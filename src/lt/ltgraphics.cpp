@@ -219,11 +219,14 @@ LTImageBuffer *ltLoadImage(const char *file) {
     }
 
     // Check for 8 byte signature.
-    fread(sig, 1, 8, in);
-    if (!png_check_sig(sig, 8)) {
-        fprintf(stderr, "Error: %s has an invalid signature.\n", file);
+    int n = fread(sig, 1, 8, in);
+    if (n != 8) {
         fclose(in);
-        exit(1);
+        ltAbort("Unable to read first 8 bytes of %s.", file);
+    }
+    if (!png_check_sig(sig, 8)) {
+        fclose(in);
+        ltAbort("%s has an invalid signature.", file);
     }
     
     png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
@@ -461,7 +464,6 @@ static void paste_bin_images(LTImageBuffer *img, LTPackBin *bin) {
 
 LTImageBuffer *ltCreateAtlasImage(const char *file, LTPackBin *bin) {
     int num_pixels = bin->width * bin->height;
-    LTpixel red = 0xFF0000FF;
     LTImageBuffer *atlas = new LTImageBuffer();
     atlas->width=bin->width;
     atlas->height=bin->height;
@@ -471,8 +473,6 @@ LTImageBuffer *ltCreateAtlasImage(const char *file, LTPackBin *bin) {
     atlas->bb_bottom=0;
     atlas->bb_pixels = new LTpixel[num_pixels];
     atlas->file = file;
-    memset_pattern4(atlas->bb_pixels, &red, 4 * num_pixels);
-
     paste_bin_images(atlas, bin);
     return atlas;
 }
