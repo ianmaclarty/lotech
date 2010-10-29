@@ -476,3 +476,18 @@ LTImageBuffer *ltCreateAtlasImage(const char *file, LTPackBin *bin) {
     paste_bin_images(atlas, bin);
     return atlas;
 }
+
+LTtexture ltCreateAtlasTexture(LTPackBin *bin) {
+    LTImageBuffer *buf = ltCreateAtlasImage("tmp", bin);
+    LTtexture tex;
+    glGenTextures(1, &tex);
+    glBindTexture(GL_TEXTURE_2D, tex);
+    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    glTexImage2D(GL_TEXTURE_2D, 0, 4, buf->width, buf->height, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, buf->bb_pixels);
+    delete buf;
+    return tex;
+}
+
+void ltDeleteTexture(LTtexture tex) {
+    glDeleteTextures(1, &tex);
+}

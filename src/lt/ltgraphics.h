@@ -17,6 +17,7 @@
 #define LT_DEGREES_PER_RADIAN (180.0f / LT_PI)
 
 typedef LTuint32        LTpixel;
+typedef GLuint          LTtexture;
 
 #define LT_RED(pxl)     (pxl & 0xFF)
 #define LT_GREEN(pxl)   (pxl >> 8 & 0xFF)
@@ -72,7 +73,7 @@ LTImageBuffer *ltLoadImage(const char *file);
 void ltWriteImage(const char *file, LTImageBuffer *img);
 
 /*
- * x and y are left-bottom coordinates to past src in dest, relative to 
+ * x and y are left-bottom coordinates to paste src in dest, relative to 
  * dest->bb_left and dest->bb_bottom.
  */
 void ltPasteImage(LTImageBuffer *src, LTImageBuffer *dest, int x, int y, bool rotate);
@@ -102,5 +103,10 @@ void ltDeleteImagesInBin(LTPackBin *bin);
 
 /* The caller is responsible for freeing the buffer (with delete). */
 LTImageBuffer *ltCreateAtlasImage(const char *file, LTPackBin *bin);
+
+/* The caller is responsible for freeing the texture with ltDeleteTexture. */
+LTtexture ltCreateAtlasTexture(LTPackBin *bin);
+
+void ltDeleteTexture(LTtexture);
 
 #endif
