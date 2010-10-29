@@ -1,6 +1,7 @@
 dofile("../src/ltlua/lt.lua")
 
 lt.SetViewPort(-10, -10, 10, 10)
+local tweens = lt.TweenSet()
 
 local xs = {
     -5,
@@ -13,18 +14,18 @@ local xs = {
     -5,
     -5
 }
-lt.Tween(xs, 1, 5, 3, lt.LinearEase)
-lt.Tween(xs, 2, 5, 3, lt.EaseIn)
-lt.Tween(xs, 3, 5, 3, lt.EaseOut)
-lt.Tween(xs, 4, 5, 3, lt.EaseInOut)
-lt.Tween(xs, 5, 5, 3, lt.BackInEase)
-lt.Tween(xs, 6, 5, 3, lt.BackOutEase)
-lt.Tween(xs, 7, 5, 3, lt.ElasticEase)
-lt.Tween(xs, 8, 5, 3, lt.BounceEase)
-lt.Tween(xs, 9, 5, 3, lt.CubicBezierEase(0, 1, 1, 0))
+lt.AddTween(tweens, xs, 1, 5, 3, lt.LinearEase)
+lt.AddTween(tweens, xs, 2, 5, 3, lt.EaseIn)
+lt.AddTween(tweens, xs, 3, 5, 3, lt.EaseOut)
+lt.AddTween(tweens, xs, 4, 5, 3, lt.EaseInOut)
+lt.AddTween(tweens, xs, 5, 5, 3, lt.BackInEase)
+lt.AddTween(tweens, xs, 6, 5, 3, lt.BackOutEase)
+lt.AddTween(tweens, xs, 7, 5, 3, lt.ElasticEase)
+lt.AddTween(tweens, xs, 8, 5, 3, lt.BounceEase)
+lt.AddTween(tweens, xs, 9, 5, 3, lt.CubicBezierEase(0, 1, 1, 0))
 
 function lt.Advance()
-    lt.AdvanceTweens()
+    lt.AdvanceTweens(tweens, lt.secs_per_frame)
 end
 
 function rect(x, y)

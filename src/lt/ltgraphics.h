@@ -32,7 +32,7 @@ void ltSetViewPort(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2);
 
 void ltSetColor(LTfloat r, LTfloat g, LTfloat b, LTfloat a);
 void ltTranslate(LTfloat x, LTfloat y);
-void ltRotate(LTfloat radians);
+void ltRotate(LTdegrees degrees);
 void ltPushMatrix();
 void ltPopMatrix();
 

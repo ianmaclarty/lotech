@@ -121,8 +121,8 @@ void ltTranslate(LTfloat x, LTfloat y) {
     glTranslatef(x, y, 0.0f);
 }
 
-void ltRotate(LTfloat radians) {
-    glRotatef(radians * LT_DEGREES_PER_RADIAN, 0.0f, 0.0f, 1.0f);
+void ltRotate(LTdegrees degrees) {
+    glRotatef(degrees, 0.0f, 0.0f, 1.0f);
 }
 
 void ltPushMatrix() {

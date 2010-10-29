@@ -189,7 +189,7 @@ static int bdy_DrawShapes(lua_State *L) {
         ltPushMatrix();
         b2Vec2 pos = (*body)->GetPosition();
         ltTranslate(pos.x, pos.y);
-        ltRotate((*body)->GetAngle());
+        ltRotate((*body)->GetAngle() * LT_DEGREES_PER_RADIAN);
         b2Fixture *fixture = (*body)->GetFixtureList();
         while (fixture != NULL) {
             b2Shape *shape = fixture->GetShape();

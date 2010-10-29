@@ -1,8 +1,12 @@
-local tweens = {}
 local tweens_mt = {__mode = "k"}
-setmetatable(tweens, tweens_mt) -- make tweens' keys weak references
 
-function lt.AdvanceTweens()
+function lt.TweenSet()
+    local tweens = {}
+    setmetatable(tweens, tweens_mt) -- make tweens' keys weak references
+    return tweens
+end
+
+function lt.AdvanceTweens(tweens, dt)
     local actions = {}
     for table, fields in pairs(tweens) do
         for field, tween in pairs(fields) do
@@ -10,7 +14,7 @@ function lt.AdvanceTweens()
             if t < 1 then
                 local v0 = tween.v0
                 local v = v0 + (tween.v - v0) * tween.ease(t)
-                tween.t = t + tween.dt
+                tween.t = t + dt / tween.period
                 table[field] = v
             else
                 table[field] = tween.v
@@ -29,7 +33,7 @@ function lt.AdvanceTweens()
     end
 end
 
-function lt.Tween(table, field, to, secs, ease, onDone)
+function lt.AddTween(tweens, table, field, to, secs, ease, onDone)
     if ease == nil then
         ease = lt.LinearEase
     end
@@ -37,7 +41,7 @@ function lt.Tween(table, field, to, secs, ease, onDone)
         v0 = table[field],
         v = to,
         t = 0,
-        dt = lt.secs_per_frame / secs,
+        period = secs,
         ease = ease,
         done = onDone
     }
