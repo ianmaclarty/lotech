@@ -1,40 +1,31 @@
 lt.images = {}
 lt.atlas_size = 1024
-local images_loaded = false
-local image_queue = {}
 local atlas_textures = {}
 
--- Queue the given png file for loading.  The .png suffix should be omitted.
-function lt.QueueImage(file)
-    if images_loaded then
-        error("Images already loaded.  Call lt.ClearImages first.", 2)
-    end
-    table.insert(image_queue, file)
-end
-
--- Load queued images.
-function lt.LoadImages()
-    if images_loaded then
-        error("Images already loaded.  Call lt.ClearImages first.", 2)
-    end
-
+-- Load an array of images.  Each entry in the array should be the filename of a PNG
+-- file ending in .png.  The loaded images are placed in the lt.images table, indexed
+-- by the filename without the .png suffix.
+function lt.LoadImages(images)
     local packer = lt.ImagePacker(lt.atlas_size)
 
     local
     function gen_atlas_texture()
-        local texture = lt.TextureFromImagePacker(packer)
+        local texture = lt.CreateAtlasTexture(packer)
         table.insert(atlas_textures, texture)
         -- Add the images to lt.images.
         lt.AddPackerImagesToTable(lt.images, packer, texture)
-        lt.ClearImagePacker(packer)
+        lt.DeleteImagesInPacker(packer)
     end
 
     -- Pack images into atlas textures.
-    for _, file in ipairs(image_queue) do
+    for _, file in ipairs(images) do
         local img_buf = lt.ReadImage(file)
         if not lt.PackImage(packer, img_buf) then
             -- packer full, so generate an atlas texture.
             gen_atlas_texture()
+            if not lt.PackImage(packer, img_buf) then
+                error("Image " .. file .. " is too large")
+            end
         end
     end
 
@@ -43,8 +34,7 @@ function lt.LoadImages()
         gen_atlas_texture()
     end
 
-    images_loaded = true
-    image_queue = {}
+    lt.DeleteImagePacker(packer);
 end
 
 -- Clear lt.images.  The images become invalid.

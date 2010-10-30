@@ -47,6 +47,8 @@ for i = 1, n do
     lt.AddToScene(scene, draw, 1)
 end
 
+lt.LoadImages({"test.png"})
+
 function lt.Advance()
     lt.DoWorldStep()
     lt.AdvanceTweens(tweens, 1/60)
@@ -56,11 +58,8 @@ function lt.Render()
     lt.SetColor(0, 1, 0)
     floor:DrawShapes()
     lt.DrawScene(scene)
-    --[[
-    for i = 1, n do
-        lt.SetColor(colors[i].r, colors[i].g, colors[i].b)
-        things[i]:DrawShapes()
-    end
-    ]]
+    lt.Scale(20)
+    lt.SetColor(1, 1, 1)
+    lt.images.test:DrawBottomLeft()
     print_fps()
 end

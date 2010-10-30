@@ -73,22 +73,22 @@ int main(int argc, const char **argv) {
     argc -= shift;
     argv += shift;
 
-    LTPackBin *bin = new LTPackBin(0, 0, 1024, 1024);
+    LTImagePacker *packer = new LTImagePacker(0, 0, 1024, 1024);
 
     for (i = 0; i < argc; i++) {
-        LTImageBuffer *img = ltLoadImage(argv[i]);
-        if (!ltPackImage(bin, img)) {
+        LTImageBuffer *img = ltReadImage(argv[i]);
+        if (!ltPackImage(packer, img)) {
             fprintf(stderr, "Error: Not enough space to pack %s.\n", img->file);
             exit(1);
         }
     }
     bench("load and pack ");
-    LTImageBuffer *atlas = ltCreateAtlasImage("out.png", bin);
+    LTImageBuffer *atlas = ltCreateAtlasImage("out.png", packer);
     bench("create atlas  ");
     ltWriteImage("out.png", atlas);
     bench("write         ");
-    bin->deleteOccupants();
+    packer->deleteOccupants();
     delete atlas;
-    delete bin;
+    delete packer;
     return 0;
 }

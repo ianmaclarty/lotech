@@ -49,6 +49,25 @@ static int lt_SetColor(lua_State *L) {
     return 0;
 }
 
+static int lt_Scale(lua_State *L) {
+    int num_args = lua_gettop(L);
+    LTfloat x = (LTfloat)luaL_checknumber(L, 1);
+    LTfloat y;
+    if (num_args > 1) {
+        y = (LTfloat)luaL_checknumber(L, 2);
+    } else {
+        y = x;
+    }
+    LTfloat z;
+    if (num_args > 2) {
+        z = (LTfloat)luaL_checknumber(L, 3);
+    } else {
+        z = 1.0f;
+    }
+    ltScale(x, y, z);
+    return 0;
+}
+
 static int lt_DrawUnitSquare(lua_State *L) {
     ltDrawUnitSquare();
     return 0;
@@ -74,6 +93,132 @@ static int lt_DrawEllipse(lua_State *L) {
     LTfloat rx = (LTfloat)luaL_checknumber(L, 3);
     LTfloat ry = (LTfloat)luaL_checknumber(L, 4);
     ltDrawEllipse(x, y, rx, ry);
+    return 0;
+}
+
+/************************* Images **************************/
+
+// User must free with DeleteImagePacker.
+static int lt_ImagePacker(lua_State *L) {
+    int size = (int)luaL_checkinteger(L, 1);
+    LTImagePacker *packer = new LTImagePacker(0, 0, size, size);
+    LTImagePacker **ud = (LTImagePacker **)lua_newuserdata(L, sizeof(LTImagePacker **));
+    *ud = packer;
+    luaL_newmetatable(L, "pkr");
+    lua_setmetatable(L, -2);
+    return 1;
+}
+
+static int lt_ImagePackerSize(lua_State *L) {
+    LTImagePacker **packer = (LTImagePacker**)luaL_checkudata(L, 1, "pkr");
+    lua_pushinteger(L, (*packer)->size());
+    return 1;
+}
+
+static int lt_DeleteImagePacker(lua_State *L) {
+    LTImagePacker **packer = (LTImagePacker**)luaL_checkudata(L, 1, "pkr");
+    delete *packer;
+    *packer = NULL;
+    return 0;
+}
+
+// User must free with DeleteImagesInPacker.
+static int lt_ReadImage(lua_State *L) {
+    const char *file = luaL_checkstring(L, 1);
+    LTImageBuffer *buf = ltReadImage(file);
+    LTImageBuffer **ud = (LTImageBuffer **)lua_newuserdata(L, sizeof(LTImageBuffer **));
+    *ud = buf;
+    luaL_newmetatable(L, "imgbuf");
+    lua_setmetatable(L, -2);
+    return 1;
+}
+
+static int lt_PackImage(lua_State *L) {
+    LTImagePacker **packer = (LTImagePacker**)luaL_checkudata(L, 1, "pkr");
+    LTImageBuffer **img_buf = (LTImageBuffer**)luaL_checkudata(L, 2, "imgbuf");
+    if (ltPackImage(*packer, *img_buf)) {
+        lua_pushboolean(L, 1);
+    } else {
+        lua_pushboolean(L, 0);
+    }
+    return 1;
+}
+
+static int lt_CreateAtlasTexture(lua_State *L) {
+    LTImagePacker **packer = (LTImagePacker**)luaL_checkudata(L, 1, "pkr");
+    LTtexture tex = ltCreateAtlasTexture(*packer);
+    lua_pushinteger(L, (lua_Integer)tex); // XXX relies on lua_Integer being compatible with GLuint.
+    return 1;
+}
+
+static int lt_DeleteTexture(lua_State *L) {
+    LTtexture tex = (LTtexture)luaL_checkinteger(L, 1);
+    ltDeleteTexture(tex);
+    return 0;
+}
+
+static int img_DrawBottomLeft(lua_State *L) {
+    LTImage **img = (LTImage**)luaL_checkudata(L, 1, "img");
+    (*img)->drawBottomLeft();
+    return 0;
+}
+
+static void push_image(lua_State *L, LTImage *img) {
+    LTImage **ud = (LTImage **)lua_newuserdata(L, sizeof(LTImage **));
+    *ud = img;
+    if (luaL_newmetatable(L, "img")) {
+        lua_createtable(L, 0, 16);
+            lua_pushcfunction(L, img_DrawBottomLeft);
+            lua_setfield(L, -2, "DrawBottomLeft");
+        lua_setfield(L, -2, "__index");
+    }
+    lua_setmetatable(L, -2);
+}
+
+static void add_packer_images_to_lua_table(lua_State *L, int table, int w, int h, LTImagePacker *packer, LTtexture atlas) {
+    char img_name[128];
+    int len;
+    const char *file;
+    if (packer->occupant != NULL) {
+        LTImage *img = new LTImage(atlas, w, h, packer);
+        file = packer->occupant->file;
+        len = strlen(file);
+        if (len <= 4) {
+            ltAbort("PNG file name too short: %s.", file);
+        }
+        if (len > 120) {
+            ltAbort("PNG file name too long: %s.", file);
+        }
+        if (strcmp(".png", file + len - 4) != 0) {
+            ltAbort("File %s does not end in .png", file);
+        }
+        strncpy(img_name, file, len - 4); // Remove ".png" suffix.
+        img_name[len - 4] = '\0';
+        push_image(L, img);
+        lua_setfield(L, table, img_name);
+        add_packer_images_to_lua_table(L, table, w, h, packer->lo_child, atlas);
+        add_packer_images_to_lua_table(L, table, w, h, packer->hi_child, atlas);
+    }
+}
+
+static int lt_AddPackerImagesToTable(lua_State *L) {
+    luaL_checktype(L, 1, LUA_TTABLE);
+    LTImagePacker **packer = (LTImagePacker**)luaL_checkudata(L, 2, "pkr");
+    LTtexture atlas = (LTtexture)luaL_checkinteger(L, 3);
+    add_packer_images_to_lua_table(L, 1, (*packer)->width, (*packer)->height, *packer, atlas);
+    return 0;
+}
+
+static int lt_DeleteImage(lua_State *L) {
+    LTImage **img = (LTImage**)luaL_checkudata(L, 1, "img");
+    delete *img;
+    *img = NULL;
+    return 0;
+}
+
+static int lt_DeleteImagesInPacker(lua_State *L) {
+    LTImagePacker **packer = (LTImagePacker**)luaL_checkudata(L, 1, "pkr");
+    (*packer)->deleteOccupants();
     return 0;
 }
 
@@ -147,6 +292,7 @@ static int bdy_GetAngle(lua_State *L) {
 }
 
 // XXX This doesn't currently work.
+/*
 static int bdy_SetAngle(lua_State *L) {
     b2Body** body = check_body(L, 1);
     if (*body != NULL) {
@@ -154,6 +300,7 @@ static int bdy_SetAngle(lua_State *L) {
     }
     return 0;
 }
+*/
 
 static int bdy_AddRect(lua_State *L) {
     int num_args = lua_gettop(L);
@@ -269,10 +416,22 @@ static int lt_DynamicBody(lua_State *L) {
 static const luaL_Reg ltlib[] = {
     {"SetViewPort",             lt_SetViewPort},
     {"SetColor",                lt_SetColor},
+    {"Scale",                   lt_Scale},
     {"DrawUnitSquare",          lt_DrawUnitSquare},
     {"DrawUnitCircle",          lt_DrawUnitCircle},
     {"DrawRect",                lt_DrawRect},
     {"DrawEllipse",             lt_DrawEllipse},
+
+    {"ImagePacker",             lt_ImagePacker},
+    {"ImagePackerSize",         lt_ImagePackerSize},
+    {"DeleteImagePacker",       lt_DeleteImagePacker},
+    {"ReadImage",               lt_ReadImage},
+    {"PackImage",               lt_PackImage},
+    {"CreateAtlasTexture",      lt_CreateAtlasTexture},
+    {"DeleteTexture",           lt_DeleteTexture},
+    {"AddPackerImagesToTable",  lt_AddPackerImagesToTable},
+    {"DeleteImage",             lt_DeleteImage},
+    {"DeleteImagesInPacker",    lt_DeleteImagesInPacker},
 
     {"DoWorldStep",             lt_DoWorldStep},
     {"SetGravity",              lt_SetGravity},

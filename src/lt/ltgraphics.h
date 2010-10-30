@@ -18,6 +18,8 @@
 
 typedef LTuint32        LTpixel;
 typedef GLuint          LTtexture;
+typedef GLuint          LTvertbuf;
+typedef GLuint          LTtexbuf;
 
 #define LT_RED(pxl)     (pxl & 0xFF)
 #define LT_GREEN(pxl)   (pxl >> 8 & 0xFF)
@@ -26,7 +28,7 @@ typedef GLuint          LTtexture;
 
 void ltInitGraphics();
 
-void ltEnableTextures();
+void ltEnableTexture(LTtexture tex);
 void ltDisableTextures();
 
 void ltSetViewPort(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2);
@@ -34,6 +36,7 @@ void ltSetViewPort(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2);
 void ltSetColor(LTfloat r, LTfloat g, LTfloat b, LTfloat a);
 void ltTranslate(LTfloat x, LTfloat y);
 void ltRotate(LTdegrees degrees);
+void ltScale(LTfloat x, LTfloat y, LTfloat z);
 void ltPushMatrix();
 void ltPopMatrix();
 
@@ -67,7 +70,7 @@ struct LTImageBuffer {
 };
 
 /* The caller is responsible for freeing the buffer (with delete). */
-LTImageBuffer *ltLoadImage(const char *file);
+LTImageBuffer *ltReadImage(const char *file);
 
 /* Only the bounding box is written. */
 void ltWriteImage(const char *file, LTImageBuffer *img);
@@ -79,34 +82,64 @@ void ltWriteImage(const char *file, LTImageBuffer *img);
 void ltPasteImage(LTImageBuffer *src, LTImageBuffer *dest, int x, int y, bool rotate);
 
 // Invariant: occupant != NULL <=> hi_child != NULL && lo_child != NULL.
-struct LTPackBin {
+struct LTImagePacker {
     int left;
     int bottom;
     int width;
     int height;
     LTImageBuffer *occupant;
-    bool rotated;
-    LTPackBin *hi_child;
-    LTPackBin *lo_child;
+    bool rotated; // 90 degrees clockwise, so that the lower-left corner becomes the top-left corner.
+    LTImagePacker *hi_child;
+    LTImagePacker *lo_child;
 
-    LTPackBin(int l, int b, int w, int h);
-    virtual ~LTPackBin();
+    LTImagePacker(int l, int b, int w, int h);
+    virtual ~LTImagePacker();
 
     void deleteOccupants();
+    int size();
 };
 
 /* Returns false if there's no room in the bin. */
-bool ltPackImage(LTPackBin *bin, LTImageBuffer *img);
-
-/* Free all images in the bin. */
-void ltDeleteImagesInBin(LTPackBin *bin);
+bool ltPackImage(LTImagePacker *packer, LTImageBuffer *img);
 
 /* The caller is responsible for freeing the buffer (with delete). */
-LTImageBuffer *ltCreateAtlasImage(const char *file, LTPackBin *bin);
+LTImageBuffer *ltCreateAtlasImage(const char *file, LTImagePacker *packer);
 
 /* The caller is responsible for freeing the texture with ltDeleteTexture. */
-LTtexture ltCreateAtlasTexture(LTPackBin *bin);
+LTtexture ltCreateAtlasTexture(LTImagePacker *packer);
 
 void ltDeleteTexture(LTtexture);
+
+struct LTImage {
+    LTtexture atlas;
+    LTvertbuf vertbuf;
+    LTtexbuf  texbuf;
+
+    // Texture coords of image bounding box in atlas.
+    LTfloat   tex_left;
+    LTfloat   tex_bottom;
+
+    // Bounding box coords, as ratio of atlas dimensions.
+    LTfloat   bb_left;
+    LTfloat   bb_bottom;
+    LTfloat   bb_width;
+    LTfloat   bb_height;
+
+    // Original image size, as ration of atlas dimensions.
+    LTfloat   orig_width;
+    LTfloat   orig_height;
+
+    bool rotated;
+
+    // Dimensions of original image in pixels.
+    int       pxl_w;
+    int       pxl_h;
+
+    // packer->occupant != NULL
+    LTImage(LTtexture atlas, int atlas_w, int atlas_h, LTImagePacker *packer);
+    virtual ~LTImage();
+
+    void drawBottomLeft();
+};
 
 #endif

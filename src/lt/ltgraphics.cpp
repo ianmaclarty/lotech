@@ -11,6 +11,7 @@
 #define LTPI (3.14159265358979323846f)
 
 static bool g_textures_enabled = false;
+static LTtexture g_current_bound_texture = 0;
 
 void ltInitGraphics() {
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -20,10 +21,14 @@ void ltInitGraphics() {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
-void ltEnableTextures() {
+void ltEnableTexture(LTtexture tex) {
     if (!g_textures_enabled) {
         glEnable(GL_TEXTURE_2D);
         g_textures_enabled = true;
+    }
+    if (g_current_bound_texture != tex) {
+        glBindTexture(GL_TEXTURE_2D, tex);
+        g_current_bound_texture = tex;
     }
 }
 
@@ -31,6 +36,7 @@ void ltDisableTextures() {
     if (g_textures_enabled) {
         glDisable(GL_TEXTURE_2D);
         g_textures_enabled = false;
+        g_current_bound_texture = 0;
     }
 }
 
@@ -125,6 +131,10 @@ void ltRotate(LTdegrees degrees) {
     glRotatef(degrees, 0.0f, 0.0f, 1.0f);
 }
 
+void ltScale(LTfloat x, LTfloat y, LTfloat z) {
+    glScalef(x, y, z);
+}
+
 void ltPushMatrix() {
     glPushMatrix();
 }
@@ -192,7 +202,7 @@ static void compute_bbox(const char *file, LTpixel **rows, int w, int h,
     }
 }
 
-LTImageBuffer *ltLoadImage(const char *file) {
+LTImageBuffer *ltReadImage(const char *file) {
     FILE *in;
     png_structp png_ptr; 
     png_infop info_ptr; 
@@ -349,24 +359,20 @@ void ltPasteImage(LTImageBuffer *src, LTImageBuffer *dest, int x, int y, bool ro
     int dest_width = dest->bb_width();
     int dest_height = dest->bb_height();
     if (!rotate && (x + src_width > dest_width)) {
-        fprintf(stderr, "Error: %s too wide to be pasted into %s at x = %d.\n",
+        ltAbort("%s too wide to be pasted into %s at x = %d.", 
             src->file, dest->file, x);
-        exit(1);
     }
     if (!rotate && (y + src_height > dest_height)) {
-        fprintf(stderr, "Error: %s too high to be pasted into %s at y = %d.\n",
+        ltAbort("%s too high to be pasted into %s at y = %d.",
             src->file, dest->file, y);
-        exit(1);
     }
     if (rotate && (x + src_height > dest_width)) {
-        fprintf(stderr, "Error: %s too high to be pasted into %s at x = %d after rotation.\n",
+        ltAbort("%s too high to be pasted into %s at x = %d after rotation.",
             src->file, dest->file, x);
-        exit(1);
     }
     if (rotate && (y + src_width > dest_height)) {
-        fprintf(stderr, "Error: %s too wide to be pasted into %s at y = %d after rotation.\n",
+        ltAbort("%s too wide to be pasted into %s at y = %d after rotation.",
             src->file, dest->file, y);
-        exit(1);
     }
 
     LTpixel *dest_ptr = dest->bb_pixels + y * dest_width + x;
@@ -399,7 +405,9 @@ void ltPasteImage(LTImageBuffer *src, LTImageBuffer *dest, int x, int y, bool ro
     }
 }
 
-LTPackBin::LTPackBin(int l, int b, int w, int h) {
+//-----------------------------------------------------------------
+
+LTImagePacker::LTImagePacker(int l, int b, int w, int h) {
     left = l;
     bottom = b;
     width = w;
@@ -410,78 +418,95 @@ LTPackBin::LTPackBin(int l, int b, int w, int h) {
     lo_child = NULL;
 }
 
-LTPackBin::~LTPackBin() {
+LTImagePacker::~LTImagePacker() {
     if (occupant != NULL) {
         delete hi_child;
         delete lo_child;
     }
 }
 
-bool ltPackImage(LTPackBin *bin, LTImageBuffer *img) {
-    int bin_w = bin->width;
-    int bin_h = bin->height;
+bool ltPackImage(LTImagePacker *packer, LTImageBuffer *img) {
+    int pkr_w = packer->width;
+    int pkr_h = packer->height;
     int img_w = img->bb_width();
     int img_h = img->bb_height();
-    if (bin->occupant == NULL) {
-        if (img_w <= bin_w && img_h <= bin_h) {
-            bin->occupant = img;
-            bin->rotated = false;
-            bin->hi_child = new LTPackBin(bin->left, bin->bottom + img_h,
-                bin_w, bin_h - img_h);
-            bin->lo_child = new LTPackBin(bin->left + img_w, bin->bottom,
-                bin_w - img_w, img_h);
+    if (packer->occupant == NULL) {
+        if (img_w <= pkr_w && img_h <= pkr_h) {
+            packer->occupant = img;
+            packer->rotated = false;
+            packer->hi_child = new LTImagePacker(packer->left, packer->bottom + img_h,
+                pkr_w, pkr_h - img_h);
+            packer->lo_child = new LTImagePacker(packer->left + img_w, packer->bottom,
+                pkr_w - img_w, img_h);
             return true;
         }
-        if (img_h <= bin_w && img_w <= bin_h) {
-            bin->occupant = img;
-            bin->rotated = true;
-            bin->hi_child = new LTPackBin(bin->left, bin->bottom + img_w,
-                bin_w, bin_h - img_w);
-            bin->lo_child = new LTPackBin(bin->left + img_h, bin->bottom,
-                bin_w - img_h, img_w);
+        if (img_h <= pkr_w && img_w <= pkr_h) {
+            packer->occupant = img;
+            packer->rotated = true;
+            packer->hi_child = new LTImagePacker(packer->left, packer->bottom + img_w,
+                pkr_w, pkr_h - img_w);
+            packer->lo_child = new LTImagePacker(packer->left + img_h, packer->bottom,
+                pkr_w - img_h, img_w);
             return true;
         }
         return false;
     }
-    return ltPackImage(bin->lo_child, img) || ltPackImage(bin->hi_child, img);
+    return ltPackImage(packer->lo_child, img) || ltPackImage(packer->hi_child, img);
 }
 
-void LTPackBin::deleteOccupants() {
+void LTImagePacker::deleteOccupants() {
     if (occupant != NULL) {
         delete occupant;
+        occupant = NULL;
         hi_child->deleteOccupants();
         lo_child->deleteOccupants();
+        delete hi_child;
+        hi_child = NULL;
+        delete lo_child;
+        lo_child = NULL;
     }
 }
 
-static void paste_bin_images(LTImageBuffer *img, LTPackBin *bin) {
-    if (bin->occupant != NULL) {
-        ltPasteImage(bin->occupant, img, bin->left, bin->bottom, bin->rotated);
-        paste_bin_images(img, bin->lo_child);
-        paste_bin_images(img, bin->hi_child);
+int LTImagePacker::size() {
+    if (occupant != NULL) {
+        return hi_child->size() + lo_child->size() + 1;
+    } else {
+        return 0;
     }
 }
 
-LTImageBuffer *ltCreateAtlasImage(const char *file, LTPackBin *bin) {
-    int num_pixels = bin->width * bin->height;
+static void paste_packer_images(LTImageBuffer *img, LTImagePacker *packer) {
+    if (packer->occupant != NULL) {
+        ltPasteImage(packer->occupant, img, packer->left, packer->bottom, packer->rotated);
+        paste_packer_images(img, packer->lo_child);
+        paste_packer_images(img, packer->hi_child);
+    }
+}
+
+//-----------------------------------------------------------------
+
+LTImageBuffer *ltCreateAtlasImage(const char *file, LTImagePacker *packer) {
+    int num_pixels = packer->width * packer->height;
     LTImageBuffer *atlas = new LTImageBuffer();
-    atlas->width=bin->width;
-    atlas->height=bin->height;
+    atlas->width=packer->width;
+    atlas->height=packer->height;
     atlas->bb_left=0;
-    atlas->bb_right=bin->width - 1;
-    atlas->bb_top=bin->height - 1;
+    atlas->bb_right=packer->width - 1;
+    atlas->bb_top=packer->height - 1;
     atlas->bb_bottom=0;
     atlas->bb_pixels = new LTpixel[num_pixels];
     atlas->file = file;
-    paste_bin_images(atlas, bin);
+    paste_packer_images(atlas, packer);
     return atlas;
 }
 
-LTtexture ltCreateAtlasTexture(LTPackBin *bin) {
-    LTImageBuffer *buf = ltCreateAtlasImage("tmp", bin);
+LTtexture ltCreateAtlasTexture(LTImagePacker *packer) {
+    LTImageBuffer *buf = ltCreateAtlasImage("tmp", packer);
     LTtexture tex;
     glGenTextures(1, &tex);
     glBindTexture(GL_TEXTURE_2D, tex);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); 
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
     glTexImage2D(GL_TEXTURE_2D, 0, 4, buf->width, buf->height, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, buf->bb_pixels);
     delete buf;
@@ -490,4 +515,75 @@ LTtexture ltCreateAtlasTexture(LTPackBin *bin) {
 
 void ltDeleteTexture(LTtexture tex) {
     glDeleteTextures(1, &tex);
+}
+
+//-----------------------------------------------------------------
+
+LTImage::LTImage(LTtexture atls, int atlas_w, int atlas_h, LTImagePacker *packer) {
+    if (packer->occupant == NULL) {
+        ltAbort("Packer occupant is NULL.");
+    }
+
+    atlas = atls;
+    rotated = packer->rotated;
+
+    LTfloat fatlas_w = (LTfloat)atlas_w;
+    LTfloat fatlas_h = (LTfloat)atlas_h;
+
+    tex_left = (LTfloat)packer->left / fatlas_w;
+    tex_bottom = (LTfloat)packer->bottom / fatlas_h;
+
+    bb_left = (LTfloat)packer->occupant->bb_left / fatlas_w;
+    bb_bottom = (LTfloat)packer->occupant->bb_bottom / fatlas_h;
+    if (rotated) {
+        bb_width = (LTfloat)packer->height / fatlas_w;
+        bb_height = (LTfloat)packer->width / fatlas_h;
+    } else {
+        bb_width = (LTfloat)packer->width / fatlas_w;
+        bb_height = (LTfloat)packer->height / fatlas_h;
+    }
+    orig_width = (LTfloat)packer->occupant->width / fatlas_w;
+    orig_height = (LTfloat)packer->occupant->height / fatlas_h;
+    pxl_w = packer->occupant->width;
+    pxl_h = packer->occupant->height;
+
+    GLfloat vertices[] = {
+        bb_left,                bb_bottom + bb_height,
+        bb_left + bb_width,     bb_bottom + bb_height,
+        bb_left + bb_width,     bb_bottom,
+        bb_left,                bb_bottom
+    };
+    glGenBuffers(1, &vertbuf);
+    glBindBuffer(GL_ARRAY_BUFFER, vertbuf);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 8, vertices, GL_STATIC_DRAW);
+
+    GLfloat tex_coords[8];
+    if (rotated) {
+        tex_coords[0] = tex_left;               tex_coords[1] = tex_bottom;
+        tex_coords[2] = tex_left;               tex_coords[3] = tex_bottom + bb_height;
+        tex_coords[4] = tex_left + bb_width;    tex_coords[5] = tex_bottom + bb_height;
+        tex_coords[6] = tex_left + bb_width;    tex_coords[7] = tex_bottom;
+    } else {
+        tex_coords[0] = tex_left;               tex_coords[1] = tex_bottom + bb_height;
+        tex_coords[2] = tex_left + bb_width;    tex_coords[3] = tex_bottom + bb_height;
+        tex_coords[4] = tex_left + bb_width;    tex_coords[5] = tex_bottom;
+        tex_coords[6] = tex_left;               tex_coords[7] = tex_bottom;
+    }
+    glGenBuffers(1, &texbuf);
+    glBindBuffer(GL_ARRAY_BUFFER, texbuf);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 8, tex_coords, GL_STATIC_DRAW);
+}
+
+LTImage::~LTImage() {
+    glDeleteBuffers(1, &vertbuf);
+    glDeleteBuffers(1, &texbuf);
+}
+
+void LTImage::drawBottomLeft() {
+    ltEnableTexture(atlas);
+    glBindBuffer(GL_ARRAY_BUFFER, vertbuf);
+    glVertexPointer(2, GL_FLOAT, 0, 0);
+    glBindBuffer(GL_ARRAY_BUFFER, texbuf);
+    glTexCoordPointer(2, GL_FLOAT, 0, 0);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
