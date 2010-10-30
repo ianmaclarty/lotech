@@ -535,17 +535,12 @@ LTImage::LTImage(LTtexture atls, int atlas_w, int atlas_h, LTImagePacker *packer
 
     bb_left = (LTfloat)packer->occupant->bb_left / fatlas_w;
     bb_bottom = (LTfloat)packer->occupant->bb_bottom / fatlas_h;
-    if (rotated) {
-        bb_width = (LTfloat)packer->height / fatlas_w;
-        bb_height = (LTfloat)packer->width / fatlas_h;
-    } else {
-        bb_width = (LTfloat)packer->width / fatlas_w;
-        bb_height = (LTfloat)packer->height / fatlas_h;
-    }
+    bb_width = (LTfloat)packer->occupant->bb_width() / fatlas_w;
+    bb_height = (LTfloat)packer->occupant->bb_height() / fatlas_h;
     orig_width = (LTfloat)packer->occupant->width / fatlas_w;
     orig_height = (LTfloat)packer->occupant->height / fatlas_h;
-    pxl_w = packer->occupant->width;
-    pxl_h = packer->occupant->height;
+    pixel_width = packer->occupant->width;
+    pixel_height = packer->occupant->height;
 
     GLfloat vertices[] = {
         bb_left,                bb_bottom + bb_height,
@@ -559,10 +554,10 @@ LTImage::LTImage(LTtexture atls, int atlas_w, int atlas_h, LTImagePacker *packer
 
     GLfloat tex_coords[8];
     if (rotated) {
-        tex_coords[0] = tex_left;               tex_coords[1] = tex_bottom;
-        tex_coords[2] = tex_left;               tex_coords[3] = tex_bottom + bb_height;
-        tex_coords[4] = tex_left + bb_width;    tex_coords[5] = tex_bottom + bb_height;
-        tex_coords[6] = tex_left + bb_width;    tex_coords[7] = tex_bottom;
+        tex_coords[0] = tex_left + bb_height;   tex_coords[1] = tex_bottom + bb_width;
+        tex_coords[2] = tex_left + bb_height;   tex_coords[3] = tex_bottom;
+        tex_coords[4] = tex_left;               tex_coords[5] = tex_bottom;
+        tex_coords[6] = tex_left;               tex_coords[7] = tex_bottom + bb_width;
     } else {
         tex_coords[0] = tex_left;               tex_coords[1] = tex_bottom + bb_height;
         tex_coords[2] = tex_left + bb_width;    tex_coords[3] = tex_bottom + bb_height;

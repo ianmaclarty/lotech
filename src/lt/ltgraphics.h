@@ -129,8 +129,8 @@ struct LTImage {
     bool rotated;
 
     // Dimensions of original image in pixels.
-    int       pxl_w;
-    int       pxl_h;
+    int       pixel_width;
+    int       pixel_height;
 
     // packer->occupant != NULL
     LTImage(LTtexture atlas, int atlas_w, int atlas_h, LTImagePacker *packer);
