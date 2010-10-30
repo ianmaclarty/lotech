@@ -248,8 +248,8 @@ LTImageBuffer *ltReadImage(const char *file) {
 
     // Read the data.
     png_transforms = PNG_TRANSFORM_STRIP_16 | PNG_TRANSFORM_PACKING |
-        PNG_TRANSFORM_GRAY_TO_RGB;
-    png_set_filler(png_ptr, 0xFF, PNG_FILLER_AFTER);
+        PNG_TRANSFORM_GRAY_TO_RGB | PNG_TRANSFORM_SWAP_ALPHA | PNG_TRANSFORM_BGR;
+    png_set_filler(png_ptr, 0xFF, PNG_FILLER_BEFORE);
     png_read_png(png_ptr, info_ptr, png_transforms, NULL);
     fclose(in);
     png_get_IHDR(png_ptr, info_ptr, &uwidth, &uheight, &bit_depth, &color_type,
@@ -344,7 +344,7 @@ void ltWriteImage(const char *file, LTImageBuffer *img) {
     png_set_rows(png_ptr, info_ptr, rows);
 
     // Write image.
-    png_write_png(png_ptr, info_ptr, PNG_TRANSFORM_IDENTITY, NULL);
+    png_write_png(png_ptr, info_ptr, PNG_TRANSFORM_SWAP_ALPHA | PNG_TRANSFORM_BGR, NULL);
 
     // Free libpng data.
     png_destroy_write_struct(&png_ptr, &info_ptr);

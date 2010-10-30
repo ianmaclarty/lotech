@@ -21,10 +21,7 @@ typedef GLuint          LTtexture;
 typedef GLuint          LTvertbuf;
 typedef GLuint          LTtexbuf;
 
-#define LT_RED(pxl)     (pxl & 0xFF)
-#define LT_GREEN(pxl)   (pxl >> 8 & 0xFF)
-#define LT_BLUE(pxl)    (pxl >> 16 & 0xFF)
-#define LT_ALPHA(pxl)   (pxl >> 24)
+#define LT_ALPHA(pxl)     (pxl & 0xFF)
 
 void ltInitGraphics();
 
