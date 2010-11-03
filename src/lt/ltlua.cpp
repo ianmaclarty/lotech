@@ -1,5 +1,7 @@
 /* Copyright (C) 2010 Ian MacLarty */
 
+#include <string.h>
+
 extern "C" {
 #include "lua.h"
 #include "lauxlib.h"
