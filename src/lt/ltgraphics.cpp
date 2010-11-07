@@ -425,7 +425,7 @@ LTImagePacker::~LTImagePacker() {
     }
 }
 
-bool ltPackImage(LTImagePacker *packer, LTImageBuffer *img) {
+static bool pack_image(LTImagePacker *packer, LTImageBuffer *img) {
     int pkr_w = packer->width;
     int pkr_h = packer->height;
     int img_w = img->bb_width();
@@ -451,7 +451,51 @@ bool ltPackImage(LTImagePacker *packer, LTImageBuffer *img) {
         }
         return false;
     }
-    return ltPackImage(packer->lo_child, img) || ltPackImage(packer->hi_child, img);
+    return pack_image(packer->lo_child, img) || pack_image(packer->hi_child, img);
+}
+
+static int compare_img_bufs(const void *v1, const void *v2) {
+    LTImageBuffer *img1 = (LTImageBuffer *)v1;
+    LTImageBuffer *img2 = (LTImageBuffer *)v2;
+    int h1 = img1->bb_height();
+    int h2 = img2->bb_height();
+    if (h1 < h2) {
+        return -1;
+    } else if (h1 == h2) {
+        return 0;
+    } else {
+        return 1;
+    }
+}
+
+bool ltPackImage(LTImagePacker *packer, LTImageBuffer *img) {
+    if (pack_image(packer, img)) {
+        return true;
+    } else {
+        // Sort images and try again.
+        int n = packer->size();
+        bool filled = true;
+        LTImagePacker *packer2 = new LTImagePacker(packer->left, packer->bottom,
+            packer->width, packer->height);
+        LTImageBuffer **imgs = packer->getImages();
+        qsort(imgs, n, sizeof(LTImageBuffer *), compare_img_bufs);
+        for (int i = n - 1; i >= 0; i--) {
+            if (!pack_image(packer2, imgs[i])) {
+                filled = false;
+                break;
+            }
+        }
+        if (filled) {
+            // Success after sorting, so re-insert into packer.
+            packer->clear();
+            for (int i = n - 1; i >= 0; i--) {
+                pack_image(packer, imgs[i]);
+            }
+        }
+        delete packer2;
+        delete[] imgs;
+        return filled;
+    }
 }
 
 void LTImagePacker::deleteOccupants() {
@@ -467,12 +511,40 @@ void LTImagePacker::deleteOccupants() {
     }
 }
 
+void LTImagePacker::clear() {
+    if (occupant != NULL) {
+        occupant = NULL;
+        hi_child->clear();
+        lo_child->clear();
+        delete hi_child;
+        hi_child = NULL;
+        delete lo_child;
+        lo_child = NULL;
+    }
+}
+
 int LTImagePacker::size() {
     if (occupant != NULL) {
         return hi_child->size() + lo_child->size() + 1;
     } else {
         return 0;
     }
+}
+
+static void get_images(LTImagePacker *packer, int *i, LTImageBuffer **imgs) {
+    if (packer->occupant != NULL) {
+        imgs[*i] = packer->occupant;
+        *i = *i + 1;
+        get_images(packer->hi_child, i, imgs);
+        get_images(packer->lo_child, i, imgs);
+    }
+}
+
+LTImageBuffer **LTImagePacker::getImages() {
+    int i = 0;
+    LTImageBuffer **imgs = new LTImageBuffer*[size()];
+    get_images(this, &i, imgs);
+    return imgs;
 }
 
 static void paste_packer_images(LTImageBuffer *img, LTImagePacker *packer) {

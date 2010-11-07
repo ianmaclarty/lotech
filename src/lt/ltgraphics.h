@@ -93,7 +93,11 @@ struct LTImagePacker {
     virtual ~LTImagePacker();
 
     void deleteOccupants();
+    void clear(); // Just removes occupants without freeing them.
     int size();
+
+    // Return array of images in packer.  Caller must free array with delete[].
+    LTImageBuffer **getImages();
 };
 
 /* Returns false if there's no room in the bin. */
