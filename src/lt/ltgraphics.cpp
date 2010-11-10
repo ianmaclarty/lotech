@@ -350,6 +350,8 @@ void ltWriteImage(const char *file, LTImageBuffer *img) {
     // Free libpng data.
     png_destroy_write_struct(&png_ptr, &info_ptr);
     delete[] rows;
+
+    fclose(out);
 }
 
 void ltPasteImage(LTImageBuffer *src, LTImageBuffer *dest, int x, int y, bool rotate) {
@@ -750,7 +752,7 @@ LTImageBuffer *ltCreateAtlasImage(const char *file, LTImagePacker *packer) {
 }
 
 LTtexture ltCreateAtlasTexture(LTImagePacker *packer, const char *dump_file) {
-    LTImageBuffer *buf = ltCreateAtlasImage("tmp", packer);
+    LTImageBuffer *buf = ltCreateAtlasImage("<internal>", packer);
     if (dump_file != NULL) {
         ltLog("Dumping %s (%d x %d)", dump_file, buf->bb_width(), buf->bb_height());
         ltWriteImage(dump_file, buf);
