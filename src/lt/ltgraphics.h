@@ -96,8 +96,9 @@ struct LTImagePacker {
     void clear(); // Just removes occupants without freeing them.
     int size();
 
-    // Return array of images in packer.  Caller must free array with delete[].
-    LTImageBuffer **getImages();
+    // Populate given array with images in packer.  imgs should
+    // have enough space to hold size() images.
+    void getImages(LTImageBuffer **imgs);
 };
 
 /* Returns false if there's no room in the bin. */
@@ -107,7 +108,8 @@ bool ltPackImage(LTImagePacker *packer, LTImageBuffer *img);
 LTImageBuffer *ltCreateAtlasImage(const char *file, LTImagePacker *packer);
 
 /* The caller is responsible for freeing the texture with ltDeleteTexture. */
-LTtexture ltCreateAtlasTexture(LTImagePacker *packer);
+/* Atlas will be dumped to dump_file if it isn't NULL. */
+LTtexture ltCreateAtlasTexture(LTImagePacker *packer, const char *dump_file);
 
 void ltDeleteTexture(LTtexture);
 

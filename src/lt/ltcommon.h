@@ -17,5 +17,6 @@ typedef unsigned int    LTuint32;
 ct_assert(sizeof(LTuint32) == 4);
 
 void ltAbort(const char *fmt, ...);
+void ltLog(const char *fmt, ...);
 
 #endif

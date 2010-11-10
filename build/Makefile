@@ -11,12 +11,10 @@ ifeq "$(UNAME)" "Linux"
 DEBUG_OPTS=-g
 LD_OPTS=$(DEBUG_OPTS) -lglut -lGL -lm
 DEFINES=-DLINUX -DLUA_USE_LINUX -DLTGLUT $(PNGDEFS)
-DSYMCMD=
 else
 DEBUG_OPTS=-gdwarf-2
 LD_OPTS=$(DEBUG_OPTS) -framework GLUT -framework OpenGL -framework Cocoa -lm
 DEFINES=-DLUA_USE_MACOSX -DLTGLUT $(PNGDEFS)
-DSYMCMD="dsymutil $@"
 endif
 
 GCC_OPTS=$(DEFINES) $(DEBUG_OPTS) -I../src/lt -I../src/zlib -I../src/lpng -I../src -I../src/lua -Wall -O3
@@ -68,6 +66,10 @@ $(BOX2D_O_FILES): %.o: %.cpp $(BOX2D_H_FILES)
 
 $(C_O_FILES): %.o: %.c $(C_H_FILES)
 	$(GCC) $(GCC_OPTS) -c $<
+
+.PHONY: harness.dSYM
+harness.dSYM:
+	dsymutil ./harness
 
 clean:
 	rm -f *.o

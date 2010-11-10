@@ -61,6 +61,13 @@ static void bench(const char *msg) {
     fprintf(stderr, "%s  %g\n", msg, t);
 }
 
+char *atlas_filename(int atlas_num) {
+    char *name;
+    name = (char*)malloc(20);
+    sprintf(name, "atlas%d.png", atlas_num);
+    return name;
+}
+
 int main(int argc, const char **argv) {
     int i = 0;
     int shift = 0;
@@ -75,20 +82,32 @@ int main(int argc, const char **argv) {
 
     LTImagePacker *packer = new LTImagePacker(0, 0, 1024, 1024);
 
+    int atlas_num = 1;
     for (i = 0; i < argc; i++) {
         LTImageBuffer *img = ltReadImage(argv[i]);
         if (!ltPackImage(packer, img)) {
-            fprintf(stderr, "Error: Not enough space to pack %s.\n", img->file);
-            exit(1);
+            char *file = atlas_filename(atlas_num);
+            LTImageBuffer *atlas = ltCreateAtlasImage(file, packer);
+            ltWriteImage(file, atlas);
+            printf("Wrote %s (%s couldn't fit)\n", file, img->file);
+            packer->deleteOccupants();
+            delete atlas;
+            free(file);
+            atlas_num++;
+            if (!ltPackImage(packer, img)) {
+                ltAbort("%s is too large.", argv[i]);
+            }
         }
     }
-    bench("load and pack ");
-    LTImageBuffer *atlas = ltCreateAtlasImage("out.png", packer);
-    bench("create atlas  ");
-    ltWriteImage("out.png", atlas);
-    bench("write         ");
-    packer->deleteOccupants();
-    delete atlas;
+    if (packer->size() > 0) {
+        char *file = atlas_filename(atlas_num);
+        LTImageBuffer *atlas = ltCreateAtlasImage(file, packer);
+        ltWriteImage(file, atlas);
+        printf("Wrote %s\n", file);
+        packer->deleteOccupants();
+        delete atlas;
+        free(file);
+    }
     delete packer;
     return 0;
 }

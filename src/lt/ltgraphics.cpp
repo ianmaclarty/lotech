@@ -1,6 +1,7 @@
 /* Copyright (C) 2010 Ian MacLarty */
 #include "ltgraphics.h"
 
+#include <assert.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -431,34 +432,174 @@ static bool pack_image(LTImagePacker *packer, LTImageBuffer *img) {
     int img_w = img->bb_width();
     int img_h = img->bb_height();
     if (packer->occupant == NULL) {
-        if (img_w <= pkr_w && img_h <= pkr_h) {
-            packer->occupant = img;
-            packer->rotated = false;
-            packer->hi_child = new LTImagePacker(packer->left, packer->bottom + img_h,
-                pkr_w, pkr_h - img_h);
-            packer->lo_child = new LTImagePacker(packer->left + img_w, packer->bottom,
-                pkr_w - img_w, img_h);
-            return true;
+        bool fits_rotated = img_h <= pkr_w && img_w <= pkr_h;
+        bool fits_non_rotated = img_w <= pkr_w && img_h <= pkr_h;
+
+        if (!fits_rotated && !fits_non_rotated) {
+            return false;
         }
-        if (img_h <= pkr_w && img_w <= pkr_h) {
-            packer->occupant = img;
-            packer->rotated = true;
-            packer->hi_child = new LTImagePacker(packer->left, packer->bottom + img_w,
-                pkr_w, pkr_h - img_w);
-            packer->lo_child = new LTImagePacker(packer->left + img_h, packer->bottom,
-                pkr_w - img_h, img_w);
-            return true;
+
+        /*
+        int area_left_vert_split_rotated = img_h * (pkr_h - img_w);
+        int area_right_vert_split_rotated = (pkr_w - img_h) * pkr_h;
+        int area_left_vert_split_non_rotated = img_w * (pkr_h - img_h);
+        int area_right_vert_split_non_rotated = (pkr_w - img_w) * pkr_h;
+        int area_bottom_horiz_split_rotated = (pkr_w - img_h) * img_w;
+        int area_top_horiz_split_rotated = pkr_w * (pkr_h - img_w);
+        int area_bottom_horiz_split_non_rotated = (pkr_w - img_w) * img_h;
+        int area_top_horiz_split_non_rotated = pkr_w * (pkr_h - img_h);
+
+        int vert_split_rotated_diff;
+        int vert_split_non_rotated_diff;
+        int horiz_split_rotated_diff;
+        int horiz_split_non_rotated_diff;
+
+        if (fits_rotated) {
+            vert_split_rotated_diff = abs(area_left_vert_split_rotated - area_right_vert_split_rotated);
+            horiz_split_rotated_diff = abs(area_bottom_horiz_split_rotated - area_top_horiz_split_rotated);
+        } else {
+            vert_split_rotated_diff = 1000000000;
+            horiz_split_rotated_diff = 1000000000;
         }
-        return false;
+        if (fits_non_rotated) {
+            vert_split_non_rotated_diff = abs(area_left_vert_split_non_rotated - area_right_vert_split_non_rotated);
+            horiz_split_non_rotated_diff = abs(area_bottom_horiz_split_non_rotated - area_top_horiz_split_non_rotated);
+        } else {
+            vert_split_non_rotated_diff = 1000000000;
+            horiz_split_non_rotated_diff = 1000000000;
+        }
+        */
+
+        bool should_rotate = false;
+        if (!fits_non_rotated) {
+            should_rotate = true;
+        }
+        bool should_split_vert = false;
+
+        /*
+        bool should_rotate = (random() & 0x1) == 0x1;
+        bool should_split_vert = (random() & 0x1) == 0x1;
+        if (should_rotate && !fits_rotated || !should_rotate && !fits_non_rotated) {
+            should_rotate = !should_rotate;
+        }
+        */
+
+        /*
+        bool should_rotate = false;
+        if (!fits_non_rotated) {
+            should_rotate = true;
+        }
+        bool should_split_vert = (random() & 0x1) == 0x1;
+        */
+
+        /*
+        bool should_rotate;
+        bool should_split_vert;
+        if (vert_split_rotated_diff < vert_split_non_rotated_diff) {
+            if (vert_split_rotated_diff < horiz_split_rotated_diff) {
+                if (vert_split_rotated_diff < horiz_split_non_rotated_diff) {
+                    should_split_vert = true;
+                    should_rotate = true;
+                } else {
+                    should_split_vert = false;
+                    should_rotate = false;
+                }
+            } else {
+                if (horiz_split_rotated_diff < horiz_split_non_rotated_diff) {
+                    should_split_vert = false;
+                    should_rotate = true;
+                } else {
+                    should_split_vert = false;
+                    should_rotate = false;
+                }
+            }
+        } else {
+            if (vert_split_non_rotated_diff < horiz_split_rotated_diff) {
+                if (vert_split_non_rotated_diff < horiz_split_non_rotated_diff) {
+                    should_split_vert = true;
+                    should_rotate = false;
+                } else {
+                    should_split_vert = false;
+                    should_rotate = false;
+                }
+            } else {
+                if (horiz_split_rotated_diff < horiz_split_non_rotated_diff) {
+                    should_split_vert = false;
+                    should_rotate = true;
+                } else {
+                    should_split_vert = false;
+                    should_rotate = false;
+                }
+            }
+        }
+        */
+
+        int hi_l;
+        int hi_b;
+        int hi_w;
+        int hi_h;
+        int lo_l;
+        int lo_b;
+        int lo_w;
+        int lo_h;
+
+        if (should_split_vert) {
+            if (should_rotate) {
+                hi_l = packer->left;
+                hi_b = packer->bottom + img_w;
+                hi_w = img_h;
+                hi_h = pkr_h - img_w;
+                lo_l = packer->left + img_h;
+                lo_b = packer->bottom;
+                lo_w = pkr_w - img_h;
+                lo_h = pkr_h;
+            } else {
+                hi_l = packer->left;
+                hi_b = packer->bottom + img_h;
+                hi_w = img_w;
+                hi_h = pkr_h - img_h;
+                lo_l = packer->left + img_w;
+                lo_b = packer->bottom;
+                lo_w = pkr_w - img_w;
+                lo_h = pkr_h;
+            }
+        } else {
+            if (should_rotate) {
+                hi_l = packer->left;
+                hi_b = packer->bottom + img_w;
+                hi_w = pkr_w;
+                hi_h = pkr_h - img_w;
+                lo_l = packer->left + img_h;
+                lo_b = packer->bottom;
+                lo_w = pkr_w - img_h;
+                lo_h = img_w;
+            } else {
+                hi_l = packer->left;
+                hi_b = packer->bottom + img_h;
+                hi_w = pkr_w;
+                hi_h = pkr_h - img_h;
+                lo_l = packer->left + img_w;
+                lo_b = packer->bottom;
+                lo_w = pkr_w - img_w;
+                lo_h = img_h;
+            }
+        }
+
+        packer->occupant = img;
+        packer->rotated = should_rotate;
+        packer->hi_child = new LTImagePacker(hi_l, hi_b, hi_w, hi_h);
+        packer->lo_child = new LTImagePacker(lo_l, lo_b, lo_w, lo_h);
+
+        return true;
     }
     return pack_image(packer->lo_child, img) || pack_image(packer->hi_child, img);
 }
 
 static int compare_img_bufs(const void *v1, const void *v2) {
-    LTImageBuffer *img1 = (LTImageBuffer *)v1;
-    LTImageBuffer *img2 = (LTImageBuffer *)v2;
-    int h1 = img1->bb_height();
-    int h2 = img2->bb_height();
+    LTImageBuffer **img1 = (LTImageBuffer **)v1;
+    LTImageBuffer **img2 = (LTImageBuffer **)v2;
+    int h1 = (*img1)->bb_height();
+    int h2 = (*img2)->bb_height();
     if (h1 < h2) {
         return -1;
     } else if (h1 == h2) {
@@ -466,6 +607,42 @@ static int compare_img_bufs(const void *v1, const void *v2) {
     } else {
         return 1;
     }
+    /*
+    int w1 = (*img1)->bb_width();
+    int w2 = (*img2)->bb_width();
+    int a1 = w1 * h1;
+    int a2 = w2 * h2;
+    if (a1 < a2) {
+        return -1;
+    } else if (a1 == a2) {
+        return 0;
+    } else {
+        return 1;
+    }
+    */
+    /*
+    int w1 = (*img1)->bb_width();
+    int w2 = (*img2)->bb_width();
+    int m1;
+    int m2;
+    if (w1 > h1) {
+        m1 = w1;
+    } else {
+        m1 = h1;
+    }
+    if (w2 > h2) {
+        m2 = w2;
+    } else {
+        m2 = h2;
+    }
+    if (m1 < m2) {
+        return -1;
+    } else if (m1 == m2) {
+        return 0;
+    } else {
+        return 1;
+    }
+    */
 }
 
 bool ltPackImage(LTImagePacker *packer, LTImageBuffer *img) {
@@ -473,28 +650,29 @@ bool ltPackImage(LTImagePacker *packer, LTImageBuffer *img) {
         return true;
     } else {
         // Sort images and try again.
-        int n = packer->size();
-        bool filled = true;
-        LTImagePacker *packer2 = new LTImagePacker(packer->left, packer->bottom,
+        int n = packer->size() + 1;
+        bool fitted = true;
+        LTImagePacker *test_packer = new LTImagePacker(packer->left, packer->bottom,
             packer->width, packer->height);
-        LTImageBuffer **imgs = packer->getImages();
+        LTImageBuffer **imgs = new LTImageBuffer *[n];
+        packer->getImages(imgs);
+        imgs[n - 1] = img;
         qsort(imgs, n, sizeof(LTImageBuffer *), compare_img_bufs);
         for (int i = n - 1; i >= 0; i--) {
-            if (!pack_image(packer2, imgs[i])) {
-                filled = false;
+            if (!pack_image(test_packer, imgs[i])) {
+                fitted = false;
                 break;
             }
         }
-        if (filled) {
-            // Success after sorting, so re-insert into packer.
+        if (fitted) {
             packer->clear();
             for (int i = n - 1; i >= 0; i--) {
                 pack_image(packer, imgs[i]);
             }
         }
-        delete packer2;
+        delete test_packer;
         delete[] imgs;
-        return filled;
+        return fitted;
     }
 }
 
@@ -540,11 +718,9 @@ static void get_images(LTImagePacker *packer, int *i, LTImageBuffer **imgs) {
     }
 }
 
-LTImageBuffer **LTImagePacker::getImages() {
+void LTImagePacker::getImages(LTImageBuffer **imgs) {
     int i = 0;
-    LTImageBuffer **imgs = new LTImageBuffer*[size()];
     get_images(this, &i, imgs);
-    return imgs;
 }
 
 static void paste_packer_images(LTImageBuffer *img, LTImagePacker *packer) {
@@ -567,13 +743,18 @@ LTImageBuffer *ltCreateAtlasImage(const char *file, LTImagePacker *packer) {
     atlas->bb_top=packer->height - 1;
     atlas->bb_bottom=0;
     atlas->bb_pixels = new LTpixel[num_pixels];
+    memset(atlas->bb_pixels, 0xFF, num_pixels * 4);
     atlas->file = file;
     paste_packer_images(atlas, packer);
     return atlas;
 }
 
-LTtexture ltCreateAtlasTexture(LTImagePacker *packer) {
+LTtexture ltCreateAtlasTexture(LTImagePacker *packer, const char *dump_file) {
     LTImageBuffer *buf = ltCreateAtlasImage("tmp", packer);
+    if (dump_file != NULL) {
+        ltLog("Dumping %s (%d x %d)", dump_file, buf->bb_width(), buf->bb_height());
+        ltWriteImage(dump_file, buf);
+    }
     LTtexture tex;
     glGenTextures(1, &tex);
     glBindTexture(GL_TEXTURE_2D, tex);

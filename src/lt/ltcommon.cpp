@@ -12,3 +12,11 @@ void ltAbort(const char *fmt, ...) {
     fprintf(stderr, "\n");
     exit(1);
 }
+
+void ltLog(const char *fmt, ...) {
+    va_list argp;
+    va_start(argp, fmt);
+    vfprintf(stderr, fmt, argp);
+    va_end(argp);
+    fprintf(stderr, "\n");
+}

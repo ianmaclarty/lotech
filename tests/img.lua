@@ -5,6 +5,8 @@ local tweens = lt.TweenSet()
 
 lt.SetViewPort(-10, -10, 10, 10)
 
+lt.dump_atlases = true
+
 lt.LoadImages({
     "air_vent.png",
     "apple.png",
@@ -515,6 +517,63 @@ lt.LoadImages({
     "z.png"
 })
 
+--[[
+lt.LoadImages({
+    "arrow.png",
+    "background1.png",
+    "background2.png",
+    "background3.png",
+    "background4.png",
+    "background5.png",
+    "ball.png",
+    "ball_bw.png",
+    "bee1.png",
+    "bee2.png",
+    "bee3.png",
+    "butterfly1.png",
+    "butterfly2.png",
+    "butterfly_rare1.png",
+    "butterfly_rare2.png",
+    "credits.png",
+    "daisies2.png",
+    "daisies3.png",
+    "daisies4a.png",
+    "daisies4b.png",
+    "daisies5a.png",
+    "daisies5b.png",
+    "digit0.png",
+    "digit1.png",
+    "digit2.png",
+    "digit3.png",
+    "digit4.png",
+    "digit5.png",
+    "digit6.png",
+    "digit7.png",
+    "digit8.png",
+    "digit9.png",
+    "menu.png",
+    "menu_difficulty.png",
+    "menu_difficulty_easy.png",
+    "menu_difficulty_hard.png",
+    "menu_difficulty_medium.png",
+    "menu_music.png",
+    "menu_music_off.png",
+    "menu_music_on.png",
+    "menu_openfeint.png",
+    "menu_openfeint_off.png",
+    "menu_openfeint_on.png",
+    "menu_resume.png",
+    "pause.png",
+    "plane.png",
+    "plane_overlay.png",
+    "shadow.png",
+    "text_best.png",
+    "text_instructions.png",
+    "text_score.png",
+    "text_title.png"
+})
+]]
+
 local imgs = {}
 local n = 0
 for _, img in pairs(lt.images) do
@@ -522,20 +581,22 @@ for _, img in pairs(lt.images) do
     imgs[n] = img
 end
 
-local frame = 0
 local i = 1
 
-function lt.Advance()
-    if frame > 10 then
-        frame = 0
-    end
-    frame = frame + 1
-    if frame == 5 then
+function lt.KeyDown(key)
+    if key == "right" then
         i = i + 1
+    elseif key == "left" then
+        i = i - 1
     end
     if i > n then
         i = 1
+    elseif i < 1 then
+        i = n
     end
+end
+
+function lt.Advance()
 end
 
 function lt.Render()

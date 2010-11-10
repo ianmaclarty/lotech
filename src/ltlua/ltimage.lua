@@ -1,5 +1,6 @@
 lt.images = {}
 lt.atlas_size = 1024
+lt.dump_atlases = false
 local atlas_textures = {}
 
 -- Load an array of images.  Each entry in the array should be the filename of a PNG
@@ -7,14 +8,21 @@ local atlas_textures = {}
 -- by the filename without the .png suffix.
 function lt.LoadImages(images)
     local packer = lt.ImagePacker(lt.atlas_size)
-
+    local atlas_num = 1
     local
     function gen_atlas_texture()
-        local texture = lt.CreateAtlasTexture(packer)
+        local texture
+        if lt.dump_atlases then
+            local dump_file = "atlas" .. atlas_num .. ".png"
+            texture = lt.CreateAtlasTexture(packer, dump_file)
+        else
+            texture = lt.CreateAtlasTexture(packer)
+        end
         table.insert(atlas_textures, texture)
         -- Add the images to lt.images.
         lt.AddPackerImagesToTable(lt.images, packer, texture)
         lt.DeleteImagesInPacker(packer)
+        atlas_num = atlas_num + 1
     end
 
     -- Pack images into atlas textures.

@@ -147,8 +147,15 @@ static int lt_PackImage(lua_State *L) {
 }
 
 static int lt_CreateAtlasTexture(lua_State *L) {
+    int num_args = lua_gettop(L);
+    const char *dump_file;
     LTImagePacker **packer = (LTImagePacker**)luaL_checkudata(L, 1, "pkr");
-    LTtexture tex = ltCreateAtlasTexture(*packer);
+    if (num_args > 1) {
+        dump_file = luaL_checkstring(L, 2);
+    } else {
+        dump_file = NULL;
+    }
+    LTtexture tex = ltCreateAtlasTexture(*packer, dump_file);
     lua_pushinteger(L, (lua_Integer)tex); // XXX relies on lua_Integer being compatible with GLuint.
     return 1;
 }
