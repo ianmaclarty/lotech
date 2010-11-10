@@ -441,100 +441,10 @@ static bool pack_image(LTImagePacker *packer, LTImageBuffer *img) {
             return false;
         }
 
-        /*
-        int area_left_vert_split_rotated = img_h * (pkr_h - img_w);
-        int area_right_vert_split_rotated = (pkr_w - img_h) * pkr_h;
-        int area_left_vert_split_non_rotated = img_w * (pkr_h - img_h);
-        int area_right_vert_split_non_rotated = (pkr_w - img_w) * pkr_h;
-        int area_bottom_horiz_split_rotated = (pkr_w - img_h) * img_w;
-        int area_top_horiz_split_rotated = pkr_w * (pkr_h - img_w);
-        int area_bottom_horiz_split_non_rotated = (pkr_w - img_w) * img_h;
-        int area_top_horiz_split_non_rotated = pkr_w * (pkr_h - img_h);
-
-        int vert_split_rotated_diff;
-        int vert_split_non_rotated_diff;
-        int horiz_split_rotated_diff;
-        int horiz_split_non_rotated_diff;
-
-        if (fits_rotated) {
-            vert_split_rotated_diff = abs(area_left_vert_split_rotated - area_right_vert_split_rotated);
-            horiz_split_rotated_diff = abs(area_bottom_horiz_split_rotated - area_top_horiz_split_rotated);
-        } else {
-            vert_split_rotated_diff = 1000000000;
-            horiz_split_rotated_diff = 1000000000;
-        }
-        if (fits_non_rotated) {
-            vert_split_non_rotated_diff = abs(area_left_vert_split_non_rotated - area_right_vert_split_non_rotated);
-            horiz_split_non_rotated_diff = abs(area_bottom_horiz_split_non_rotated - area_top_horiz_split_non_rotated);
-        } else {
-            vert_split_non_rotated_diff = 1000000000;
-            horiz_split_non_rotated_diff = 1000000000;
-        }
-        */
-
         bool should_rotate = false;
         if (!fits_non_rotated) {
             should_rotate = true;
         }
-        bool should_split_vert = false;
-
-        /*
-        bool should_rotate = (random() & 0x1) == 0x1;
-        bool should_split_vert = (random() & 0x1) == 0x1;
-        if (should_rotate && !fits_rotated || !should_rotate && !fits_non_rotated) {
-            should_rotate = !should_rotate;
-        }
-        */
-
-        /*
-        bool should_rotate = false;
-        if (!fits_non_rotated) {
-            should_rotate = true;
-        }
-        bool should_split_vert = (random() & 0x1) == 0x1;
-        */
-
-        /*
-        bool should_rotate;
-        bool should_split_vert;
-        if (vert_split_rotated_diff < vert_split_non_rotated_diff) {
-            if (vert_split_rotated_diff < horiz_split_rotated_diff) {
-                if (vert_split_rotated_diff < horiz_split_non_rotated_diff) {
-                    should_split_vert = true;
-                    should_rotate = true;
-                } else {
-                    should_split_vert = false;
-                    should_rotate = false;
-                }
-            } else {
-                if (horiz_split_rotated_diff < horiz_split_non_rotated_diff) {
-                    should_split_vert = false;
-                    should_rotate = true;
-                } else {
-                    should_split_vert = false;
-                    should_rotate = false;
-                }
-            }
-        } else {
-            if (vert_split_non_rotated_diff < horiz_split_rotated_diff) {
-                if (vert_split_non_rotated_diff < horiz_split_non_rotated_diff) {
-                    should_split_vert = true;
-                    should_rotate = false;
-                } else {
-                    should_split_vert = false;
-                    should_rotate = false;
-                }
-            } else {
-                if (horiz_split_rotated_diff < horiz_split_non_rotated_diff) {
-                    should_split_vert = false;
-                    should_rotate = true;
-                } else {
-                    should_split_vert = false;
-                    should_rotate = false;
-                }
-            }
-        }
-        */
 
         int hi_l;
         int hi_b;
@@ -545,46 +455,24 @@ static bool pack_image(LTImagePacker *packer, LTImageBuffer *img) {
         int lo_w;
         int lo_h;
 
-        if (should_split_vert) {
-            if (should_rotate) {
-                hi_l = packer->left;
-                hi_b = packer->bottom + img_w;
-                hi_w = img_h;
-                hi_h = pkr_h - img_w;
-                lo_l = packer->left + img_h;
-                lo_b = packer->bottom;
-                lo_w = pkr_w - img_h;
-                lo_h = pkr_h;
-            } else {
-                hi_l = packer->left;
-                hi_b = packer->bottom + img_h;
-                hi_w = img_w;
-                hi_h = pkr_h - img_h;
-                lo_l = packer->left + img_w;
-                lo_b = packer->bottom;
-                lo_w = pkr_w - img_w;
-                lo_h = pkr_h;
-            }
+        if (should_rotate) {
+            hi_l = packer->left;
+            hi_b = packer->bottom + img_w;
+            hi_w = pkr_w;
+            hi_h = pkr_h - img_w;
+            lo_l = packer->left + img_h;
+            lo_b = packer->bottom;
+            lo_w = pkr_w - img_h;
+            lo_h = img_w;
         } else {
-            if (should_rotate) {
-                hi_l = packer->left;
-                hi_b = packer->bottom + img_w;
-                hi_w = pkr_w;
-                hi_h = pkr_h - img_w;
-                lo_l = packer->left + img_h;
-                lo_b = packer->bottom;
-                lo_w = pkr_w - img_h;
-                lo_h = img_w;
-            } else {
-                hi_l = packer->left;
-                hi_b = packer->bottom + img_h;
-                hi_w = pkr_w;
-                hi_h = pkr_h - img_h;
-                lo_l = packer->left + img_w;
-                lo_b = packer->bottom;
-                lo_w = pkr_w - img_w;
-                lo_h = img_h;
-            }
+            hi_l = packer->left;
+            hi_b = packer->bottom + img_h;
+            hi_w = pkr_w;
+            hi_h = pkr_h - img_h;
+            lo_l = packer->left + img_w;
+            lo_b = packer->bottom;
+            lo_w = pkr_w - img_w;
+            lo_h = img_h;
         }
 
         packer->occupant = img;
@@ -594,6 +482,7 @@ static bool pack_image(LTImagePacker *packer, LTImageBuffer *img) {
 
         return true;
     }
+
     return pack_image(packer->lo_child, img) || pack_image(packer->hi_child, img);
 }
 
@@ -609,42 +498,6 @@ static int compare_img_bufs(const void *v1, const void *v2) {
     } else {
         return 1;
     }
-    /*
-    int w1 = (*img1)->bb_width();
-    int w2 = (*img2)->bb_width();
-    int a1 = w1 * h1;
-    int a2 = w2 * h2;
-    if (a1 < a2) {
-        return -1;
-    } else if (a1 == a2) {
-        return 0;
-    } else {
-        return 1;
-    }
-    */
-    /*
-    int w1 = (*img1)->bb_width();
-    int w2 = (*img2)->bb_width();
-    int m1;
-    int m2;
-    if (w1 > h1) {
-        m1 = w1;
-    } else {
-        m1 = h1;
-    }
-    if (w2 > h2) {
-        m2 = w2;
-    } else {
-        m2 = h2;
-    }
-    if (m1 < m2) {
-        return -1;
-    } else if (m1 == m2) {
-        return 0;
-    } else {
-        return 1;
-    }
-    */
 }
 
 bool ltPackImage(LTImagePacker *packer, LTImageBuffer *img) {
