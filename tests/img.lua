@@ -601,6 +601,8 @@ end
 
 function lt.Render()
     lt.Scale(20)
+    lt.SetColor(0.5, 0.5, 0.5)
+    lt.DrawRect(-10, -10, 10, 10)
     lt.SetColor(1, 1, 1)
     imgs[i]:DrawBottomLeft()
 end

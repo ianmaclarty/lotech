@@ -431,8 +431,8 @@ LTImagePacker::~LTImagePacker() {
 static bool pack_image(LTImagePacker *packer, LTImageBuffer *img) {
     int pkr_w = packer->width;
     int pkr_h = packer->height;
-    int img_w = img->bb_width();
-    int img_h = img->bb_height();
+    int img_w = img->bb_width() + 1;
+    int img_h = img->bb_height() + 1;
     if (packer->occupant == NULL) {
         bool fits_rotated = img_h <= pkr_w && img_w <= pkr_h;
         bool fits_non_rotated = img_w <= pkr_w && img_h <= pkr_h;
@@ -598,7 +598,7 @@ LTImageBuffer *ltCreateAtlasImage(const char *file, LTImagePacker *packer) {
     atlas->bb_top=packer->height - 1;
     atlas->bb_bottom=0;
     atlas->bb_pixels = new LTpixel[num_pixels];
-    memset(atlas->bb_pixels, 0xFF, num_pixels * 4);
+    memset(atlas->bb_pixels, 0x00, num_pixels * 4);
     atlas->file = file;
     paste_packer_images(atlas, packer);
     return atlas;
