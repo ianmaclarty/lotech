@@ -124,12 +124,12 @@ void ltDrawPoly(LTfloat *vertices, int num_vertices) {
     glDrawArrays(GL_TRIANGLE_FAN, 0, num_vertices);
 }
 
-void ltTranslate(LTfloat x, LTfloat y) {
-    glTranslatef(x, y, 0.0f);
+void ltTranslate(LTfloat x, LTfloat y, LTfloat z) {
+    glTranslatef(x, y, z);
 }
 
-void ltRotate(LTdegrees degrees) {
-    glRotatef(degrees, 0.0f, 0.0f, 1.0f);
+void ltRotate(LTdegrees degrees, LTfloat x, LTfloat y, LTfloat z) {
+    glRotatef(degrees, x, y, z);
 }
 
 void ltScale(LTfloat x, LTfloat y, LTfloat z) {

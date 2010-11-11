@@ -21,6 +21,8 @@ lt.SetViewPort(-10, -10, 10, 10)
 local floor = lt.StaticBody()
 floor:AddRect(-20, -10, 20, -7)
 
+lt.LoadImages({"test.png"})
+
 local things = {}
 local colors = {}
 local n = 500
@@ -42,12 +44,15 @@ for i = 1, n do
     add_tween()
     function draw()
         lt.SetColor(colors[i].r, colors[i].g, colors[i].b)
-        things[i]:DrawShapes()
+        lt.DoInNewMatrix(function()
+            lt.Translate(things[i]:GetPosition())
+            --lt.Rotate(things[i]:GetAngle())
+            lt.Scale(10)
+            lt.images.test:DrawBottomLeft()
+        end)
     end
     lt.AddToScene(scene, draw, 1)
 end
-
-lt.LoadImages({"test.png"})
 
 function lt.Advance()
     lt.DoWorldStep()
@@ -55,11 +60,8 @@ function lt.Advance()
 end
 
 function lt.Render()
-    lt.SetColor(0, 1, 0)
+    --lt.SetColor(0, 1, 0)
     floor:DrawShapes()
     lt.DrawScene(scene)
-    lt.Scale(20)
-    lt.SetColor(1, 1, 1)
-    lt.images.test:DrawBottomLeft()
     print_fps()
 end

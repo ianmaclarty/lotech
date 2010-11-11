@@ -31,8 +31,8 @@ void ltDisableTextures();
 void ltSetViewPort(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2);
 
 void ltSetColor(LTfloat r, LTfloat g, LTfloat b, LTfloat a);
-void ltTranslate(LTfloat x, LTfloat y);
-void ltRotate(LTdegrees degrees);
+void ltTranslate(LTfloat x, LTfloat y, LTfloat z);
+void ltRotate(LTdegrees degrees, LTfloat x, LTfloat y, LTfloat z);
 void ltScale(LTfloat x, LTfloat y, LTfloat z);
 void ltPushMatrix();
 void ltPopMatrix();

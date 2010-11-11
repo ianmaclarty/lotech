@@ -70,6 +70,55 @@ static int lt_Scale(lua_State *L) {
     return 0;
 }
 
+static int lt_Translate(lua_State *L) {
+    int num_args = lua_gettop(L);
+    LTfloat x = (LTfloat)luaL_checknumber(L, 1);
+    LTfloat y = (LTfloat)luaL_checknumber(L, 2);
+    LTfloat z;
+    if (num_args > 2) {
+        z = (LTfloat)luaL_checknumber(L, 3);
+    } else {
+        z = 0.0f;
+    }
+    ltTranslate(x, y, z);
+    return 0;
+}
+
+static int lt_Rotate(lua_State *L) {
+    int num_args = lua_gettop(L);
+    LTfloat theta = (LTdegrees)luaL_checknumber(L, 1);
+    LTfloat x;
+    if (num_args > 1) {
+        x = (LTfloat)luaL_checknumber(L, 2);
+    } else {
+        x = 0.0f;
+    }
+    LTfloat y;
+    if (num_args > 2) {
+        y = (LTfloat)luaL_checknumber(L, 3);
+    } else {
+        y = 0.0f;
+    }
+    LTfloat z;
+    if (num_args > 3) {
+        z = (LTfloat)luaL_checknumber(L, 4);
+    } else {
+        z = 1.0f;
+    }
+    ltRotate(theta, x, y, z);
+    return 0;
+}
+
+static int lt_PushMatrix(lua_State *L) {
+    ltPushMatrix();
+    return 0;
+}
+
+static int lt_PopMatrix(lua_State *L) {
+    ltPopMatrix();
+    return 0;
+}
+
 static int lt_DrawUnitSquare(lua_State *L) {
     ltDrawUnitSquare();
     return 0;
@@ -300,6 +349,17 @@ static int bdy_GetAngle(lua_State *L) {
     return 0;
 }
 
+static int bdy_GetPosition(lua_State *L) {
+    b2Body** body = check_body(L, 1);
+    if (*body != NULL) {
+        b2Vec2 pos = (*body)->GetPosition();
+        lua_pushnumber(L, pos.x);
+        lua_pushnumber(L, pos.y);
+        return 2;
+    }
+    return 0;
+}
+
 // XXX This doesn't currently work.
 /*
 static int bdy_SetAngle(lua_State *L) {
@@ -344,8 +404,8 @@ static int bdy_DrawShapes(lua_State *L) {
     if (*body != NULL) {
         ltPushMatrix();
         b2Vec2 pos = (*body)->GetPosition();
-        ltTranslate(pos.x, pos.y);
-        ltRotate((*body)->GetAngle() * LT_DEGREES_PER_RADIAN);
+        ltTranslate(pos.x, pos.y, 0.0f);
+        ltRotate((*body)->GetAngle() * LT_DEGREES_PER_RADIAN, 0.0f, 0.0f, 1.0f);
         b2Fixture *fixture = (*body)->GetFixtureList();
         while (fixture != NULL) {
             b2Shape *shape = fixture->GetShape();
@@ -387,6 +447,8 @@ static void push_body(lua_State *L, b2BodyDef *def) {
 
             lua_pushcfunction(L, bdy_GetAngle);
             lua_setfield(L, -2, "GetAngle");
+            lua_pushcfunction(L, bdy_GetPosition);
+            lua_setfield(L, -2, "GetPosition");
 
             lua_pushcfunction(L, bdy_AddRect);
             lua_setfield(L, -2, "AddRect");
@@ -426,6 +488,10 @@ static const luaL_Reg ltlib[] = {
     {"SetViewPort",             lt_SetViewPort},
     {"SetColor",                lt_SetColor},
     {"Scale",                   lt_Scale},
+    {"Translate",               lt_Translate},
+    {"Rotate",                  lt_Rotate},
+    {"PushMatrix",              lt_PushMatrix},
+    {"PopMatrix",               lt_PopMatrix},
     {"DrawUnitSquare",          lt_DrawUnitSquare},
     {"DrawUnitCircle",          lt_DrawUnitCircle},
     {"DrawRect",                lt_DrawRect},
