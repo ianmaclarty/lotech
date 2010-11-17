@@ -8,8 +8,14 @@ function lt.AddToScene(scene, draw, z)
     scene[draw] = z
 end
 
-function lt.Hide(scene, draw)
+function lt.RemoveFromScene(scene, draw)
     scene[draw] = nil
+end
+
+function lt.ReplaceInScene(scene, old, new)
+    local z = scene[old]
+    scene[old] = nil
+    scene[new] = z
 end
 
 function lt.DrawScene(scene)
