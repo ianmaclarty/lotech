@@ -283,7 +283,17 @@ static int lt_DeleteImagesInPacker(lua_State *L) {
 /************************* Box2D **************************/
 
 static int lt_DoWorldStep(lua_State *L) {
-    g_W->Step(1.0f / 60.0f, 10, 8);
+    int num_args = lua_gettop(L);
+    LTfloat time_step = luaL_checknumber(L, 1);
+    int velocity_iterations = 10;
+    int position_iterations = 8;
+    if (num_args > 1) {
+        velocity_iterations = luaL_checkinteger(L, 2);
+    }
+    if (num_args > 2) {
+        position_iterations = luaL_checkinteger(L, 3);
+    }
+    g_W->Step(time_step, velocity_iterations, position_iterations);
     return 0;
 }
 

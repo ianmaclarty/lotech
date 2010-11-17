@@ -30,7 +30,7 @@ function lt.Advance()
         b:ApplyForce(math.sin(angle) * 10, math.cos(angle) * 10)
     end
 
-    lt.DoWorldStep()
+    lt.DoWorldStep(lt.secs_per_frame)
 end
 
 function lt.Render()

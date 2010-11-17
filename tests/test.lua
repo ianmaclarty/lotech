@@ -44,19 +44,23 @@ for i = 1, n do
     add_tween()
     function draw()
         lt.SetColor(colors[i].r, colors[i].g, colors[i].b)
+        --[[
         lt.DoInNewMatrix(function()
             lt.Translate(things[i]:GetPosition())
             --lt.Rotate(things[i]:GetAngle())
             lt.Scale(10)
             lt.images.test:DrawBottomLeft()
         end)
+        ]]
+        things[i]:DrawShapes()
     end
     lt.AddToScene(scene, draw, 1)
 end
 
 function lt.Advance()
-    lt.DoWorldStep()
-    lt.AdvanceTweens(tweens, 1/60)
+    local step = lt.secs_per_frame
+    lt.DoWorldStep(step)
+    lt.AdvanceTweens(tweens, step)
 end
 
 function lt.Render()
