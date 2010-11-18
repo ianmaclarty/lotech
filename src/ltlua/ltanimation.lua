@@ -11,7 +11,6 @@ end
 function lt.Animate(animators, time_step)
     local success
     local wait
-    local finished_animators = {}
     for animator, t in pairs(animators) do
         local is_dead = false
         t = t - time_step
@@ -25,12 +24,9 @@ function lt.Animate(animators, time_step)
             is_dead = coroutine.status(animator) == "dead"
         end
         if is_dead then
-            finished_animators[animator] = true
+            animators[animator] = nil
         else
             animators[animator] = t
         end
-    end
-    for animator in next, finished_animators do
-        animators[animator] = nil
     end
 end
