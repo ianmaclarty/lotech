@@ -2,6 +2,7 @@ dofile("../src/ltlua/lt.lua")
 
 local scene = lt.Scene()
 local tweens = lt.TweenSet()
+local world = lt.World()
 
 local t0 = 0;
 local frames = 0;
@@ -18,7 +19,7 @@ end
 
 lt.SetViewPort(-10, -10, 10, 10)
 
-local floor = lt.StaticBody()
+local floor = world:StaticBody()
 floor:AddRect(-20, -10, 20, -7)
 
 lt.LoadImages({"test.png"})
@@ -27,7 +28,7 @@ local things = {}
 local colors = {}
 local n = 500
 for i = 1, n do
-    things[i] = lt.DynamicBody((i - n / 2) * (10 / n), math.sin(i) * 50 + 60, math.cos(i) * 180)
+    things[i] = world:DynamicBody((i - n / 2) * (10 / n), math.sin(i) * 50 + 60, math.cos(i) * 180)
     local size = (math.random() + 0.5) * 0.25
     things[i]:AddRect(-size, -size, size, size, 3.3)
     local red = 0
@@ -59,7 +60,7 @@ end
 
 function lt.Advance()
     local step = lt.secs_per_frame
-    lt.DoWorldStep(step)
+    world:Step(step)
     lt.AdvanceTweens(tweens, step)
 end
 

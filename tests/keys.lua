@@ -1,13 +1,16 @@
-lt.SetViewPort(-10, -10, 10, 10)
-lt.SetGravity(0, 0)
+dofile("../src/ltlua/lt.lua")
 
-local s = lt.StaticBody()
+lt.SetViewPort(-10, -10, 10, 10)
+
+local w = lt.World()
+w:SetGravity(0, 0)
+local s = w:StaticBody()
 s:AddRect(-10, -10, 10, -9)
 s:AddRect(-10, 9, 10, 10)
 s:AddRect(-10, -10, -9, 10)
 s:AddRect(9, -10, 10, 10)
 
-local b = lt.DynamicBody(0, 0, 0)
+local b = w:DynamicBody(0, 0, 0)
 b:AddRect(-0.5, -0.8, 0.5, 0.8, 10)
 local keys = {}
 
@@ -27,10 +30,10 @@ function lt.Advance()
         b:ApplyTorque(200.1)
     end
     if keys.up then
-        b:ApplyForce(math.sin(angle) * 10, math.cos(angle) * 10)
+        b:ApplyForce(math.sin(angle) * 100, math.cos(angle) * 100)
     end
 
-    lt.DoWorldStep(lt.secs_per_frame)
+    w:Step(lt.secs_per_frame)
 end
 
 function lt.Render()

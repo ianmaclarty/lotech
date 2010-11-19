@@ -15,8 +15,6 @@ extern "C" {
 
 static lua_State *g_L = NULL;
 
-static b2World *g_W = NULL;
-
 static LTfloat g_screen_w = 1024.0f;
 static LTfloat g_screen_h = 768.0f;
 
@@ -282,25 +280,31 @@ static int lt_DeleteImagesInPacker(lua_State *L) {
 
 /************************* Box2D **************************/
 
-static int lt_DoWorldStep(lua_State *L) {
+static int wld_Step(lua_State *L) {
     int num_args = lua_gettop(L);
-    LTfloat time_step = luaL_checknumber(L, 1);
-    int velocity_iterations = 10;
-    int position_iterations = 8;
-    if (num_args > 1) {
-        velocity_iterations = luaL_checkinteger(L, 2);
+    b2World **world = (b2World**)luaL_checkudata(L, 1, "wld");
+    if (*world != NULL) {
+        LTfloat time_step = luaL_checknumber(L, 2);
+        int velocity_iterations = 10;
+        int position_iterations = 8;
+        if (num_args > 2) {
+            velocity_iterations = luaL_checkinteger(L, 3);
+        }
+        if (num_args > 3) {
+            position_iterations = luaL_checkinteger(L, 4);
+        }
+        (*world)->Step(time_step, velocity_iterations, position_iterations);
     }
-    if (num_args > 2) {
-        position_iterations = luaL_checkinteger(L, 3);
-    }
-    g_W->Step(time_step, velocity_iterations, position_iterations);
     return 0;
 }
 
-static int lt_SetGravity(lua_State *L) {
-    LTfloat x = (LTfloat)luaL_checknumber(L, 1);
-    LTfloat y = (LTfloat)luaL_checknumber(L, 2);
-    g_W->SetGravity(b2Vec2(x, y));
+static int wld_SetGravity(lua_State *L) {
+    b2World **world = (b2World**)luaL_checkudata(L, 1, "wld");
+    if (*world != NULL) {
+        LTfloat x = (LTfloat)luaL_checknumber(L, 2);
+        LTfloat y = (LTfloat)luaL_checknumber(L, 3);
+        (*world)->SetGravity(b2Vec2(x, y));
+    }
     return 0;
 }
 
@@ -311,7 +315,7 @@ static b2Body **check_body(lua_State *L, int narg) {
 static int bdy_Destroy(lua_State *L) {
     b2Body** body = check_body(L, 1);
     if (*body != NULL) {
-        g_W->DestroyBody(*body);
+        (*body)->GetWorld()->DestroyBody(*body);
         *body = NULL;
     }
     return 0;
@@ -439,9 +443,9 @@ static int bdy_DrawShapes(lua_State *L) {
     return 0;
 }
 
-static void push_body(lua_State *L, b2BodyDef *def) {
+static void push_body(lua_State *L, b2World *world, b2BodyDef *def) {
     b2Body **ud = (b2Body **)lua_newuserdata(L, sizeof(b2Body **));
-    b2Body *body = g_W->CreateBody(def);
+    b2Body *body = world->CreateBody(def);
     *ud = body;
     if (luaL_newmetatable(L, "bdy")) {
         lua_createtable(L, 0, 16);
@@ -469,26 +473,61 @@ static void push_body(lua_State *L, b2BodyDef *def) {
     lua_setmetatable(L, -2);
 }
 
-static int lt_StaticBody(lua_State *L) {
-    b2BodyDef def;
-    def.type = b2_staticBody;
-    push_body(L, &def);
-    return 1;
+static int wld_StaticBody(lua_State *L) {
+    b2World **world = (b2World**)luaL_checkudata(L, 1, "wld");
+    if (*world != NULL) {
+        b2BodyDef def;
+        def.type = b2_staticBody;
+        push_body(L, *world, &def);
+        return 1;
+    }
+    return 0;
 }
 
-static int lt_DynamicBody(lua_State *L) {
+static int wld_DynamicBody(lua_State *L) {
     int num_args = lua_gettop(L);
-    LTfloat x = (LTfloat)luaL_checknumber(L, 1);
-    LTfloat y = (LTfloat)luaL_checknumber(L, 2);
-    LTfloat angle = 0.0f;
-    if (num_args > 2) {
-        angle = (LTfloat)luaL_checknumber(L, 3);
+    b2World **world = (b2World**)luaL_checkudata(L, 1, "wld");
+    if (*world != NULL) {
+        LTfloat x = (LTfloat)luaL_checknumber(L, 2);
+        LTfloat y = (LTfloat)luaL_checknumber(L, 3);
+        LTfloat angle = 0.0f;
+        if (num_args > 3) {
+            angle = (LTfloat)luaL_checknumber(L, 4);
+        }
+        b2BodyDef def;
+        def.type = b2_dynamicBody;
+        def.position.Set(x, y);
+        def.angle = angle;
+        push_body(L, *world, &def);
+        return 1;
+    } else {
+        return 0;
     }
-    b2BodyDef def;
-    def.type = b2_dynamicBody;
-    def.position.Set(x, y);
-    def.angle = angle;
-    push_body(L, &def);
+}
+
+static void push_world(lua_State *L, b2World *world) {
+    b2World **ud = (b2World **)lua_newuserdata(L, sizeof(b2World **));
+    *ud = world;
+    if (luaL_newmetatable(L, "wld")) {
+        lua_createtable(L, 0, 16);
+            //lua_pushcfunction(L, wld_Clear);
+            //lua_setfield(L, -2, "Clear");
+            lua_pushcfunction(L, wld_Step);
+            lua_setfield(L, -2, "Step");
+            lua_pushcfunction(L, wld_SetGravity);
+            lua_setfield(L, -2, "SetGravity");
+            lua_pushcfunction(L, wld_StaticBody);
+            lua_setfield(L, -2, "StaticBody");
+            lua_pushcfunction(L, wld_DynamicBody);
+            lua_setfield(L, -2, "DynamicBody");
+        lua_setfield(L, -2, "__index");
+    }
+    lua_setmetatable(L, -2);
+}
+
+static int lt_World(lua_State *L) {
+    b2World *world = new b2World(b2Vec2(0.0f, -10.0f), true);
+    push_world(L, world);
     return 1;
 }
 
@@ -518,11 +557,7 @@ static const luaL_Reg ltlib[] = {
     {"DeleteImage",             lt_DeleteImage},
     {"DeleteImagesInPacker",    lt_DeleteImagesInPacker},
 
-    {"DoWorldStep",             lt_DoWorldStep},
-    {"SetGravity",              lt_SetGravity},
-
-    {"StaticBody",              lt_StaticBody},
-    {"DynamicBody",             lt_DynamicBody},
+    {"World",                   lt_World},
 
     {NULL, NULL}
 };
@@ -563,7 +598,6 @@ static void call_lt_func(const char *func) {
 }
 
 void ltLuaSetup(const char *file) {
-    g_W = new b2World(b2Vec2(0.0f, -10.0f), true);
     g_L = luaL_newstate();
     if (g_L == NULL) {
         fprintf(stderr, "Cannot create lua state: not enough memory.\n");
@@ -581,8 +615,6 @@ void ltLuaTeardown() {
     if (g_L != NULL) {
         lua_close(g_L);
     }
-    delete g_W;
-    g_W = NULL;
 }
 
 void ltLuaAdvance() {
