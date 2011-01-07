@@ -25,6 +25,7 @@ struct LTObject {
     LTObject() {
         ref_count = 0;
     }
+    virtual ~LTObject() {}
 
     void retain() {
         ref_count++;
