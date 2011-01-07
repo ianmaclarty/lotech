@@ -19,4 +19,27 @@ ct_assert(sizeof(LTuint32) == 4);
 void ltAbort(const char *fmt, ...);
 void ltLog(const char *fmt, ...);
 
+struct LTObject {
+    int ref_count;
+
+    LTObject() {
+        ref_count = 0;
+    }
+
+    void retain() {
+        ref_count++;
+    }
+
+    void release() {
+        ref_count--;
+        if (ref_count <= 0) {
+            delete this;
+        }
+    }
+
+    virtual void* field_ptr(const char *field_name) {
+        return NULL;
+    }
+};
+
 #endif
