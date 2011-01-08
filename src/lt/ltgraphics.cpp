@@ -807,15 +807,9 @@ LTImage::LTImage(LTtexture atls, int atlas_w, int atlas_h, LTImagePacker *packer
     pixel_width = packer->occupant->width;
     pixel_height = packer->occupant->height;
 
-    GLfloat vertices[] = {
-        bb_left,                bb_bottom + bb_height,
-        bb_left + bb_width,     bb_bottom + bb_height,
-        bb_left + bb_width,     bb_bottom,
-        bb_left,                bb_bottom
-    };
     glGenBuffers(1, &vertbuf);
     glBindBuffer(GL_ARRAY_BUFFER, vertbuf);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 8, vertices, GL_STATIC_DRAW);
+    setAnchor(LT_ANCHOR_CENTER);
 
     GLfloat tex_coords[8];
     if (rotated) {
@@ -839,11 +833,40 @@ LTImage::~LTImage() {
     glDeleteBuffers(1, &texbuf);
 }
 
-void LTImage::drawBottomLeft() {
+void LTImage::draw() {
     ltEnableTexture(atlas);
     glBindBuffer(GL_ARRAY_BUFFER, vertbuf);
     glVertexPointer(2, GL_FLOAT, 0, 0);
     glBindBuffer(GL_ARRAY_BUFFER, texbuf);
     glTexCoordPointer(2, GL_FLOAT, 0, 0);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+}
+
+void LTImage::setAnchor(LTAnchor anchor) {
+    GLfloat *vertices = NULL;
+    switch (anchor) {
+        case LT_ANCHOR_CENTER: {
+            LTfloat w2 = orig_width * 0.5f;
+            LTfloat h2 = orig_width * 0.5f;
+            GLfloat v[] = {
+                bb_left - w2,               bb_bottom + bb_height - h2,
+                bb_left + bb_width - w2,    bb_bottom + bb_height - h2,
+                bb_left + bb_width - w2,    bb_bottom - h2,
+                bb_left - w2,               bb_bottom - h2
+            };
+            vertices = v;
+            break;
+        }
+        case LT_ANCHOR_BOTTOM_LEFT: {
+            GLfloat v[] = {
+                bb_left,                bb_bottom + bb_height,
+                bb_left + bb_width,     bb_bottom + bb_height,
+                bb_left + bb_width,     bb_bottom,
+                bb_left,                bb_bottom
+            };
+            vertices = v;
+            break;
+        }
+    }
+    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 8, vertices, GL_STATIC_DRAW);
 }

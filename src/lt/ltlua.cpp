@@ -213,9 +213,9 @@ static int lt_DeleteTexture(lua_State *L) {
     return 0;
 }
 
-static int img_DrawBottomLeft(lua_State *L) {
+static int img_Draw(lua_State *L) {
     LTImage **img = (LTImage**)luaL_checkudata(L, 1, "img");
-    (*img)->drawBottomLeft();
+    (*img)->draw();
     return 0;
 }
 
@@ -224,8 +224,8 @@ static void push_image(lua_State *L, LTImage *img) {
     *ud = img;
     if (luaL_newmetatable(L, "img")) {
         lua_createtable(L, 0, 16);
-            lua_pushcfunction(L, img_DrawBottomLeft);
-            lua_setfield(L, -2, "DrawBottomLeft");
+            lua_pushcfunction(L, img_Draw);
+            lua_setfield(L, -2, "Draw");
         lua_setfield(L, -2, "__index");
     }
     lua_setmetatable(L, -2);

@@ -604,5 +604,5 @@ function lt.Render()
     lt.SetColor(0.5, 0.5, 0.5)
     lt.DrawRect(-10, -10, 10, 10)
     lt.SetColor(1, 1, 1)
-    imgs[i]:DrawBottomLeft()
+    imgs[i]:Draw()
 end

@@ -183,7 +183,12 @@ LTtexture ltCreateAtlasTexture(LTImagePacker *packer, const char *dump_file);
 
 void ltDeleteTexture(LTtexture);
 
-struct LTImage {
+enum LTAnchor {
+    LT_ANCHOR_CENTER,
+    LT_ANCHOR_BOTTOM_LEFT
+};
+
+struct LTImage : LTProp {
     LTtexture atlas;
     LTvertbuf vertbuf;
     LTtexbuf  texbuf;
@@ -198,7 +203,7 @@ struct LTImage {
     LTfloat   bb_width;
     LTfloat   bb_height;
 
-    // Original image size, as ration of atlas dimensions.
+    // Original image size, as ratio of atlas dimensions.
     LTfloat   orig_width;
     LTfloat   orig_height;
 
@@ -212,7 +217,9 @@ struct LTImage {
     LTImage(LTtexture atlas, int atlas_w, int atlas_h, LTImagePacker *packer);
     virtual ~LTImage();
 
-    void drawBottomLeft();
+    void draw();
+
+    void setAnchor(LTAnchor anchor);
 };
 
 #endif
