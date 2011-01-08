@@ -14,6 +14,11 @@
 static bool g_textures_enabled = false;
 static LTtexture g_current_bound_texture = 0;
 
+static LTfloat g_red = 1.0f;
+static LTfloat g_green = 1.0f;
+static LTfloat g_blue = 1.0f;
+static LTfloat g_alpha = 1.0f;
+
 void ltInitGraphics() {
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glEnableClientState(GL_VERTEX_ARRAY);
@@ -142,6 +147,158 @@ void ltPushMatrix() {
 
 void ltPopMatrix() {
     glPopMatrix();
+}
+
+//-----------------------------------------------------------------
+// Props.
+
+
+LTTranslator::LTTranslator(LTfloat x, LTfloat y, LTfloat z, LTProp *target) {
+    LTTranslator::x = x;
+    LTTranslator::y = y;
+    LTTranslator::z = z;
+    LTTranslator::target = target;
+    target->retain();
+}
+
+LTTranslator::~LTTranslator() {
+    target->release();
+}
+
+void LTTranslator::draw() {
+    ltPushMatrix();
+    ltTranslate(x, y, z);
+    target->draw();
+    ltPopMatrix();
+}
+
+void* LTTranslator::field_ptr(const char *field_name) {
+    if (strcmp(field_name, "x") == 0) {
+        return &x;
+    }
+    if (strcmp(field_name, "y") == 0) {
+        return &y;
+    }
+    if (strcmp(field_name, "z") == 0) {
+        return &z;
+    }
+    return target->field_ptr(field_name);
+}
+
+LTRotator::LTRotator(LTdegrees angle, LTfloat rx, LTfloat ry, LTfloat rz, LTProp *target) {
+    LTRotator::angle = angle;
+    LTRotator::rx = rx;
+    LTRotator::ry = ry;
+    LTRotator::rz = rz;
+    LTRotator::target = target;
+    target->retain();
+}
+
+LTRotator::~LTRotator() {
+    target->release();
+}
+
+void LTRotator::draw() {
+    ltPushMatrix();
+    ltRotate(angle, rx, ry, rz);
+    target->draw();
+    ltPopMatrix();
+}
+
+void* LTRotator::field_ptr(const char *field_name) {
+    if (strcmp(field_name, "angle") == 0) {
+        return &angle;
+    }
+    if (strcmp(field_name, "rx") == 0) {
+        return &rx;
+    }
+    if (strcmp(field_name, "ry") == 0) {
+        return &ry;
+    }
+    if (strcmp(field_name, "rz") == 0) {
+        return &rz;
+    }
+    return target->field_ptr(field_name);
+}
+
+LTScalor::LTScalor(LTfloat sx, LTfloat sy, LTfloat sz, LTProp *target) {
+    LTScalor::sx = sx;
+    LTScalor::sy = sy;
+    LTScalor::sz = sz;
+    LTScalor::target = target;
+    target->retain();
+}
+
+LTScalor::~LTScalor() {
+    target->release();
+}
+
+void LTScalor::draw() {
+    ltPushMatrix();
+    ltScale(sx, sy, sz);
+    target->draw();
+    ltPopMatrix();
+}
+
+void* LTScalor::field_ptr(const char *field_name) {
+    if (strcmp(field_name, "sx") == 0) {
+        return &sx;
+    }
+    if (strcmp(field_name, "sy") == 0) {
+        return &sy;
+    }
+    if (strcmp(field_name, "sz") == 0) {
+        return &sz;
+    }
+    return target->field_ptr(field_name);
+}
+
+LTTinter::LTTinter(LTfloat r, LTfloat g, LTfloat b, LTfloat a, LTProp *target) {
+    LTTinter::r = r;
+    LTTinter::g = g;
+    LTTinter::b = b;
+    LTTinter::a = a;
+    LTTinter::target = target;
+    target->retain();
+}
+
+LTTinter::~LTTinter() {
+    target->release();
+}
+
+void LTTinter::draw() {
+    LTfloat r0, g0, b0, a0;
+    r0 = g_red;
+    g0 = g_green;
+    b0 = g_blue;
+    a0 = g_alpha;
+    g_red *= r;
+    g_green *= g;
+    g_blue *= b;
+    g_alpha *= a;
+    ltSetColor(g_red, g_green, g_blue, g_alpha);
+    target->draw();
+    g_red = r0;
+    g_green = g0;
+    g_blue = b0;
+    g_alpha = a0;
+    ltSetColor(g_red, g_green, g_blue, g_alpha);
+}
+
+void* LTTinter::field_ptr(const char *field_name) {
+    if (strcmp(field_name, "r") == 0) {
+        return &r;
+    }
+    if (strcmp(field_name, "g") == 0) {
+        return &g;
+    }
+    if (strcmp(field_name, "b") == 0) {
+        return &b;
+    }
+    if (strcmp(field_name, "a") == 0) {
+        return &a;
+    }
+    return target->field_ptr(field_name);
 }
 
 //-----------------------------------------------------------------
