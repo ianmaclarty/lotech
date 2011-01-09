@@ -25,6 +25,17 @@ static LTfloat g_viewport_y2 = 10.0f;
 
 /************************* Objects **************************/
 
+static LTObject* get_object(lua_State *L, int index, LTType type) {
+    LTObject **ud = (LTObject**)lua_touserdata(L, index);
+    if (*ud == NULL) {
+        luaL_error(L, "Userdata is NULL.");
+    }
+    if (!(*ud)->hasType(type)) {
+        luaL_typerror(L, index, ltTypes[type].name);
+    }
+    return *ud;
+}
+
 static int release_object(lua_State *L) {
     LTObject **ud = (LTObject**)lua_touserdata(L, 1);
     if (*ud != NULL) {
@@ -34,13 +45,13 @@ static int release_object(lua_State *L) {
     return 0;
 }
 
-static void push_object(lua_State *L, LTObject *obj, const char *type, const luaL_Reg *methods) {
+static void push_object(lua_State *L, LTObject *obj, const luaL_Reg *methods) {
     // We use a full userdata so we can get Lua GC finalize events.
     LTObject **ud = (LTObject **)lua_newuserdata(L, sizeof(LTObject *));
     *ud = obj;
     // Count all Lua references to the object as one reference.
     obj->retain();
-    if (luaL_newmetatable(L, type)) {
+    if (luaL_newmetatable(L, ltTypes[obj->type].name)) {
         if (methods != NULL) {
             lua_newtable(L);
                 // All objects get a Release method that can be used to
@@ -184,8 +195,8 @@ static int lt_DrawEllipse(lua_State *L) {
 /************************* Images **************************/
 
 static int img_Draw(lua_State *L) {
-    LTImage **img = (LTImage**)luaL_checkudata(L, 1, "img");
-    (*img)->draw();
+    LTImage *img = (LTImage*)get_object(L, 1, LT_TYPE_IMAGE);
+    img->draw();
     return 0;
 }
 
@@ -214,7 +225,7 @@ static void add_packer_images_to_lua_table(lua_State *L, int w, int h, LTImagePa
         }
         strncpy(img_name, file, len - 4); // Remove ".png" suffix.
         img_name[len - 4] = '\0';
-        push_object(L, img, "img", img_methods);
+        push_object(L, img, img_methods);
         lua_setfield(L, -2, img_name);
         add_packer_images_to_lua_table(L, w, h, packer->lo_child, atlas);
         add_packer_images_to_lua_table(L, w, h, packer->hi_child, atlas);

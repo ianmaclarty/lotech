@@ -34,20 +34,24 @@ enum LTType {
     LT_NUM_TYPES
 };
 
-// Gives the supertype of each type.
-static const LTType supertypes[] = {
-    LT_TYPE_OBJECT, // LT_TYPE_OBJECT
-    LT_TYPE_OBJECT, // LT_TYPE_PROP
-    LT_TYPE_PROP,   // LT_TYPE_TRANSLATOR
-    LT_TYPE_PROP,   // LT_TYPE_ROTATOR
-    LT_TYPE_PROP,   // LT_TYPE_SCALOR
-    LT_TYPE_PROP,   // LT_TYPE_TINTER
-    LT_TYPE_PROP,   // LT_TYPE_SCENE
-    LT_TYPE_PROP,   // LT_TYPE_IMAGE
-    LT_TYPE_OBJECT, // LT_TYPE_ATLAS
+struct LTTypeInfo {
+    const char *name;
+    LTType super_type;
 };
 
-ct_assert(sizeof(supertypes) == (int)LT_NUM_TYPES * 4);
+const LTTypeInfo ltTypes[] = {
+    {"Object",      LT_TYPE_OBJECT},
+    {"Prop",        LT_TYPE_OBJECT},
+    {"Translator",  LT_TYPE_PROP},  
+    {"Rotator",     LT_TYPE_PROP},  
+    {"Scalor",      LT_TYPE_PROP},  
+    {"Tinter",      LT_TYPE_PROP},  
+    {"Scene",       LT_TYPE_PROP},  
+    {"Image",       LT_TYPE_PROP},  
+    {"Atlas",       LT_TYPE_OBJECT},
+};
+
+ct_assert(sizeof(ltTypes) == (int)LT_NUM_TYPES * sizeof(LTTypeInfo));
 
 struct LTObject {
     LTType type;
@@ -85,7 +89,7 @@ struct LTObject {
             if (t == t1) {
                 return true;
             }
-            t1 = supertypes[t1];
+            t1 = ltTypes[t1].super_type;
         }
         return false;
     }
