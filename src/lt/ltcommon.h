@@ -31,6 +31,8 @@ enum LTType {
     LT_TYPE_SCENE,
     LT_TYPE_IMAGE,
     LT_TYPE_ATLAS,
+    LT_TYPE_WORLD,
+    LT_TYPE_BODY,
     LT_NUM_TYPES
 };
 
@@ -49,6 +51,8 @@ const LTTypeInfo ltTypes[] = {
     {"Scene",       LT_TYPE_PROP},  
     {"Image",       LT_TYPE_PROP},  
     {"Atlas",       LT_TYPE_OBJECT},
+    {"World",       LT_TYPE_OBJECT},
+    {"Body",        LT_TYPE_OBJECT},
 };
 
 ct_assert(sizeof(ltTypes) == (int)LT_NUM_TYPES * sizeof(LTTypeInfo));

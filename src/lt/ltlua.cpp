@@ -564,6 +564,8 @@ static const luaL_Reg ltlib[] = {
     {NULL, NULL}
 };
 
+/************************************************************/
+
 static void check_status(int status, bool abort) {
     if (status && !lua_isnil(g_L, -1)) {
         const char *msg = lua_tostring(g_L, -1);
