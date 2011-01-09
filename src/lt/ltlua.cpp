@@ -30,10 +30,11 @@ static LTObject* get_object(lua_State *L, int index, LTType type) {
     if (*ud == NULL) {
         luaL_error(L, "Userdata is NULL.");
     }
-    if (!(*ud)->hasType(type)) {
-        luaL_typerror(L, index, ltTypes[type].name);
+    LTObject *o = *ud;
+    if (!o->hasType(type)) {
+        luaL_typerror(L, index, ltTypeName(type));
     }
-    return *ud;
+    return o;
 }
 
 static int release_object(lua_State *L) {
@@ -51,7 +52,7 @@ static void push_object(lua_State *L, LTObject *obj, const luaL_Reg *methods) {
     *ud = obj;
     // Count all Lua references to the object as one reference.
     obj->retain();
-    if (luaL_newmetatable(L, ltTypes[obj->type].name)) {
+    if (luaL_newmetatable(L, obj->typeName())) {
         if (methods != NULL) {
             lua_newtable(L);
                 // All objects get a Release method that can be used to

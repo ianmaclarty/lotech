@@ -36,67 +36,25 @@ enum LTType {
     LT_NUM_TYPES
 };
 
-struct LTTypeInfo {
-    const char *name;
-    LTType super_type;
-};
-
-const LTTypeInfo ltTypes[] = {
-    {"Object",      LT_TYPE_OBJECT},
-    {"Prop",        LT_TYPE_OBJECT},
-    {"Translator",  LT_TYPE_PROP},  
-    {"Rotator",     LT_TYPE_PROP},  
-    {"Scalor",      LT_TYPE_PROP},  
-    {"Tinter",      LT_TYPE_PROP},  
-    {"Scene",       LT_TYPE_PROP},  
-    {"Image",       LT_TYPE_PROP},  
-    {"Atlas",       LT_TYPE_OBJECT},
-    {"World",       LT_TYPE_OBJECT},
-    {"Body",        LT_TYPE_OBJECT},
-};
-
-ct_assert(sizeof(ltTypes) == (int)LT_NUM_TYPES * sizeof(LTTypeInfo));
+const char* ltTypeName(LTType type);
 
 struct LTObject {
     LTType type;
     int ref_count;
 
-    LTObject(LTType type) {
-        LTObject::type = type;
-        ref_count = 0;
-    }
-    virtual ~LTObject() {}
+    LTObject(LTType type);
+    virtual ~LTObject();
 
-    void retain() {
-        ref_count++;
-    }
-
-    void release() {
-        ref_count--;
-        if (ref_count <= 0) {
-            delete this;
-        }
-    }
+    void retain();
+    void release();
 
     // For tweening.
-    virtual LTfloat* field_ptr(const char *field_name) {
-        return NULL;
-    }
+    virtual LTfloat* field_ptr(const char *field_name);
 
     // Is this object of a certain type?
-    bool hasType(LTType t) {
-        if (t == LT_TYPE_OBJECT) {
-            return true;
-        }
-        LTType t1 = type;
-        while (t1 != LT_TYPE_OBJECT) {
-            if (t == t1) {
-                return true;
-            }
-            t1 = ltTypes[t1].super_type;
-        }
-        return false;
-    }
+    bool hasType(LTType t);
+
+    const char* typeName();
 };
 
 #endif
