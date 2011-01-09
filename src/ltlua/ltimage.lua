@@ -48,7 +48,7 @@ end
 -- Clear lt.images.  The images become invalid.
 function lt.ClearImages()
     for file, img in pairs(images) do
-        lt.DeleteImage(img)
+        img:Release()
     end
     for i, texture in pairs(atlas_textures) do
         lt.DeleteTexture(texture)
