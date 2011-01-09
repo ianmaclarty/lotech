@@ -172,7 +172,7 @@ void LTTranslator::draw() {
     ltPopMatrix();
 }
 
-void* LTTranslator::field_ptr(const char *field_name) {
+LTfloat* LTTranslator::field_ptr(const char *field_name) {
     if (strcmp(field_name, "x") == 0) {
         return &x;
     }
@@ -205,7 +205,7 @@ void LTRotator::draw() {
     ltPopMatrix();
 }
 
-void* LTRotator::field_ptr(const char *field_name) {
+LTfloat* LTRotator::field_ptr(const char *field_name) {
     if (strcmp(field_name, "angle") == 0) {
         return &angle;
     }
@@ -240,7 +240,7 @@ void LTScalor::draw() {
     ltPopMatrix();
 }
 
-void* LTScalor::field_ptr(const char *field_name) {
+LTfloat* LTScalor::field_ptr(const char *field_name) {
     if (strcmp(field_name, "sx") == 0) {
         return &sx;
     }
@@ -285,7 +285,7 @@ void LTTinter::draw() {
     ltSetColor(g_red, g_green, g_blue, g_alpha);
 }
 
-void* LTTinter::field_ptr(const char *field_name) {
+LTfloat* LTTinter::field_ptr(const char *field_name) {
     if (strcmp(field_name, "r") == 0) {
         return &r;
     }

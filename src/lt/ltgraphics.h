@@ -65,7 +65,7 @@ struct LTTranslator : LTProp {
 
     virtual void draw();
 
-    virtual void* field_ptr(const char *field_name);
+    virtual LTfloat* field_ptr(const char *field_name);
 };
 
 struct LTRotator : LTProp {
@@ -80,7 +80,7 @@ struct LTRotator : LTProp {
 
     virtual void draw();
 
-    virtual void* field_ptr(const char *field_name);
+    virtual LTfloat* field_ptr(const char *field_name);
 };
 
 struct LTScalor : LTProp {
@@ -94,7 +94,7 @@ struct LTScalor : LTProp {
 
     virtual void draw();
 
-    virtual void* field_ptr(const char *field_name);
+    virtual LTfloat* field_ptr(const char *field_name);
 };
 
 struct LTTinter : LTProp {
@@ -109,7 +109,7 @@ struct LTTinter : LTProp {
 
     virtual void draw();
 
-    virtual void* field_ptr(const char *field_name);
+    virtual LTfloat* field_ptr(const char *field_name);
 };
 
 struct LTScene : LTProp {

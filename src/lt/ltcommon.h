@@ -38,7 +38,8 @@ struct LTObject {
         }
     }
 
-    virtual void* field_ptr(const char *field_name) {
+    // For tweening.
+    virtual LTfloat* field_ptr(const char *field_name) {
         return NULL;
     }
 };
