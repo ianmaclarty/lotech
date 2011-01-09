@@ -153,7 +153,7 @@ void ltPopMatrix() {
 // Props.
 
 
-LTTranslator::LTTranslator(LTfloat x, LTfloat y, LTfloat z, LTProp *target) {
+LTTranslator::LTTranslator(LTfloat x, LTfloat y, LTfloat z, LTProp *target) : LTProp(LT_TYPE_TRANSLATOR) {
     LTTranslator::x = x;
     LTTranslator::y = y;
     LTTranslator::z = z;
@@ -185,7 +185,7 @@ LTfloat* LTTranslator::field_ptr(const char *field_name) {
     return target->field_ptr(field_name);
 }
 
-LTRotator::LTRotator(LTdegrees angle, LTfloat rx, LTfloat ry, LTfloat rz, LTProp *target) {
+LTRotator::LTRotator(LTdegrees angle, LTfloat rx, LTfloat ry, LTfloat rz, LTProp *target) : LTProp(LT_TYPE_ROTATOR) {
     LTRotator::angle = angle;
     LTRotator::rx = rx;
     LTRotator::ry = ry;
@@ -221,7 +221,7 @@ LTfloat* LTRotator::field_ptr(const char *field_name) {
     return target->field_ptr(field_name);
 }
 
-LTScalor::LTScalor(LTfloat sx, LTfloat sy, LTfloat sz, LTProp *target) {
+LTScalor::LTScalor(LTfloat sx, LTfloat sy, LTfloat sz, LTProp *target) : LTProp(LT_TYPE_SCALOR) {
     LTScalor::sx = sx;
     LTScalor::sy = sy;
     LTScalor::sz = sz;
@@ -253,7 +253,7 @@ LTfloat* LTScalor::field_ptr(const char *field_name) {
     return target->field_ptr(field_name);
 }
 
-LTTinter::LTTinter(LTfloat r, LTfloat g, LTfloat b, LTfloat a, LTProp *target) {
+LTTinter::LTTinter(LTfloat r, LTfloat g, LTfloat b, LTfloat a, LTProp *target) : LTProp(LT_TYPE_TINTER) {
     LTTinter::r = r;
     LTTinter::g = g;
     LTTinter::b = b;
@@ -301,7 +301,7 @@ LTfloat* LTTinter::field_ptr(const char *field_name) {
     return target->field_ptr(field_name);
 }
 
-LTScene::LTScene() {
+LTScene::LTScene() : LTProp(LT_TYPE_SCENE) {
 }
 
 LTScene::~LTScene() {
@@ -817,7 +817,7 @@ void ltDeleteTexture(LTtexture tex) {
 
 //-----------------------------------------------------------------
 
-LTImage::LTImage(LTtexture atls, int atlas_w, int atlas_h, LTImagePacker *packer) {
+LTImage::LTImage(LTtexture atls, int atlas_w, int atlas_h, LTImagePacker *packer) : LTProp(LT_TYPE_IMAGE) {
     if (packer->occupant == NULL) {
         ltAbort("Packer occupant is NULL.");
     }

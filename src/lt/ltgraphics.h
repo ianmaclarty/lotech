@@ -52,6 +52,7 @@ void ltDrawPoly(LTfloat *vertices, int num_vertices); /* Must be convex */
 
 struct LTProp : LTObject {
     virtual void draw() = 0;
+    LTProp(LTType type) : LTObject(type) {}
 };
 
 struct LTTranslator : LTProp {
