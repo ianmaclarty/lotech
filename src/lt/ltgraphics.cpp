@@ -12,7 +12,7 @@
 #define LTPI (3.14159265358979323846f)
 
 static bool g_textures_enabled = false;
-static LTtexture g_current_bound_texture = 0;
+static GLuint g_current_bound_texture = 0;
 
 static LTfloat g_red = 1.0f;
 static LTfloat g_green = 1.0f;
@@ -27,14 +27,14 @@ void ltInitGraphics() {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
-void ltEnableTexture(LTtexture tex) {
+void ltEnableAtlas(LTAtlas *atlas) {
     if (!g_textures_enabled) {
         glEnable(GL_TEXTURE_2D);
         g_textures_enabled = true;
     }
-    if (g_current_bound_texture != tex) {
-        glBindTexture(GL_TEXTURE_2D, tex);
-        g_current_bound_texture = tex;
+    if (g_current_bound_texture != atlas->texture_id) {
+        glBindTexture(GL_TEXTURE_2D, atlas->texture_id);
+        g_current_bound_texture = atlas->texture_id;
     }
 }
 
@@ -335,6 +335,26 @@ void LTScene::draw() {
 }
 
 //-----------------------------------------------------------------
+// Images.
+
+LTAtlas::LTAtlas(LTImagePacker *packer, const char *dump_file) : LTObject(LT_TYPE_ATLAS) {
+    LTImageBuffer *buf = ltCreateAtlasImage("<atlas>", packer);
+    if (dump_file != NULL) {
+        ltLog("Dumping %s (%d x %d)", dump_file, buf->bb_width(), buf->bb_height());
+        ltWriteImage(dump_file, buf);
+    }
+    glGenTextures(1, &texture_id);
+    glBindTexture(GL_TEXTURE_2D, texture_id);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); 
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    glTexImage2D(GL_TEXTURE_2D, 0, 4, buf->width, buf->height, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, buf->bb_pixels);
+    delete buf;
+}
+
+LTAtlas::~LTAtlas() {
+    glDeleteTextures(1, &texture_id);
+}
 
 LTImageBuffer::~LTImageBuffer() {
     delete[] bb_pixels;
@@ -794,35 +814,15 @@ LTImageBuffer *ltCreateAtlasImage(const char *file, LTImagePacker *packer) {
     return atlas;
 }
 
-LTtexture ltCreateAtlasTexture(LTImagePacker *packer, const char *dump_file) {
-    LTImageBuffer *buf = ltCreateAtlasImage("<internal>", packer);
-    if (dump_file != NULL) {
-        ltLog("Dumping %s (%d x %d)", dump_file, buf->bb_width(), buf->bb_height());
-        ltWriteImage(dump_file, buf);
-    }
-    LTtexture tex;
-    glGenTextures(1, &tex);
-    glBindTexture(GL_TEXTURE_2D, tex);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-    glTexImage2D(GL_TEXTURE_2D, 0, 4, buf->width, buf->height, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, buf->bb_pixels);
-    delete buf;
-    return tex;
-}
-
-void ltDeleteTexture(LTtexture tex) {
-    glDeleteTextures(1, &tex);
-}
-
 //-----------------------------------------------------------------
 
-LTImage::LTImage(LTtexture atls, int atlas_w, int atlas_h, LTImagePacker *packer) : LTProp(LT_TYPE_IMAGE) {
+LTImage::LTImage(LTAtlas *atls, int atlas_w, int atlas_h, LTImagePacker *packer) : LTProp(LT_TYPE_IMAGE) {
     if (packer->occupant == NULL) {
         ltAbort("Packer occupant is NULL.");
     }
 
     atlas = atls;
+    atlas->retain();
     rotated = packer->rotated;
 
     LTfloat fatlas_w = (LTfloat)atlas_w;
@@ -864,10 +864,11 @@ LTImage::LTImage(LTtexture atls, int atlas_w, int atlas_h, LTImagePacker *packer
 LTImage::~LTImage() {
     glDeleteBuffers(1, &vertbuf);
     glDeleteBuffers(1, &texbuf);
+    atlas->release();
 }
 
 void LTImage::draw() {
-    ltEnableTexture(atlas);
+    ltEnableAtlas(atlas);
     glBindBuffer(GL_ARRAY_BUFFER, vertbuf);
     glVertexPointer(2, GL_FLOAT, 0, 0);
     glBindBuffer(GL_ARRAY_BUFFER, texbuf);

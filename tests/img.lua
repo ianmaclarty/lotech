@@ -7,7 +7,7 @@ lt.SetViewPort(-10, -10, 10, 10)
 
 lt.dump_atlases = true
 
-lt.LoadImages({
+images = lt.LoadImages({
     "air_vent.png",
     "apple.png",
     "b.png",
@@ -576,7 +576,7 @@ lt.LoadImages({
 
 local imgs = {}
 local n = 0
-for _, img in pairs(lt.images) do
+for _, img in pairs(images) do
     n = n + 1
     imgs[n] = img
 end

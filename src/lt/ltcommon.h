@@ -30,6 +30,7 @@ enum LTType {
     LT_TYPE_TINTER,
     LT_TYPE_SCENE,
     LT_TYPE_IMAGE,
+    LT_TYPE_ATLAS,
     LT_NUM_TYPES
 };
 
@@ -43,6 +44,7 @@ static const LTType supertypes[] = {
     LT_TYPE_PROP,   // LT_TYPE_TINTER
     LT_TYPE_PROP,   // LT_TYPE_SCENE
     LT_TYPE_PROP,   // LT_TYPE_IMAGE
+    LT_TYPE_OBJECT, // LT_TYPE_ATLAS
 };
 
 ct_assert(sizeof(supertypes) == (int)LT_NUM_TYPES * 4);

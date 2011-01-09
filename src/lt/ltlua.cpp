@@ -42,7 +42,7 @@ static void push_object(lua_State *L, LTObject *obj, const char *type, const lua
     obj->retain();
     if (luaL_newmetatable(L, type)) {
         if (methods != NULL) {
-            lua_createtable(L, 0, 16);
+            lua_newtable(L);
                 // All objects get a Release method that can be used to
                 // manually free them.
                 lua_pushcfunction(L, release_object);
@@ -183,72 +183,6 @@ static int lt_DrawEllipse(lua_State *L) {
 
 /************************* Images **************************/
 
-// User must free with DeleteImagePacker.
-static int lt_ImagePacker(lua_State *L) {
-    int size = (int)luaL_checkinteger(L, 1);
-    LTImagePacker *packer = new LTImagePacker(0, 0, size, size);
-    LTImagePacker **ud = (LTImagePacker **)lua_newuserdata(L, sizeof(LTImagePacker *));
-    *ud = packer;
-    luaL_newmetatable(L, "pkr");
-    lua_setmetatable(L, -2);
-    return 1;
-}
-
-static int lt_ImagePackerSize(lua_State *L) {
-    LTImagePacker **packer = (LTImagePacker**)luaL_checkudata(L, 1, "pkr");
-    lua_pushinteger(L, (*packer)->size());
-    return 1;
-}
-
-static int lt_DeleteImagePacker(lua_State *L) {
-    LTImagePacker **packer = (LTImagePacker**)luaL_checkudata(L, 1, "pkr");
-    delete *packer;
-    *packer = NULL;
-    return 0;
-}
-
-// User must free with DeleteImagesInPacker.
-static int lt_ReadImage(lua_State *L) {
-    const char *file = luaL_checkstring(L, 1);
-    LTImageBuffer *buf = ltReadImage(file);
-    LTImageBuffer **ud = (LTImageBuffer **)lua_newuserdata(L, sizeof(LTImageBuffer *));
-    *ud = buf;
-    luaL_newmetatable(L, "imgbuf");
-    lua_setmetatable(L, -2);
-    return 1;
-}
-
-static int lt_PackImage(lua_State *L) {
-    LTImagePacker **packer = (LTImagePacker**)luaL_checkudata(L, 1, "pkr");
-    LTImageBuffer **img_buf = (LTImageBuffer**)luaL_checkudata(L, 2, "imgbuf");
-    if (ltPackImage(*packer, *img_buf)) {
-        lua_pushboolean(L, 1);
-    } else {
-        lua_pushboolean(L, 0);
-    }
-    return 1;
-}
-
-static int lt_CreateAtlasTexture(lua_State *L) {
-    int num_args = lua_gettop(L);
-    const char *dump_file;
-    LTImagePacker **packer = (LTImagePacker**)luaL_checkudata(L, 1, "pkr");
-    if (num_args > 1) {
-        dump_file = luaL_checkstring(L, 2);
-    } else {
-        dump_file = NULL;
-    }
-    LTtexture tex = ltCreateAtlasTexture(*packer, dump_file);
-    lua_pushinteger(L, (lua_Integer)tex); // XXX relies on lua_Integer being compatible with GLuint.
-    return 1;
-}
-
-static int lt_DeleteTexture(lua_State *L) {
-    LTtexture tex = (LTtexture)luaL_checkinteger(L, 1);
-    ltDeleteTexture(tex);
-    return 0;
-}
-
 static int img_Draw(lua_State *L) {
     LTImage **img = (LTImage**)luaL_checkudata(L, 1, "img");
     (*img)->draw();
@@ -261,7 +195,7 @@ static const luaL_Reg img_methods[] = {
     {NULL, NULL}
 };
 
-static void add_packer_images_to_lua_table(lua_State *L, int table, int w, int h, LTImagePacker *packer, LTtexture atlas) {
+static void add_packer_images_to_lua_table(lua_State *L, int w, int h, LTImagePacker *packer, LTAtlas *atlas) {
     char img_name[128];
     int len;
     const char *file;
@@ -281,24 +215,67 @@ static void add_packer_images_to_lua_table(lua_State *L, int table, int w, int h
         strncpy(img_name, file, len - 4); // Remove ".png" suffix.
         img_name[len - 4] = '\0';
         push_object(L, img, "img", img_methods);
-        lua_setfield(L, table, img_name);
-        add_packer_images_to_lua_table(L, table, w, h, packer->lo_child, atlas);
-        add_packer_images_to_lua_table(L, table, w, h, packer->hi_child, atlas);
+        lua_setfield(L, -2, img_name);
+        add_packer_images_to_lua_table(L, w, h, packer->lo_child, atlas);
+        add_packer_images_to_lua_table(L, w, h, packer->hi_child, atlas);
     }
 }
 
-static int lt_AddPackerImagesToTable(lua_State *L) {
-    luaL_checktype(L, 1, LUA_TTABLE);
-    LTImagePacker **packer = (LTImagePacker**)luaL_checkudata(L, 2, "pkr");
-    LTtexture atlas = (LTtexture)luaL_checkinteger(L, 3);
-    add_packer_images_to_lua_table(L, 1, (*packer)->width, (*packer)->height, *packer, atlas);
-    return 0;
-}
+// Load images in 1st argument (an array) and return a table
+// indexed by image name (without the .png suffix).
+// The second argument is the size of the atlasses to generate
+// (1024 by default).
+static int lt_LoadImages(lua_State *L) {
+    int num_args = lua_gettop(L);
+    int size = 1024;
+    if (num_args > 1) {
+        size = (int)luaL_checkinteger(L, 2);
+    }
+    lua_newtable(L); // The table to be returned.
+    LTImagePacker *packer = new LTImagePacker(0, 0, size, size);
+    int atlas_num = 1;
+    int i = 1;
+    do {
+        lua_pushinteger(L, i);
+        lua_gettable(L, 1);
+        if (lua_isnil(L, -1)) {
+            // We've reached the end of the array.
+            lua_pop(L, 1);
+            break;
+        }
+        const char* file = lua_tostring(L, -1);
+        lua_pop(L, 1);
+        if (file == NULL) {
+            return luaL_error(L, "Expecting an array of strings.");
+        }
+        
+        LTImageBuffer *buf = ltReadImage(file);
+        if (!ltPackImage(packer, buf)) {
+            // Packer full, so generate an atlas.
+            LTAtlas *atlas = new LTAtlas(packer);
+            add_packer_images_to_lua_table(L, packer->width, packer->height, packer, atlas);
+            packer->deleteOccupants();
+            atlas_num++;
 
-static int lt_DeleteImagesInPacker(lua_State *L) {
-    LTImagePacker **packer = (LTImagePacker**)luaL_checkudata(L, 1, "pkr");
-    (*packer)->deleteOccupants();
-    return 0;
+            if (!ltPackImage(packer, buf)) {
+                return luaL_error(L, "Image %s is too large.", file);
+            }
+        }
+
+        i++;
+    } while (true);
+
+    // Pack any images left in packer into a new texture.
+    if (packer->size() > 0) {
+        LTAtlas *atlas = new LTAtlas(packer);
+        add_packer_images_to_lua_table(L, packer->width, packer->height, packer, atlas);
+        packer->deleteOccupants();
+        atlas_num++;
+    }
+        
+    delete packer;
+
+    return 1;
 }
 
 /************************* Box2D **************************/
@@ -471,7 +448,7 @@ static void push_body(lua_State *L, b2World *world, b2BodyDef *def) {
     b2Body *body = world->CreateBody(def);
     *ud = body;
     if (luaL_newmetatable(L, "bdy")) {
-        lua_createtable(L, 0, 16);
+        lua_newtable(L);
             lua_pushcfunction(L, bdy_Destroy);
             lua_setfield(L, -2, "Destroy");
             lua_pushcfunction(L, bdy_IsDestroyed);
@@ -532,7 +509,7 @@ static void push_world(lua_State *L, b2World *world) {
     b2World **ud = (b2World **)lua_newuserdata(L, sizeof(b2World *));
     *ud = world;
     if (luaL_newmetatable(L, "wld")) {
-        lua_createtable(L, 0, 16);
+        lua_newtable(L);
             //lua_pushcfunction(L, wld_Clear);
             //lua_setfield(L, -2, "Clear");
             lua_pushcfunction(L, wld_Step);
@@ -569,15 +546,7 @@ static const luaL_Reg ltlib[] = {
     {"DrawRect",                lt_DrawRect},
     {"DrawEllipse",             lt_DrawEllipse},
 
-    {"ImagePacker",             lt_ImagePacker},
-    {"ImagePackerSize",         lt_ImagePackerSize},
-    {"DeleteImagePacker",       lt_DeleteImagePacker},
-    {"ReadImage",               lt_ReadImage},
-    {"PackImage",               lt_PackImage},
-    {"CreateAtlasTexture",      lt_CreateAtlasTexture},
-    {"DeleteTexture",           lt_DeleteTexture},
-    {"AddPackerImagesToTable",  lt_AddPackerImagesToTable},
-    {"DeleteImagesInPacker",    lt_DeleteImagesInPacker},
+    {"LoadImages",              lt_LoadImages},
 
     {"World",                   lt_World},
 

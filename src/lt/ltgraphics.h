@@ -21,15 +21,16 @@
 #define LT_DEGREES_PER_RADIAN (180.0f / LT_PI)
 
 typedef LTuint32        LTpixel;
-typedef GLuint          LTtexture;
 typedef GLuint          LTvertbuf;
 typedef GLuint          LTtexbuf;
 
 #define LT_ALPHA(pxl)     (pxl & 0xFF)
 
+
 void ltInitGraphics();
 
-void ltEnableTexture(LTtexture tex);
+struct LTAtlas;
+void ltEnableAtlas(LTAtlas *atlas);
 void ltDisableTextures();
 
 void ltSetViewPort(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2);
@@ -193,19 +194,20 @@ bool ltPackImage(LTImagePacker *packer, LTImageBuffer *img);
 /* The caller is responsible for freeing the buffer (with delete). */
 LTImageBuffer *ltCreateAtlasImage(const char *file, LTImagePacker *packer);
 
-/* The caller is responsible for freeing the texture with ltDeleteTexture. */
-/* Atlas will be dumped to dump_file if it isn't NULL. */
-LTtexture ltCreateAtlasTexture(LTImagePacker *packer, const char *dump_file);
-
-void ltDeleteTexture(LTtexture);
-
 enum LTAnchor {
     LT_ANCHOR_CENTER,
     LT_ANCHOR_BOTTOM_LEFT
 };
 
+struct LTAtlas : LTObject {
+    GLuint texture_id;
+
+    LTAtlas(LTImagePacker *packer, const char *dump_file = NULL);
+    virtual ~LTAtlas();
+};
+
 struct LTImage : LTProp {
-    LTtexture atlas;
+    LTAtlas   *atlas;
     LTvertbuf vertbuf;
     LTtexbuf  texbuf;
 
@@ -230,7 +232,7 @@ struct LTImage : LTProp {
     int       pixel_height;
 
     // packer->occupant != NULL
-    LTImage(LTtexture atlas, int atlas_w, int atlas_h, LTImagePacker *packer);
+    LTImage(LTAtlas *atlas, int atlas_w, int atlas_h, LTImagePacker *packer);
     virtual ~LTImage();
 
     void draw();
