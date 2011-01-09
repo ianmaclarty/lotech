@@ -10,6 +10,8 @@
 #include <OpenGL/GL.h>
 #endif
 
+#include <map>
+
 #include <string.h>
 
 #include "ltcommon.h"
@@ -108,6 +110,19 @@ struct LTTinter : LTProp {
     virtual void draw();
 
     virtual void* field_ptr(const char *field_name);
+};
+
+struct LTScene : LTProp {
+    std::multimap<LTfloat, LTProp*> scene;
+    std::map<LTProp*, std::multimap<LTfloat, LTProp*>::iterator> prop_index;
+
+    LTScene();
+    virtual ~LTScene();
+
+    void insert(LTProp *prop, LTfloat depth);
+    void remove(LTProp *prop);
+
+    virtual void draw();
 };
 
 //---------------------------------------------------------------------

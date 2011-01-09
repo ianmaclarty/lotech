@@ -301,6 +301,39 @@ void* LTTinter::field_ptr(const char *field_name) {
     return target->field_ptr(field_name);
 }
 
+LTScene::LTScene() {
+}
+
+LTScene::~LTScene() {
+    std::multimap<LTfloat, LTProp*>::iterator it;
+    for (it = scene.begin(); it != scene.end(); it++) {
+        ((*it).second)->release();
+    }
+}
+
+void LTScene::insert(LTProp *prop, LTfloat depth) {
+    std::pair<LTfloat, LTProp*> val(depth, prop);
+    prop_index[prop] = scene.insert(val);
+    prop->retain();
+}
+
+void LTScene::remove(LTProp *prop) {
+    std::map<LTProp*, std::multimap<LTfloat, LTProp*>::iterator>::iterator pos;
+    pos = prop_index.find(prop);
+    if (pos != prop_index.end()) {
+        prop_index.erase(pos);
+        scene.erase((*pos).second);
+        prop->release();
+    }
+}
+
+void LTScene::draw() {
+    std::multimap<LTfloat, LTProp*>::iterator it;
+    for (it = scene.begin(); it != scene.end(); it++) {
+        ((*it).second)->draw();
+    }
+}
+
 //-----------------------------------------------------------------
 
 LTImageBuffer::~LTImageBuffer() {
