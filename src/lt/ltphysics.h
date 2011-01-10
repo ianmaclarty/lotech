@@ -5,6 +5,7 @@
 #include "Box2D/Box2D.h"
 
 #include "ltcommon.h"
+#include "ltgraphics.h"
 
 struct LTWorld : LTObject {
     b2World *world;
@@ -13,7 +14,7 @@ struct LTWorld : LTObject {
     virtual ~LTWorld();
 };
 
-struct LTBody : LTObject {
+struct LTBody : LTProp {
     b2Body *body; // May be null if the body is destroyed.
     LTWorld *world;
 
@@ -25,6 +26,8 @@ struct LTBody : LTObject {
     virtual void release();
 
     void destroy();
+
+    virtual void draw();
 };
 
 #endif

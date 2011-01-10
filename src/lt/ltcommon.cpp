@@ -43,7 +43,7 @@ const LTTypeInfo types[] = {
     {"Image",       LT_TYPE_PROP},  
     {"Atlas",       LT_TYPE_OBJECT},
     {"World",       LT_TYPE_OBJECT},
-    {"Body",        LT_TYPE_OBJECT},
+    {"Body",        LT_TYPE_PROP},
 };
 
 ct_assert(sizeof(types) == (int)LT_NUM_TYPES * sizeof(LTTypeInfo));

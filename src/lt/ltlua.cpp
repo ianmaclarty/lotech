@@ -396,7 +396,7 @@ static int bdy_ApplyTorque(lua_State *L) {
 static int bdy_GetAngle(lua_State *L) {
     LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
     if (body->body != NULL) {
-        lua_pushnumber(L, body->body->GetAngle());
+        lua_pushnumber(L, body->body->GetAngle() * LT_DEGREES_PER_RADIAN);
         return 1;
     }
     return 0;
