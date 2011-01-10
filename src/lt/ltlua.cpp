@@ -12,6 +12,7 @@ extern "C" {
 #include "ltgraphics.h"
 #include "ltharness.h"
 #include "ltlua.h"
+#include "ltphysics.h"
 
 static lua_State *g_L = NULL;
 
@@ -294,55 +295,44 @@ static int lt_LoadImages(lua_State *L) {
 
 static int wld_Step(lua_State *L) {
     int num_args = lua_gettop(L);
-    b2World **world = (b2World**)luaL_checkudata(L, 1, "wld");
-    if (*world != NULL) {
-        LTfloat time_step = luaL_checknumber(L, 2);
-        int velocity_iterations = 10;
-        int position_iterations = 8;
-        if (num_args > 2) {
-            velocity_iterations = luaL_checkinteger(L, 3);
-        }
-        if (num_args > 3) {
-            position_iterations = luaL_checkinteger(L, 4);
-        }
-        (*world)->Step(time_step, velocity_iterations, position_iterations);
+    LTWorld *world = (LTWorld*)get_object(L, 1, LT_TYPE_WORLD);
+    LTfloat time_step = luaL_checknumber(L, 2);
+    int velocity_iterations = 10;
+    int position_iterations = 8;
+    if (num_args > 2) {
+        velocity_iterations = luaL_checkinteger(L, 3);
     }
+    if (num_args > 3) {
+        position_iterations = luaL_checkinteger(L, 4);
+    }
+    world->world->Step(time_step, velocity_iterations, position_iterations);
     return 0;
 }
 
 static int wld_SetGravity(lua_State *L) {
-    b2World **world = (b2World**)luaL_checkudata(L, 1, "wld");
-    if (*world != NULL) {
-        LTfloat x = (LTfloat)luaL_checknumber(L, 2);
-        LTfloat y = (LTfloat)luaL_checknumber(L, 3);
-        (*world)->SetGravity(b2Vec2(x, y));
-    }
+    LTWorld *world = (LTWorld*)get_object(L, 1, LT_TYPE_WORLD);
+    LTfloat x = (LTfloat)luaL_checknumber(L, 2);
+    LTfloat y = (LTfloat)luaL_checknumber(L, 3);
+    world->world->SetGravity(b2Vec2(x, y));
     return 0;
 }
 
-static b2Body **check_body(lua_State *L, int narg) {
-    return (b2Body **)luaL_checkudata(L, narg, "bdy");
-}
-
 static int bdy_Destroy(lua_State *L) {
-    b2Body** body = check_body(L, 1);
-    if (*body != NULL) {
-        (*body)->GetWorld()->DestroyBody(*body);
-        *body = NULL;
-    }
+    LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
+    body->destroy();
     return 0;
 }
 
 static int bdy_IsDestroyed(lua_State *L) {
-    b2Body** body = check_body(L, 1);
-    lua_pushboolean(L, *body == NULL);
+    LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
+    lua_pushboolean(L, body->body == NULL);
     return 1;
 }
 
 static int bdy_ApplyForce(lua_State *L) {
     int num_args = lua_gettop(L);
-    b2Body** body = check_body(L, 1);
-    if (*body != NULL) {
+    LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
+    if (body->body != NULL) {
         b2Vec2 force;
         b2Vec2 pos;
         force.x = luaL_checknumber(L, 2);
@@ -351,34 +341,34 @@ static int bdy_ApplyForce(lua_State *L) {
             pos.x = (LTfloat)luaL_checknumber(L, 4);
             pos.y = (LTfloat)luaL_checknumber(L, 5);
         } else {
-            pos = (*body)->GetWorldCenter();
+            pos = body->body->GetWorldCenter();
         }
-        (*body)->ApplyForce(force, pos);
+        body->body->ApplyForce(force, pos);
     }
     return 0;
 }
 
 static int bdy_ApplyTorque(lua_State *L) {
-    b2Body** body = check_body(L, 1);
-    if (*body != NULL) {
-        (*body)->ApplyTorque(luaL_checknumber(L, 2));
+    LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
+    if (body->body != NULL) {
+        body->body->ApplyTorque(luaL_checknumber(L, 2));
     }
     return 0;
 }
 
 static int bdy_GetAngle(lua_State *L) {
-    b2Body** body = check_body(L, 1);
-    if (*body != NULL) {
-        lua_pushnumber(L, (*body)->GetAngle());
+    LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
+    if (body->body != NULL) {
+        lua_pushnumber(L, body->body->GetAngle());
         return 1;
     }
     return 0;
 }
 
 static int bdy_GetPosition(lua_State *L) {
-    b2Body** body = check_body(L, 1);
-    if (*body != NULL) {
-        b2Vec2 pos = (*body)->GetPosition();
+    LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
+    if (body->body != NULL) {
+        b2Vec2 pos = body->body->GetPosition();
         lua_pushnumber(L, pos.x);
         lua_pushnumber(L, pos.y);
         return 2;
@@ -386,21 +376,10 @@ static int bdy_GetPosition(lua_State *L) {
     return 0;
 }
 
-// XXX This doesn't currently work.
-/*
-static int bdy_SetAngle(lua_State *L) {
-    b2Body** body = check_body(L, 1);
-    if (*body != NULL) {
-        (*body)->SetTransform((*body)->GetPosition(), luaL_checknumber(L, 2));
-    }
-    return 0;
-}
-*/
-
 static int bdy_AddRect(lua_State *L) {
     int num_args = lua_gettop(L);
-    b2Body** body = check_body(L, 1);
-    if (*body != NULL) {
+    LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
+    if (body->body != NULL) {
         LTfloat x1 = (LTfloat)luaL_checknumber(L, 2);
         LTfloat y1 = (LTfloat)luaL_checknumber(L, 3);
         LTfloat x2 = (LTfloat)luaL_checknumber(L, 4);
@@ -420,19 +399,19 @@ static int bdy_AddRect(lua_State *L) {
         poly.m_normals[2].Set(0.0f, 1.0f);
         poly.m_normals[3].Set(-1.0f, 0.0f);
         poly.m_centroid.Set(x1 + ((x2 - x1) * 0.5f), y1 + ((y2 - y1) * 0.5f));
-        (*body)->CreateFixture(&poly, density);
+        body->body->CreateFixture(&poly, density);
     }
     return 0;
 }
 
 static int bdy_DrawShapes(lua_State *L) {
-    b2Body** body = check_body(L, 1);
-    if (*body != NULL) {
+    LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
+    if (body->body != NULL) {
         ltPushMatrix();
-        b2Vec2 pos = (*body)->GetPosition();
+        b2Vec2 pos = body->body->GetPosition();
         ltTranslate(pos.x, pos.y, 0.0f);
-        ltRotate((*body)->GetAngle() * LT_DEGREES_PER_RADIAN, 0.0f, 0.0f, 1.0f);
-        b2Fixture *fixture = (*body)->GetFixtureList();
+        ltRotate(body->body->GetAngle() * LT_DEGREES_PER_RADIAN, 0.0f, 0.0f, 1.0f);
+        b2Fixture *fixture = body->body->GetFixtureList();
         while (fixture != NULL) {
             b2Shape *shape = fixture->GetShape();
             switch (shape->m_type) {
@@ -455,91 +434,58 @@ static int bdy_DrawShapes(lua_State *L) {
     return 0;
 }
 
-static void push_body(lua_State *L, b2World *world, b2BodyDef *def) {
-    b2Body **ud = (b2Body **)lua_newuserdata(L, sizeof(b2Body *));
-    b2Body *body = world->CreateBody(def);
-    *ud = body;
-    if (luaL_newmetatable(L, "bdy")) {
-        lua_newtable(L);
-            lua_pushcfunction(L, bdy_Destroy);
-            lua_setfield(L, -2, "Destroy");
-            lua_pushcfunction(L, bdy_IsDestroyed);
-            lua_setfield(L, -2, "IsDestroyed");
+static const luaL_Reg body_methods[] = {
+    {"Destroy",             bdy_Destroy},
+    {"IsDestroyed",         bdy_IsDestroyed},
+    {"ApplyForce",          bdy_ApplyForce},
+    {"ApplyTorque",         bdy_ApplyTorque},
+    {"GetAngle",            bdy_GetAngle},
+    {"GetPosition",         bdy_GetPosition},
+    {"AddRect",             bdy_AddRect},
+    {"DrawShapes",          bdy_DrawShapes},
 
-            lua_pushcfunction(L, bdy_ApplyForce);
-            lua_setfield(L, -2, "ApplyForce");
-            lua_pushcfunction(L, bdy_ApplyTorque);
-            lua_setfield(L, -2, "ApplyTorque");
-
-            lua_pushcfunction(L, bdy_GetAngle);
-            lua_setfield(L, -2, "GetAngle");
-            lua_pushcfunction(L, bdy_GetPosition);
-            lua_setfield(L, -2, "GetPosition");
-
-            lua_pushcfunction(L, bdy_AddRect);
-            lua_setfield(L, -2, "AddRect");
-            lua_pushcfunction(L, bdy_DrawShapes);
-            lua_setfield(L, -2, "DrawShapes");
-        lua_setfield(L, -2, "__index");
-    }
-    lua_setmetatable(L, -2);
-}
+    {NULL, NULL}
+};
 
 static int wld_StaticBody(lua_State *L) {
-    b2World **world = (b2World**)luaL_checkudata(L, 1, "wld");
-    if (*world != NULL) {
-        b2BodyDef def;
-        def.type = b2_staticBody;
-        push_body(L, *world, &def);
-        return 1;
-    }
-    return 0;
+    LTWorld *world = (LTWorld*)get_object(L, 1, LT_TYPE_WORLD);
+    b2BodyDef def;
+    def.type = b2_staticBody;
+    LTBody *body = new LTBody(world, &def);
+    push_object(L, body, body_methods);
+    return 1;
 }
 
 static int wld_DynamicBody(lua_State *L) {
     int num_args = lua_gettop(L);
-    b2World **world = (b2World**)luaL_checkudata(L, 1, "wld");
-    if (*world != NULL) {
-        LTfloat x = (LTfloat)luaL_checknumber(L, 2);
-        LTfloat y = (LTfloat)luaL_checknumber(L, 3);
-        LTfloat angle = 0.0f;
-        if (num_args > 3) {
-            angle = (LTfloat)luaL_checknumber(L, 4);
-        }
-        b2BodyDef def;
-        def.type = b2_dynamicBody;
-        def.position.Set(x, y);
-        def.angle = angle;
-        push_body(L, *world, &def);
-        return 1;
-    } else {
-        return 0;
+    LTWorld *world = (LTWorld*)get_object(L, 1, LT_TYPE_WORLD);
+    LTfloat x = (LTfloat)luaL_checknumber(L, 2);
+    LTfloat y = (LTfloat)luaL_checknumber(L, 3);
+    LTfloat angle = 0.0f;
+    if (num_args > 3) {
+        angle = (LTfloat)luaL_checknumber(L, 4);
     }
+    b2BodyDef def;
+    def.type = b2_dynamicBody;
+    def.position.Set(x, y);
+    def.angle = angle;
+    LTBody *body = new LTBody(world, &def);
+    push_object(L, body, body_methods);
+    return 1;
 }
 
-static void push_world(lua_State *L, b2World *world) {
-    b2World **ud = (b2World **)lua_newuserdata(L, sizeof(b2World *));
-    *ud = world;
-    if (luaL_newmetatable(L, "wld")) {
-        lua_newtable(L);
-            //lua_pushcfunction(L, wld_Clear);
-            //lua_setfield(L, -2, "Clear");
-            lua_pushcfunction(L, wld_Step);
-            lua_setfield(L, -2, "Step");
-            lua_pushcfunction(L, wld_SetGravity);
-            lua_setfield(L, -2, "SetGravity");
-            lua_pushcfunction(L, wld_StaticBody);
-            lua_setfield(L, -2, "StaticBody");
-            lua_pushcfunction(L, wld_DynamicBody);
-            lua_setfield(L, -2, "DynamicBody");
-        lua_setfield(L, -2, "__index");
-    }
-    lua_setmetatable(L, -2);
-}
+static const luaL_Reg world_methods[] = {
+    {"Step",             wld_Step},
+    {"SetGravity",       wld_SetGravity},
+    {"StaticBody",       wld_StaticBody},
+    {"DynamicBody",      wld_DynamicBody},
+
+    {NULL, NULL}
+};
 
 static int lt_World(lua_State *L) {
-    b2World *world = new b2World(b2Vec2(0.0f, -10.0f), true);
-    push_world(L, world);
+    LTWorld *world = new LTWorld(b2Vec2(0.0f, -10.0f), true);
+    push_object(L, world, world_methods);
     return 1;
 }
 

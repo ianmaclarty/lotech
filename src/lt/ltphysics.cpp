@@ -39,7 +39,9 @@ void LTBody::release() {
 }
 
 void LTBody::destroy() {
-    world->world->DestroyBody(body);
-    body = NULL;
-    LTObject::release(); // Release reference in body user data.
+    if (body != NULL) { // NULL means the body was already destroyed.
+        world->world->DestroyBody(body);
+        body = NULL;
+        LTObject::release(); // Release reference in body user data.
+    }
 }
