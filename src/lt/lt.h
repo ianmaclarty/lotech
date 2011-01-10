@@ -8,6 +8,7 @@
 #include "ltharness.h"
 #include "ltinput.h"
 #include "ltlua.h"
+#include "ltphysics.h"
 #include "ltrandom.h"
 #include "ltscene.h"
 #include "lttween.h"

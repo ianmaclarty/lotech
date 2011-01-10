@@ -402,6 +402,14 @@ static int bdy_GetAngle(lua_State *L) {
     return 0;
 }
 
+static int bdy_SetAngle(lua_State *L) {
+    LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
+    if (body->body != NULL) {
+        body->body->SetTransform(body->body->GetPosition(), luaL_checknumber(L, 2) * LT_RADIANS_PER_DEGREE);
+    }
+    return 0;
+}
+
 static int bdy_GetPosition(lua_State *L) {
     LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
     if (body->body != NULL) {
@@ -477,6 +485,7 @@ static const luaL_Reg body_methods[] = {
     {"ApplyForce",          bdy_ApplyForce},
     {"ApplyTorque",         bdy_ApplyTorque},
     {"GetAngle",            bdy_GetAngle},
+    {"SetAngle",            bdy_SetAngle},
     {"GetPosition",         bdy_GetPosition},
     {"AddRect",             bdy_AddRect},
     {"DrawShapes",          bdy_DrawShapes},

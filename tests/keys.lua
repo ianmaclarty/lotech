@@ -3,7 +3,7 @@ dofile("../src/ltlua/lt.lua")
 lt.SetViewPort(-10, -10, 10, 10)
 
 local w = lt.World()
-w:SetGravity(0, 0)
+w:SetGravity(0, -10)
 local s = w:StaticBody()
 s:AddRect(-10, -10, 10, -9)
 s:AddRect(-10, 9, 10, 10)
@@ -25,12 +25,14 @@ end
 function lt.Advance()
     local angle = b:GetAngle()
     if keys.left then
-        b:ApplyTorque(-200.1)
+        --b:ApplyTorque(-20.1)
+        b:SetAngle(angle + 1.5)
     elseif keys.right then
-        b:ApplyTorque(200.1)
+        --b:ApplyTorque(20.1)
+        b:SetAngle(angle - 1.5)
     end
     if keys.up then
-        b:ApplyForce(math.sin(angle) * 100, math.cos(angle) * 100)
+        b:ApplyForce(sin(-angle) * 400, cos(-angle) * 400)
     end
 
     w:Step(lt.secs_per_frame)
