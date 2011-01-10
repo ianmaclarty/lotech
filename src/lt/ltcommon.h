@@ -45,8 +45,8 @@ struct LTObject {
     LTObject(LTType type);
     virtual ~LTObject();
 
-    void retain();
-    void release();
+    virtual void retain();
+    virtual void release();
 
     // For tweening.
     virtual LTfloat* field_ptr(const char *field_name);

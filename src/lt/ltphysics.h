@@ -15,10 +15,16 @@ struct LTWorld : LTObject {
 
 struct LTBody : LTObject {
     b2Body *body; // May be null if the body is destroyed.
+    LTWorld *world;
 
     // Userdata is always a pointer to the LTBody object, so
     // don't pass it in the body def.
-    LTBody(LTWorld *world, const b2BodyDef def);
+    LTBody(LTWorld *world, const b2BodyDef *def);
+
+    virtual void retain();
+    virtual void release();
+
+    void destroy();
 };
 
 #endif
