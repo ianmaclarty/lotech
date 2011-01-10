@@ -194,6 +194,43 @@ static int lt_DrawEllipse(lua_State *L) {
     return 0;
 }
 
+/************************* Props **************************/
+
+static int prop_draw(lua_State *L) {
+    LTProp *prop = (LTProp*)get_object(L, 1, LT_TYPE_PROP);
+    prop->draw();
+    return 0;
+}
+
+static int scene_insert(lua_State *L) {
+    LTScene *scene = (LTScene*)get_object(L, 1, LT_TYPE_SCENE);
+    LTProp *prop = (LTProp*)get_object(L, 2, LT_TYPE_PROP);
+    LTfloat depth = luaL_checknumber(L, 3);
+    scene->insert(prop, depth);
+    return 0;
+}
+
+static int scene_remove(lua_State *L) {
+    LTScene *scene = (LTScene*)get_object(L, 1, LT_TYPE_SCENE);
+    LTProp *prop = (LTProp*)get_object(L, 2, LT_TYPE_PROP);
+    scene->remove(prop);
+    return 0;
+}
+
+static const luaL_Reg scene_methods[] = {
+    {"Draw",            prop_draw},
+    {"Insert",          scene_insert},
+    {"Remove",          scene_remove},
+
+    {NULL, NULL}
+};
+
+static int lt_Scene(lua_State *L) {
+    LTScene *scene = new LTScene();
+    push_object(L, scene, scene_methods);
+    return 1;
+}
+
 /************************* Images **************************/
 
 static int img_Draw(lua_State *L) {
@@ -503,6 +540,8 @@ static const luaL_Reg ltlib[] = {
     {"DrawUnitCircle",          lt_DrawUnitCircle},
     {"DrawRect",                lt_DrawRect},
     {"DrawEllipse",             lt_DrawEllipse},
+
+    {"Scene",                   lt_Scene},
 
     {"LoadImages",              lt_LoadImages},
 

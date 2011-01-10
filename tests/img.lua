@@ -1,7 +1,7 @@
 dofile("../src/ltlua/lt.lua")
 
 local scene = lt.Scene()
-local tweens = lt.TweenSet()
+local curr_img;
 
 lt.SetViewPort(-10, -10, 10, 10)
 
@@ -583,6 +583,9 @@ end
 
 local i = 1
 
+curr_img = imgs[i]
+scene:Insert(curr_img, 1)
+
 function lt.KeyDown(key)
     if key == "right" then
         i = i + 1
@@ -594,6 +597,9 @@ function lt.KeyDown(key)
     elseif i < 1 then
         i = n
     end
+    scene:Remove(curr_img)
+    curr_img = imgs[i]
+    scene:Insert(curr_img, 1)
 end
 
 function lt.Advance()
@@ -604,5 +610,5 @@ function lt.Render()
     lt.SetColor(0.5, 0.5, 0.5)
     lt.DrawRect(-10, -10, 10, 10)
     lt.SetColor(1, 1, 1)
-    imgs[i]:Draw()
+    scene:Draw()
 end
