@@ -24,15 +24,15 @@ end
 
 function lt.Advance()
     local angle = b:GetAngle()
-    if keys.left then
-        --b:ApplyTorque(-20.1)
-        b:SetAngle(angle + 1.5)
-    elseif keys.right then
-        --b:ApplyTorque(20.1)
-        b:SetAngle(angle - 1.5)
-    end
     if keys.up then
         b:ApplyForce(sin(-angle) * 400, cos(-angle) * 400)
+    end
+    if keys.left then
+        b:SetAngularVelocity(90)
+    elseif keys.right then
+        b:SetAngularVelocity(-90)
+    else
+        b:SetAngularVelocity(0)
     end
 
     w:Step(lt.secs_per_frame)

@@ -421,6 +421,14 @@ static int bdy_GetPosition(lua_State *L) {
     return 0;
 }
 
+static int bdy_SetAngularVelocity(lua_State *L) {
+    LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
+    if (body->body != NULL) {
+        body->body->SetAngularVelocity(luaL_checknumber(L, 2) * LT_RADIANS_PER_DEGREE);
+    }
+    return 0;
+}
+
 static int bdy_AddRect(lua_State *L) {
     int num_args = lua_gettop(L);
     LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
@@ -489,6 +497,7 @@ static const luaL_Reg body_methods[] = {
     {"GetPosition",         bdy_GetPosition},
     {"AddRect",             bdy_AddRect},
     {"DrawShapes",          bdy_DrawShapes},
+    {"SetAngularVelocity",  bdy_SetAngularVelocity},
 
     {NULL, NULL}
 };
