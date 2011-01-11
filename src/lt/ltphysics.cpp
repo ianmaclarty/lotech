@@ -11,8 +11,15 @@ LTWorld::~LTWorld() {
     // Release all body wrappers.
     while (b != NULL) {
         LTBody *ud = (LTBody*)b->GetUserData();
+        ud->world = NULL;
         ud->body = NULL;
-        ud->release();
+        // Don't call ud->release(), because that might cause this
+        // LTWorld to be freed, resulting in infinite recursion to
+        // ~LTWorld().
+        ud->ref_count--;
+        if (ud->ref_count <= 0) {
+            delete ud;
+        }
         b = b->GetNext();
     }
     delete world;
@@ -30,11 +37,15 @@ LTBody::LTBody(LTWorld *world, const b2BodyDef *def) : LTProp(LT_TYPE_BODY) {
 // references directly to it, but there are external references
 // to bodies in the world.
 void LTBody::retain() {
-    world->retain();
+    if (world != NULL) {
+        world->retain();
+    }
     LTObject::retain();
 }
 void LTBody::release() {
-    world->release();
+    if (world != NULL) {
+        world->release();
+    }
     LTObject::release();
 }
 
