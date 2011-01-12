@@ -127,6 +127,16 @@ struct LTScene : LTProp {
     virtual void draw();
 };
 
+struct LTLine : LTProp {
+    LTfloat x1, y1, x2, y2;
+
+    LTLine(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2);
+    
+    virtual void draw();
+
+    virtual LTfloat* field_ptr(const char *field_name);
+};
+
 //---------------------------------------------------------------------
 // Images.
 

@@ -334,6 +334,36 @@ void LTScene::draw() {
     }
 }
 
+LTLine::LTLine(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2) : LTProp(LT_TYPE_LINE) {
+    LTLine::x1 = x1;
+    LTLine::y1 = y1;
+    LTLine::x2 = x2;
+    LTLine::y2 = y2;
+}
+
+void LTLine::draw() {
+    ltDisableTextures();
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glVertexPointer(2, GL_FLOAT, 0, &x1);
+    glDrawArrays(GL_LINE_STRIP, 0, 2);
+}
+
+LTfloat* LTLine::field_ptr(const char *field_name) {
+    if (strcmp(field_name, "x1") == 0) {
+        return &x1;
+    }
+    if (strcmp(field_name, "y1") == 0) {
+        return &y1;
+    }
+    if (strcmp(field_name, "x2") == 0) {
+        return &x2;
+    }
+    if (strcmp(field_name, "y2") == 0) {
+        return &y2;
+    }
+    return NULL;
+}
+
 //-----------------------------------------------------------------
 // Images.
 

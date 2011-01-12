@@ -33,6 +33,7 @@ enum LTType {
     LT_TYPE_ATLAS,
     LT_TYPE_WORLD,
     LT_TYPE_BODY,
+    LT_TYPE_LINE,
     LT_NUM_TYPES
 };
 

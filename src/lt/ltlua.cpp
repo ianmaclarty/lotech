@@ -231,6 +231,37 @@ static int lt_Scene(lua_State *L) {
     return 1;
 }
 
+static const luaL_Reg prop_methods[] = {
+    {"Draw",            prop_draw},
+
+    {NULL, NULL}
+};
+
+static int lt_Tinter(lua_State *L) {
+    int num_args = lua_gettop(L);
+    LTProp *target = (LTProp *)get_object(L, 1, LT_TYPE_PROP);
+    LTfloat r = (LTfloat)luaL_checknumber(L, 2);
+    LTfloat g = (LTfloat)luaL_checknumber(L, 3);
+    LTfloat b = (LTfloat)luaL_checknumber(L, 4);
+    LTfloat a = 1.0f;
+    if (num_args > 4) {
+        a = (LTfloat)luaL_checknumber(L, 5);
+    }
+    LTTinter *tinter = new LTTinter(r, g, b, a, target);
+    push_object(L, tinter, prop_methods);
+    return 1;
+}
+
+static int lt_Line(lua_State *L) {
+    LTfloat x1 = (LTfloat)luaL_checknumber(L, 1);
+    LTfloat y1 = (LTfloat)luaL_checknumber(L, 2);
+    LTfloat x2 = (LTfloat)luaL_checknumber(L, 3);
+    LTfloat y2 = (LTfloat)luaL_checknumber(L, 4);
+    LTLine *line = new LTLine(x1, y1, x2, y2);
+    push_object(L, line, prop_methods);
+    return 1;
+}
+
 /************************* Images **************************/
 
 static int img_Draw(lua_State *L) {
@@ -560,6 +591,8 @@ static const luaL_Reg ltlib[] = {
     {"DrawEllipse",             lt_DrawEllipse},
 
     {"Scene",                   lt_Scene},
+    {"Line",                    lt_Line},
+    {"Tinter",                  lt_Tinter},
 
     {"LoadImages",              lt_LoadImages},
 
