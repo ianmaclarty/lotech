@@ -44,6 +44,7 @@ const LTTypeInfo types[] = {
     {"Atlas",       LT_TYPE_OBJECT},
     {"World",       LT_TYPE_OBJECT},
     {"Line",        LT_TYPE_LINE},
+    {"Triangle",    LT_TYPE_TRIANGLE},
     {"Body",        LT_TYPE_PROP},
 };
 

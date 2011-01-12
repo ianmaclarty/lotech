@@ -21,12 +21,12 @@ local scene = lt.Scene()
 -- Draw grid lines
 local grid = lt.Scene()
 for y = bottom, top, grid_gap do
-    grid:Insert(lt.Tinter(lt.Line(left, y, right, y), grey()), 0)
+    grid:Insert(lt.Line(left, y, right, y), 0)
 end
 for x = left, right, grid_gap do
-    grid:Insert(lt.Tinter(lt.Line(x, bottom, x, top), grey()), 0)
+    grid:Insert(lt.Line(x, bottom, x, top), 0)
 end
-scene:Insert(grid, 0)
+scene:Insert(lt.Tinter(grid, grey()), 0)
 
 local function nearest_grid_point(x, y)
     local nx = math.floor(x / grid_gap + 0.5) * grid_gap;
@@ -34,29 +34,47 @@ local function nearest_grid_point(x, y)
     return nx, ny
 end
 
-function lt.MouseMove(x, y)
-    if down and curr_line then
-        scene:Remove(curr_line)
-        x, y = nearest_grid_point(x, y)
-        curr_line = lt.Line(x1, y1, x, y)
-        scene:Insert(curr_line, 1)
+-- Building triangles.
+local next_point = 1
+local points = {}
+local lines = {}
+local build_triangle = {}
+function build_triangle.MouseDown(button, x, y)
+    x, y = nearest_grid_point(x, y)
+    points[next_point] = {x = x, y = y}
+    if next_point < 3 then
+        lines[next_point] = lt.Line(x, y, x, y)
+        scene:Insert(lines[next_point], 1)
+        print("set lines " .. next_point)
+    end
+    if next_point == 3 then
+        next_point = 0
+        local triangle = lt.Triangle(
+            points[1].x, points[1].y,
+            points[2].x, points[2].y,
+            points[3].x, points[3].y)
+        scene:Insert(triangle, 1)
+        points = {}
+        for i, l in ipairs(lines) do
+            scene:Remove(l)
+        end
+        lines = {}
+    end
+    next_point = next_point + 1
+end
+function build_triangle.MouseUp(button, x, y)
+end
+function build_triangle.MouseMove(x, y)
+    x, y = nearest_grid_point(x, y)
+    print("move " .. next_point .. tostring(lines[next_point - 1]))
+    if next_point > 1 and lines[next_point - 1] then
+        lines[next_point - 1]:Set{x2 = x, y2 = y}
     end
 end
 
-function lt.MouseDown(button, x, y)
-    if button == 1 then
-        down = true
-        x1, y1 = nearest_grid_point(x, y)
-        curr_line = lt.Line(x1, y1, x1, y1)
-        scene:Insert(curr_line, 1)
-    end
-end
-
-function lt.MouseUp(button, x, y)
-    if button == 1 then
-        down = false
-    end
-end
+lt.MouseUp = build_triangle.MouseUp
+lt.MouseDown = build_triangle.MouseDown
+lt.MouseMove = build_triangle.MouseMove
 
 function lt.Render()
     scene:Draw()

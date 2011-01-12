@@ -364,6 +364,44 @@ LTfloat* LTLine::field_ptr(const char *field_name) {
     return NULL;
 }
 
+LTTriangle::LTTriangle(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2, LTfloat x3, LTfloat y3) : LTProp(LT_TYPE_TRIANGLE) {
+    LTTriangle::x1 = x1;
+    LTTriangle::y1 = y1;
+    LTTriangle::x2 = x2;
+    LTTriangle::y2 = y2;
+    LTTriangle::x3 = x3;
+    LTTriangle::y3 = y3;
+}
+
+void LTTriangle::draw() {
+    ltDisableTextures();
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glVertexPointer(2, GL_FLOAT, 0, &x1);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 3);
+}
+
+LTfloat* LTTriangle::field_ptr(const char *field_name) {
+    if (strcmp(field_name, "x1") == 0) {
+        return &x1;
+    }
+    if (strcmp(field_name, "y1") == 0) {
+        return &y1;
+    }
+    if (strcmp(field_name, "x2") == 0) {
+        return &x2;
+    }
+    if (strcmp(field_name, "y2") == 0) {
+        return &y2;
+    }
+    if (strcmp(field_name, "x3") == 0) {
+        return &x3;
+    }
+    if (strcmp(field_name, "y3") == 0) {
+        return &y3;
+    }
+    return NULL;
+}
+
 //-----------------------------------------------------------------
 // Images.
 

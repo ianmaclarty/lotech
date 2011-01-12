@@ -34,6 +34,7 @@ enum LTType {
     LT_TYPE_WORLD,
     LT_TYPE_BODY,
     LT_TYPE_LINE,
+    LT_TYPE_TRIANGLE,
     LT_NUM_TYPES
 };
 

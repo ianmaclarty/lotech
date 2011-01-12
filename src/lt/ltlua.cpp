@@ -47,6 +47,50 @@ static int release_object(lua_State *L) {
     return 0;
 }
 
+static int set_object_field(lua_State *L) {
+    const char *fname;
+    LTfloat val;
+    LTObject **ud = (LTObject**)lua_touserdata(L, 1);
+    if (lua_isstring(L, 2)) {
+        fname = luaL_checkstring(L, 2);
+        val = (LTfloat)luaL_checknumber(L, 3);
+        if (*ud != NULL) {
+            LTfloat *f = (*ud)->field_ptr(fname);
+            if (f != NULL) {
+                *f = val;
+            }
+        }
+    } else {
+        // Allow multiple fields to be set with a table.
+        lua_pushnil(L);
+        while (lua_next(L, 2) != 0) {
+            fname = luaL_checkstring(L, -2);
+            val = (LTfloat)luaL_checknumber(L, -1);
+            if (*ud != NULL) {
+                LTfloat *f = (*ud)->field_ptr(fname);
+                if (f != NULL) {
+                    *f = val;
+                }
+            }
+            lua_pop(L, 1);
+        }
+    }
+    return 0;
+}
+
+static int get_object_field(lua_State *L) {
+    LTObject **ud = (LTObject**)lua_touserdata(L, 1);
+    const char *fname = luaL_checkstring(L, 2);
+    if (*ud != NULL) {
+        LTfloat *f = (*ud)->field_ptr(fname);
+        if (f != NULL) {
+            lua_pushnumber(L, *f);
+            return 1;
+        }
+    }
+    return 0;
+}
+
 static void push_object(lua_State *L, LTObject *obj, const luaL_Reg *methods) {
     // We use a full userdata so we can get Lua GC finalize events.
     LTObject **ud = (LTObject **)lua_newuserdata(L, sizeof(LTObject *));
@@ -60,6 +104,12 @@ static void push_object(lua_State *L, LTObject *obj, const luaL_Reg *methods) {
                 // manually free them.
                 lua_pushcfunction(L, release_object);
                 lua_setfield(L, -2, "Release");
+
+                // Field access functions.
+                lua_pushcfunction(L, get_object_field);
+                lua_setfield(L, -2, "Get");
+                lua_pushcfunction(L, set_object_field);
+                lua_setfield(L, -2, "Set");
 
                 luaL_register(L, NULL, methods);
             lua_setfield(L, -2, "__index");
@@ -259,6 +309,18 @@ static int lt_Line(lua_State *L) {
     LTfloat y2 = (LTfloat)luaL_checknumber(L, 4);
     LTLine *line = new LTLine(x1, y1, x2, y2);
     push_object(L, line, prop_methods);
+    return 1;
+}
+
+static int lt_Triangle(lua_State *L) {
+    LTfloat x1 = (LTfloat)luaL_checknumber(L, 1);
+    LTfloat y1 = (LTfloat)luaL_checknumber(L, 2);
+    LTfloat x2 = (LTfloat)luaL_checknumber(L, 3);
+    LTfloat y2 = (LTfloat)luaL_checknumber(L, 4);
+    LTfloat x3 = (LTfloat)luaL_checknumber(L, 5);
+    LTfloat y3 = (LTfloat)luaL_checknumber(L, 6);
+    LTTriangle *triangle = new LTTriangle(x1, y1, x2, y2, x3, y3);
+    push_object(L, triangle, prop_methods);
     return 1;
 }
 
@@ -592,6 +654,7 @@ static const luaL_Reg ltlib[] = {
 
     {"Scene",                   lt_Scene},
     {"Line",                    lt_Line},
+    {"Triangle",                lt_Triangle},
     {"Tinter",                  lt_Tinter},
 
     {"LoadImages",              lt_LoadImages},
