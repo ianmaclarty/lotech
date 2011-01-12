@@ -550,6 +550,41 @@ static int bdy_AddRect(lua_State *L) {
     return 0;
 }
 
+static int bdy_AddTriangle(lua_State *L) {
+    int num_args = lua_gettop(L);
+    LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
+    if (body->body != NULL) {
+        LTfloat x1 = (LTfloat)luaL_checknumber(L, 2);
+        LTfloat y1 = (LTfloat)luaL_checknumber(L, 3);
+        LTfloat x2 = (LTfloat)luaL_checknumber(L, 4);
+        LTfloat y2 = (LTfloat)luaL_checknumber(L, 5);
+        LTfloat x3 = (LTfloat)luaL_checknumber(L, 6);
+        LTfloat y3 = (LTfloat)luaL_checknumber(L, 7);
+        LTfloat density = 0.0f;
+        if (num_args > 5) {
+            density = (LTfloat)luaL_checknumber(L, 6);
+        }
+        b2PolygonShape poly;
+        b2Vec2 vertices[3];
+        vertices[0].Set(x1, y1);
+        vertices[1].Set(x2, y2);
+        vertices[2].Set(x3, y3);
+        if (!ltCheckB2Poly(vertices, 3)) {
+            vertices[2] = vertices[0];
+            vertices[0].Set(x3, y3);
+            if (!ltCheckB2Poly(vertices, 3)) {
+                lua_pushboolean(L, 0);
+                return 1;
+            }
+        }
+        poly.Set(vertices, 3);
+        body->body->CreateFixture(&poly, density);
+        lua_pushboolean(L, 1);
+        return 1;
+    }
+    return 0;
+}
+
 static int bdy_DrawShapes(lua_State *L) {
     LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
     if (body->body != NULL) {
@@ -589,6 +624,7 @@ static const luaL_Reg body_methods[] = {
     {"SetAngle",            bdy_SetAngle},
     {"GetPosition",         bdy_GetPosition},
     {"AddRect",             bdy_AddRect},
+    {"AddTriangle",         bdy_AddTriangle},
     {"DrawShapes",          bdy_DrawShapes},
     {"SetAngularVelocity",  bdy_SetAngularVelocity},
 

@@ -89,3 +89,39 @@ void LTBody::draw() {
         ltPopMatrix();
     }
 }
+
+bool ltCheckB2Poly(const b2Vec2* vs, int32 count) {
+    // This code copied from Box2D (b2PolygonShape.cpp, ComputeCentroid).
+
+    if (count < 2) {
+        return false;
+    }
+    if (count == 2) {
+        return true;
+    }
+
+    b2Vec2 c;
+    c.Set(0.0f, 0.0f);
+    float32 area = 0.0f;
+    b2Vec2 pRef(0.0f, 0.0f);
+
+    const float32 inv3 = 1.0f / 3.0f;
+
+    for (int32 i = 0; i < count; ++i) {
+        b2Vec2 p1 = pRef;
+        b2Vec2 p2 = vs[i];
+        b2Vec2 p3 = i + 1 < count ? vs[i+1] : vs[0];
+
+        b2Vec2 e1 = p2 - p1;
+        b2Vec2 e2 = p3 - p1;
+
+        float32 D = b2Cross(e1, e2);
+
+        float32 triangleArea = 0.5f * D;
+        area += triangleArea;
+
+        c += triangleArea * inv3 * (p1 + p2 + p3);
+    }
+
+    return area > b2_epsilon;
+}

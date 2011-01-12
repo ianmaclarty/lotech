@@ -30,4 +30,8 @@ struct LTBody : LTProp {
     virtual void draw();
 };
 
+// Check if Box2D will allow the polygon to be attached to a body
+// without an assertion failure.
+bool ltCheckB2Poly(const b2Vec2* vs, int32 count);
+
 #endif

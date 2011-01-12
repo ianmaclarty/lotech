@@ -18,6 +18,42 @@ end
 
 local scene = lt.Scene()
 
+local world = lt.World()
+world:SetGravity(0, -10)
+local static = world:StaticBody()
+static:AddRect(left, bottom, right, bottom + 0.5)
+static:AddRect(left, top - 0.5, right, top)
+static:AddRect(left, bottom, left + 0.5, top)
+static:AddRect(right - 0.5, bottom, right, top)
+
+local body = world:DynamicBody(0, 0, 0)
+body:AddTriangle(-0.5, -0.8, 0.5, -0.8, 0, 0.8, 50)
+local keys = {}
+
+function lt.KeyDown(key)
+    keys[key] = true
+end
+
+function lt.KeyUp(key)
+    keys[key] = false
+end
+
+function lt.Advance()
+    local angle = body:GetAngle()
+    if keys.up then
+        body:ApplyForce(sin(-angle) * 30, cos(-angle) * 30)
+    end
+    if keys.left then
+        body:SetAngularVelocity(130)
+    elseif keys.right then
+        body:SetAngularVelocity(-130)
+    else
+        body:SetAngularVelocity(0)
+    end
+
+    world:Step(lt.secs_per_frame)
+end
+
 -- Draw grid lines
 local grid = lt.Scene()
 for y = bottom, top, grid_gap do
@@ -45,15 +81,13 @@ function build_triangle.MouseDown(button, x, y)
     if next_point < 3 then
         lines[next_point] = lt.Line(x, y, x, y)
         scene:Insert(lines[next_point], 1)
-        print("set lines " .. next_point)
     end
     if next_point == 3 then
         next_point = 0
-        local triangle = lt.Triangle(
+        static:AddTriangle(
             points[1].x, points[1].y,
             points[2].x, points[2].y,
-            points[3].x, points[3].y)
-        scene:Insert(triangle, 1)
+            points[3].x, points[3].y);
         points = {}
         for i, l in ipairs(lines) do
             scene:Remove(l)
@@ -66,7 +100,6 @@ function build_triangle.MouseUp(button, x, y)
 end
 function build_triangle.MouseMove(x, y)
     x, y = nearest_grid_point(x, y)
-    print("move " .. next_point .. tostring(lines[next_point - 1]))
     if next_point > 1 and lines[next_point - 1] then
         lines[next_point - 1]:Set{x2 = x, y2 = y}
     end
@@ -78,4 +111,8 @@ lt.MouseMove = build_triangle.MouseMove
 
 function lt.Render()
     scene:Draw()
+    lt.SetColor(1, 0, 0)
+    body:DrawShapes()
+    lt.SetColor(0, 0, 1)
+    static:DrawShapes()
 end
