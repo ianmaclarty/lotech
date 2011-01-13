@@ -561,8 +561,8 @@ static int bdy_AddTriangle(lua_State *L) {
         LTfloat x3 = (LTfloat)luaL_checknumber(L, 6);
         LTfloat y3 = (LTfloat)luaL_checknumber(L, 7);
         LTfloat density = 0.0f;
-        if (num_args > 5) {
-            density = (LTfloat)luaL_checknumber(L, 6);
+        if (num_args > 7) {
+            density = (LTfloat)luaL_checknumber(L, 8);
         }
         b2PolygonShape poly;
         b2Vec2 vertices[3];

@@ -20,6 +20,7 @@ local scene = lt.Scene()
 
 local world = lt.World()
 world:SetGravity(0, -10)
+
 local static = world:StaticBody()
 static:AddRect(left, bottom, right, bottom + 0.5)
 static:AddRect(left, top - 0.5, right, top)
@@ -27,28 +28,31 @@ static:AddRect(left, bottom, left + 0.5, top)
 static:AddRect(right - 0.5, bottom, right, top)
 
 local body = world:DynamicBody(0, 0, 0)
-body:AddTriangle(-0.5, -0.8, 0.5, -0.8, 0, 0.8, 50)
+body:AddTriangle(-0.5, -0.8, 0.5, -0.8, 0, 0.8, 1)
+--body:AddRect(-0.5, -0.8, 0.5, 0.8, 1)
+
 local keys = {}
 
 function lt.KeyDown(key)
     keys[key] = true
+    if key == "left" then
+        body:SetAngularVelocity(130)
+    elseif key == "right" then
+        body:SetAngularVelocity(-130)
+    end
 end
 
 function lt.KeyUp(key)
     keys[key] = false
+    if key == "left" or key == "right" then
+        body:SetAngularVelocity(0)
+    end
 end
 
 function lt.Advance()
     local angle = body:GetAngle()
     if keys.up then
         body:ApplyForce(sin(-angle) * 30, cos(-angle) * 30)
-    end
-    if keys.left then
-        body:SetAngularVelocity(130)
-    elseif keys.right then
-        body:SetAngularVelocity(-130)
-    else
-        body:SetAngularVelocity(0)
     end
 
     world:Step(lt.secs_per_frame)
