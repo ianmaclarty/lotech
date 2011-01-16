@@ -33,6 +33,7 @@ enum LTType {
     LT_TYPE_ATLAS,
     LT_TYPE_WORLD,
     LT_TYPE_BODY,
+    LT_TYPE_FIXTURE,
     LT_TYPE_LINE,
     LT_TYPE_TRIANGLE,
     LT_NUM_TYPES
@@ -58,5 +59,18 @@ struct LTObject {
 
     const char* typeName();
 };
+
+inline void ltRetain(LTObject *o) {
+    o->ref_count++;
+    //ltLog("RC+ %p (%s): %d", o, ltTypeName(o->type), o->ref_count);
+}
+
+inline void ltRelease(LTObject *o) {
+    o->ref_count--;
+    //ltLog("RC- %p (%s): %d", o, ltTypeName(o->type), o->ref_count);
+    if (o->ref_count <= 0) {
+        delete o;
+    }
+}
 
 #endif

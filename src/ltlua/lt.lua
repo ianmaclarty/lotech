@@ -16,6 +16,11 @@ function cos(x)
     return cos_func__(x * rads_per_deg__)
 end
 
+-- Logging to stderr.
+function log(msg)
+    io.stderr:write(msg .. "\n")
+end
+
 local dir = "../src/ltlua/"
 dofile(dir .. "ltanimation.lua")
 dofile(dir .. "ltgraphics.lua")

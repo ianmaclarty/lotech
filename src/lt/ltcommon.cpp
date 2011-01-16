@@ -43,9 +43,10 @@ const LTTypeInfo types[] = {
     {"Image",       LT_TYPE_PROP},  
     {"Atlas",       LT_TYPE_OBJECT},
     {"World",       LT_TYPE_OBJECT},
-    {"Line",        LT_TYPE_LINE},
-    {"Triangle",    LT_TYPE_TRIANGLE},
     {"Body",        LT_TYPE_PROP},
+    {"Fixture",     LT_TYPE_PROP},
+    {"Line",        LT_TYPE_PROP},
+    {"Triangle",    LT_TYPE_PROP},
 };
 
 ct_assert(sizeof(types) == (int)LT_NUM_TYPES * sizeof(LTTypeInfo));
@@ -63,14 +64,11 @@ LTObject::~LTObject() {
 }
 
 void LTObject::retain() {
-    ref_count++;
+    ltRetain(this);
 }
 
 void LTObject::release() {
-    ref_count--;
-    if (ref_count <= 0) {
-        delete this;
-    }
+    ltRelease(this);
 }
 
 LTfloat* LTObject::field_ptr(const char *field_name) {

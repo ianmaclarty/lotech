@@ -39,8 +39,10 @@ function lt.Advance()
 end
 
 function lt.Render()
-    lt.SetColor(1, 0, 0)
-    b:DrawShapes()
-    lt.SetColor(0, 0, 1)
-    s:DrawShapes()
+    lt.PushTint(1, 0, 0)
+    b:Draw()
+    lt.PopTint()
+    lt.PushTint(0, 0, 1)
+    s:Draw()
+    lt.PopTint()
 end

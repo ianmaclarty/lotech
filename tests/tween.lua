@@ -33,12 +33,15 @@ function rect(x, y)
 end
 
 function lt.Render()
-    lt.SetColor(0, 1, 0)
+    lt.PushTint(0, 1, 0)
     lt.DrawRect(5.5, -10, 6, 10)
-    lt.SetColor(0, 0, 1)
+    lt.PopTint()
+    lt.PushTint(0, 0, 1)
     lt.DrawRect(-6, -10, -5.5, 10)
-    lt.SetColor(1, 0, 0)
+    lt.PopTint()
+    lt.PushTint(1, 0, 0)
     for i = 1, 9 do
         rect(xs[i], -(i * 1.8) + 9)
     end
+    lt.PopTint()
 end

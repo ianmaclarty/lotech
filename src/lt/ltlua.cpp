@@ -28,6 +28,9 @@ static LTfloat g_viewport_y2 = 10.0f;
 
 static LTObject* get_object(lua_State *L, int index, LTType type) {
     LTObject **ud = (LTObject**)lua_touserdata(L, index);
+    if (ud == NULL) {
+        luaL_typerror(L, index, ltTypeName(type));
+    }
     if (*ud == NULL) {
         luaL_error(L, "Userdata is NULL.");
     }
@@ -133,7 +136,7 @@ static int lt_SetViewPort(lua_State *L) {
     return 0;
 }
 
-static int lt_SetColor(lua_State *L) {
+static int lt_PushTint(lua_State *L) {
     int num_args = lua_gettop(L);
     LTfloat r = (LTfloat)luaL_checknumber(L, 1);
     LTfloat g = (LTfloat)luaL_checknumber(L, 2);
@@ -144,7 +147,12 @@ static int lt_SetColor(lua_State *L) {
     } else {
         a = 1.0f;
     }
-    ltSetColor(r, g, b, a);
+    ltPushTint(r, g, b, a);
+    return 0;
+}
+
+static int lt_PopTint(lua_State *L) {
+    ltPopTint();
     return 0;
 }
 
@@ -246,13 +254,13 @@ static int lt_DrawEllipse(lua_State *L) {
 
 /************************* Props **************************/
 
-static int prop_draw(lua_State *L) {
+static int prop_Draw(lua_State *L) {
     LTProp *prop = (LTProp*)get_object(L, 1, LT_TYPE_PROP);
     prop->draw();
     return 0;
 }
 
-static int scene_insert(lua_State *L) {
+static int scene_Insert(lua_State *L) {
     LTScene *scene = (LTScene*)get_object(L, 1, LT_TYPE_SCENE);
     LTProp *prop = (LTProp*)get_object(L, 2, LT_TYPE_PROP);
     LTfloat depth = luaL_checknumber(L, 3);
@@ -260,7 +268,7 @@ static int scene_insert(lua_State *L) {
     return 0;
 }
 
-static int scene_remove(lua_State *L) {
+static int scene_Remove(lua_State *L) {
     LTScene *scene = (LTScene*)get_object(L, 1, LT_TYPE_SCENE);
     LTProp *prop = (LTProp*)get_object(L, 2, LT_TYPE_PROP);
     scene->remove(prop);
@@ -268,9 +276,9 @@ static int scene_remove(lua_State *L) {
 }
 
 static const luaL_Reg scene_methods[] = {
-    {"Draw",            prop_draw},
-    {"Insert",          scene_insert},
-    {"Remove",          scene_remove},
+    {"Draw",            prop_Draw},
+    {"Insert",          scene_Insert},
+    {"Remove",          scene_Remove},
 
     {NULL, NULL}
 };
@@ -282,7 +290,7 @@ static int lt_Scene(lua_State *L) {
 }
 
 static const luaL_Reg prop_methods[] = {
-    {"Draw",            prop_draw},
+    {"Draw",            prop_Draw},
 
     {NULL, NULL}
 };
@@ -545,7 +553,10 @@ static int bdy_AddRect(lua_State *L) {
         poly.m_normals[2].Set(0.0f, 1.0f);
         poly.m_normals[3].Set(-1.0f, 0.0f);
         poly.m_centroid.Set(x1 + ((x2 - x1) * 0.5f), y1 + ((y2 - y1) * 0.5f));
-        body->body->CreateFixture(&poly, density);
+        b2FixtureDef fixtureDef;
+        fixtureDef.density = density;
+        fixtureDef.shape = &poly;
+        new LTFixture(body, &fixtureDef);
     }
     return 0;
 }
@@ -578,39 +589,12 @@ static int bdy_AddTriangle(lua_State *L) {
             }
         }
         poly.Set(vertices, 3);
-        body->body->CreateFixture(&poly, density);
+        b2FixtureDef fixtureDef;
+        fixtureDef.density = density;
+        fixtureDef.shape = &poly;
+        new LTFixture(body, &fixtureDef);
         lua_pushboolean(L, 1);
         return 1;
-    }
-    return 0;
-}
-
-static int bdy_DrawShapes(lua_State *L) {
-    LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
-    if (body->body != NULL) {
-        ltPushMatrix();
-        b2Vec2 pos = body->body->GetPosition();
-        ltTranslate(pos.x, pos.y, 0.0f);
-        ltRotate(body->body->GetAngle() * LT_DEGREES_PER_RADIAN, 0.0f, 0.0f, 1.0f);
-        b2Fixture *fixture = body->body->GetFixtureList();
-        while (fixture != NULL) {
-            b2Shape *shape = fixture->GetShape();
-            switch (shape->m_type) {
-		case b2Shape::e_unknown:
-                    break;
-		case b2Shape::e_circle:
-                    break;
-                case b2Shape::e_polygon: {
-                    b2PolygonShape *poly = (b2PolygonShape *)shape;
-                    ltDrawPoly((LTfloat *)poly->m_vertices, poly->m_vertexCount);
-                    break;
-                }
-		case b2Shape::e_typeCount:
-                    break;
-            }
-            fixture = fixture->GetNext();
-        }
-        ltPopMatrix();
     }
     return 0;
 }
@@ -625,7 +609,7 @@ static const luaL_Reg body_methods[] = {
     {"GetPosition",         bdy_GetPosition},
     {"AddRect",             bdy_AddRect},
     {"AddTriangle",         bdy_AddTriangle},
-    {"DrawShapes",          bdy_DrawShapes},
+    {"Draw",                prop_Draw},
     {"SetAngularVelocity",  bdy_SetAngularVelocity},
 
     {NULL, NULL}
@@ -677,7 +661,8 @@ static int lt_World(lua_State *L) {
 
 static const luaL_Reg ltlib[] = {
     {"SetViewPort",             lt_SetViewPort},
-    {"SetColor",                lt_SetColor},
+    {"PushTint",                lt_PushTint},
+    {"PopTint",                 lt_PopTint},
     {"Scale",                   lt_Scale},
     {"Translate",               lt_Translate},
     {"Rotate",                  lt_Rotate},

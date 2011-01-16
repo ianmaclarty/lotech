@@ -39,16 +39,18 @@ function lt.MouseUp(button, x, y)
 end
 
 function lt.Render()
-    lt.SetColor(0, 0, 1)
+    lt.PushTint(0, 0, 1)
     for rect in next, rects do
         lt.DrawRect(rect.x1, rect.y1, rect.x2, rect.y2)
     end
+    lt.PopTint()
     if down then
-        lt.SetColor(1, 1, 0)
+        lt.PushTint(1, 1, 0)
     else
-        lt.SetColor(1, 0, 0)
+        lt.PushTint(1, 0, 0)
     end
     if mouse_x and mouse_y then
         lt.DrawRect(mouse_x - 1, mouse_y - 1, mouse_x + 1, mouse_y + 1)
     end
+    lt.PopTint()
 end

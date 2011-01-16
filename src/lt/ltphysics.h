@@ -19,8 +19,24 @@ struct LTBody : LTProp {
     LTWorld *world;
 
     // Userdata is always a pointer to the LTBody object, so
-    // don't pass it in the body def.
+    // leave it null in the body def.
     LTBody(LTWorld *world, const b2BodyDef *def);
+
+    virtual void retain();
+    virtual void release();
+
+    void destroy();
+
+    virtual void draw();
+};
+
+struct LTFixture : LTProp {
+    b2Fixture *fixture; // May be null if the fixture is destroyed.
+    LTBody *body;
+
+    // Userdata is always a pointer to the LTFixture object, so
+    // leave it null in the fixture def. 
+    LTFixture(LTBody *body, const b2FixtureDef *def);
 
     virtual void retain();
     virtual void release();

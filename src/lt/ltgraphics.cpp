@@ -14,10 +14,23 @@
 static bool g_textures_enabled = false;
 static GLuint g_current_bound_texture = 0;
 
-static LTfloat g_red = 1.0f;
-static LTfloat g_green = 1.0f;
-static LTfloat g_blue = 1.0f;
-static LTfloat g_alpha = 1.0f;
+struct LTTint {
+    LTfloat r;
+    LTfloat g;
+    LTfloat b;
+    LTfloat a;
+
+    LTTint() {
+        r = 1.0f;
+        g = 1.0f;
+        b = 1.0f;
+        a = 1.0f;
+    }
+};
+
+#define LT_TINT_STACK_SIZE 128
+static LTTint g_tint_stack[LT_TINT_STACK_SIZE];
+static int g_tint_stack_top = 0;
 
 void ltInitGraphics() {
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -52,8 +65,25 @@ void ltSetViewPort(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2) {
     glMatrixMode(GL_MODELVIEW);
 }
 
-void ltSetColor(LTfloat r, LTfloat g, LTfloat b, LTfloat a) {
-    glColor4f(r, g, b, a);
+void ltPushTint(LTfloat r, LTfloat g, LTfloat b, LTfloat a) {
+    if (g_tint_stack_top < (LT_TINT_STACK_SIZE - 1)) {
+        g_tint_stack_top++;
+        LTTint *top = &g_tint_stack[g_tint_stack_top];
+        *top = *(top - 1);
+        top->r *= r;
+        top->g *= g;
+        top->b *= b;
+        top->a *= a;
+        glColor4f(top->r, top->g, top->b, top->a);
+    }
+}
+
+void ltPopTint() {
+    if (g_tint_stack_top > 0) {
+        g_tint_stack_top--;
+        LTTint *top = &g_tint_stack[g_tint_stack_top];
+        glColor4f(top->r, top->g, top->b, top->a);
+    }
 }
 
 void ltDrawUnitSquare() {
@@ -267,22 +297,9 @@ LTTinter::~LTTinter() {
 }
 
 void LTTinter::draw() {
-    LTfloat r0, g0, b0, a0;
-    r0 = g_red;
-    g0 = g_green;
-    b0 = g_blue;
-    a0 = g_alpha;
-    g_red *= r;
-    g_green *= g;
-    g_blue *= b;
-    g_alpha *= a;
-    ltSetColor(g_red, g_green, g_blue, g_alpha);
+    ltPushTint(r, g, b, a);
     target->draw();
-    g_red = r0;
-    g_green = g0;
-    g_blue = b0;
-    g_alpha = a0;
-    ltSetColor(g_red, g_green, g_blue, g_alpha);
+    ltPopTint();
 }
 
 LTfloat* LTTinter::field_ptr(const char *field_name) {

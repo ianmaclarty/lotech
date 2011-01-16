@@ -607,8 +607,10 @@ end
 
 function lt.Render()
     lt.Scale(20)
-    lt.SetColor(0.5, 0.5, 0.5)
+    lt.PushTint(0.5, 0.5, 0.5)
     lt.DrawRect(-10, -10, 10, 10)
-    lt.SetColor(1, 1, 1)
+    lt.PopTint()
+    lt.PushTint(1, 1, 1)
     scene:Draw()
+    lt.PopTint()
 end

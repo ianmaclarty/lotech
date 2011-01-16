@@ -115,8 +115,10 @@ lt.MouseMove = build_triangle.MouseMove
 
 function lt.Render()
     scene:Draw()
-    lt.SetColor(1, 0, 0)
-    body:DrawShapes()
-    lt.SetColor(0, 0, 1)
-    static:DrawShapes()
+    lt.PushTint(1, 0, 0)
+    body:Draw()
+    lt.PopTint()
+    lt.PushTint(0, 0, 1)
+    static:Draw()
+    lt.PopTint()
 end
