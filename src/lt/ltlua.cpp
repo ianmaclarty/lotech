@@ -431,6 +431,14 @@ static int lt_LoadImages(lua_State *L) {
 
 /************************* Box2D **************************/
 
+static const luaL_Reg fixture_methods[] = {
+    //{"Destroy",             fixture_Destroy},
+    //{"IsDestroyed",         fixture_IsDestroyed},
+    {"Draw",                prop_Draw},
+
+    {NULL, NULL}
+};
+
 static int wld_Step(lua_State *L) {
     int num_args = lua_gettop(L);
     LTWorld *world = (LTWorld*)get_object(L, 1, LT_TYPE_WORLD);
@@ -455,6 +463,59 @@ static int wld_SetGravity(lua_State *L) {
     return 0;
 }
 
+struct AABBQueryCallBack : b2QueryCallback {
+    lua_State *L;
+    int i;
+
+    AABBQueryCallBack(lua_State *L) {
+        AABBQueryCallBack::L = L;
+        i = 1;
+    }
+
+    virtual bool ReportFixture(b2Fixture *fixture) {
+        lua_pushinteger(L, i);
+        LTFixture *f = (LTFixture*)fixture->GetUserData();
+        push_object(L, f, fixture_methods);
+        lua_settable(L, -3);
+        i++;
+        return true;
+    }
+};
+
+static int wld_Query(lua_State *L) {
+    int num_args = lua_gettop(L);
+    LTWorld *world = (LTWorld*)get_object(L, 1, LT_TYPE_WORLD);
+    LTfloat x1 = (LTfloat)luaL_checknumber(L, 2);
+    LTfloat y1 = (LTfloat)luaL_checknumber(L, 3);
+    LTfloat x2 = x1;
+    LTfloat y2 = y1;
+    if (num_args > 3) {
+        x2 = (LTfloat)luaL_checknumber(L, 4);
+    }
+    if (num_args > 4) {
+        y2 = (LTfloat)luaL_checknumber(L, 5);
+    }
+    b2AABB aabb;
+    if (x1 > x2) {
+        aabb.upperBound.x = x1;
+        aabb.lowerBound.x = x2;
+    } else {
+        aabb.upperBound.x = x2;
+        aabb.lowerBound.x = x1;
+    }
+    if (y1 > y2) {
+        aabb.upperBound.y = y1;
+        aabb.lowerBound.y = y2;
+    } else {
+        aabb.upperBound.y = y2;
+        aabb.lowerBound.y = y1;
+    }
+    AABBQueryCallBack cb(L);
+    lua_newtable(L);
+    world->world->QueryAABB(&cb, aabb);
+    return 1;
+}
+
 static int bdy_Destroy(lua_State *L) {
     LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
     body->destroy();
@@ -463,7 +524,7 @@ static int bdy_Destroy(lua_State *L) {
 
 static int bdy_IsDestroyed(lua_State *L) {
     LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
-    lua_pushboolean(L, body->body == NULL);
+   lua_pushboolean(L, body->body == NULL);
     return 1;
 }
 
@@ -599,6 +660,36 @@ static int bdy_AddTriangle(lua_State *L) {
     return 0;
 }
 
+static int bdy_Fixture(lua_State *L) {
+    LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
+    if (body->body != NULL) {
+        LTObject *obj = get_object(L, 1, LT_TYPE_OBJECT);
+        if (obj->type == LT_TYPE_TRIANGLE) {
+            LTTriangle *t = (LTTriangle*)obj;
+            b2PolygonShape poly;
+            b2Vec2 vertices[3];
+            vertices[0].Set(t->x1, t->y1);
+            vertices[1].Set(t->x2, t->y2);
+            vertices[2].Set(t->x3, t->y3);
+            if (!ltCheckB2Poly(vertices, 3)) {
+                vertices[2] = vertices[0];
+                vertices[0].Set(t->x3, t->y3);
+                if (!ltCheckB2Poly(vertices, 3)) {
+                    return 0;
+                }
+            }
+            poly.Set(vertices, 3);
+            b2FixtureDef fixtureDef;
+            fixtureDef.shape = &poly;
+            LTFixture *f = new LTFixture(body, &fixtureDef);
+            push_object(L, f, fixture_methods);
+            return 1;
+        }
+        return luaL_error(L, "Expecting a shape.");
+    }
+    return 0;
+}
+
 static const luaL_Reg body_methods[] = {
     {"Destroy",             bdy_Destroy},
     {"IsDestroyed",         bdy_IsDestroyed},
@@ -611,6 +702,7 @@ static const luaL_Reg body_methods[] = {
     {"AddTriangle",         bdy_AddTriangle},
     {"Draw",                prop_Draw},
     {"SetAngularVelocity",  bdy_SetAngularVelocity},
+    {"Fixture",             bdy_Fixture},
 
     {NULL, NULL}
 };
@@ -647,6 +739,7 @@ static const luaL_Reg world_methods[] = {
     {"SetGravity",       wld_SetGravity},
     {"StaticBody",       wld_StaticBody},
     {"DynamicBody",      wld_DynamicBody},
+    {"Query",            wld_Query},
 
     {NULL, NULL}
 };

@@ -105,7 +105,7 @@ end
 function ship.init()
     if ship.body then
         ship.body:Destroy()
-        scene:Remove(ship)
+        scene:Remove(ship.body)
     end
     log("dynamic")
     ship.body = world:DynamicBody(0, 0, 0)
@@ -191,35 +191,21 @@ mode.select = {
 }
 
 function mode.select.MouseDown(button, x, y)
-    x, y = nearest_grid_point(x, y)
-    points[next_point] = {x = x, y = y}
-    if next_point < 3 then
-        lines[next_point] = lt.Line(x, y, x, y)
-        scene:Insert(lines[next_point], 1)
-    end
-    if next_point == 3 then
-        next_point = 0
-        static:AddTriangle(
-            points[1].x, points[1].y,
-            points[2].x, points[2].y,
-            points[3].x, points[3].y);
-        points = {}
-        for i, l in ipairs(lines) do
-            scene:Remove(l)
+    local fixtures = world:Query(x, y)
+    local first = fixtures[1]
+    if first then
+        if selected then
+            scene:Remove(selected)
         end
-        lines = {}
+        selected = lt.Tinter(first, 1, 0, 0)
+        scene:Insert(selected, 2)
     end
-    next_point = next_point + 1
 end
 
 function mode.select.MouseUp(button, x, y)
 end
 
 function mode.select.MouseMove(x, y)
-    x, y = nearest_grid_point(x, y)
-    if next_point > 1 and lines[next_point - 1] then
-        lines[next_point - 1]:Set{x2 = x, y2 = y}
-    end
 end
 
 setfenv(mode.select.MouseDown, mode.select)

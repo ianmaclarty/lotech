@@ -72,6 +72,10 @@ $(C_O_FILES): %.o: %.c $(C_H_FILES)
 %.dSYM: %
 	dsymutil $^
 
+.PHONY: tags
+tags:
+	ctags -t `find .. -name "*.h"` `find .. -name "*.cpp"`
+
 clean:
 	rm -f *.o
 	rm -f $(TEST_EXES)
