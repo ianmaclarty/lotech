@@ -431,10 +431,23 @@ static int lt_LoadImages(lua_State *L) {
 
 /************************* Box2D **************************/
 
+static int fixture_ContainsPoint(lua_State *L) {
+    LTFixture *fixture = (LTFixture*)get_object(L, 1, LT_TYPE_FIXTURE);
+    LTfloat x = luaL_checknumber(L, 2);
+    LTfloat y = luaL_checknumber(L, 3);
+    if (fixture->fixture != NULL) {
+        lua_pushboolean(L, fixture->fixture->TestPoint(b2Vec2(x, y)));
+    } else {
+        lua_pushboolean(L, 0);
+    }
+    return 1;
+}
+
 static const luaL_Reg fixture_methods[] = {
     //{"Destroy",             fixture_Destroy},
     //{"IsDestroyed",         fixture_IsDestroyed},
     {"Draw",                prop_Draw},
+    {"ContainsPoint",       fixture_ContainsPoint},
 
     {NULL, NULL}
 };
@@ -482,19 +495,12 @@ struct AABBQueryCallBack : b2QueryCallback {
     }
 };
 
-static int wld_Query(lua_State *L) {
-    int num_args = lua_gettop(L);
+static int wld_QueryBox(lua_State *L) {
     LTWorld *world = (LTWorld*)get_object(L, 1, LT_TYPE_WORLD);
     LTfloat x1 = (LTfloat)luaL_checknumber(L, 2);
     LTfloat y1 = (LTfloat)luaL_checknumber(L, 3);
-    LTfloat x2 = x1;
-    LTfloat y2 = y1;
-    if (num_args > 3) {
-        x2 = (LTfloat)luaL_checknumber(L, 4);
-    }
-    if (num_args > 4) {
-        y2 = (LTfloat)luaL_checknumber(L, 5);
-    }
+    LTfloat x2 = (LTfloat)luaL_checknumber(L, 4);
+    LTfloat y2 = (LTfloat)luaL_checknumber(L, 5);
     b2AABB aabb;
     if (x1 > x2) {
         aabb.upperBound.x = x1;
@@ -739,7 +745,7 @@ static const luaL_Reg world_methods[] = {
     {"SetGravity",       wld_SetGravity},
     {"StaticBody",       wld_StaticBody},
     {"DynamicBody",      wld_DynamicBody},
-    {"Query",            wld_Query},
+    {"QueryBox",         wld_QueryBox},
 
     {NULL, NULL}
 };

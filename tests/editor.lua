@@ -191,14 +191,17 @@ mode.select = {
 }
 
 function mode.select.MouseDown(button, x, y)
-    local fixtures = world:Query(x, y)
-    local first = fixtures[1]
-    if first then
-        if selected then
-            scene:Remove(selected)
+    if selected then
+        scene:Remove(selected)
+        selected = nil
+    end
+    local fixtures = world:QueryBox(x - grid_gap, y - grid_gap, x + grid_gap, y + grid_gap)
+    for _, fixture in ipairs(fixtures) do
+        if fixture:ContainsPoint(x, y) then
+            selected = lt.Tinter(fixture, 1, 0, 0)
+            scene:Insert(selected, 2)
+            break
         end
-        selected = lt.Tinter(first, 1, 0, 0)
-        scene:Insert(selected, 2)
     end
 end
 
