@@ -224,6 +224,8 @@ static LTKey glut_key_to_lt_key(unsigned char key) {
             return LT_KEY_SPACE;
         case 13:
             return LT_KEY_ENTER;
+        case 127:
+            return LT_KEY_BACKSPACE;
         default:
             fprintf(stderr, "Unknown key pressed: %c (%d)\n", key, key);
             return LT_KEY_UNKNOWN;

@@ -443,9 +443,21 @@ static int fixture_ContainsPoint(lua_State *L) {
     return 1;
 }
 
+static int fixture_Destroy(lua_State *L) {
+    LTFixture *fixture = (LTFixture*)get_object(L, 1, LT_TYPE_FIXTURE);
+    fixture->destroy();
+    return 0;
+}
+
+static int fixture_IsDestroyed(lua_State *L) {
+    LTFixture *fixture = (LTFixture*)get_object(L, 1, LT_TYPE_FIXTURE);
+    lua_pushboolean(L, fixture->fixture == NULL);
+    return 1;
+}
+
 static const luaL_Reg fixture_methods[] = {
-    //{"Destroy",             fixture_Destroy},
-    //{"IsDestroyed",         fixture_IsDestroyed},
+    {"Destroy",             fixture_Destroy},
+    {"IsDestroyed",         fixture_IsDestroyed},
     {"Draw",                prop_Draw},
     {"ContainsPoint",       fixture_ContainsPoint},
 
@@ -908,6 +920,7 @@ static const char *lt_key_str(LTKey key) {
         case LT_KEY_PLUS: return "+"; 
         case LT_KEY_MINUS: return "-"; 
         case LT_KEY_TICK: return "`"; 
+        case LT_KEY_BACKSPACE: return "backspace"; 
         case LT_KEY_UNKNOWN: return "unknown";
     }
     return "";

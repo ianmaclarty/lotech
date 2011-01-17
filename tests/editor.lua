@@ -39,18 +39,15 @@ local function nearest_grid_point(x, y)
     return nx, ny
 end
 
-log("world")
 local world = lt.World()
 world:SetGravity(0, -10)
 
-log("static")
 local static = world:StaticBody()
 static:AddRect(left, bottom, right, bottom + 0.5)
 static:AddRect(left, top - 0.5, right, top)
 static:AddRect(left, bottom, left + 0.5, top)
 static:AddRect(right - 0.5, bottom, right, top)
-log("add static to scene")
-scene:Insert(static, 1)
+scene:Insert(lt.Tinter(static, 0.5, 0.5, 0.5, 0.4), 1)
 
 local paused = false
 local keys = {}
@@ -70,6 +67,8 @@ function lt.KeyDown(key)
         paused = not paused
     elseif key == "R" then
         ship.init()
+    elseif key == "backspace" then
+        mode.select.delete_selected()
     elseif modekeys[key] then
         current_mode = modekeys[key]
     else
@@ -107,11 +106,9 @@ function ship.init()
         ship.body:Destroy()
         scene:Remove(ship.body)
     end
-    log("dynamic")
     ship.body = world:DynamicBody(0, 0, 0)
-    log("add triangle")
     ship.body:AddTriangle(-0.5, -0.8, 0.5, -0.8, 0, 0.8, 1)
-    scene:Insert(ship.body, 1)
+    scene:Insert(lt.Tinter(ship.body, 1, 0, 0), 1)
 end
 
 ship.init()
@@ -192,14 +189,17 @@ mode.select = {
 
 function mode.select.MouseDown(button, x, y)
     if selected then
-        scene:Remove(selected)
+        scene:Remove(selected.prop)
         selected = nil
     end
     local fixtures = world:QueryBox(x - grid_gap, y - grid_gap, x + grid_gap, y + grid_gap)
     for _, fixture in ipairs(fixtures) do
         if fixture:ContainsPoint(x, y) then
-            selected = lt.Tinter(fixture, 1, 0, 0)
-            scene:Insert(selected, 2)
+            selected = {
+                fixture = fixture,
+                prop = lt.Tinter(fixture, 1, 1, 1, 0.4)
+            }
+            scene:Insert(selected.prop, 2)
             break
         end
     end
@@ -211,9 +211,18 @@ end
 function mode.select.MouseMove(x, y)
 end
 
+function mode.select.delete_selected()
+    if selected then
+        scene:Remove(selected.prop)
+        selected.fixture:Destroy()
+        selected = nil
+    end
+end
+
 setfenv(mode.select.MouseDown, mode.select)
 setfenv(mode.select.MouseUp, mode.select)
 setfenv(mode.select.MouseMove, mode.select)
+setfenv(mode.select.delete_selected, mode.select)
 setmetatable(mode.select, mode.select)
 
 ---------------------------------------------------------------------------------
