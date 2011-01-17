@@ -45,6 +45,13 @@ struct LTObject {
     LTType type;
     int ref_count;
 
+    // A pointer to lua allocated userdata containing this object or
+    // NULL if lua has no references to it.
+    // This is used to return the same user data to lua for the same
+    // LTObject, which avoids an extra allocation and problems with
+    // equality and hashing being different for the same LTObject reference.
+    LTObject **lua_userdata; 
+
     LTObject(LTType type);
     virtual ~LTObject();
 

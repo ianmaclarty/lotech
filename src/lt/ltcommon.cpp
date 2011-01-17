@@ -58,6 +58,7 @@ const char* ltTypeName(LTType type) {
 LTObject::LTObject(LTType type) {
     LTObject::type = type;
     ref_count = 0;
+    lua_userdata = NULL;
 }
 
 LTObject::~LTObject() {

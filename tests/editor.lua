@@ -194,7 +194,7 @@ function mode.select.MouseDown(button, x, y)
     end
     local fixtures = world:QueryBox(x - grid_gap, y - grid_gap, x + grid_gap, y + grid_gap)
     for _, fixture in ipairs(fixtures) do
-        if fixture:ContainsPoint(x, y) then
+        if fixture:ContainsPoint(x, y) and fixture:GetBody() ~= ship.body then
             selected = {
                 fixture = fixture,
                 prop = lt.Tinter(fixture, 1, 1, 1, 0.4)

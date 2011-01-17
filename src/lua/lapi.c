@@ -1033,6 +1033,13 @@ LUA_API void *lua_newuserdata (lua_State *L, size_t size) {
   return u + 1;
 }
 
+LUA_API void lua_pushuserdata (lua_State *L, void *ud) {
+  Udata *u = ((Udata*)ud) - 1;
+  lua_lock(L);
+  setuvalue(L, L->top, u);
+  api_incr_top(L);
+  lua_unlock(L);
+}
 
 
 

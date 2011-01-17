@@ -1,0 +1,34 @@
+Index: lapi.c
+===================================================================
+--- lapi.c	(revision 43)
++++ lapi.c	(working copy)
+@@ -1033,6 +1033,13 @@
+   return u + 1;
+ }
+ 
++LUA_API void lua_pushuserdata (lua_State *L, void *ud) {
++  Udata *u = ((Udata*)ud) - 1;
++  lua_lock(L);
++  setuvalue(L, L->top, u);
++  api_incr_top(L);
++  lua_unlock(L);
++}
+ 
+ 
+ 
+Index: lua.h
+===================================================================
+--- lua.h	(revision 43)
++++ lua.h	(working copy)
+@@ -183,6 +183,11 @@
+ LUA_API int   (lua_getmetatable) (lua_State *L, int objindex);
+ LUA_API void  (lua_getfenv) (lua_State *L, int idx);
+ 
++// Added by Ian MacLarty.
++// The caller must ensure that ud is a pointer to some full userdata
++// previously allocated with lua_newuserdata that has not been
++// garbage collected.
++LUA_API void  (lua_pushuserdata) (lua_State *L, void *ud);
+ 
+ /*
+ ** set functions (stack -> Lua)

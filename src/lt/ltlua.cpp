@@ -44,6 +44,7 @@ static LTObject* get_object(lua_State *L, int index, LTType type) {
 static int release_object(lua_State *L) {
     LTObject **ud = (LTObject**)lua_touserdata(L, 1);
     if (*ud != NULL) {
+        (*ud)->lua_userdata = NULL;
         (*ud)->release();
         *ud = NULL;
     }
@@ -95,34 +96,40 @@ static int get_object_field(lua_State *L) {
 }
 
 static void push_object(lua_State *L, LTObject *obj, const luaL_Reg *methods) {
-    // We use a full userdata so we can get Lua GC finalize events.
-    LTObject **ud = (LTObject **)lua_newuserdata(L, sizeof(LTObject *));
-    *ud = obj;
-    // Count all Lua references to the object as one reference.
-    obj->retain();
-    if (luaL_newmetatable(L, obj->typeName())) {
-        if (methods != NULL) {
-            lua_newtable(L);
-                // All objects get a Release method that can be used to
-                // manually free them.
-                lua_pushcfunction(L, release_object);
-                lua_setfield(L, -2, "Release");
+    LTObject **lua_ud = obj->lua_userdata;
+    if (lua_ud == NULL) {
+        // We use a full userdata so we can get Lua GC finalize events.
+        LTObject **ud = (LTObject **)lua_newuserdata(L, sizeof(LTObject *));
+        *ud = obj;
+        obj->lua_userdata = ud;
+        // Count all Lua references to the object as one reference.
+        obj->retain();
+        if (luaL_newmetatable(L, obj->typeName())) {
+            if (methods != NULL) {
+                lua_newtable(L);
+                    // All objects get a Release method that can be used to
+                    // manually free them.
+                    lua_pushcfunction(L, release_object);
+                    lua_setfield(L, -2, "Release");
 
-                // Field access functions.
-                lua_pushcfunction(L, get_object_field);
-                lua_setfield(L, -2, "Get");
-                lua_pushcfunction(L, set_object_field);
-                lua_setfield(L, -2, "Set");
+                    // Field access functions.
+                    lua_pushcfunction(L, get_object_field);
+                    lua_setfield(L, -2, "Get");
+                    lua_pushcfunction(L, set_object_field);
+                    lua_setfield(L, -2, "Set");
 
-                luaL_register(L, NULL, methods);
-            lua_setfield(L, -2, "__index");
+                    luaL_register(L, NULL, methods);
+                lua_setfield(L, -2, "__index");
+            }
+            // Decrement reference count when Lua no longer references the object.
+            // This will have no effect if the object was released using the Release method.
+            lua_pushcfunction(L, release_object);
+            lua_setfield(L, -2, "__gc");
         }
-        // Decrement reference count when Lua no longer references the object.
-        // This will have no effect if the object was released using the Release method.
-        lua_pushcfunction(L, release_object);
-        lua_setfield(L, -2, "__gc");
+        lua_setmetatable(L, -2);
+    } else {
+        lua_pushuserdata(L, lua_ud);
     }
-    lua_setmetatable(L, -2);
 }
 
 /************************* Graphics **************************/
@@ -455,11 +462,14 @@ static int fixture_IsDestroyed(lua_State *L) {
     return 1;
 }
 
+static int fixture_GetBody(lua_State *L);
+
 static const luaL_Reg fixture_methods[] = {
     {"Destroy",             fixture_Destroy},
     {"IsDestroyed",         fixture_IsDestroyed},
     {"Draw",                prop_Draw},
     {"ContainsPoint",       fixture_ContainsPoint},
+    {"GetBody",             fixture_GetBody},
 
     {NULL, NULL}
 };
@@ -724,6 +734,16 @@ static const luaL_Reg body_methods[] = {
 
     {NULL, NULL}
 };
+
+static int fixture_GetBody(lua_State *L) {
+    LTFixture *fixture = (LTFixture*)get_object(L, 1, LT_TYPE_FIXTURE);
+    if (fixture->fixture != NULL) {
+        push_object(L, fixture->body, body_methods);
+    } else {
+        lua_pushnil(L);
+    }
+    return 1;
+}
 
 static int wld_StaticBody(lua_State *L) {
     LTWorld *world = (LTWorld*)get_object(L, 1, LT_TYPE_WORLD);

@@ -183,6 +183,11 @@ LUA_API void *(lua_newuserdata) (lua_State *L, size_t sz);
 LUA_API int   (lua_getmetatable) (lua_State *L, int objindex);
 LUA_API void  (lua_getfenv) (lua_State *L, int idx);
 
+// Added by Ian MacLarty.
+// The caller must ensure that ud is a pointer to some full userdata
+// previously allocated with lua_newuserdata that has not been
+// garbage collected.
+LUA_API void  (lua_pushuserdata) (lua_State *L, void *ud);
 
 /*
 ** set functions (stack -> Lua)
