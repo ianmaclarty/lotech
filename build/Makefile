@@ -74,7 +74,7 @@ $(C_O_FILES): %.o: %.c $(C_H_FILES)
 
 .PHONY: tags
 tags:
-	ctags -t `find .. -name "*.h"` `find .. -name "*.cpp"`
+	ctags `find .. -name "*.h"` `find .. -name "*.cpp"`
 
 clean:
 	rm -f *.o
