@@ -284,7 +284,7 @@ void ltHarnessInit(bool fullscreen, const char *title, int fps,
     g_mouse_move = mouseMove;
     g_resize_window = resizeWindow;
 
-    glutInitWindowSize(1024, 768);
+    glutInitWindowSize(900, 600);
     glutInit(&argc, &argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
     if (g_fullscreen) {
