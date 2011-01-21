@@ -940,7 +940,7 @@ static const char *lt_key_str(LTKey key) {
         case LT_KEY_PLUS: return "+"; 
         case LT_KEY_MINUS: return "-"; 
         case LT_KEY_TICK: return "`"; 
-        case LT_KEY_BACKSPACE: return "backspace"; 
+        case LT_KEY_DEL: return "del"; 
         case LT_KEY_UNKNOWN: return "unknown";
     }
     return "";

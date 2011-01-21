@@ -58,7 +58,7 @@ enum LTKey {
     LT_KEY_PLUS,
     LT_KEY_MINUS,
     LT_KEY_TICK,
-    LT_KEY_BACKSPACE,
+    LT_KEY_DEL,
     LT_KEY_UNKNOWN
 };
 

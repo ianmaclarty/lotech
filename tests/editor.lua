@@ -67,7 +67,7 @@ function lt.KeyDown(key)
         paused = not paused
     elseif key == "R" then
         ship.init()
-    elseif key == "backspace" then
+    elseif key == "del" then
         mode.select.delete_selected()
     elseif modekeys[key] then
         current_mode = modekeys[key]
