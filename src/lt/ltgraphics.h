@@ -117,7 +117,7 @@ struct LTTinter : LTProp {
 
 struct LTScene : LTProp {
     std::multimap<LTfloat, LTProp*> scene;
-    std::map<LTProp*, std::multimap<LTfloat, LTProp*>::iterator> prop_index;
+    std::multimap<LTProp*, std::multimap<LTfloat, LTProp*>::iterator> prop_index;
 
     LTScene();
     virtual ~LTScene();

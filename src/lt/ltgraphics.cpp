@@ -328,20 +328,23 @@ LTScene::~LTScene() {
     }
 }
 
+#define PIVAL std::multimap<LTfloat, LTProp*>::iterator
+
 void LTScene::insert(LTProp *prop, LTfloat depth) {
     std::pair<LTfloat, LTProp*> val(depth, prop);
-    prop_index[prop] = scene.insert(val);
+    prop_index.insert(std::pair<LTProp*, PIVAL>(prop, scene.insert(val)));
     prop->retain();
 }
 
 void LTScene::remove(LTProp *prop) {
-    std::map<LTProp*, std::multimap<LTfloat, LTProp*>::iterator>::iterator pos;
-    pos = prop_index.find(prop);
-    if (pos != prop_index.end()) {
-        prop_index.erase(pos);
-        scene.erase((*pos).second);
+    std::pair<std::multimap<LTProp*, PIVAL>::iterator, std::multimap<LTProp*, PIVAL>::iterator> range;
+    std::multimap<LTProp*, PIVAL>::iterator it;
+    range = prop_index.equal_range(prop);
+    for (it = range.first; it != range.second; it++) {
+        scene.erase((*it).second);
         prop->release();
     }
+    prop_index.erase(range.first, range.second);
 }
 
 void LTScene::draw() {
