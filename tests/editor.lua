@@ -31,7 +31,7 @@ end
 for x = left, right, grid_gap do
     grid:Insert(lt.Line(x, bottom, x, top), 0)
 end
-scene:Insert(lt.Tinter(grid, grey()), 0)
+scene:Insert(lt.Tint(grid, grey()), 0)
 
 local function nearest_grid_point(x, y)
     local nx = math.floor(x / grid_gap + 0.5) * grid_gap;
@@ -47,7 +47,7 @@ static:AddRect(left, bottom, right, bottom + 0.5)
 static:AddRect(left, top - 0.5, right, top)
 static:AddRect(left, bottom, left + 0.5, top)
 static:AddRect(right - 0.5, bottom, right, top)
-scene:Insert(lt.Tinter(static, 0.5, 0.5, 0.5, 0.4), 1)
+scene:Insert(lt.Tint(static, 0.5, 0.5, 0.5, 0.4), 1)
 
 local paused = false
 local keys = {}
@@ -108,7 +108,7 @@ function ship.init()
     end
     ship.body = world:DynamicBody(0, 0, 0)
     ship.body:AddTriangle(-0.5, -0.8, 0.5, -0.8, 0, 0.8, 1)
-    scene:Insert(lt.Tinter(ship.body, 1, 0, 0), 1)
+    scene:Insert(lt.Tint(ship.body, 1, 0, 0), 1)
 end
 
 ship.init()
@@ -197,7 +197,7 @@ function mode.select.MouseDown(button, x, y)
         if fixture:ContainsPoint(x, y) and fixture:GetBody() ~= ship.body then
             selected = {
                 fixture = fixture,
-                prop = lt.Tinter(fixture, 1, 1, 1, 0.4)
+                prop = lt.Tint(fixture, 1, 1, 1, 0.4)
             }
             scene:Insert(selected.prop, 2)
             break

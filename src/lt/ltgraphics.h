@@ -57,58 +57,53 @@ struct LTProp : LTObject {
     LTProp(LTType type) : LTObject(type) {}
 };
 
-struct LTTranslator : LTProp {
+struct LTTranslate2D : LTProp {
     LTfloat x;
     LTfloat y;
-    LTfloat z;
     LTProp *target;
 
-    LTTranslator(LTfloat x, LTfloat y, LTfloat z, LTProp *target);
-    virtual ~LTTranslator();
+    LTTranslate2D(LTfloat x, LTfloat y, LTProp *target);
+    virtual ~LTTranslate2D();
 
     virtual void draw();
 
     virtual LTfloat* field_ptr(const char *field_name);
 };
 
-struct LTRotator : LTProp {
+struct LTRotate2D : LTProp {
     LTdegrees angle;
-    LTfloat rx;
-    LTfloat ry;
-    LTfloat rz;
     LTProp *target;
 
-    LTRotator(LTdegrees angle, LTfloat rx, LTfloat ry, LTfloat rz, LTProp *target);
-    virtual ~LTRotator();
+    LTRotate2D(LTdegrees angle, LTProp *target);
+    virtual ~LTRotate2D();
 
     virtual void draw();
 
     virtual LTfloat* field_ptr(const char *field_name);
 };
 
-struct LTScalor : LTProp {
+struct LTScale2D : LTProp {
     LTfloat sx;
     LTfloat sy;
-    LTfloat sz;
     LTProp *target;
 
-    LTScalor(LTfloat sx, LTfloat sy, LTfloat sz, LTProp *target);
-    virtual ~LTScalor();
+    LTScale2D(LTfloat sx, LTfloat sy, LTProp *target);
+    virtual ~LTScale2D();
 
     virtual void draw();
 
     virtual LTfloat* field_ptr(const char *field_name);
 };
 
-struct LTTinter : LTProp {
+struct LTTint : LTProp {
     LTfloat r;
     LTfloat g;
     LTfloat b;
     LTfloat a;
     LTProp *target;
 
-    LTTinter(LTfloat r, LTfloat g, LTfloat b, LTfloat a, LTProp *target);
-    virtual ~LTTinter();
+    LTTint(LTfloat r, LTfloat g, LTfloat b, LTfloat a, LTProp *target);
+    virtual ~LTTint();
 
     virtual void draw();
 

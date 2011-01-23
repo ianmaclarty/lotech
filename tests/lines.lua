@@ -66,7 +66,7 @@ end
 for x = left, right, grid_gap do
     grid:Insert(lt.Line(x, bottom, x, top), 0)
 end
-scene:Insert(lt.Tinter(grid, grey()), 0)
+scene:Insert(lt.Tint(grid, grey()), 0)
 
 local function nearest_grid_point(x, y)
     local nx = math.floor(x / grid_gap + 0.5) * grid_gap;

@@ -302,7 +302,7 @@ static const luaL_Reg prop_methods[] = {
     {NULL, NULL}
 };
 
-static int lt_Tinter(lua_State *L) {
+static int lt_Tint(lua_State *L) {
     int num_args = lua_gettop(L);
     LTProp *target = (LTProp *)get_object(L, 1, LT_TYPE_PROP);
     LTfloat r = (LTfloat)luaL_checknumber(L, 2);
@@ -312,7 +312,7 @@ static int lt_Tinter(lua_State *L) {
     if (num_args > 4) {
         a = (LTfloat)luaL_checknumber(L, 5);
     }
-    LTTinter *tinter = new LTTinter(r, g, b, a, target);
+    LTTint *tinter = new LTTint(r, g, b, a, target);
     push_object(L, tinter, prop_methods);
     return 1;
 }
@@ -807,7 +807,7 @@ static const luaL_Reg ltlib[] = {
     {"Scene",                   lt_Scene},
     {"Line",                    lt_Line},
     {"Triangle",                lt_Triangle},
-    {"Tinter",                  lt_Tinter},
+    {"Tint",                    lt_Tint},
 
     {"LoadImages",              lt_LoadImages},
 

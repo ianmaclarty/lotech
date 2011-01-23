@@ -14,13 +14,13 @@
 static bool g_textures_enabled = false;
 static GLuint g_current_bound_texture = 0;
 
-struct LTTint {
+struct LTTintStackElem {
     LTfloat r;
     LTfloat g;
     LTfloat b;
     LTfloat a;
 
-    LTTint() {
+    LTTintStackElem() {
         r = 1.0f;
         g = 1.0f;
         b = 1.0f;
@@ -29,7 +29,7 @@ struct LTTint {
 };
 
 #define LT_TINT_STACK_SIZE 128
-static LTTint g_tint_stack[LT_TINT_STACK_SIZE];
+static LTTintStackElem g_tint_stack[LT_TINT_STACK_SIZE];
 static int g_tint_stack_top = 0;
 
 void ltInitGraphics() {
@@ -68,7 +68,7 @@ void ltSetViewPort(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2) {
 void ltPushTint(LTfloat r, LTfloat g, LTfloat b, LTfloat a) {
     if (g_tint_stack_top < (LT_TINT_STACK_SIZE - 1)) {
         g_tint_stack_top++;
-        LTTint *top = &g_tint_stack[g_tint_stack_top];
+        LTTintStackElem *top = &g_tint_stack[g_tint_stack_top];
         *top = *(top - 1);
         top->r *= r;
         top->g *= g;
@@ -81,7 +81,7 @@ void ltPushTint(LTfloat r, LTfloat g, LTfloat b, LTfloat a) {
 void ltPopTint() {
     if (g_tint_stack_top > 0) {
         g_tint_stack_top--;
-        LTTint *top = &g_tint_stack[g_tint_stack_top];
+        LTTintStackElem *top = &g_tint_stack[g_tint_stack_top];
         glColor4f(top->r, top->g, top->b, top->a);
     }
 }
@@ -183,126 +183,106 @@ void ltPopMatrix() {
 // Props.
 
 
-LTTranslator::LTTranslator(LTfloat x, LTfloat y, LTfloat z, LTProp *target) : LTProp(LT_TYPE_TRANSLATOR) {
-    LTTranslator::x = x;
-    LTTranslator::y = y;
-    LTTranslator::z = z;
-    LTTranslator::target = target;
+LTTranslate2D::LTTranslate2D(LTfloat x, LTfloat y, LTProp *target) : LTProp(LT_TYPE_TRANSLATE2D) {
+    LTTranslate2D::x = x;
+    LTTranslate2D::y = y;
+    LTTranslate2D::target = target;
     target->retain();
 }
 
-LTTranslator::~LTTranslator() {
+LTTranslate2D::~LTTranslate2D() {
     target->release();
 }
 
-void LTTranslator::draw() {
+void LTTranslate2D::draw() {
     ltPushMatrix();
-    ltTranslate(x, y, z);
+    ltTranslate(x, y, 0.0f);
     target->draw();
     ltPopMatrix();
 }
 
-LTfloat* LTTranslator::field_ptr(const char *field_name) {
+LTfloat* LTTranslate2D::field_ptr(const char *field_name) {
     if (strcmp(field_name, "x") == 0) {
         return &x;
     }
     if (strcmp(field_name, "y") == 0) {
         return &y;
     }
-    if (strcmp(field_name, "z") == 0) {
-        return &z;
-    }
     return target->field_ptr(field_name);
 }
 
-LTRotator::LTRotator(LTdegrees angle, LTfloat rx, LTfloat ry, LTfloat rz, LTProp *target) : LTProp(LT_TYPE_ROTATOR) {
-    LTRotator::angle = angle;
-    LTRotator::rx = rx;
-    LTRotator::ry = ry;
-    LTRotator::rz = rz;
-    LTRotator::target = target;
+LTRotate2D::LTRotate2D(LTdegrees angle, LTProp *target) : LTProp(LT_TYPE_ROTATE2D) {
+    LTRotate2D::angle = angle;
+    LTRotate2D::target = target;
     target->retain();
 }
 
-LTRotator::~LTRotator() {
+LTRotate2D::~LTRotate2D() {
     target->release();
 }
 
-void LTRotator::draw() {
+void LTRotate2D::draw() {
     ltPushMatrix();
-    ltRotate(angle, rx, ry, rz);
+    ltRotate(angle, 0.0f, 0.0f, 1.0f);
     target->draw();
     ltPopMatrix();
 }
 
-LTfloat* LTRotator::field_ptr(const char *field_name) {
+LTfloat* LTRotate2D::field_ptr(const char *field_name) {
     if (strcmp(field_name, "angle") == 0) {
         return &angle;
     }
-    if (strcmp(field_name, "rx") == 0) {
-        return &rx;
-    }
-    if (strcmp(field_name, "ry") == 0) {
-        return &ry;
-    }
-    if (strcmp(field_name, "rz") == 0) {
-        return &rz;
-    }
     return target->field_ptr(field_name);
 }
 
-LTScalor::LTScalor(LTfloat sx, LTfloat sy, LTfloat sz, LTProp *target) : LTProp(LT_TYPE_SCALOR) {
-    LTScalor::sx = sx;
-    LTScalor::sy = sy;
-    LTScalor::sz = sz;
-    LTScalor::target = target;
+LTScale2D::LTScale2D(LTfloat sx, LTfloat sy, LTProp *target) : LTProp(LT_TYPE_SCALE2D) {
+    LTScale2D::sx = sx;
+    LTScale2D::sy = sy;
+    LTScale2D::target = target;
     target->retain();
 }
 
-LTScalor::~LTScalor() {
+LTScale2D::~LTScale2D() {
     target->release();
 }
 
-void LTScalor::draw() {
+void LTScale2D::draw() {
     ltPushMatrix();
-    ltScale(sx, sy, sz);
+    ltScale(sx, sy, 1.0f);
     target->draw();
     ltPopMatrix();
 }
 
-LTfloat* LTScalor::field_ptr(const char *field_name) {
+LTfloat* LTScale2D::field_ptr(const char *field_name) {
     if (strcmp(field_name, "sx") == 0) {
         return &sx;
     }
     if (strcmp(field_name, "sy") == 0) {
         return &sy;
     }
-    if (strcmp(field_name, "sz") == 0) {
-        return &sz;
-    }
     return target->field_ptr(field_name);
 }
 
-LTTinter::LTTinter(LTfloat r, LTfloat g, LTfloat b, LTfloat a, LTProp *target) : LTProp(LT_TYPE_TINTER) {
-    LTTinter::r = r;
-    LTTinter::g = g;
-    LTTinter::b = b;
-    LTTinter::a = a;
-    LTTinter::target = target;
+LTTint::LTTint(LTfloat r, LTfloat g, LTfloat b, LTfloat a, LTProp *target) : LTProp(LT_TYPE_TINT) {
+    LTTint::r = r;
+    LTTint::g = g;
+    LTTint::b = b;
+    LTTint::a = a;
+    LTTint::target = target;
     target->retain();
 }
 
-LTTinter::~LTTinter() {
+LTTint::~LTTint() {
     target->release();
 }
 
-void LTTinter::draw() {
+void LTTint::draw() {
     ltPushTint(r, g, b, a);
     target->draw();
     ltPopTint();
 }
 
-LTfloat* LTTinter::field_ptr(const char *field_name) {
+LTfloat* LTTint::field_ptr(const char *field_name) {
     if (strcmp(field_name, "r") == 0) {
         return &r;
     }
