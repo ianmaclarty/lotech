@@ -10,11 +10,13 @@
 #include <OpenGL/GL.h>
 #endif
 
+#include <list>
 #include <map>
 
 #include <string.h>
 
 #include "ltcommon.h"
+#include "ltevent.h"
 
 #define LT_PI 3.14159265358979323846f
 #define LT_RADIANS_PER_DEGREE (LT_PI / 180.0f)
@@ -53,8 +55,15 @@ void ltDrawPoly(LTfloat *vertices, int num_vertices); /* Must be convex */
 // Props (drawable objects).
 
 struct LTProp : LTObject {
+    std::list<LTPointerEventHandler *> *event_handlers;
+
+    LTProp(LTType type);
+    virtual ~LTProp();
+
     virtual void draw() = 0;
-    LTProp(LTType type) : LTObject(type) {}
+
+    bool consumePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
+    virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
 };
 
 struct LTTranslate2D : LTProp {
@@ -66,6 +75,7 @@ struct LTTranslate2D : LTProp {
     virtual ~LTTranslate2D();
 
     virtual void draw();
+    virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
 
     virtual LTfloat* field_ptr(const char *field_name);
 };
@@ -78,6 +88,7 @@ struct LTRotate2D : LTProp {
     virtual ~LTRotate2D();
 
     virtual void draw();
+    virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
 
     virtual LTfloat* field_ptr(const char *field_name);
 };
@@ -91,6 +102,7 @@ struct LTScale2D : LTProp {
     virtual ~LTScale2D();
 
     virtual void draw();
+    virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
 
     virtual LTfloat* field_ptr(const char *field_name);
 };
@@ -106,6 +118,7 @@ struct LTTint : LTProp {
     virtual ~LTTint();
 
     virtual void draw();
+    virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
 
     virtual LTfloat* field_ptr(const char *field_name);
 };
@@ -121,6 +134,7 @@ struct LTScene : LTProp {
     void remove(LTProp *prop);
 
     virtual void draw();
+    virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
 };
 
 struct LTLine : LTProp {
@@ -251,7 +265,7 @@ struct LTImage : LTProp {
     LTImage(LTAtlas *atlas, int atlas_w, int atlas_h, LTImagePacker *packer);
     virtual ~LTImage();
 
-    void draw();
+    virtual void draw();
 
     void setAnchor(LTAnchor anchor);
 };

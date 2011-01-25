@@ -182,6 +182,36 @@ void ltPopMatrix() {
 //-----------------------------------------------------------------
 // Props.
 
+LTProp::LTProp(LTType type) : LTObject(type) {
+    event_handlers = NULL;
+}
+
+LTProp::~LTProp() {
+    if (event_handlers != NULL) {
+        std::list<LTPointerEventHandler*>::iterator it;
+        for (it = event_handlers->begin(); it != event_handlers->end(); it++) {
+            delete (*it);
+        }
+        delete event_handlers;
+    }
+}
+
+bool LTProp::consumePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
+    bool consumed = false;
+    if (event_handlers != NULL) {
+        std::list<LTPointerEventHandler*>::iterator it;
+        for (it = event_handlers->begin(); it != event_handlers->end(); it++) {
+            if ((*it)->consume(x, y, this, event)) {
+                consumed = true;
+            }
+        }
+    }
+    return consumed;
+}
+
+bool LTProp::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
+    return consumePointerEvent(x, y, event);
+}
 
 LTTranslate2D::LTTranslate2D(LTfloat x, LTfloat y, LTProp *target) : LTProp(LT_TYPE_TRANSLATE2D) {
     LTTranslate2D::x = x;
@@ -199,6 +229,14 @@ void LTTranslate2D::draw() {
     ltTranslate(x, y, 0.0f);
     target->draw();
     ltPopMatrix();
+}
+
+bool LTTranslate2D::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
+    if (!consumePointerEvent(x, y, event)) {
+        return target->propogatePointerEvent(x - LTTranslate2D::x, y - LTTranslate2D::y, event);
+    } else {
+        return true;
+    }
 }
 
 LTfloat* LTTranslate2D::field_ptr(const char *field_name) {
@@ -228,6 +266,17 @@ void LTRotate2D::draw() {
     ltPopMatrix();
 }
 
+bool LTRotate2D::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
+    if (!consumePointerEvent(x, y, event)) {
+        LTfloat a = -angle * LT_RADIANS_PER_DEGREE;
+        LTfloat s = sinf(a);
+        LTfloat c = cosf(a);
+        return target->propogatePointerEvent(x * c, y * s, event);
+    } else {
+        return true;
+    }
+}
+
 LTfloat* LTRotate2D::field_ptr(const char *field_name) {
     if (strcmp(field_name, "angle") == 0) {
         return &angle;
@@ -251,6 +300,18 @@ void LTScale2D::draw() {
     ltScale(sx, sy, 1.0f);
     target->draw();
     ltPopMatrix();
+}
+
+bool LTScale2D::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
+    if (!consumePointerEvent(x, y, event)) {
+        if (sx != 0.0f && sy != 0.0f) {
+            return target->propogatePointerEvent(x / sx, y / sy, event);
+        } else {
+            return false;
+        }
+    } else {
+        return true;
+    }
 }
 
 LTfloat* LTScale2D::field_ptr(const char *field_name) {
@@ -280,6 +341,14 @@ void LTTint::draw() {
     ltPushTint(r, g, b, a);
     target->draw();
     ltPopTint();
+}
+
+bool LTTint::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
+    if (!consumePointerEvent(x, y, event)) {
+        return target->propogatePointerEvent(x, y, event);
+    } else {
+        return true;
+    }
 }
 
 LTfloat* LTTint::field_ptr(const char *field_name) {
@@ -331,6 +400,20 @@ void LTScene::draw() {
     std::multimap<LTfloat, LTProp*>::iterator it;
     for (it = scene.begin(); it != scene.end(); it++) {
         ((*it).second)->draw();
+    }
+}
+
+bool LTScene::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
+    if (!consumePointerEvent(x, y, event)) {
+        std::multimap<LTfloat, LTProp*>::reverse_iterator it;
+        for (it = scene.rbegin(); it != scene.rend(); it++) {
+            if (((*it).second)->propogatePointerEvent(x, y, event)) {
+                return true;
+            }
+        }
+        return false;
+    } else {
+        return true;
     }
 }
 

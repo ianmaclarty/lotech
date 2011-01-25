@@ -4,6 +4,40 @@
 
 #include "ltcommon.h"
 
+//---------------------------------------------------------------
+
+struct LTProp;
+
+enum LTPointerEventType {
+    LT_EVENT_POINTER_DOWN,
+    LT_EVENT_POINTER_UP,
+    LT_EVENT_POINTER_MOVE
+};
+
+struct LTPointerEvent {
+    LTPointerEventType type;
+    LTfloat orig_x;
+    LTfloat orig_y;
+    int button;  // Only applicable for up and down events.
+
+    LTPointerEvent(LTPointerEventType type, LTfloat x, LTfloat y, int button) {
+        LTPointerEvent::type = type;
+        LTPointerEvent::orig_x = x;
+        LTPointerEvent::orig_y = y;
+        LTPointerEvent::button = button;
+    }
+};
+
+struct LTPointerEventHandler {
+    virtual ~LTPointerEventHandler() {}
+
+    // x and y are local coordinates w.r.t prop.
+    // Returning true stops the event propogating further.
+    virtual bool consume(LTfloat x, LTfloat y, LTProp *prop, LTPointerEvent *event) = 0;
+};
+
+//---------------------------------------------------------------
+
 /* An action to take in response to an event. */
 struct LTAction {
     virtual ~LTAction() {};
