@@ -28,6 +28,7 @@ struct LTBody : LTProp {
     void destroy();
 
     virtual void draw();
+    virtual bool containsPoint(LTfloat x, LTfloat y);
 };
 
 struct LTFixture : LTProp {

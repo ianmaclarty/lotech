@@ -11,6 +11,7 @@ extern "C" {
 #include "Box2D/Box2D.h"
 #include "ltgraphics.h"
 #include "ltharness.h"
+#include "ltlevent.h"
 #include "ltlua.h"
 #include "ltphysics.h"
 
@@ -267,6 +268,24 @@ static int prop_Draw(lua_State *L) {
     return 0;
 }
 
+static int prop_OnPointerDown(lua_State *L) {
+    LTProp *prop = (LTProp*)get_object(L, 1, LT_TYPE_PROP);
+    lua_pushvalue(L, 2);
+    LTLPointerDownInEventHandler *handler = new LTLPointerDownInEventHandler(L);
+    prop->addHandler(handler);
+    return 0;
+}
+
+static int prop_PropogatePointerDownEvent(lua_State *L) {
+    LTProp *prop = (LTProp*)get_object(L, 1, LT_TYPE_PROP);
+    int button = luaL_checkinteger(L, 2);
+    LTfloat x = luaL_checknumber(L, 3);
+    LTfloat y = luaL_checknumber(L, 4);
+    LTPointerEvent event(LT_EVENT_POINTER_DOWN, x, y, button);
+    prop->propogatePointerEvent(x, y, &event);
+    return 0;
+}
+
 static int scene_Insert(lua_State *L) {
     LTScene *scene = (LTScene*)get_object(L, 1, LT_TYPE_SCENE);
     LTProp *prop = (LTProp*)get_object(L, 2, LT_TYPE_PROP);
@@ -283,9 +302,11 @@ static int scene_Remove(lua_State *L) {
 }
 
 static const luaL_Reg scene_methods[] = {
-    {"Draw",            prop_Draw},
-    {"Insert",          scene_Insert},
-    {"Remove",          scene_Remove},
+    {"Draw",                        prop_Draw},
+    {"OnPointerDown",               prop_OnPointerDown},
+    {"PropogatePointerDownEvent",   prop_PropogatePointerDownEvent},
+    {"Insert",                      scene_Insert},
+    {"Remove",                      scene_Remove},
 
     {NULL, NULL}
 };
@@ -297,7 +318,9 @@ static int lt_Scene(lua_State *L) {
 }
 
 static const luaL_Reg prop_methods[] = {
-    {"Draw",            prop_Draw},
+    {"Draw",                        prop_Draw},
+    {"OnPointerDown",               prop_OnPointerDown},
+    {"PropogatePointerDownEvent",   prop_PropogatePointerDownEvent},
 
     {NULL, NULL}
 };
@@ -719,18 +742,20 @@ static int bdy_Fixture(lua_State *L) {
 }
 
 static const luaL_Reg body_methods[] = {
-    {"Destroy",             bdy_Destroy},
-    {"IsDestroyed",         bdy_IsDestroyed},
-    {"ApplyForce",          bdy_ApplyForce},
-    {"ApplyTorque",         bdy_ApplyTorque},
-    {"GetAngle",            bdy_GetAngle},
-    {"SetAngle",            bdy_SetAngle},
-    {"GetPosition",         bdy_GetPosition},
-    {"AddRect",             bdy_AddRect},
-    {"AddTriangle",         bdy_AddTriangle},
-    {"Draw",                prop_Draw},
-    {"SetAngularVelocity",  bdy_SetAngularVelocity},
-    {"Fixture",             bdy_Fixture},
+    {"Destroy",                     bdy_Destroy},
+    {"IsDestroyed",                 bdy_IsDestroyed},
+    {"ApplyForce",                  bdy_ApplyForce},
+    {"ApplyTorque",                 bdy_ApplyTorque},
+    {"GetAngle",                    bdy_GetAngle},
+    {"SetAngle",                    bdy_SetAngle},
+    {"GetPosition",                 bdy_GetPosition},
+    {"AddRect",                     bdy_AddRect},
+    {"AddTriangle",                 bdy_AddTriangle},
+    {"Draw",                        prop_Draw},
+    {"OnPointerDown",               prop_OnPointerDown},
+    {"PropogatePointerDownEvent",   prop_PropogatePointerDownEvent},
+    {"SetAngularVelocity",          bdy_SetAngularVelocity},
+    {"Fixture",                     bdy_Fixture},
 
     {NULL, NULL}
 };

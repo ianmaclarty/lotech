@@ -25,12 +25,16 @@ scene:Insert(floor, 1)
 
 local things = {}
 local colors = {}
-local n = 500
+local n = 1000
 for i = 1, n do
     things[i] = world:DynamicBody((i - n / 2) * (10 / n), math.sin(i) * 50 + 60, math.cos(i) * 180)
     local size = (math.random() + 0.5) * 0.25
     things[i]:AddRect(-size, -size, size, size, 3.3)
-    scene:Insert(things[i], 1)
+    local node = lt.Tint(things[i], 0.5, 0.5, 0.5)
+    things[i]:OnPointerDown(function()
+        node:Set{r = 1}
+    end)
+    scene:Insert(node, 1)
 end
 
 function lt.Advance()
@@ -42,3 +46,8 @@ function lt.Render()
     scene:Draw()
     print_fps()
 end
+
+function lt.MouseDown(button, x, y)
+    scene:PropogatePointerDownEvent(button, x, y)
+end
+

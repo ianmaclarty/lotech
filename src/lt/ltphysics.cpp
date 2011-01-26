@@ -87,6 +87,18 @@ void LTBody::draw() {
     }
 }
 
+bool LTBody::containsPoint(LTfloat x, LTfloat y) {
+    b2Vec2 p = b2Vec2(x, y);
+    b2Fixture *fixture = body->GetFixtureList();
+    while (fixture != NULL) {
+        if (fixture->TestPoint(p)) {
+            return true;
+        }
+        fixture = fixture->GetNext();
+    }
+    return false;
+}
+
 LTFixture::LTFixture(LTBody *body, const b2FixtureDef *def) : LTProp(LT_TYPE_FIXTURE) {
     LTFixture::body = body;
     if (body->body != NULL) {

@@ -62,8 +62,19 @@ struct LTProp : LTObject {
 
     virtual void draw() = 0;
 
+    // Call all the event handles for this node only, returning true iff at least one
+    // of the event handlers returns true.
     bool consumePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
+
+    // Propogate an event to this and all descendent nodes, calling event
+    // handlers along the way.  If at least one of the event handlers for a particular
+    // node returns true, then propogation stops.
     virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
+
+    // Returns true iff this node, or one of its descendents, contains the given point.
+    virtual bool containsPoint(LTfloat x, LTfloat y) { return false; } // XXX make abstract.
+
+    void addHandler(LTPointerEventHandler *handler);
 };
 
 struct LTTranslate2D : LTProp {

@@ -1,4 +1,4 @@
-/* Copyright (C) 2010 Ian MacLarty */
+/* Copyright (C) 2011 Ian MacLarty */
 #ifndef LTEVENT_H
 #define LTEVENT_H
 

@@ -213,6 +213,13 @@ bool LTProp::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) 
     return consumePointerEvent(x, y, event);
 }
 
+void LTProp::addHandler(LTPointerEventHandler *handler) {
+    if (event_handlers == NULL) {
+        event_handlers = new std::list<LTPointerEventHandler *>();
+    }
+    event_handlers->push_front(handler);
+}
+
 LTTranslate2D::LTTranslate2D(LTfloat x, LTfloat y, LTProp *target) : LTProp(LT_TYPE_TRANSLATE2D) {
     LTTranslate2D::x = x;
     LTTranslate2D::y = y;
