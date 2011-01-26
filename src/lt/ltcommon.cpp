@@ -47,6 +47,7 @@ const LTTypeInfo types[] = {
     {"Fixture",     LT_TYPE_PROP},
     {"Line",        LT_TYPE_PROP},
     {"Triangle",    LT_TYPE_PROP},
+    {"Rect",        LT_TYPE_PROP},
 };
 
 ct_assert(sizeof(types) == (int)LT_NUM_TYPES * sizeof(LTTypeInfo));

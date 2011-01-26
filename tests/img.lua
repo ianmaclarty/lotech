@@ -602,15 +602,12 @@ function lt.KeyDown(key)
     scene:Insert(curr_img, 1)
 end
 
+local main_scene = lt.Scale(scene, 20)
+scene:Insert(lt.Tint(lt.Rect(-10, -10, 10, 10), 0.5, 0.5, 0.5), 0);
+
 function lt.Advance()
 end
 
 function lt.Render()
-    lt.Scale(20)
-    lt.PushTint(0.5, 0.5, 0.5)
-    lt.DrawRect(-10, -10, 10, 10)
-    lt.PopTint()
-    lt.PushTint(1, 1, 1)
-    scene:Draw()
-    lt.PopTint()
+    main_scene:Draw()
 end

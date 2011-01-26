@@ -278,7 +278,7 @@ bool LTRotate2D::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *eve
         LTfloat a = -angle * LT_RADIANS_PER_DEGREE;
         LTfloat s = sinf(a);
         LTfloat c = cosf(a);
-        return target->propogatePointerEvent(x * c, y * s, event);
+        return target->propogatePointerEvent(c * x - s * y, s * x + c * y, event);
     } else {
         return true;
     }
@@ -488,6 +488,42 @@ LTfloat* LTTriangle::field_ptr(const char *field_name) {
     }
     if (strcmp(field_name, "y3") == 0) {
         return &y3;
+    }
+    return NULL;
+}
+
+LTRect::LTRect(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2) : LTProp(LT_TYPE_RECT) {
+    LTRect::x1 = x1;
+    LTRect::y1 = y1;
+    LTRect::x2 = x2;
+    LTRect::y2 = y2;
+}
+
+void LTRect::draw() {
+    ltDisableTextures();
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    GLfloat v[] = {
+        x1, y1,
+        x2, y1,
+        x2, y2,
+        x1, y2
+    };
+    glVertexPointer(2, GL_FLOAT, 0, v);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+}
+
+LTfloat* LTRect::field_ptr(const char *field_name) {
+    if (strcmp(field_name, "x1") == 0) {
+        return &x1;
+    }
+    if (strcmp(field_name, "y1") == 0) {
+        return &y1;
+    }
+    if (strcmp(field_name, "x2") == 0) {
+        return &x2;
+    }
+    if (strcmp(field_name, "y2") == 0) {
+        return &y2;
     }
     return NULL;
 }

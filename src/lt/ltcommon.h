@@ -36,6 +36,7 @@ enum LTType {
     LT_TYPE_FIXTURE,
     LT_TYPE_LINE,
     LT_TYPE_TRIANGLE,
+    LT_TYPE_RECT,
     LT_NUM_TYPES
 };
 

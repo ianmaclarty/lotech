@@ -168,6 +168,16 @@ struct LTTriangle : LTProp {
     virtual LTfloat* field_ptr(const char *field_name);
 };
 
+struct LTRect : LTProp {
+    LTfloat x1, y1, x2, y2;
+
+    LTRect(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2);
+    
+    virtual void draw();
+
+    virtual LTfloat* field_ptr(const char *field_name);
+};
+
 //---------------------------------------------------------------------
 // Images.
 

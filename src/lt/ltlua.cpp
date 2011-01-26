@@ -164,64 +164,6 @@ static int lt_PopTint(lua_State *L) {
     return 0;
 }
 
-static int lt_Scale(lua_State *L) {
-    int num_args = lua_gettop(L);
-    LTfloat x = (LTfloat)luaL_checknumber(L, 1);
-    LTfloat y;
-    if (num_args > 1) {
-        y = (LTfloat)luaL_checknumber(L, 2);
-    } else {
-        y = x;
-    }
-    LTfloat z;
-    if (num_args > 2) {
-        z = (LTfloat)luaL_checknumber(L, 3);
-    } else {
-        z = 1.0f;
-    }
-    ltScale(x, y, z);
-    return 0;
-}
-
-static int lt_Translate(lua_State *L) {
-    int num_args = lua_gettop(L);
-    LTfloat x = (LTfloat)luaL_checknumber(L, 1);
-    LTfloat y = (LTfloat)luaL_checknumber(L, 2);
-    LTfloat z;
-    if (num_args > 2) {
-        z = (LTfloat)luaL_checknumber(L, 3);
-    } else {
-        z = 0.0f;
-    }
-    ltTranslate(x, y, z);
-    return 0;
-}
-
-static int lt_Rotate(lua_State *L) {
-    int num_args = lua_gettop(L);
-    LTfloat theta = (LTdegrees)luaL_checknumber(L, 1);
-    LTfloat x;
-    if (num_args > 1) {
-        x = (LTfloat)luaL_checknumber(L, 2);
-    } else {
-        x = 0.0f;
-    }
-    LTfloat y;
-    if (num_args > 2) {
-        y = (LTfloat)luaL_checknumber(L, 3);
-    } else {
-        y = 0.0f;
-    }
-    LTfloat z;
-    if (num_args > 3) {
-        z = (LTfloat)luaL_checknumber(L, 4);
-    } else {
-        z = 1.0f;
-    }
-    ltRotate(theta, x, y, z);
-    return 0;
-}
-
 static int lt_PushMatrix(lua_State *L) {
     ltPushMatrix();
     return 0;
@@ -287,9 +229,13 @@ static int prop_PropogatePointerDownEvent(lua_State *L) {
 }
 
 static int scene_Insert(lua_State *L) {
+    int num_args = lua_gettop(L);
     LTScene *scene = (LTScene*)get_object(L, 1, LT_TYPE_SCENE);
     LTProp *prop = (LTProp*)get_object(L, 2, LT_TYPE_PROP);
-    LTfloat depth = luaL_checknumber(L, 3);
+    LTfloat depth = 0.0f;
+    if (num_args > 2) {
+        depth = luaL_checknumber(L, 3);
+    }
     scene->insert(prop, depth);
     return 0;
 }
@@ -325,6 +271,36 @@ static const luaL_Reg prop_methods[] = {
     {NULL, NULL}
 };
 
+static int lt_Translate(lua_State *L) {
+    LTProp *target = (LTProp *)get_object(L, 1, LT_TYPE_PROP);
+    LTfloat x = (LTfloat)luaL_checknumber(L, 2);
+    LTfloat y = (LTfloat)luaL_checknumber(L, 3);
+    LTTranslate2D *node = new LTTranslate2D(x, y, target);
+    push_object(L, node, prop_methods);
+    return 1;
+}
+
+static int lt_Rotate(lua_State *L) {
+    LTProp *target = (LTProp *)get_object(L, 1, LT_TYPE_PROP);
+    LTdegrees angle = (LTfloat)luaL_checknumber(L, 2);
+    LTRotate2D *node = new LTRotate2D(angle, target);
+    push_object(L, node, prop_methods);
+    return 1;
+}
+
+static int lt_Scale(lua_State *L) {
+    int num_args = lua_gettop(L);
+    LTProp *target = (LTProp *)get_object(L, 1, LT_TYPE_PROP);
+    LTfloat sx = (LTfloat)luaL_checknumber(L, 2);
+    LTfloat sy = sx;
+    if (num_args > 2) {
+        sy = (LTfloat)luaL_checknumber(L, 3);
+    }
+    LTScale2D *node = new LTScale2D(sx, sy, target);
+    push_object(L, node, prop_methods);
+    return 1;
+}
+
 static int lt_Tint(lua_State *L) {
     int num_args = lua_gettop(L);
     LTProp *target = (LTProp *)get_object(L, 1, LT_TYPE_PROP);
@@ -359,6 +335,16 @@ static int lt_Triangle(lua_State *L) {
     LTfloat y3 = (LTfloat)luaL_checknumber(L, 6);
     LTTriangle *triangle = new LTTriangle(x1, y1, x2, y2, x3, y3);
     push_object(L, triangle, prop_methods);
+    return 1;
+}
+
+static int lt_Rect(lua_State *L) {
+    LTfloat x1 = (LTfloat)luaL_checknumber(L, 1);
+    LTfloat y1 = (LTfloat)luaL_checknumber(L, 2);
+    LTfloat x2 = (LTfloat)luaL_checknumber(L, 3);
+    LTfloat y2 = (LTfloat)luaL_checknumber(L, 4);
+    LTRect *node = new LTRect(x1, y1, x2, y2);
+    push_object(L, node, prop_methods);
     return 1;
 }
 
@@ -819,9 +805,6 @@ static const luaL_Reg ltlib[] = {
     {"SetViewPort",             lt_SetViewPort},
     {"PushTint",                lt_PushTint},
     {"PopTint",                 lt_PopTint},
-    {"Scale",                   lt_Scale},
-    {"Translate",               lt_Translate},
-    {"Rotate",                  lt_Rotate},
     {"PushMatrix",              lt_PushMatrix},
     {"PopMatrix",               lt_PopMatrix},
     {"DrawUnitSquare",          lt_DrawUnitSquare},
@@ -832,7 +815,11 @@ static const luaL_Reg ltlib[] = {
     {"Scene",                   lt_Scene},
     {"Line",                    lt_Line},
     {"Triangle",                lt_Triangle},
+    {"Rect",                    lt_Rect},
     {"Tint",                    lt_Tint},
+    {"Scale",                   lt_Scale},
+    {"Translate",               lt_Translate},
+    {"Rotate",                  lt_Rotate},
 
     {"LoadImages",              lt_LoadImages},
 
