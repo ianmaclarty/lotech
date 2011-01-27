@@ -218,12 +218,30 @@ static int prop_OnPointerDown(lua_State *L) {
     return 0;
 }
 
+static int prop_OnPointerOver(lua_State *L) {
+    LTProp *prop = (LTProp*)get_object(L, 1, LT_TYPE_PROP);
+    lua_pushvalue(L, 2);
+    lua_pushvalue(L, 3);
+    LTLPointerOverEventHandler *handler = new LTLPointerOverEventHandler(L);
+    prop->addHandler(handler);
+    return 0;
+}
+
 static int prop_PropogatePointerDownEvent(lua_State *L) {
     LTProp *prop = (LTProp*)get_object(L, 1, LT_TYPE_PROP);
     int button = luaL_checkinteger(L, 2);
     LTfloat x = luaL_checknumber(L, 3);
     LTfloat y = luaL_checknumber(L, 4);
     LTPointerEvent event(LT_EVENT_POINTER_DOWN, x, y, button);
+    prop->propogatePointerEvent(x, y, &event);
+    return 0;
+}
+
+static int prop_PropogatePointerMoveEvent(lua_State *L) {
+    LTProp *prop = (LTProp*)get_object(L, 1, LT_TYPE_PROP);
+    LTfloat x = luaL_checknumber(L, 2);
+    LTfloat y = luaL_checknumber(L, 3);
+    LTPointerEvent event(LT_EVENT_POINTER_MOVE, x, y, 0);
     prop->propogatePointerEvent(x, y, &event);
     return 0;
 }
@@ -250,7 +268,9 @@ static int scene_Remove(lua_State *L) {
 static const luaL_Reg scene_methods[] = {
     {"Draw",                        prop_Draw},
     {"OnPointerDown",               prop_OnPointerDown},
+    {"OnPointerOver",               prop_OnPointerOver},
     {"PropogatePointerDownEvent",   prop_PropogatePointerDownEvent},
+    {"PropogatePointerMoveEvent",   prop_PropogatePointerMoveEvent},
     {"Insert",                      scene_Insert},
     {"Remove",                      scene_Remove},
 
@@ -266,7 +286,9 @@ static int lt_Scene(lua_State *L) {
 static const luaL_Reg prop_methods[] = {
     {"Draw",                        prop_Draw},
     {"OnPointerDown",               prop_OnPointerDown},
+    {"OnPointerOver",               prop_OnPointerOver},
     {"PropogatePointerDownEvent",   prop_PropogatePointerDownEvent},
+    {"PropogatePointerMoveEvent",   prop_PropogatePointerMoveEvent},
 
     {NULL, NULL}
 };
@@ -739,7 +761,9 @@ static const luaL_Reg body_methods[] = {
     {"AddTriangle",                 bdy_AddTriangle},
     {"Draw",                        prop_Draw},
     {"OnPointerDown",               prop_OnPointerDown},
+    {"OnPointerOver",               prop_OnPointerOver},
     {"PropogatePointerDownEvent",   prop_PropogatePointerDownEvent},
+    {"PropogatePointerMoveEvent",   prop_PropogatePointerMoveEvent},
     {"SetAngularVelocity",          bdy_SetAngularVelocity},
     {"Fixture",                     bdy_Fixture},
 
