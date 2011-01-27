@@ -4,9 +4,7 @@
 
 #include "ltcommon.h"
 
-//---------------------------------------------------------------
-
-struct LTProp;
+struct LTSceneNode;
 
 enum LTPointerEventType {
     LT_EVENT_POINTER_DOWN,
@@ -31,9 +29,9 @@ struct LTPointerEvent {
 struct LTPointerEventHandler {
     virtual ~LTPointerEventHandler() {}
 
-    // x and y are local coordinates w.r.t prop.
+    // x and y are local coordinates w.r.t the node.
     // Returning true stops the event propogating further.
-    virtual bool consume(LTfloat x, LTfloat y, LTProp *prop, LTPointerEvent *event) = 0;
+    virtual bool consume(LTfloat x, LTfloat y, LTSceneNode *node, LTPointerEvent *event) = 0;
 };
 
 //---------------------------------------------------------------

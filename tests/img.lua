@@ -1,6 +1,6 @@
 dofile("../src/ltlua/lt.lua")
 
-local scene = lt.Scene()
+local layer = lt.Layer()
 local curr_img;
 
 lt.SetViewPort(-10, -10, 10, 10)
@@ -584,7 +584,7 @@ end
 local i = 1
 
 curr_img = imgs[i]
-scene:Insert(curr_img, 1)
+layer:Insert(curr_img, 1)
 
 function lt.KeyDown(key)
     if key == "right" then
@@ -597,17 +597,17 @@ function lt.KeyDown(key)
     elseif i < 1 then
         i = n
     end
-    scene:Remove(curr_img)
+    layer:Remove(curr_img)
     curr_img = imgs[i]
-    scene:Insert(curr_img, 1)
+    layer:Insert(curr_img, 1)
 end
 
-local main_scene = lt.Scale(scene, 20)
-scene:Insert(lt.Tint(lt.Rect(-10, -10, 10, 10), 0.5, 0.5, 0.5), 0);
+local main_layer = lt.Scale(layer, 20)
+layer:Insert(lt.Tint(lt.Rect(-10, -10, 10, 10), 0.5, 0.5, 0.5), 0);
 
 function lt.Advance()
 end
 
 function lt.Render()
-    main_scene:Draw()
+    main_layer:Draw()
 end

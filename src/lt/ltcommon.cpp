@@ -34,20 +34,20 @@ struct LTTypeInfo {
 
 const LTTypeInfo types[] = {
     {"Object",      LT_TYPE_OBJECT},
-    {"Prop",        LT_TYPE_OBJECT},
-    {"Translate2D", LT_TYPE_PROP},  
-    {"Rotate2D",    LT_TYPE_PROP},  
-    {"Scale2D",     LT_TYPE_PROP},  
-    {"Tint",        LT_TYPE_PROP},  
-    {"Scene",       LT_TYPE_PROP},  
-    {"Image",       LT_TYPE_PROP},  
+    {"SceneNode",   LT_TYPE_OBJECT},
+    {"Translate",   LT_TYPE_SCENENODE},  
+    {"Rotate",      LT_TYPE_SCENENODE},  
+    {"Scale",       LT_TYPE_SCENENODE},  
+    {"Tint",        LT_TYPE_SCENENODE},  
+    {"Scene",       LT_TYPE_SCENENODE},  
+    {"Image",       LT_TYPE_SCENENODE},  
     {"Atlas",       LT_TYPE_OBJECT},
     {"World",       LT_TYPE_OBJECT},
-    {"Body",        LT_TYPE_PROP},
-    {"Fixture",     LT_TYPE_PROP},
-    {"Line",        LT_TYPE_PROP},
-    {"Triangle",    LT_TYPE_PROP},
-    {"Rect",        LT_TYPE_PROP},
+    {"Body",        LT_TYPE_SCENENODE},
+    {"Fixture",     LT_TYPE_SCENENODE},
+    {"Line",        LT_TYPE_SCENENODE},
+    {"Triangle",    LT_TYPE_SCENENODE},
+    {"Rect",        LT_TYPE_SCENENODE},
 };
 
 ct_assert(sizeof(types) == (int)LT_NUM_TYPES * sizeof(LTTypeInfo));

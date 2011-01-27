@@ -11,7 +11,7 @@ extern "C" {
 #include "Box2D/Box2D.h"
 #include "ltgraphics.h"
 #include "ltharness.h"
-#include "ltlevent.h"
+#include "ltimage.h"
 #include "ltlua.h"
 #include "ltphysics.h"
 
@@ -24,6 +24,20 @@ static LTfloat g_viewport_x1 = -15.0f;
 static LTfloat g_viewport_y1 = -10.0f;
 static LTfloat g_viewport_x2 = 15.0f;
 static LTfloat g_viewport_y2 = 10.0f;
+
+/************************* Refs **************************/
+
+static int make_ref(lua_State *L) {
+    return luaL_ref(L, LUA_REGISTRYINDEX);
+}
+
+static void get_ref(lua_State *L, int ref) {
+    lua_rawgeti(L, LUA_REGISTRYINDEX, ref);
+}
+
+static void unref(lua_State *L, int ref) {
+    luaL_unref(L, LUA_REGISTRYINDEX, ref);
+}
 
 /************************* Objects **************************/
 
@@ -202,130 +216,247 @@ static int lt_DrawEllipse(lua_State *L) {
     return 0;
 }
 
+/************************* Events **************************/
+
+static bool call_pointer_event_handler(lua_State *L, int func, LTfloat x, LTfloat y, int button) {
+    get_ref(L, func);
+    if (lua_isfunction(L, -1)) {
+        lua_pushnumber(L, x);
+        lua_pushnumber(L, y);
+        lua_pushinteger(L, button);
+        lua_call(L, 3, 1);
+        bool consumed = lua_toboolean(L, -1);
+        lua_pop(L, 1);
+        return consumed;
+    } else {
+        return false;
+    }
+}
+
+struct LTLPointerDownInEventHandler : LTPointerEventHandler {
+    lua_State *L;
+    int lua_func_ref;
+
+    // Pops the lua function on the top of the stack and uses it
+    // as the event handler.
+    LTLPointerDownInEventHandler(lua_State *L) {
+        LTLPointerDownInEventHandler::L = L;
+        lua_func_ref = make_ref(L);
+    }
+
+    virtual ~LTLPointerDownInEventHandler() {
+        unref(L, lua_func_ref);
+    }
+
+    virtual bool consume(LTfloat x, LTfloat y, LTSceneNode *node, LTPointerEvent *event) {
+        if (event->type == LT_EVENT_POINTER_DOWN) {
+            if (node->containsPoint(x, y)) {
+                return call_pointer_event_handler(L, lua_func_ref, x, y, event->button);
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+};
+
+struct LTLPointerMoveEventHandler : LTPointerEventHandler {
+    lua_State *L;
+    int lua_func_ref;
+
+    // Pops the lua function on the top of the stack and uses it
+    // as the event handler.
+    LTLPointerMoveEventHandler(lua_State *L) {
+        LTLPointerMoveEventHandler::L = L;
+        lua_func_ref = make_ref(L);
+    }
+
+    virtual ~LTLPointerMoveEventHandler() {
+        unref(L, lua_func_ref);
+    }
+
+    virtual bool consume(LTfloat x, LTfloat y, LTSceneNode *node, LTPointerEvent *event) {
+        if (event->type == LT_EVENT_POINTER_MOVE) {
+            return call_pointer_event_handler(L, lua_func_ref, x, y, event->button);
+        } else {
+            return false;
+        }
+    }
+};
+
+struct LTLPointerOverEventHandler : LTPointerEventHandler {
+    lua_State *L;
+    int lua_enter_func_ref;
+    int lua_exit_func_ref;
+    bool first_time;
+    bool in;
+
+    // Pops the 2 lua function on the top of the stack and uses them
+    // as the event handler (top one is for exist, other is for enter).
+    LTLPointerOverEventHandler(lua_State *L) {
+        LTLPointerOverEventHandler::L = L;
+        lua_exit_func_ref = make_ref(L);
+        lua_enter_func_ref = make_ref(L);
+        first_time = true;
+        in = false;
+    }
+    virtual ~LTLPointerOverEventHandler() {
+        unref(L, lua_enter_func_ref);
+        unref(L, lua_exit_func_ref);
+    }
+
+    virtual bool consume(LTfloat x, LTfloat y, LTSceneNode *node, LTPointerEvent *event) {
+        if (event->type == LT_EVENT_POINTER_MOVE) {
+            bool containsPoint = node->containsPoint(x, y);
+            if (first_time) {
+                first_time = false;
+                in = containsPoint;
+                if (in) {
+                    return call_pointer_event_handler(L, lua_enter_func_ref, x, y, event->button);
+                } else {
+                    return false;
+                }
+            } else {
+                bool res = false;
+                if (containsPoint && !in) {
+                    res = call_pointer_event_handler(L, lua_enter_func_ref, x, y, event->button);
+                } else if (!containsPoint && in) {
+                    res = call_pointer_event_handler(L, lua_exit_func_ref, x, y, event->button);
+                }
+                in = containsPoint;
+                return res;
+            }
+        } else {
+            return false;
+        }
+    }
+};
+
 /************************* Props **************************/
 
-static int prop_Draw(lua_State *L) {
-    LTProp *prop = (LTProp*)get_object(L, 1, LT_TYPE_PROP);
-    prop->draw();
+static int scene_Draw(lua_State *L) {
+    LTSceneNode *node = (LTSceneNode*)get_object(L, 1, LT_TYPE_SCENENODE);
+    node->draw();
     return 0;
 }
 
-static int prop_OnPointerDown(lua_State *L) {
-    LTProp *prop = (LTProp*)get_object(L, 1, LT_TYPE_PROP);
+static int scene_OnPointerDown(lua_State *L) {
+    LTSceneNode *node = (LTSceneNode*)get_object(L, 1, LT_TYPE_SCENENODE);
     lua_pushvalue(L, 2);
     LTLPointerDownInEventHandler *handler = new LTLPointerDownInEventHandler(L);
-    prop->addHandler(handler);
+    node->addHandler(handler);
     return 0;
 }
 
-static int prop_OnPointerOver(lua_State *L) {
-    LTProp *prop = (LTProp*)get_object(L, 1, LT_TYPE_PROP);
+static int scene_OnPointerOver(lua_State *L) {
+    LTSceneNode *node = (LTSceneNode*)get_object(L, 1, LT_TYPE_SCENENODE);
     lua_pushvalue(L, 2);
     lua_pushvalue(L, 3);
     LTLPointerOverEventHandler *handler = new LTLPointerOverEventHandler(L);
-    prop->addHandler(handler);
+    node->addHandler(handler);
     return 0;
 }
 
-static int prop_PropogatePointerDownEvent(lua_State *L) {
-    LTProp *prop = (LTProp*)get_object(L, 1, LT_TYPE_PROP);
+static int scene_PropogatePointerDownEvent(lua_State *L) {
+    LTSceneNode *node = (LTSceneNode*)get_object(L, 1, LT_TYPE_SCENENODE);
     int button = luaL_checkinteger(L, 2);
     LTfloat x = luaL_checknumber(L, 3);
     LTfloat y = luaL_checknumber(L, 4);
     LTPointerEvent event(LT_EVENT_POINTER_DOWN, x, y, button);
-    prop->propogatePointerEvent(x, y, &event);
+    node->propogatePointerEvent(x, y, &event);
     return 0;
 }
 
-static int prop_PropogatePointerMoveEvent(lua_State *L) {
-    LTProp *prop = (LTProp*)get_object(L, 1, LT_TYPE_PROP);
+static int scene_PropogatePointerMoveEvent(lua_State *L) {
+    LTSceneNode *node = (LTSceneNode*)get_object(L, 1, LT_TYPE_SCENENODE);
     LTfloat x = luaL_checknumber(L, 2);
     LTfloat y = luaL_checknumber(L, 3);
     LTPointerEvent event(LT_EVENT_POINTER_MOVE, x, y, 0);
-    prop->propogatePointerEvent(x, y, &event);
+    node->propogatePointerEvent(x, y, &event);
     return 0;
 }
 
-static int scene_Insert(lua_State *L) {
+static int layer_Insert(lua_State *L) {
     int num_args = lua_gettop(L);
-    LTScene *scene = (LTScene*)get_object(L, 1, LT_TYPE_SCENE);
-    LTProp *prop = (LTProp*)get_object(L, 2, LT_TYPE_PROP);
+    LTLayer *layer = (LTLayer*)get_object(L, 1, LT_TYPE_LAYER);
+    LTSceneNode *node = (LTSceneNode*)get_object(L, 2, LT_TYPE_SCENENODE);
     LTfloat depth = 0.0f;
     if (num_args > 2) {
         depth = luaL_checknumber(L, 3);
     }
-    scene->insert(prop, depth);
+    layer->insert(node, depth);
     return 0;
 }
 
-static int scene_Remove(lua_State *L) {
-    LTScene *scene = (LTScene*)get_object(L, 1, LT_TYPE_SCENE);
-    LTProp *prop = (LTProp*)get_object(L, 2, LT_TYPE_PROP);
-    scene->remove(prop);
+static int layer_Remove(lua_State *L) {
+    LTLayer *layer = (LTLayer*)get_object(L, 1, LT_TYPE_LAYER);
+    LTSceneNode *node = (LTSceneNode*)get_object(L, 2, LT_TYPE_SCENENODE);
+    layer->remove(node);
     return 0;
 }
 
-static const luaL_Reg scene_methods[] = {
-    {"Draw",                        prop_Draw},
-    {"OnPointerDown",               prop_OnPointerDown},
-    {"OnPointerOver",               prop_OnPointerOver},
-    {"PropogatePointerDownEvent",   prop_PropogatePointerDownEvent},
-    {"PropogatePointerMoveEvent",   prop_PropogatePointerMoveEvent},
-    {"Insert",                      scene_Insert},
-    {"Remove",                      scene_Remove},
+static const luaL_Reg layer_methods[] = {
+    {"Draw",                        scene_Draw},
+    {"OnPointerDown",               scene_OnPointerDown},
+    {"OnPointerOver",               scene_OnPointerOver},
+    {"PropogatePointerDownEvent",   scene_PropogatePointerDownEvent},
+    {"PropogatePointerMoveEvent",   scene_PropogatePointerMoveEvent},
+    {"Insert",                      layer_Insert},
+    {"Remove",                      layer_Remove},
 
     {NULL, NULL}
 };
 
-static int lt_Scene(lua_State *L) {
-    LTScene *scene = new LTScene();
-    push_object(L, scene, scene_methods);
+static int lt_Layer(lua_State *L) {
+    LTLayer *layer = new LTLayer();
+    push_object(L, layer, layer_methods);
     return 1;
 }
 
-static const luaL_Reg prop_methods[] = {
-    {"Draw",                        prop_Draw},
-    {"OnPointerDown",               prop_OnPointerDown},
-    {"OnPointerOver",               prop_OnPointerOver},
-    {"PropogatePointerDownEvent",   prop_PropogatePointerDownEvent},
-    {"PropogatePointerMoveEvent",   prop_PropogatePointerMoveEvent},
+static const luaL_Reg scene_methods[] = {
+    {"Draw",                        scene_Draw},
+    {"OnPointerDown",               scene_OnPointerDown},
+    {"OnPointerOver",               scene_OnPointerOver},
+    {"PropogatePointerDownEvent",   scene_PropogatePointerDownEvent},
+    {"PropogatePointerMoveEvent",   scene_PropogatePointerMoveEvent},
 
     {NULL, NULL}
 };
 
 static int lt_Translate(lua_State *L) {
-    LTProp *target = (LTProp *)get_object(L, 1, LT_TYPE_PROP);
+    LTSceneNode *target = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
     LTfloat x = (LTfloat)luaL_checknumber(L, 2);
     LTfloat y = (LTfloat)luaL_checknumber(L, 3);
-    LTTranslate2D *node = new LTTranslate2D(x, y, target);
-    push_object(L, node, prop_methods);
+    LTTranslateNode *node = new LTTranslateNode(x, y, target);
+    push_object(L, node, scene_methods);
     return 1;
 }
 
 static int lt_Rotate(lua_State *L) {
-    LTProp *target = (LTProp *)get_object(L, 1, LT_TYPE_PROP);
+    LTSceneNode *target = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
     LTdegrees angle = (LTfloat)luaL_checknumber(L, 2);
-    LTRotate2D *node = new LTRotate2D(angle, target);
-    push_object(L, node, prop_methods);
+    LTRotateNode *node = new LTRotateNode(angle, target);
+    push_object(L, node, scene_methods);
     return 1;
 }
 
 static int lt_Scale(lua_State *L) {
     int num_args = lua_gettop(L);
-    LTProp *target = (LTProp *)get_object(L, 1, LT_TYPE_PROP);
+    LTSceneNode *target = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
     LTfloat sx = (LTfloat)luaL_checknumber(L, 2);
     LTfloat sy = sx;
     if (num_args > 2) {
         sy = (LTfloat)luaL_checknumber(L, 3);
     }
-    LTScale2D *node = new LTScale2D(sx, sy, target);
-    push_object(L, node, prop_methods);
+    LTScaleNode *node = new LTScaleNode(sx, sy, target);
+    push_object(L, node, scene_methods);
     return 1;
 }
 
 static int lt_Tint(lua_State *L) {
     int num_args = lua_gettop(L);
-    LTProp *target = (LTProp *)get_object(L, 1, LT_TYPE_PROP);
+    LTSceneNode *target = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
     LTfloat r = (LTfloat)luaL_checknumber(L, 2);
     LTfloat g = (LTfloat)luaL_checknumber(L, 3);
     LTfloat b = (LTfloat)luaL_checknumber(L, 4);
@@ -333,8 +464,8 @@ static int lt_Tint(lua_State *L) {
     if (num_args > 4) {
         a = (LTfloat)luaL_checknumber(L, 5);
     }
-    LTTint *tinter = new LTTint(r, g, b, a, target);
-    push_object(L, tinter, prop_methods);
+    LTTintNode *tinter = new LTTintNode(r, g, b, a, target);
+    push_object(L, tinter, scene_methods);
     return 1;
 }
 
@@ -343,8 +474,8 @@ static int lt_Line(lua_State *L) {
     LTfloat y1 = (LTfloat)luaL_checknumber(L, 2);
     LTfloat x2 = (LTfloat)luaL_checknumber(L, 3);
     LTfloat y2 = (LTfloat)luaL_checknumber(L, 4);
-    LTLine *line = new LTLine(x1, y1, x2, y2);
-    push_object(L, line, prop_methods);
+    LTLineNode *line = new LTLineNode(x1, y1, x2, y2);
+    push_object(L, line, scene_methods);
     return 1;
 }
 
@@ -355,8 +486,8 @@ static int lt_Triangle(lua_State *L) {
     LTfloat y2 = (LTfloat)luaL_checknumber(L, 4);
     LTfloat x3 = (LTfloat)luaL_checknumber(L, 5);
     LTfloat y3 = (LTfloat)luaL_checknumber(L, 6);
-    LTTriangle *triangle = new LTTriangle(x1, y1, x2, y2, x3, y3);
-    push_object(L, triangle, prop_methods);
+    LTTriangleNode *triangle = new LTTriangleNode(x1, y1, x2, y2, x3, y3);
+    push_object(L, triangle, scene_methods);
     return 1;
 }
 
@@ -365,8 +496,8 @@ static int lt_Rect(lua_State *L) {
     LTfloat y1 = (LTfloat)luaL_checknumber(L, 2);
     LTfloat x2 = (LTfloat)luaL_checknumber(L, 3);
     LTfloat y2 = (LTfloat)luaL_checknumber(L, 4);
-    LTRect *node = new LTRect(x1, y1, x2, y2);
-    push_object(L, node, prop_methods);
+    LTRectNode *node = new LTRectNode(x1, y1, x2, y2);
+    push_object(L, node, scene_methods);
     return 1;
 }
 
@@ -498,7 +629,7 @@ static int fixture_GetBody(lua_State *L);
 static const luaL_Reg fixture_methods[] = {
     {"Destroy",             fixture_Destroy},
     {"IsDestroyed",         fixture_IsDestroyed},
-    {"Draw",                prop_Draw},
+    {"Draw",                scene_Draw},
     {"ContainsPoint",       fixture_ContainsPoint},
     {"GetBody",             fixture_GetBody},
 
@@ -724,7 +855,7 @@ static int bdy_Fixture(lua_State *L) {
     if (body->body != NULL) {
         LTObject *obj = get_object(L, 1, LT_TYPE_OBJECT);
         if (obj->type == LT_TYPE_TRIANGLE) {
-            LTTriangle *t = (LTTriangle*)obj;
+            LTTriangleNode *t = (LTTriangleNode*)obj;
             b2PolygonShape poly;
             b2Vec2 vertices[3];
             vertices[0].Set(t->x1, t->y1);
@@ -759,11 +890,11 @@ static const luaL_Reg body_methods[] = {
     {"GetPosition",                 bdy_GetPosition},
     {"AddRect",                     bdy_AddRect},
     {"AddTriangle",                 bdy_AddTriangle},
-    {"Draw",                        prop_Draw},
-    {"OnPointerDown",               prop_OnPointerDown},
-    {"OnPointerOver",               prop_OnPointerOver},
-    {"PropogatePointerDownEvent",   prop_PropogatePointerDownEvent},
-    {"PropogatePointerMoveEvent",   prop_PropogatePointerMoveEvent},
+    {"Draw",                        scene_Draw},
+    {"OnPointerDown",               scene_OnPointerDown},
+    {"OnPointerOver",               scene_OnPointerOver},
+    {"PropogatePointerDownEvent",   scene_PropogatePointerDownEvent},
+    {"PropogatePointerMoveEvent",   scene_PropogatePointerMoveEvent},
     {"SetAngularVelocity",          bdy_SetAngularVelocity},
     {"Fixture",                     bdy_Fixture},
 
@@ -836,7 +967,7 @@ static const luaL_Reg ltlib[] = {
     {"DrawRect",                lt_DrawRect},
     {"DrawEllipse",             lt_DrawEllipse},
 
-    {"Scene",                   lt_Scene},
+    {"Layer",                   lt_Layer},
     {"Line",                    lt_Line},
     {"Triangle",                lt_Triangle},
     {"Rect",                    lt_Rect},

@@ -3,62 +3,133 @@
 #define LTSCENE_H
 
 #include <list>
+#include <map>
 
-#ifdef LINUX
-#define GL_GLEXT_PROTOTYPES
-#include <GL/gl.h>
-#include <GL/glext.h>
-#else
-#include <OpenGL/GL.h>
-#endif
+#include "ltevent.h"
 
-#include "lttween.h"
+struct LTSceneNode : LTObject {
+    std::list<LTPointerEventHandler *> *event_handlers;
 
-enum LTSceneNodeStatus {
-    LT_STATUS_VISIBLE,
-    LT_STATUS_HIDDEN,
-    LT_STATUS_DEAD            /* Delete from scene before next render. */
+    LTSceneNode(LTType type);
+    virtual ~LTSceneNode();
+
+    virtual void draw() = 0;
+
+    // Call all the event handles for this node only, returning true iff at least one
+    // of the event handlers returns true.
+    bool consumePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
+
+    // Propogate an event to this and all descendent nodes, calling event
+    // handlers along the way.  If at least one of the event handlers for a particular
+    // node returns true, then propogation stops.
+    virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
+
+    // Returns true iff this node, or one of its descendents, contains the given point.
+    virtual bool containsPoint(LTfloat x, LTfloat y) { return false; } // XXX make abstract.
+
+    void addHandler(LTPointerEventHandler *handler);
 };
 
-struct LTSceneNode : public LTTweenable {
-    LTSceneNodeStatus   status;
+// Layers group nodes together.
+struct LTLayer : LTSceneNode {
+    std::multimap<LTfloat, LTSceneNode*> layer;
+    std::multimap<LTSceneNode*, std::multimap<LTfloat, LTSceneNode*>::iterator> node_index;
 
-    LTfloat      red;
-    LTfloat      green;
-    LTfloat      blue;
-    LTfloat      alpha;
+    LTLayer();
+    virtual ~LTLayer();
 
-    LTfloat      x;
-    LTfloat      y;
-    LTdegrees    angle;
-    LTfloat      x_scale;
-    LTfloat      y_scale;
-
-    std::list<LTSceneNode*> children;
-
-    LTSceneNode();
-    virtual ~LTSceneNode() {};
-
-    virtual LTfloat* getFloatField(LTTweenFloatField f);
-
-    virtual void preRenderChildren() {};
-    virtual void postRenderChildren() {};
-};
-
-/*
-struct LTBufferedImage : public LTSceneNode {
-    GLuint  vertex_buffer_id;
-    GLuint  texture_buffer_id;
-    GLuint  texture_id;
+    void insert(LTSceneNode *node, LTfloat depth);
+    void remove(LTSceneNode *node);
 
     virtual void draw();
-};
-*/
-
-struct LTUnitSquare : public LTSceneNode {
-    virtual void preRenderChildren();
+    virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
 };
 
-void ltRenderScene(LTSceneNode *scene);
+struct LTTranslateNode : LTSceneNode {
+    LTfloat x;
+    LTfloat y;
+    LTSceneNode *child;
+
+    LTTranslateNode(LTfloat x, LTfloat y, LTSceneNode *child);
+    virtual ~LTTranslateNode();
+
+    virtual void draw();
+    virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
+
+    virtual LTfloat* field_ptr(const char *field_name);
+};
+
+struct LTRotateNode : LTSceneNode {
+    LTdegrees angle;
+    LTSceneNode *child;
+
+    LTRotateNode(LTdegrees angle, LTSceneNode *child);
+    virtual ~LTRotateNode();
+
+    virtual void draw();
+    virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
+
+    virtual LTfloat* field_ptr(const char *field_name);
+};
+
+struct LTScaleNode : LTSceneNode {
+    LTfloat sx;
+    LTfloat sy;
+    LTSceneNode *child;
+
+    LTScaleNode(LTfloat sx, LTfloat sy, LTSceneNode *child);
+    virtual ~LTScaleNode();
+
+    virtual void draw();
+    virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
+
+    virtual LTfloat* field_ptr(const char *field_name);
+};
+
+struct LTTintNode : LTSceneNode {
+    LTfloat r;
+    LTfloat g;
+    LTfloat b;
+    LTfloat a;
+    LTSceneNode *child;
+
+    LTTintNode(LTfloat r, LTfloat g, LTfloat b, LTfloat a, LTSceneNode *child);
+    virtual ~LTTintNode();
+
+    virtual void draw();
+    virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
+
+    virtual LTfloat* field_ptr(const char *field_name);
+};
+
+struct LTLineNode : LTSceneNode {
+    LTfloat x1, y1, x2, y2;
+
+    LTLineNode(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2);
+    
+    virtual void draw();
+
+    virtual LTfloat* field_ptr(const char *field_name);
+};
+
+struct LTTriangleNode : LTSceneNode {
+    LTfloat x1, y1, x2, y2, x3, y3;
+
+    LTTriangleNode(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2, LTfloat x3, LTfloat y3);
+    
+    virtual void draw();
+
+    virtual LTfloat* field_ptr(const char *field_name);
+};
+
+struct LTRectNode : LTSceneNode {
+    LTfloat x1, y1, x2, y2;
+
+    LTRectNode(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2);
+    
+    virtual void draw();
+
+    virtual LTfloat* field_ptr(const char *field_name);
+};
 
 #endif

@@ -3,6 +3,7 @@
 #include <assert.h>
 
 #include "ltphysics.h"
+#include "ltgraphics.h"
 
 LTWorld::LTWorld(b2Vec2 gravity, bool doSleep) : LTObject(LT_TYPE_WORLD) {
     world = new b2World(gravity, doSleep);
@@ -29,7 +30,7 @@ LTWorld::~LTWorld() {
     delete world;
 }
 
-LTBody::LTBody(LTWorld *world, const b2BodyDef *def) : LTProp(LT_TYPE_BODY) {
+LTBody::LTBody(LTWorld *world, const b2BodyDef *def) : LTSceneNode(LT_TYPE_BODY) {
     LTBody::world = world;
     body = world->world->CreateBody(def);
     body->SetUserData(this);
@@ -99,7 +100,7 @@ bool LTBody::containsPoint(LTfloat x, LTfloat y) {
     return false;
 }
 
-LTFixture::LTFixture(LTBody *body, const b2FixtureDef *def) : LTProp(LT_TYPE_FIXTURE) {
+LTFixture::LTFixture(LTBody *body, const b2FixtureDef *def) : LTSceneNode(LT_TYPE_FIXTURE) {
     LTFixture::body = body;
     if (body->body != NULL) {
         fixture = body->body->CreateFixture(def);

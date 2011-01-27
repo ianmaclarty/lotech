@@ -21,17 +21,17 @@ local y1 = 0
 local curr_line = nil
 local down = false
 
-local scene = lt.Scene()
+local layer = lt.Layer()
 
 -- Draw grid lines
-local grid = lt.Scene()
+local grid = lt.Layer()
 for y = bottom, top, grid_gap do
     grid:Insert(lt.Line(left, y, right, y), 0)
 end
 for x = left, right, grid_gap do
     grid:Insert(lt.Line(x, bottom, x, top), 0)
 end
-scene:Insert(lt.Tint(grid, grey()), 0)
+layer:Insert(lt.Tint(grid, grey()), 0)
 
 local function nearest_grid_point(x, y)
     local nx = math.floor(x / grid_gap + 0.5) * grid_gap;
@@ -47,7 +47,7 @@ static:AddRect(left, bottom, right, bottom + 0.5)
 static:AddRect(left, top - 0.5, right, top)
 static:AddRect(left, bottom, left + 0.5, top)
 static:AddRect(right - 0.5, bottom, right, top)
-scene:Insert(lt.Tint(static, 0.5, 0.5, 0.5, 0.4), 1)
+layer:Insert(lt.Tint(static, 0.5, 0.5, 0.5, 0.4), 1)
 
 local paused = false
 local keys = {}
@@ -104,11 +104,11 @@ end
 function ship.init()
     if ship.body then
         ship.body:Destroy()
-        scene:Remove(ship.body)
+        layer:Remove(ship.body)
     end
     ship.body = world:DynamicBody(0, 0, 0)
     ship.body:AddTriangle(-0.5, -0.8, 0.5, -0.8, 0, 0.8, 1)
-    scene:Insert(lt.Tint(ship.body, 1, 0, 0), 1)
+    layer:Insert(lt.Tint(ship.body, 1, 0, 0), 1)
 end
 
 ship.init()
@@ -147,7 +147,7 @@ function mode.draw.MouseDown(button, x, y)
     points[next_point] = {x = x, y = y}
     if next_point < 3 then
         lines[next_point] = lt.Line(x, y, x, y)
-        scene:Insert(lines[next_point], 1)
+        layer:Insert(lines[next_point], 1)
     end
     if next_point == 3 then
         next_point = 0
@@ -157,7 +157,7 @@ function mode.draw.MouseDown(button, x, y)
             points[3].x, points[3].y);
         points = {}
         for i, l in ipairs(lines) do
-            scene:Remove(l)
+            layer:Remove(l)
         end
         lines = {}
     end
@@ -189,7 +189,7 @@ mode.select = {
 
 function mode.select.MouseDown(button, x, y)
     if selected then
-        scene:Remove(selected.prop)
+        layer:Remove(selected.prop)
         selected = nil
     end
     local fixtures = world:QueryBox(x - grid_gap, y - grid_gap, x + grid_gap, y + grid_gap)
@@ -199,7 +199,7 @@ function mode.select.MouseDown(button, x, y)
                 fixture = fixture,
                 prop = lt.Tint(fixture, 1, 1, 1, 0.4)
             }
-            scene:Insert(selected.prop, 2)
+            layer:Insert(selected.prop, 2)
             break
         end
     end
@@ -213,7 +213,7 @@ end
 
 function mode.select.delete_selected()
     if selected then
-        scene:Remove(selected.prop)
+        layer:Remove(selected.prop)
         selected.fixture:Destroy()
         selected = nil
     end
@@ -228,5 +228,5 @@ setmetatable(mode.select, mode.select)
 ---------------------------------------------------------------------------------
 
 function lt.Render()
-    scene:Draw()
+    layer:Draw()
 end

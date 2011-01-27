@@ -1,6 +1,6 @@
 dofile("../src/ltlua/lt.lua")
 
-local scene0 = lt.Scene()
+local layer0 = lt.Layer()
 local tweens = lt.TweenSet()
 local world = lt.World()
 
@@ -21,7 +21,7 @@ lt.SetViewPort(-9, -6, 9, 6)
 
 local floor = world:StaticBody()
 floor:AddRect(-20, -10, 20, -7)
-scene0:Insert(floor, 1)
+layer0:Insert(floor, 1)
 
 local things = {}
 local colors = {}
@@ -45,26 +45,26 @@ for i = 1, n do
             return true
         end
     )
-    scene0:Insert(node, 1)
+    layer0:Insert(node, 1)
 end
 
-local main_scene = lt.Rotate(lt.Translate(lt.Scale(lt.Rotate(lt.Translate(scene0, 3, -0.5), -30), -1.1, 1.1), -1, 0.5), 10)
+local main_layer = lt.Rotate(lt.Translate(lt.Scale(lt.Rotate(lt.Translate(layer0, 3, -0.5), -30), -1.1, 1.1), -1, 0.5), 10)
 
 local mouse_x, mouse_y = 0, 0
 
 function lt.Advance()
     local step = lt.secs_per_frame
     world:Step(step)
-    main_scene:PropogatePointerMoveEvent(mouse_x, mouse_y)
+    main_layer:PropogatePointerMoveEvent(mouse_x, mouse_y)
 end
 
 function lt.Render()
-    main_scene:Draw()
+    main_layer:Draw()
     --print_fps()
 end
 
 function lt.MouseDown(button, x, y)
-    main_scene:PropogatePointerDownEvent(button, x, y)
+    main_layer:PropogatePointerDownEvent(button, x, y)
 end
 
 function lt.MouseMove(x, y)

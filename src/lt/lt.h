@@ -6,12 +6,12 @@
 #include "ltevent.h"
 #include "ltgraphics.h"
 #include "ltharness.h"
+#include "ltimage.h"
 #include "ltinput.h"
 #include "ltlua.h"
 #include "ltphysics.h"
 #include "ltrandom.h"
 #include "ltscene.h"
-#include "lttween.h"
 #include "lttime.h"
 #include "lttween.h"
 

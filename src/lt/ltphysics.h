@@ -5,7 +5,7 @@
 #include "Box2D/Box2D.h"
 
 #include "ltcommon.h"
-#include "ltgraphics.h"
+#include "ltscene.h"
 
 struct LTWorld : LTObject {
     b2World *world;
@@ -14,7 +14,7 @@ struct LTWorld : LTObject {
     virtual ~LTWorld();
 };
 
-struct LTBody : LTProp {
+struct LTBody : LTSceneNode {
     b2Body *body; // May be null if the body is destroyed.
     LTWorld *world;
 
@@ -31,7 +31,7 @@ struct LTBody : LTProp {
     virtual bool containsPoint(LTfloat x, LTfloat y);
 };
 
-struct LTFixture : LTProp {
+struct LTFixture : LTSceneNode {
     b2Fixture *fixture; // May be null if the fixture is destroyed.
     LTBody *body;
 
