@@ -43,13 +43,13 @@ local world = lt.World()
 world:SetGravity(0, -10)
 
 local static = world:StaticBody()
-static:AddRect(left, bottom, right, bottom + 0.5)
-static:AddRect(left, top - 0.5, right, top)
-static:AddRect(left, bottom, left + 0.5, top)
-static:AddRect(right - 0.5, bottom, right, top)
-layer:Insert(lt.Tint(static, 0.5, 0.5, 0.5, 0.4), 1)
+--static:AddRect(left, bottom, right, bottom + 0.5)
+--static:AddRect(left, top - 0.5, right, top)
+--static:AddRect(left, bottom, left + 0.5, top)
+--static:AddRect(right - 0.5, bottom, right, top)
+--layer:Insert(lt.Tint(static, 0.5, 0.5, 0.5, 0.4), 1)
 
-local paused = false
+local paused = true
 local keys = {}
 local ship = {}
 local current_mode = "draw"
@@ -57,6 +57,25 @@ local modekeys = {}
 modekeys.D = "draw"
 modekeys.S = "select"
 local mode = {}
+
+local level = {
+    triangles = {}
+}
+local colors = {
+    red         = {r = 1, g = 0, b = 0},
+    blue        = {r = 0, g = 0, b = 1},
+    green       = {r = 0, g = 1, b = 0},
+    yellow      = {r = 1, g = 1, b = 0},
+    magenta     = {r = 1, g = 0, b = 1},
+    cyan        = {r = 0, g = 1, b = 1},
+}
+local color_keys = {}
+local i = 1
+for key, rgb in pairs(colors) do
+    color_keys[i] = key
+    i = i + 1
+end
+local color = "red"
 
 ---------------------------------------------------------------------------------
 -- Input
@@ -71,6 +90,14 @@ function lt.KeyDown(key)
         mode.select.delete_selected()
     elseif modekeys[key] then
         current_mode = modekeys[key]
+    elseif tonumber(key) then
+        local n = tonumber(key)
+        if n >= 1 and n <= #color_keys then
+            color = color_keys[n]
+            print(color)
+        end
+    elseif key == "W" then
+        lt.Save("level.data", level)
     else
         ship.KeyDown(key)
     end
@@ -151,10 +178,24 @@ function mode.draw.MouseDown(button, x, y)
     end
     if next_point == 3 then
         next_point = 0
-        static:AddTriangle(
+        local c = colors[color];
+        local node = lt.Tint(lt.Triangle(
+            points[1].x, points[1].y,
+            points[2].x, points[2].y,
+            points[3].x, points[3].y), c.r, c.g, c.b, 0.7)
+        layer:Insert(node);
+        local pos = #level.triangles + 1
+        table.insert(level.triangles, pos, {
+            x1 = points[1].x, y1 = points[1].y,
+            x2 = points[2].x, y2 = points[2].y,
+            x3 = points[3].x, y3 = points[3].y,
+            color = color});
+        local fixture = static:AddTriangle(
             points[1].x, points[1].y,
             points[2].x, points[2].y,
             points[3].x, points[3].y);
+        fixture.triangle_index = pos
+        fixture.layer_node = node
         points = {}
         for i, l in ipairs(lines) do
             layer:Remove(l)
@@ -189,17 +230,15 @@ mode.select = {
 
 function mode.select.MouseDown(button, x, y)
     if selected then
-        layer:Remove(selected.prop)
+        local c = colors[level.triangles[selected.triangle_index].color]
+        selected.layer_node:Set{r = c.r, g = c.g, b = c.b, a = 0.7}
         selected = nil
     end
     local fixtures = world:QueryBox(x - grid_gap, y - grid_gap, x + grid_gap, y + grid_gap)
     for _, fixture in ipairs(fixtures) do
         if fixture:ContainsPoint(x, y) and fixture:GetBody() ~= ship.body then
-            selected = {
-                fixture = fixture,
-                prop = lt.Tint(fixture, 1, 1, 1, 0.4)
-            }
-            layer:Insert(selected.prop, 2)
+            selected = fixture
+            selected.layer_node:Set{r = 1, b = 1, g = 1, a = 0.8}
             break
         end
     end
@@ -213,8 +252,9 @@ end
 
 function mode.select.delete_selected()
     if selected then
-        layer:Remove(selected.prop)
-        selected.fixture:Destroy()
+        layer:Remove(selected.layer_node)
+        level.triangles[selected.triangle_index] = nil
+        selected:Destroy()
         selected = nil
     end
 end

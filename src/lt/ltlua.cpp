@@ -870,7 +870,7 @@ static int bdy_AddTriangle(lua_State *L) {
             vertices[2] = vertices[0];
             vertices[0].Set(x3, y3);
             if (!ltCheckB2Poly(vertices, 3)) {
-                lua_pushboolean(L, 0);
+                lua_pushnil(L);
                 return 1;
             }
         }
@@ -878,8 +878,8 @@ static int bdy_AddTriangle(lua_State *L) {
         b2FixtureDef fixtureDef;
         fixtureDef.density = density;
         fixtureDef.shape = &poly;
-        new LTFixture(body, &fixtureDef);
-        lua_pushboolean(L, 1);
+        LTFixture *fixture = new LTFixture(body, &fixtureDef);
+        push_object(L, fixture, fixture_methods);
         return 1;
     }
     return 0;
