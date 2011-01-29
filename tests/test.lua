@@ -31,11 +31,17 @@ for i = 1, n do
     local size = (math.random() + 0.5) * 0.25
     things[i]:AddRect(-size, -size, size, size, 3.3)
     local node = lt.Tint(things[i], 0.5, 0.5, 0.5)
+    node.on = false
+    node.touch_count = 0
     things[i]:OnPointerDown(function(x, y)
-        if node.r == 1 then
+        if node.on then
             node.r = 0.5
+            node.g = 0.5 + node.touch_count / 10
+            node.on = false
         else
             node.r = 1
+            node.on = true
+            node.touch_count = node.touch_count + 1
         end
         return true
     end)

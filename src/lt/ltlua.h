@@ -17,4 +17,7 @@ void ltLuaMouseUp(int button, LTfloat x, LTfloat y);
 void ltLuaMouseMove(LTfloat x, LTfloat y);
 void ltLuaResizeWindow(LTfloat w, LTfloat h);
 
+int ltLuaInitExtraFieldsTable();
+void ltLuaFreeExtraFieldsTable(int ref);
+
 #endif /* LTLUA_H */

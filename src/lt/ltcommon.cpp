@@ -1,5 +1,6 @@
 /* Copyright (C) 2010 Ian MacLarty */
 #include "ltcommon.h"
+#include "ltlua.h"
 
 #include <cstdarg>
 
@@ -39,7 +40,7 @@ const LTTypeInfo types[] = {
     {"Rotate",      LT_TYPE_SCENENODE},  
     {"Scale",       LT_TYPE_SCENENODE},  
     {"Tint",        LT_TYPE_SCENENODE},  
-    {"Scene",       LT_TYPE_SCENENODE},  
+    {"Layer",       LT_TYPE_SCENENODE},  
     {"Image",       LT_TYPE_SCENENODE},  
     {"Atlas",       LT_TYPE_OBJECT},
     {"World",       LT_TYPE_OBJECT},
@@ -60,9 +61,11 @@ LTObject::LTObject(LTType type) {
     LTObject::type = type;
     ref_count = 0;
     lua_userdata = NULL;
+    lua_extra_fields_ref = ltLuaInitExtraFieldsTable();
 }
 
 LTObject::~LTObject() {
+    ltLuaFreeExtraFieldsTable(lua_extra_fields_ref);
 }
 
 void LTObject::retain() {

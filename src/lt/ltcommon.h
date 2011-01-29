@@ -69,6 +69,11 @@ struct LTObject {
     // equality and hashing being different for the same LTObject reference.
     LTObject **lua_userdata; 
 
+    // The user can add any extra fields they want to an LTObject from
+    // Lua code.  This field holds a reference to a table used to store
+    // those fields.
+    int lua_extra_fields_ref;
+
     LTObject(LTType type);
     virtual ~LTObject();
 

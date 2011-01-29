@@ -70,15 +70,30 @@ static int set_object_field(lua_State *L) {
     const char *fname;
     LTfloat val;
     LTObject **ud = (LTObject**)lua_touserdata(L, 1);
-    if (lua_isstring(L, 2)) {
-        fname = luaL_checkstring(L, 2);
-        val = (LTfloat)luaL_checknumber(L, 3);
-        if (*ud != NULL) {
-            LTfloat *f = (*ud)->field_ptr(fname);
-            if (f != NULL) {
-                *f = val;
+    LTObject *obj = *ud;
+    if (obj != NULL) {
+        // Try to set the LTObject field.
+        if (lua_isstring(L, 2) && lua_isnumber(L, 3)) {
+            fname = luaL_checkstring(L, 2);
+            val = (LTfloat)luaL_checknumber(L, 3);
+            if (*ud != NULL) {
+                LTfloat *f = (*ud)->field_ptr(fname);
+                if (f != NULL) {
+                    *f = val;
+                    return 0;
+                }
             }
         }
+        // Use the extra fields table to set the field.
+        if (obj->lua_extra_fields_ref == LUA_NOREF) {
+            lua_newtable(L);
+            obj->lua_extra_fields_ref = make_ref(L);
+        }
+        get_ref(L, obj->lua_extra_fields_ref);
+        lua_pushvalue(L, 2);
+        lua_pushvalue(L, 3);
+        lua_rawset(L, -3);
+        return 0;
     }
     return 0;
 }
@@ -104,7 +119,8 @@ static int set_object_fields(lua_State *L) {
 
 static int get_object_field(lua_State *L) {
     LTObject **ud = (LTObject**)lua_touserdata(L, 1);
-    if (*ud != NULL) {
+    LTObject *obj = *ud;
+    if (obj != NULL) {
         // First try looking up the field in the metatable.
         if (lua_getmetatable(L, 1)) {
             lua_pushvalue(L, 2);
@@ -113,7 +129,16 @@ static int get_object_field(lua_State *L) {
                 return 1;
             }
         }
-        // Next try looking up the field in the LTObject.
+        // Next try looking it up in the extra fields table.
+        if (obj->lua_extra_fields_ref != LUA_NOREF) {
+            get_ref(L, obj->lua_extra_fields_ref);
+            lua_pushvalue(L, 2);
+            lua_rawget(L, -2);
+            if (!lua_isnil(L, -1)) {
+                return 1;
+            }
+        }
+        // Finally try looking up the field in the LTObject itself.
         const char *fname = luaL_checkstring(L, 2);
         LTfloat *f = (*ud)->field_ptr(fname);
         if (f != NULL) {
@@ -250,24 +275,22 @@ static bool call_pointer_event_handler(lua_State *L, int func, LTfloat x, LTfloa
 }
 
 struct LTLPointerDownInEventHandler : LTPointerEventHandler {
-    lua_State *L;
     int lua_func_ref;
 
     // Pops the lua function on the top of the stack and uses it
     // as the event handler.
-    LTLPointerDownInEventHandler(lua_State *L) {
-        LTLPointerDownInEventHandler::L = L;
-        lua_func_ref = make_ref(L);
+    LTLPointerDownInEventHandler() {
+        lua_func_ref = make_ref(g_L);
     }
 
     virtual ~LTLPointerDownInEventHandler() {
-        unref(L, lua_func_ref);
+        unref(g_L, lua_func_ref);
     }
 
     virtual bool consume(LTfloat x, LTfloat y, LTSceneNode *node, LTPointerEvent *event) {
         if (event->type == LT_EVENT_POINTER_DOWN) {
             if (node->containsPoint(x, y)) {
-                return call_pointer_event_handler(L, lua_func_ref, x, y, event->button);
+                return call_pointer_event_handler(g_L, lua_func_ref, x, y, event->button);
             } else {
                 return false;
             }
@@ -278,23 +301,21 @@ struct LTLPointerDownInEventHandler : LTPointerEventHandler {
 };
 
 struct LTLPointerMoveEventHandler : LTPointerEventHandler {
-    lua_State *L;
     int lua_func_ref;
 
     // Pops the lua function on the top of the stack and uses it
     // as the event handler.
-    LTLPointerMoveEventHandler(lua_State *L) {
-        LTLPointerMoveEventHandler::L = L;
-        lua_func_ref = make_ref(L);
+    LTLPointerMoveEventHandler() {
+        lua_func_ref = make_ref(g_L);
     }
 
     virtual ~LTLPointerMoveEventHandler() {
-        unref(L, lua_func_ref);
+        unref(g_L, lua_func_ref);
     }
 
     virtual bool consume(LTfloat x, LTfloat y, LTSceneNode *node, LTPointerEvent *event) {
         if (event->type == LT_EVENT_POINTER_MOVE) {
-            return call_pointer_event_handler(L, lua_func_ref, x, y, event->button);
+            return call_pointer_event_handler(g_L, lua_func_ref, x, y, event->button);
         } else {
             return false;
         }
@@ -302,7 +323,6 @@ struct LTLPointerMoveEventHandler : LTPointerEventHandler {
 };
 
 struct LTLPointerOverEventHandler : LTPointerEventHandler {
-    lua_State *L;
     int lua_enter_func_ref;
     int lua_exit_func_ref;
     bool first_time;
@@ -310,16 +330,15 @@ struct LTLPointerOverEventHandler : LTPointerEventHandler {
 
     // Pops the 2 lua function on the top of the stack and uses them
     // as the event handler (top one is for exist, other is for enter).
-    LTLPointerOverEventHandler(lua_State *L) {
-        LTLPointerOverEventHandler::L = L;
-        lua_exit_func_ref = make_ref(L);
-        lua_enter_func_ref = make_ref(L);
+    LTLPointerOverEventHandler() {
+        lua_exit_func_ref = make_ref(g_L);
+        lua_enter_func_ref = make_ref(g_L);
         first_time = true;
         in = false;
     }
     virtual ~LTLPointerOverEventHandler() {
-        unref(L, lua_enter_func_ref);
-        unref(L, lua_exit_func_ref);
+        unref(g_L, lua_enter_func_ref);
+        unref(g_L, lua_exit_func_ref);
     }
 
     virtual bool consume(LTfloat x, LTfloat y, LTSceneNode *node, LTPointerEvent *event) {
@@ -329,16 +348,16 @@ struct LTLPointerOverEventHandler : LTPointerEventHandler {
                 first_time = false;
                 in = containsPoint;
                 if (in) {
-                    return call_pointer_event_handler(L, lua_enter_func_ref, x, y, event->button);
+                    return call_pointer_event_handler(g_L, lua_enter_func_ref, x, y, event->button);
                 } else {
                     return false;
                 }
             } else {
                 bool res = false;
                 if (containsPoint && !in) {
-                    res = call_pointer_event_handler(L, lua_enter_func_ref, x, y, event->button);
+                    res = call_pointer_event_handler(g_L, lua_enter_func_ref, x, y, event->button);
                 } else if (!containsPoint && in) {
-                    res = call_pointer_event_handler(L, lua_exit_func_ref, x, y, event->button);
+                    res = call_pointer_event_handler(g_L, lua_exit_func_ref, x, y, event->button);
                 }
                 in = containsPoint;
                 return res;
@@ -360,7 +379,7 @@ static int scene_Draw(lua_State *L) {
 static int scene_OnPointerDown(lua_State *L) {
     LTSceneNode *node = (LTSceneNode*)get_object(L, 1, LT_TYPE_SCENENODE);
     lua_pushvalue(L, 2);
-    LTLPointerDownInEventHandler *handler = new LTLPointerDownInEventHandler(L);
+    LTLPointerDownInEventHandler *handler = new LTLPointerDownInEventHandler();
     node->addHandler(handler);
     return 0;
 }
@@ -369,7 +388,7 @@ static int scene_OnPointerOver(lua_State *L) {
     LTSceneNode *node = (LTSceneNode*)get_object(L, 1, LT_TYPE_SCENENODE);
     lua_pushvalue(L, 2);
     lua_pushvalue(L, 3);
-    LTLPointerOverEventHandler *handler = new LTLPointerOverEventHandler(L);
+    LTLPointerOverEventHandler *handler = new LTLPointerOverEventHandler();
     node->addHandler(handler);
     return 0;
 }
@@ -1053,6 +1072,7 @@ void ltLuaSetup(const char *file) {
 void ltLuaTeardown() {
     if (g_L != NULL) {
         lua_close(g_L);
+        g_L = NULL;
     }
 }
 
@@ -1182,4 +1202,14 @@ void ltLuaMouseMove(LTfloat x, LTfloat y) {
 void ltLuaResizeWindow(LTfloat w, LTfloat h) {
     g_screen_w = w;
     g_screen_h = h;
+}
+
+int ltLuaInitExtraFieldsTable() {
+    return LUA_NOREF;
+}
+
+void ltLuaFreeExtraFieldsTable(int ref) {
+    if (ref != LUA_NOREF) {
+        unref(g_L, ref);
+    }
 }
