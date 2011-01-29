@@ -32,16 +32,20 @@ for i = 1, n do
     things[i]:AddRect(-size, -size, size, size, 3.3)
     local node = lt.Tint(things[i], 0.5, 0.5, 0.5)
     things[i]:OnPointerDown(function(x, y)
-        node:Set{r = 1}
+        if node.r == 1 then
+            node.r = 0.5
+        else
+            node.r = 1
+        end
         return true
     end)
     things[i]:OnPointerOver(
         function() -- enter
-            node:Set{b = 1}
+            node.b = 1
             return true
         end,
         function() -- exit
-            node:Set{b = 0.5}
+            node.b = 0.5
             return true
         end
     )

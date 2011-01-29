@@ -79,28 +79,42 @@ static int set_object_field(lua_State *L) {
                 *f = val;
             }
         }
-    } else {
-        // Allow multiple fields to be set with a table.
-        lua_pushnil(L);
-        while (lua_next(L, 2) != 0) {
-            fname = luaL_checkstring(L, -2);
-            val = (LTfloat)luaL_checknumber(L, -1);
-            if (*ud != NULL) {
-                LTfloat *f = (*ud)->field_ptr(fname);
-                if (f != NULL) {
-                    *f = val;
-                }
+    }
+    return 0;
+}
+    
+static int set_object_fields(lua_State *L) {
+    const char *fname;
+    LTfloat val;
+    LTObject **ud = (LTObject**)lua_touserdata(L, 1);
+    lua_pushnil(L);
+    while (lua_next(L, 2) != 0) {
+        fname = luaL_checkstring(L, -2);
+        val = (LTfloat)luaL_checknumber(L, -1);
+        if (*ud != NULL) {
+            LTfloat *f = (*ud)->field_ptr(fname);
+            if (f != NULL) {
+                *f = val;
             }
-            lua_pop(L, 1);
         }
+        lua_pop(L, 1);
     }
     return 0;
 }
 
 static int get_object_field(lua_State *L) {
     LTObject **ud = (LTObject**)lua_touserdata(L, 1);
-    const char *fname = luaL_checkstring(L, 2);
     if (*ud != NULL) {
+        // First try looking up the field in the metatable.
+        if (lua_getmetatable(L, 1)) {
+            lua_pushvalue(L, 2);
+            lua_rawget(L, -2);
+            if (!lua_isnil(L, -1)) {
+                return 1;
+            }
+        }
+        // Next try looking up the field in the LTObject.
+        const char *fname = luaL_checkstring(L, 2);
         LTfloat *f = (*ud)->field_ptr(fname);
         if (f != NULL) {
             lua_pushnumber(L, *f);
@@ -120,22 +134,24 @@ static void push_object(lua_State *L, LTObject *obj, const luaL_Reg *methods) {
         // Count all Lua references to the object as one reference.
         obj->retain();
         if (luaL_newmetatable(L, obj->typeName())) {
-            if (methods != NULL) {
-                lua_newtable(L);
-                    // All objects get a Release method that can be used to
-                    // manually free them.
-                    lua_pushcfunction(L, release_object);
-                    lua_setfield(L, -2, "Release");
+            // All objects get a Release method that can be used to
+            // manually free them.
+            lua_pushcfunction(L, release_object);
+            lua_setfield(L, -2, "Release");
 
-                    // Field access functions.
-                    lua_pushcfunction(L, get_object_field);
-                    lua_setfield(L, -2, "Get");
-                    lua_pushcfunction(L, set_object_field);
-                    lua_setfield(L, -2, "Set");
+            // Method to allow setting of multiple fields at once using a table.
+            lua_pushcfunction(L, set_object_fields);
+            lua_setfield(L, -2, "Set");
 
-                    luaL_register(L, NULL, methods);
-                lua_setfield(L, -2, "__index");
-            }
+            // Register methods specific to this class.
+            luaL_register(L, NULL, methods);
+
+            // Field access functions.
+            lua_pushcfunction(L, get_object_field);
+            lua_setfield(L, -2, "__index");
+            lua_pushcfunction(L, set_object_field);
+            lua_setfield(L, -2, "__newindex");
+
             // Decrement reference count when Lua no longer references the object.
             // This will have no effect if the object was released using the Release method.
             lua_pushcfunction(L, release_object);
