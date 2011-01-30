@@ -1209,7 +1209,7 @@ int ltLuaInitExtraFieldsTable() {
 }
 
 void ltLuaFreeExtraFieldsTable(int ref) {
-    if (ref != LUA_NOREF) {
+    if (ref != LUA_NOREF && g_L != NULL) {
         unref(g_L, ref);
     }
 }
