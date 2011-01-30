@@ -31,23 +31,15 @@ end
 for x = left, right, grid_gap do
     grid:Insert(lt.Line(x, bottom, x, top), 0)
 end
-layer:Insert(lt.Tint(grid, grey()), 0)
+grid = lt.Tint(grid, grey())
 
 local function nearest_grid_point(x, y)
-    local nx = math.floor(x / grid_gap + 0.5) * grid_gap;
-    local ny = math.floor(y / grid_gap + 0.5) * grid_gap;
+    local nx = math.floor(x / grid_gap + 0.5) * grid_gap
+    local ny = math.floor(y / grid_gap + 0.5) * grid_gap
     return nx, ny
 end
 
-local world = lt.World()
-world:SetGravity(0, -10)
-
-local static = world:StaticBody()
---static:AddRect(left, bottom, right, bottom + 0.5)
---static:AddRect(left, top - 0.5, right, top)
---static:AddRect(left, bottom, left + 0.5, top)
---static:AddRect(right - 0.5, bottom, right, top)
---layer:Insert(lt.Tint(static, 0.5, 0.5, 0.5, 0.4), 1)
+local world, static
 
 local paused = true
 local keys = {}
@@ -61,6 +53,7 @@ local mode = {}
 local level = {
     triangles = {}
 }
+
 local colors = {
     red         = {r = 1, g = 0, b = 0},
     blue        = {r = 0, g = 0, b = 1},
@@ -77,6 +70,30 @@ for key, rgb in pairs(colors) do
 end
 local color = "red"
 
+local function add_triangle(t, p)
+    local c = colors[t.color]
+    local node = lt.Tint(lt.Triangle(
+        t.x1, t.y1, t.x2, t.y2, t.x3, t.y3), c.r, c.g, c.b, 0.7)
+    layer:Insert(node)
+    local fixture = static:AddTriangle(
+        t.x1, t.y1, t.x2, t.y2, t.x3, t.y3)
+    fixture.triangle_index = p
+    fixture.layer_node = node
+end
+
+local function init_level()
+    layer = lt.Layer()
+    layer:Insert(grid, 0)
+    world = lt.World()
+    world:SetGravity(0, -10)
+    static = world:StaticBody()
+    ship.init()
+    mode.select.selected = nil
+    for p, t in ipairs(level.triangles) do
+        add_triangle(t, p)
+    end
+end
+
 ---------------------------------------------------------------------------------
 -- Input
 
@@ -85,7 +102,7 @@ function lt.KeyDown(key)
     if key == "P" then
         paused = not paused
     elseif key == "R" then
-        ship.init()
+        init_level()
     elseif key == "del" then
         mode.select.delete_selected()
     elseif modekeys[key] then
@@ -98,6 +115,9 @@ function lt.KeyDown(key)
         end
     elseif key == "W" then
         lt.Save("level.data", level)
+    elseif key == "L" then
+        level = lt.Load("level.data")
+        init_level()
     else
         ship.KeyDown(key)
     end
@@ -129,16 +149,10 @@ end
 -- Ship
 
 function ship.init()
-    if ship.body then
-        ship.body:Destroy()
-        layer:Remove(ship.body)
-    end
     ship.body = world:DynamicBody(0, 0, 0)
     ship.body:AddTriangle(-0.5, -0.8, 0.5, -0.8, 0, 0.8, 1)
     layer:Insert(lt.Tint(ship.body, 1, 0, 0), 1)
 end
-
-ship.init()
 
 function ship.KeyDown(key)
     if key == "left" then
@@ -178,24 +192,15 @@ function mode.draw.MouseDown(button, x, y)
     end
     if next_point == 3 then
         next_point = 0
-        local c = colors[color];
-        local node = lt.Tint(lt.Triangle(
-            points[1].x, points[1].y,
-            points[2].x, points[2].y,
-            points[3].x, points[3].y), c.r, c.g, c.b, 0.7)
-        layer:Insert(node);
         local pos = #level.triangles + 1
-        table.insert(level.triangles, pos, {
+        local triangle = {
             x1 = points[1].x, y1 = points[1].y,
             x2 = points[2].x, y2 = points[2].y,
             x3 = points[3].x, y3 = points[3].y,
-            color = color});
-        local fixture = static:AddTriangle(
-            points[1].x, points[1].y,
-            points[2].x, points[2].y,
-            points[3].x, points[3].y);
-        fixture.triangle_index = pos
-        fixture.layer_node = node
+            color = color
+        }
+        table.insert(level.triangles, pos, triangle)
+        add_triangle(triangle, pos)
         points = {}
         for i, l in ipairs(lines) do
             layer:Remove(l)
@@ -266,6 +271,8 @@ setfenv(mode.select.delete_selected, mode.select)
 setmetatable(mode.select, mode.select)
 
 ---------------------------------------------------------------------------------
+
+init_level()
 
 function lt.Render()
     layer:Draw()
