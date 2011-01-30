@@ -1,0 +1,12 @@
+Cycles between Lua and C++ data will result in memory leaks
+unless those cycles are broken by invoking the Release method in Lua.
+Cases where cycles are likely to occur:
+    - Lua event handlers that reference ancestor nodes of the node
+      they are attached to.
+    - Extra lua fields attached to C++ objects that (possibly indirectly)
+      reference the same C++ object.
+
+Possible solutions:
+    - Shadow the C++ reference graph in Lua using tables, possibly passing
+      around lua tables instead of userdatas.
+    - Modify lua garbage collector so it can scan C++ userdata.
