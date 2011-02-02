@@ -94,8 +94,9 @@ enum LTAnchor {
     LT_ANCHOR_BOTTOM_LEFT
 };
 
-struct LTAtlas : LTObject {
+struct LTAtlas {
     GLuint texture_id;
+    int num_live_images;
 
     LTAtlas(LTImagePacker *packer, const char *dump_file = NULL);
     virtual ~LTAtlas();

@@ -36,7 +36,6 @@ struct LTLayer : LTSceneNode {
     std::multimap<LTSceneNode*, std::multimap<LTfloat, LTSceneNode*>::iterator> node_index;
 
     LTLayer();
-    virtual ~LTLayer();
 
     void insert(LTSceneNode *node, LTfloat depth);
     void remove(LTSceneNode *node);
@@ -51,7 +50,6 @@ struct LTTranslateNode : LTSceneNode {
     LTSceneNode *child;
 
     LTTranslateNode(LTfloat x, LTfloat y, LTSceneNode *child);
-    virtual ~LTTranslateNode();
 
     virtual void draw();
     virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
@@ -64,7 +62,6 @@ struct LTRotateNode : LTSceneNode {
     LTSceneNode *child;
 
     LTRotateNode(LTdegrees angle, LTSceneNode *child);
-    virtual ~LTRotateNode();
 
     virtual void draw();
     virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
@@ -78,7 +75,6 @@ struct LTScaleNode : LTSceneNode {
     LTSceneNode *child;
 
     LTScaleNode(LTfloat sx, LTfloat sy, LTSceneNode *child);
-    virtual ~LTScaleNode();
 
     virtual void draw();
     virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
@@ -94,7 +90,6 @@ struct LTTintNode : LTSceneNode {
     LTSceneNode *child;
 
     LTTintNode(LTfloat r, LTfloat g, LTfloat b, LTfloat a, LTSceneNode *child);
-    virtual ~LTTintNode();
 
     virtual void draw();
     virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);

@@ -19,7 +19,7 @@ LD_OPTS=$(DEBUG_OPTS) -framework GLUT -framework OpenGL -framework Cocoa -lm
 DEFINES=-DLUA_USE_MACOSX -DLTGLUT $(PNGDEFS)
 endif
 
-GCC_OPTS=$(DEFINES) $(DEBUG_OPTS) -I../src/lt -I../src/zlib -I../src/lpng -I../src -I../src/lua -Wall -O3
+GCC_OPTS=$(DEFINES) $(DEBUG_OPTS) -I../src/lt -I../src/zlib -I../src/lpng -I../src -I../src/lua -Wall -O0
 
 LT_CPP_FILES:=$(shell find ../src/lt/ -name "*.cpp" -exec basename \{\} \;)
 LT_H_FILES:=$(shell find ../src/lt/ -name "*.h" -exec basename \{\} \;)

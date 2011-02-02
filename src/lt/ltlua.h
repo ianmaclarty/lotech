@@ -20,4 +20,6 @@ void ltLuaResizeWindow(LTfloat w, LTfloat h);
 int ltLuaInitExtraFieldsTable();
 void ltLuaFreeExtraFieldsTable(int ref);
 
+int ltLuaInitRef();
+
 #endif /* LTLUA_H */

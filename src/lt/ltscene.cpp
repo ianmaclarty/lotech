@@ -47,19 +47,11 @@ void LTSceneNode::addHandler(LTPointerEventHandler *handler) {
 LTLayer::LTLayer() : LTSceneNode(LT_TYPE_LAYER) {
 }
 
-LTLayer::~LTLayer() {
-    std::multimap<LTfloat, LTSceneNode*>::iterator it;
-    for (it = layer.begin(); it != layer.end(); it++) {
-        ((*it).second)->release();
-    }
-}
-
 #define NODEINDEX std::multimap<LTfloat, LTSceneNode*>::iterator
 
 void LTLayer::insert(LTSceneNode *node, LTfloat depth) {
     std::pair<LTfloat, LTSceneNode*> val(depth, node);
     node_index.insert(std::pair<LTSceneNode*, NODEINDEX>(node, layer.insert(val)));
-    node->retain();
 }
 
 void LTLayer::remove(LTSceneNode *node) {
@@ -68,7 +60,6 @@ void LTLayer::remove(LTSceneNode *node) {
     range = node_index.equal_range(node);
     for (it = range.first; it != range.second; it++) {
         layer.erase((*it).second);
-        node->release();
     }
     node_index.erase(range.first, range.second);
 }
@@ -98,11 +89,6 @@ LTTranslateNode::LTTranslateNode(LTfloat x, LTfloat y, LTSceneNode *child) : LTS
     LTTranslateNode::x = x;
     LTTranslateNode::y = y;
     LTTranslateNode::child = child;
-    child->retain();
-}
-
-LTTranslateNode::~LTTranslateNode() {
-    child->release();
 }
 
 void LTTranslateNode::draw() {
@@ -133,11 +119,6 @@ LTfloat* LTTranslateNode::field_ptr(const char *field_name) {
 LTRotateNode::LTRotateNode(LTdegrees angle, LTSceneNode *child) : LTSceneNode(LT_TYPE_ROTATE) {
     LTRotateNode::angle = angle;
     LTRotateNode::child = child;
-    child->retain();
-}
-
-LTRotateNode::~LTRotateNode() {
-    child->release();
 }
 
 void LTRotateNode::draw() {
@@ -169,11 +150,6 @@ LTScaleNode::LTScaleNode(LTfloat sx, LTfloat sy, LTSceneNode *child) : LTSceneNo
     LTScaleNode::sx = sx;
     LTScaleNode::sy = sy;
     LTScaleNode::child = child;
-    child->retain();
-}
-
-LTScaleNode::~LTScaleNode() {
-    child->release();
 }
 
 void LTScaleNode::draw() {
@@ -211,11 +187,6 @@ LTTintNode::LTTintNode(LTfloat r, LTfloat g, LTfloat b, LTfloat a, LTSceneNode *
     LTTintNode::b = b;
     LTTintNode::a = a;
     LTTintNode::child = child;
-    child->retain();
-}
-
-LTTintNode::~LTTintNode() {
-    child->release();
 }
 
 void LTTintNode::draw() {

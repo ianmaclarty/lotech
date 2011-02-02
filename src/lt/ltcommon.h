@@ -59,28 +59,13 @@ enum LTType {
 const char* ltTypeName(LTType type);
 
 struct LTObject {
+    int lua_wrap; // Reference to Lua wrapper table.
     LTType type;
-    int ref_count;
-
-    // A pointer to lua allocated userdata containing this object or
-    // NULL if lua has no references to it.
-    // This is used to return the same user data to lua for the same
-    // LTObject, which avoids an extra allocation and problems with
-    // equality and hashing being different for the same LTObject reference.
-    LTObject **lua_userdata; 
-
-    // The user can add any extra fields they want to an LTObject from
-    // Lua code.  This field holds a reference to a table used to store
-    // those fields.
-    int lua_extra_fields_ref;
 
     LTObject(LTType type);
     virtual ~LTObject();
 
-    virtual void retain();
-    virtual void release();
-
-    // For tweening.
+    // For tweening and modification from lua.
     virtual LTfloat* field_ptr(const char *field_name);
 
     // Is this object of a certain type?
@@ -88,18 +73,5 @@ struct LTObject {
 
     const char* typeName();
 };
-
-inline void ltRetain(LTObject *o) {
-    o->ref_count++;
-    //ltLog("RC+ %p (%s): %d", o, ltTypeName(o->type), o->ref_count);
-}
-
-inline void ltRelease(LTObject *o) {
-    o->ref_count--;
-    //ltLog("RC- %p (%s): %d", o, ltTypeName(o->type), o->ref_count);
-    if (o->ref_count <= 0) {
-        delete o;
-    }
-}
 
 #endif

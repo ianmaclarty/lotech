@@ -22,9 +22,6 @@ struct LTBody : LTSceneNode {
     // leave it null in the body def.
     LTBody(LTWorld *world, const b2BodyDef *def);
 
-    virtual void retain();
-    virtual void release();
-
     void destroy();
 
     virtual void draw();
@@ -38,9 +35,6 @@ struct LTFixture : LTSceneNode {
     // Userdata is always a pointer to the LTFixture object, so
     // leave it null in the fixture def. 
     LTFixture(LTBody *body, const b2FixtureDef *def);
-
-    virtual void retain();
-    virtual void release();
 
     void destroy();
 

@@ -58,22 +58,11 @@ const char* ltTypeName(LTType type) {
 }
 
 LTObject::LTObject(LTType type) {
+    lua_wrap = ltLuaInitRef();
     LTObject::type = type;
-    ref_count = 0;
-    lua_userdata = NULL;
-    lua_extra_fields_ref = ltLuaInitExtraFieldsTable();
 }
 
 LTObject::~LTObject() {
-    ltLuaFreeExtraFieldsTable(lua_extra_fields_ref);
-}
-
-void LTObject::retain() {
-    ltRetain(this);
-}
-
-void LTObject::release() {
-    ltRelease(this);
 }
 
 LTfloat* LTObject::field_ptr(const char *field_name) {

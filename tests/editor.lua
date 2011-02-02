@@ -86,10 +86,10 @@ local function init_level()
     layer:Insert(grid, 0)
     world = lt.World()
     world:SetGravity(0, -10)
-    static = world:StaticBody()
+    static = world:AddStaticBody()
     ship.init()
     mode.select.selected = nil
-    for p, t in ipairs(level.triangles) do
+    for p, t in pairs(level.triangles) do
         add_triangle(t, p)
     end
 end
@@ -149,7 +149,7 @@ end
 -- Ship
 
 function ship.init()
-    ship.body = world:DynamicBody(0, 0, 0)
+    ship.body = world:AddDynamicBody(0, 0, 0)
     ship.body:AddTriangle(-0.5, -0.8, 0.5, -0.8, 0, 0.8, 1)
     layer:Insert(lt.Tint(ship.body, 1, 0, 0), 1)
 end

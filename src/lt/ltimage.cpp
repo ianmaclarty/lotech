@@ -33,7 +33,8 @@ void ltDisableTextures() {
     }
 }
 
-LTAtlas::LTAtlas(LTImagePacker *packer, const char *dump_file) : LTObject(LT_TYPE_ATLAS) {
+LTAtlas::LTAtlas(LTImagePacker *packer, const char *dump_file) {
+    num_live_images = 0;
     LTImageBuffer *buf = ltCreateAtlasImage("<atlas>", packer);
     if (dump_file != NULL) {
         ltLog("Dumping %s (%d x %d)", dump_file, buf->bb_width(), buf->bb_height());
@@ -518,7 +519,7 @@ LTImage::LTImage(LTAtlas *atls, int atlas_w, int atlas_h, LTImagePacker *packer)
     }
 
     atlas = atls;
-    atlas->retain();
+    atlas->num_live_images++;
     rotated = packer->rotated;
 
     LTfloat fatlas_w = (LTfloat)atlas_w;
@@ -560,7 +561,10 @@ LTImage::LTImage(LTAtlas *atls, int atlas_w, int atlas_h, LTImagePacker *packer)
 LTImage::~LTImage() {
     glDeleteBuffers(1, &vertbuf);
     glDeleteBuffers(1, &texbuf);
-    atlas->release();
+    atlas->num_live_images--;
+    if (atlas->num_live_images <= 0) {
+        delete atlas;
+    }
 }
 
 void LTImage::draw() {

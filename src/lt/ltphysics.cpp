@@ -10,23 +10,6 @@ LTWorld::LTWorld(b2Vec2 gravity, bool doSleep) : LTObject(LT_TYPE_WORLD) {
 }
 
 LTWorld::~LTWorld() {
-    b2Body *b = world->GetBodyList();
-    // Free all body and fixture wrappers.
-    // They must all have a reference count of 1, otherwise the
-    // LTWorld wouldn't be deleted.
-    while (b != NULL) {
-        LTBody *bdy = (LTBody*)b->GetUserData();
-        b2Fixture *f = b->GetFixtureList();
-        while (f != NULL) {
-            LTFixture *fix = (LTFixture*)f->GetUserData();
-            assert(fix->ref_count == 1);
-            delete fix;
-            f = f->GetNext();
-        }
-        assert(bdy->ref_count == 1);
-        delete bdy;
-        b = b->GetNext();
-    }
     delete world;
 }
 
@@ -34,41 +17,20 @@ LTBody::LTBody(LTWorld *world, const b2BodyDef *def) : LTSceneNode(LT_TYPE_BODY)
     LTBody::world = world;
     body = world->world->CreateBody(def);
     body->SetUserData(this);
-    ltRetain(this); // Reference to this in the body user data.
-                    // This causes the LTBody not to be collected until
-                    // the b2Body is destroyed.
-}
-
-// We record external references to bodies in the world too
-// so that the world is not collected if there are no external
-// references directly to it, but there are external references
-// to bodies in the world.
-void LTBody::retain() {
-    world->retain();
-    ltRetain(this);
-}
-void LTBody::release() {
-    ltRelease(this);
-    world->release();
 }
 
 void LTBody::destroy() {
     if (body != NULL) { // NULL means the body was already destroyed.
-
-        // Release fixture wrappers.
+        // Invalidate fixture wrappers.
         b2Fixture *f = body->GetFixtureList();
         while (f != NULL) {
             LTFixture *ud = (LTFixture*)f->GetUserData();
             ud->fixture = NULL;
-            // Release the reference to the fixture which was added when we created it.
-            // We don't call ud->release(), because that would release the body too.
-            ltRelease(ud);
             f = f->GetNext();
         }
 
         world->world->DestroyBody(body);
         body = NULL;
-        ltRelease(this); // Release reference in body user data.
     }
 }
 
@@ -105,32 +67,15 @@ LTFixture::LTFixture(LTBody *body, const b2FixtureDef *def) : LTSceneNode(LT_TYP
     if (body->body != NULL) {
         fixture = body->body->CreateFixture(def);
         fixture->SetUserData(this);
-        ltRetain(this); // Reference to this in the fixture user data.
-                        // This causes the LTFixture not to be collected until
-                        // the b2Fixture is destroyed.
     } else {
         fixture = NULL;
     }
-}
-
-// We record external references to fixtures in the body too
-// so that the body is not collected if there are no external
-// references directly to it, but there are external references
-// to fixtures in the body.
-void LTFixture::retain() {
-    body->retain();
-    ltRetain(this);
-}
-void LTFixture::release() {
-    ltRelease(this);
-    body->release();
 }
 
 void LTFixture::destroy() {
     if (fixture != NULL) { // NULL means the fixture was already destroyed.
         body->body->DestroyFixture(fixture);
         fixture = NULL;
-        ltRelease(this); // Release reference in fixture user data.
     }
 }
 

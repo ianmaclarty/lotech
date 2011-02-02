@@ -7,7 +7,7 @@ local function wrt(ind, file, x)
             if type(key) == "string" then
                 file:write(spaces, key, " = ")
             else
-                file:write(spaces, "[", key, "] = ")
+                file:write(spaces, "[", tostring(key), "] = ")
             end
             wrt(ind + 1, file, val)
             file:write(",\n")
@@ -22,6 +22,7 @@ end
 
 function lt.Write(file, x)
     wrt(0, file, x)
+    file:write("\n")
 end
 
 function lt.Save(filename, val)
