@@ -581,30 +581,27 @@ void LTImage::draw() {
 }
 
 void LTImage::setAnchor(LTAnchor anchor) {
-    GLfloat *vertices = NULL;
+    LTfloat l = 0.0f;
+    LTfloat b = 0.0f;
     switch (anchor) {
         case LT_ANCHOR_CENTER: {
-            LTfloat w2 = orig_width * 0.5f;
-            LTfloat h2 = orig_width * 0.5f;
-            GLfloat v[] = {
-                bb_left - w2,               bb_bottom + bb_height - h2,
-                bb_left + bb_width - w2,    bb_bottom + bb_height - h2,
-                bb_left + bb_width - w2,    bb_bottom - h2,
-                bb_left - w2,               bb_bottom - h2
-            };
-            vertices = v;
+            l = bb_left - orig_width * 0.5f;
+            b = bb_bottom - orig_height * 0.5f;
             break;
         }
         case LT_ANCHOR_BOTTOM_LEFT: {
-            GLfloat v[] = {
-                bb_left,                bb_bottom + bb_height,
-                bb_left + bb_width,     bb_bottom + bb_height,
-                bb_left + bb_width,     bb_bottom,
-                bb_left,                bb_bottom
-            };
-            vertices = v;
+            l = bb_left;
+            b = bb_bottom;
             break;
         }
     }
-    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 8, vertices, GL_STATIC_DRAW);
+    LTfloat t = b + bb_height;
+    LTfloat r = l + bb_width;
+    GLfloat v[] = {
+        l, t,
+        r, t,
+        r, b,
+        l, b
+    };
+    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 8, v, GL_STATIC_DRAW);
 }
