@@ -1,4 +1,5 @@
 local dir = "../src/ltlua/"
+dofile(dir .. "ltutil.lua")
 dofile(dir .. "ltrefs.lua")
 dofile(dir .. "lthierachy.lua")
 dofile(dir .. "ltmath.lua")

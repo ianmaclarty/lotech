@@ -41,6 +41,7 @@ end
 
 local world, static
 
+local mouse_pos = {x = 0, y = 0}
 local paused = true
 local keys = {}
 local ship = {}
@@ -51,7 +52,11 @@ modekeys.S = "select"
 local mode = {}
 
 local level = {
-    triangles = {}
+    start = {
+        x = 0,
+        y = 0,
+    },
+    triangles = {},
 }
 
 local colors = {
@@ -118,6 +123,9 @@ function lt.KeyDown(key)
     elseif key == "L" then
         level = lt.Load("level.data")
         init_level()
+    elseif key == "B" then
+        level.start = clone(mouse_pos)
+        init_level()
     else
         ship.KeyDown(key)
     end
@@ -143,13 +151,15 @@ function lt.MouseDown(button, x, y)
 end
 function lt.MouseMove(x, y)
     mode[current_mode].MouseMove(x, y)
+    mouse_pos.x = x
+    mouse_pos.y = y
 end
 
 ---------------------------------------------------------------------------------
 -- Ship
 
 function ship.init()
-    ship.body = world:AddDynamicBody(0, 0, 0)
+    ship.body = world:AddDynamicBody(level.start.x, level.start.y, 0)
     ship.body:AddTriangle(-0.5, -0.8, 0.5, -0.8, 0, 0.8, 1)
     layer:Insert(lt.Tint(ship.body, 1, 0, 0), 1)
 end
