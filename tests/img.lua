@@ -5,8 +5,6 @@ local curr_img;
 
 lt.SetViewPort(-10, -10, 10, 10)
 
-lt.dump_atlases = true
-
 images = lt.LoadImages({
     "air_vent.png",
     "apple.png",

@@ -20,6 +20,9 @@
 #include "ltscene.h"
 #include "ltgraphics.h"
 
+#define LT_ALPHA(pxl)           (pxl & 0xFF)
+#define LT_TRANSPARENT(pxl)     (LT_ALPHA(pxl) == 0)
+
 struct LTAtlas;
 
 void ltEnableAtlas(LTAtlas *atlas);
@@ -30,7 +33,7 @@ struct LTImageBuffer {
     int width;
     int height;
 
-    // Bounding box.  Bottom-left corner is 0,0.  Top-right corner is width,height.
+    // Bounding box.
     int bb_left;
     int bb_top;
     int bb_right;

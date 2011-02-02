@@ -9,8 +9,6 @@
 
 #include "png.h"
 
-#define LT_ALPHA(pxl)     (pxl & 0xFF)
-
 static bool g_textures_enabled = false;
 static GLuint g_current_bound_texture = 0;
 
@@ -85,7 +83,7 @@ static void compute_bbox(const char *file, LTpixel **rows, int w, int h,
         row_clear = true;
         for (col = 0; col < w; col++) {
             pxl = rows[row][col];
-            if ((LT_ALPHA(pxl)) > 0) { // not transparent
+            if (!LT_TRANSPARENT(pxl)) {
                 row_clear = false;
                 if (col < *bb_left) {
                     *bb_left = col;
