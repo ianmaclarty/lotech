@@ -42,8 +42,11 @@ struct LTImageBuffer {
     /* Bounding box pixels from bottom-left to top-right, scanning left to right. */
     LTpixel *bb_pixels;
 
-    const char *file; // For error messages.
+    const char *file; // Originating file.
+    bool is_glyph;
+    char glyph_char;
 
+    LTImageBuffer();
     virtual ~LTImageBuffer();
 
     int bb_width();

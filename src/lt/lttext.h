@@ -42,6 +42,6 @@ struct LTText : LTSceneNode {
 };
 */
 
-std::list<LTImageBuffer *> *ltImageBufferToGlyphs(LTImageBuffer *buf);
+std::list<LTImageBuffer *> *ltImageBufferToGlyphs(LTImageBuffer *buf, const char *glyph_chars);
 
 #endif

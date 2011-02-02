@@ -51,6 +51,12 @@ LTAtlas::~LTAtlas() {
     glDeleteTextures(1, &texture_id);
 }
 
+LTImageBuffer::LTImageBuffer() {
+    file = "unknown";
+    is_glyph = false;
+    glyph_char = '\0';
+}
+
 LTImageBuffer::~LTImageBuffer() {
     delete[] bb_pixels;
 }

@@ -34,5 +34,9 @@ end
 
 function lt.Load(filename)
     local chunk = loadfile(filename)
-    return chunk()
+    if chunk then
+        return chunk()
+    else
+        error("Unable to load " .. filename)
+    end
 end

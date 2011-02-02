@@ -14,6 +14,7 @@ extern "C" {
 #include "ltimage.h"
 #include "ltlua.h"
 #include "ltphysics.h"
+#include "lttext.h"
 
 #define LT_USERDATA_MT "ltud"
 
@@ -547,10 +548,41 @@ static void add_packer_images_to_lua_table(lua_State *L, int w, int h, LTImagePa
         }
         strncpy(img_name, file, len - 4); // Remove ".png" suffix.
         img_name[len - 4] = '\0';
-        push_wrap(L, img);
-        lua_setfield(L, -2, img_name);
+        if (!packer->occupant->is_glyph) {
+            push_wrap(L, img);
+            lua_setfield(L, -2, img_name);
+        } else {
+            lua_getfield(L, -1, img_name);
+            if (lua_isnil(L, -1)) {
+                lua_pop(L, 1);
+                lua_newtable(L);
+                lua_pushvalue(L, -1);
+                lua_setfield(L, -3, img_name);
+            }
+            // Font table now on top of stack.
+            char glyph_name[2];
+            glyph_name[0] = packer->occupant->glyph_char;
+            glyph_name[1] = '\0';
+            push_wrap(L, img);
+            lua_setfield(L, -2, glyph_name);
+            lua_pop(L, 1); // Pop font table.
+        }
         add_packer_images_to_lua_table(L, w, h, packer->lo_child, atlas);
         add_packer_images_to_lua_table(L, w, h, packer->hi_child, atlas);
+    }
+}
+
+static void pack_image(lua_State *L, LTImagePacker *packer, LTImageBuffer *buf, int *atlas_num) {
+    if (!ltPackImage(packer, buf)) {
+        // Packer full, so generate an atlas.
+        LTAtlas *atlas = new LTAtlas(packer);
+        add_packer_images_to_lua_table(L, packer->width, packer->height, packer, atlas);
+        packer->deleteOccupants();
+        (*atlas_num)++;
+
+        if (!ltPackImage(packer, buf)) {
+            luaL_error(L, "Image %s is too large.", buf->file);
+        }
     }
 }
 
@@ -568,7 +600,7 @@ static int lt_LoadImages(lua_State *L) {
     LTImagePacker *packer = new LTImagePacker(0, 0, size, size);
     int atlas_num = 1;
     int i = 1;
-    do {
+    while (true) {
         lua_pushinteger(L, i);
         lua_gettable(L, 1);
         if (lua_isnil(L, -1)) {
@@ -576,27 +608,42 @@ static int lt_LoadImages(lua_State *L) {
             lua_pop(L, 1);
             break;
         }
-        const char* file = lua_tostring(L, -1);
-        lua_pop(L, 1);
-        if (file == NULL) {
-            return luaL_error(L, "Expecting an array of strings.");
-        }
-        
-        LTImageBuffer *buf = ltReadImage(file);
-        if (!ltPackImage(packer, buf)) {
-            // Packer full, so generate an atlas.
-            LTAtlas *atlas = new LTAtlas(packer);
-            add_packer_images_to_lua_table(L, packer->width, packer->height, packer, atlas);
-            packer->deleteOccupants();
-            atlas_num++;
-
-            if (!ltPackImage(packer, buf)) {
-                return luaL_error(L, "Image %s is too large.", file);
+        if (lua_isstring(L, -1)) {
+            const char* file = lua_tostring(L, -1);
+            lua_pop(L, 1);
+            if (file == NULL) {
+                return luaL_error(L, "Expecting an array of strings.");
             }
+            
+            LTImageBuffer *buf = ltReadImage(file);
+            pack_image(L, packer, buf, &atlas_num);
+        } else {
+            // A table entry means we should load the image as a font.
+            lua_getfield(L, -1, "font");
+            const char *file = lua_tostring(L, -1);
+            lua_pop(L, 1);
+            if (file == NULL) {
+                return luaL_error(L, "Expecting a font field in table entry.");
+            }
+            lua_getfield(L, -1, "glyphs");
+            const char *glyphs = lua_tostring(L, -1);
+            lua_pop(L, 1);
+            if (glyphs == NULL) {
+                return luaL_error(L, "Expecting a glyphs field in table entry.");
+            }
+            lua_pop(L, 1); // Pop table entry.
+            LTImageBuffer *buf = ltReadImage(file);
+            std::list<LTImageBuffer *> *glyph_list = ltImageBufferToGlyphs(buf, glyphs);
+            delete buf;
+            std::list<LTImageBuffer *>::iterator it;
+            for (it = glyph_list->begin(); it != glyph_list->end(); it++) {
+                pack_image(L, packer, *it, &atlas_num);
+            }
+            delete glyph_list;
         }
 
         i++;
-    } while (true);
+    }
 
     // Pack any images left in packer into a new texture.
     if (packer->size() > 0) {
