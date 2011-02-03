@@ -57,14 +57,16 @@ LTAtlas::~LTAtlas() {
     glDeleteTextures(1, &texture_id);
 }
 
-LTImageBuffer::LTImageBuffer() {
-    file = "unknown";
+LTImageBuffer::LTImageBuffer(const char *file) {
+    LTImageBuffer::filename = new char[strlen(file) + 1];
+    strcpy(LTImageBuffer::filename, file);
     is_glyph = false;
     glyph_char = '\0';
 }
 
 LTImageBuffer::~LTImageBuffer() {
     delete[] bb_pixels;
+    delete[] filename;
 }
 
 int LTImageBuffer::bb_width() {
@@ -202,14 +204,13 @@ LTImageBuffer *ltReadImage(const char *file) {
     
     // Copy data to new LTImageBuffer.
 
-    LTImageBuffer *imgbuf = new LTImageBuffer();
+    LTImageBuffer *imgbuf = new LTImageBuffer(file);
     imgbuf->width = width;
     imgbuf->height = height;
     imgbuf->bb_left = bb_left;
     imgbuf->bb_top = height - bb_top - 1; // Normalize coordinate system.
     imgbuf->bb_right = bb_right;
     imgbuf->bb_bottom = height - bb_bottom - 1;
-    imgbuf->file = file;
     
     int num_bb_pixels = imgbuf->num_bb_pixels();
     int bb_width = imgbuf->bb_width();
@@ -280,19 +281,19 @@ void ltPasteImage(LTImageBuffer *src, LTImageBuffer *dest, int x, int y, bool ro
     int dest_height = dest->bb_height();
     if (!rotate && (x + src_width > dest_width)) {
         ltAbort("%s too wide to be pasted into %s at x = %d.", 
-            src->file, dest->file, x);
+            src->filename, dest->filename, x);
     }
     if (!rotate && (y + src_height > dest_height)) {
         ltAbort("%s too high to be pasted into %s at y = %d.",
-            src->file, dest->file, y);
+            src->filename, dest->filename, y);
     }
     if (rotate && (x + src_height > dest_width)) {
         ltAbort("%s too high to be pasted into %s at x = %d after rotation.",
-            src->file, dest->file, x);
+            src->filename, dest->filename, x);
     }
     if (rotate && (y + src_width > dest_height)) {
         ltAbort("%s too wide to be pasted into %s at y = %d after rotation.",
-            src->file, dest->file, y);
+            src->filename, dest->filename, y);
     }
 
     LTpixel *dest_ptr = dest->bb_pixels + y * dest_width + x;
@@ -507,7 +508,7 @@ static void paste_packer_images(LTImageBuffer *img, LTImagePacker *packer) {
 
 LTImageBuffer *ltCreateAtlasImage(const char *file, LTImagePacker *packer) {
     int num_pixels = packer->width * packer->height;
-    LTImageBuffer *atlas = new LTImageBuffer();
+    LTImageBuffer *atlas = new LTImageBuffer(file);
     atlas->width = packer->width;
     atlas->height = packer->height;
     atlas->bb_left = 0;
@@ -516,7 +517,6 @@ LTImageBuffer *ltCreateAtlasImage(const char *file, LTImagePacker *packer) {
     atlas->bb_bottom = 0;
     atlas->bb_pixels = new LTpixel[num_pixels];
     memset(atlas->bb_pixels, 0x00, num_pixels * 4);
-    atlas->file = file;
     paste_packer_images(atlas, packer);
     return atlas;
 }

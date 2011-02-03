@@ -538,7 +538,7 @@ static void add_packer_images_to_lua_table(lua_State *L, int w, int h, LTImagePa
     const char *file;
     if (packer->occupant != NULL) {
         LTImage *img = new LTImage(atlas, w, h, packer);
-        file = packer->occupant->file;
+        file = packer->occupant->filename;
         len = strlen(file);
         if (len <= 4) {
             ltAbort("PNG file name too short: %s.", file);
@@ -584,7 +584,7 @@ static void pack_image(lua_State *L, LTImagePacker *packer, LTImageBuffer *buf, 
         (*atlas_num)++;
 
         if (!ltPackImage(packer, buf)) {
-            luaL_error(L, "Image %s is too large.", buf->file);
+            luaL_error(L, "Image %s is too large.", buf->filename);
         }
     }
 }

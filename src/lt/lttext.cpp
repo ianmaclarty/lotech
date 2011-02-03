@@ -22,7 +22,7 @@ static bool transparent_column(LTImageBuffer *buf, int col) {
 }
 
 static LTImageBuffer *create_glyph(LTImageBuffer *buf, int start_col, int end_col, char chr) {
-    LTImageBuffer *glyph = new LTImageBuffer();
+    LTImageBuffer *glyph = new LTImageBuffer(buf->filename);
     int w = end_col - start_col + 1;
     int h = buf->bb_height();
     int buf_w = buf->bb_width();
@@ -32,7 +32,6 @@ static LTImageBuffer *create_glyph(LTImageBuffer *buf, int start_col, int end_co
     glyph->bb_top = h - 1;
     glyph->bb_right = w - 1;
     glyph->bb_bottom = 0;
-    glyph->file = buf->file;
     glyph->is_glyph = true;
     glyph->glyph_char = chr;
     LTpixel *pxls = new LTpixel[w * h];
