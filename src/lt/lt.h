@@ -8,6 +8,7 @@
 #include "ltharness.h"
 #include "ltimage.h"
 #include "ltinput.h"
+#include "ltios.h"
 #include "ltiosutil.h"
 #include "ltlua.h"
 #include "ltphysics.h"

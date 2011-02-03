@@ -22,3 +22,6 @@ void ltIOSTouchesMoved(NSSet *touches) {
 }
 void ltIOSTouchesEnded(NSSet *touches) {
 }
+void ltIOSTouchesCancelled(NSSet *touches) {
+    ltIOSTouchesEnded(touches);
+}
