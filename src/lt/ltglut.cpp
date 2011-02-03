@@ -5,8 +5,17 @@ extern "C" {
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
+}
 
 #include "ltcommon.h"
+
+#ifdef LINUX
+    #define GLX_GLXEXT_PROTOTYPES
+    #include <GL/glut.h>
+#else
+    #include <GLUT/GLUT.h>
+#endif
+
 #include "ltgraphics.h"
 #include "ltharness.h"
 

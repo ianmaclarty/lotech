@@ -1,0 +1,4 @@
+Add src dir to xcode project, renamed to lotech.
+
+Target -> Get Info -> Build Settings:
+    Other C flags: -I lotech -DIOS

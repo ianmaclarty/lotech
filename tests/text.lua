@@ -1,15 +1,14 @@
 dofile("../src/ltlua/lt.lua")
 
-local images = lt.LoadImages({
-    "helvetica.png",
-    --{font = "helvetica.png", glyphs = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"},
-})
+lt.SetViewPort(-1, -1, 1, 1)
 
-lt.Write(io.stderr, images)
+local images = lt.LoadImages({
+    {font = "helvetica.png", glyphs = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"},
+})
 
 local letters = lt.Layer()
 
-letters:Insert(images.helvetica)
+letters:Insert(lt.Scale(images.helvetica.E, 1))
 --letters:Insert(images.helvetica.B)
 --letters:Insert(images.helvetica.B)
 --letters:Insert(images.helvetica.C)
