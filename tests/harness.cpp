@@ -13,7 +13,7 @@ int main(int argc, const char **argv) {
         file = "../tests/test.lua";
     }
     ltHarnessInit(false, "Test", 60, Setup, ltLuaTeardown,
-        ltLuaRender, ltLuaAdvance, ltLuaKeyDown, ltLuaKeyUp, ltLuaMouseDown, ltLuaMouseUp, ltLuaMouseMove,
+        ltLuaRender, ltLuaAdvance, ltLuaKeyDown, ltLuaKeyUp, ltLuaPointerDown, ltLuaPointerUp, ltLuaPointerMove,
         ltLuaResizeWindow);
     return 0;
 }

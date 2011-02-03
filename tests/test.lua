@@ -86,11 +86,11 @@ function lt.Render()
     --print_num_wrefs()
 end
 
-function lt.MouseDown(button, x, y)
+function lt.PointerDown(button, x, y)
     main_layer:PropogatePointerDownEvent(button, x, y)
 end
 
-function lt.MouseMove(x, y)
+function lt.PointerMove(x, y)
     mouse_x = x
     mouse_y = y
 end

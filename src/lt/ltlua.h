@@ -12,13 +12,10 @@ void ltLuaRender();
 
 void ltLuaKeyDown(LTKey);
 void ltLuaKeyUp(LTKey);
-void ltLuaMouseDown(int button, LTfloat x, LTfloat y);
-void ltLuaMouseUp(int button, LTfloat x, LTfloat y);
-void ltLuaMouseMove(LTfloat x, LTfloat y);
+void ltLuaPointerDown(int id, LTfloat x, LTfloat y);
+void ltLuaPointerUp(int id, LTfloat x, LTfloat y);
+void ltLuaPointerMove(LTfloat x, LTfloat y);
 void ltLuaResizeWindow(LTfloat w, LTfloat h);
-
-int ltLuaInitExtraFieldsTable();
-void ltLuaFreeExtraFieldsTable(int ref);
 
 int ltLuaInitRef();
 

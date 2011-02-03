@@ -7,14 +7,14 @@
 
 typedef void (*ltVoidCallback)(void);
 typedef void (*ltKeyCallback)(LTKey);
-typedef void (*ltMouseButtonCallback)(int, LTfloat, LTfloat);
+typedef void (*ltPointerButtonCallback)(int, LTfloat, LTfloat);
 typedef void (*ltPairCallback)(LTfloat, LTfloat);
 
 void ltHarnessInit(bool fullscreen, const char *title, int fps,
     ltVoidCallback setup, ltVoidCallback teardown,
     ltVoidCallback render, ltVoidCallback advance,
     ltKeyCallback keyDown, ltKeyCallback keyUp,
-    ltMouseButtonCallback mouseDown, ltMouseButtonCallback mouseUp,
+    ltPointerButtonCallback mouseDown, ltPointerButtonCallback mouseUp,
     ltPairCallback mouseMove,
     ltPairCallback resizeWindow);
 

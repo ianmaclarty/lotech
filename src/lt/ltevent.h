@@ -16,13 +16,13 @@ struct LTPointerEvent {
     LTPointerEventType type;
     LTfloat orig_x;
     LTfloat orig_y;
-    int button;  // Only applicable for up and down events.
+    int id;
 
-    LTPointerEvent(LTPointerEventType type, LTfloat x, LTfloat y, int button) {
+    LTPointerEvent(LTPointerEventType type, LTfloat x, LTfloat y, int id) {
         LTPointerEvent::type = type;
         LTPointerEvent::orig_x = x;
         LTPointerEvent::orig_y = y;
-        LTPointerEvent::button = button;
+        LTPointerEvent::id = id;
     }
 };
 

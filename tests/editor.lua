@@ -143,14 +143,14 @@ function lt.Advance()
     ship.Advance()
 end
 
-function lt.MouseUp(button, x, y)
-    mode[current_mode].MouseUp(button, x, y)
+function lt.PointerUp(button, x, y)
+    mode[current_mode].PointerUp(button, x, y)
 end
-function lt.MouseDown(button, x, y)
-    mode[current_mode].MouseDown(button, x, y)
+function lt.PointerDown(button, x, y)
+    mode[current_mode].PointerDown(button, x, y)
 end
-function lt.MouseMove(x, y)
-    mode[current_mode].MouseMove(x, y)
+function lt.PointerMove(x, y)
+    mode[current_mode].PointerMove(x, y)
     mouse_pos.x = x
     mouse_pos.y = y
 end
@@ -193,7 +193,7 @@ mode.draw = {
     __index = _G
 }
 
-function mode.draw.MouseDown(button, x, y)
+function mode.draw.PointerDown(button, x, y)
     x, y = nearest_grid_point(x, y)
     points[next_point] = {x = x, y = y}
     if next_point < 3 then
@@ -220,19 +220,19 @@ function mode.draw.MouseDown(button, x, y)
     next_point = next_point + 1
 end
 
-function mode.draw.MouseUp(button, x, y)
+function mode.draw.PointerUp(button, x, y)
 end
 
-function mode.draw.MouseMove(x, y)
+function mode.draw.PointerMove(x, y)
     x, y = nearest_grid_point(x, y)
     if next_point > 1 and lines[next_point - 1] then
         lines[next_point - 1]:Set{x2 = x, y2 = y}
     end
 end
 
-setfenv(mode.draw.MouseDown, mode.draw)
-setfenv(mode.draw.MouseUp, mode.draw)
-setfenv(mode.draw.MouseMove, mode.draw)
+setfenv(mode.draw.PointerDown, mode.draw)
+setfenv(mode.draw.PointerUp, mode.draw)
+setfenv(mode.draw.PointerMove, mode.draw)
 setmetatable(mode.draw, mode.draw)
 
 ---------------------------------------------------------------------------------
@@ -243,7 +243,7 @@ mode.select = {
     __index = _G
 }
 
-function mode.select.MouseDown(button, x, y)
+function mode.select.PointerDown(button, x, y)
     if selected then
         local c = colors[level.triangles[selected.triangle_index].color]
         selected.layer_node:Set{r = c.r, g = c.g, b = c.b, a = 0.7}
@@ -259,10 +259,10 @@ function mode.select.MouseDown(button, x, y)
     end
 end
 
-function mode.select.MouseUp(button, x, y)
+function mode.select.PointerUp(button, x, y)
 end
 
-function mode.select.MouseMove(x, y)
+function mode.select.PointerMove(x, y)
 end
 
 function mode.select.delete_selected()
@@ -274,9 +274,9 @@ function mode.select.delete_selected()
     end
 end
 
-setfenv(mode.select.MouseDown, mode.select)
-setfenv(mode.select.MouseUp, mode.select)
-setfenv(mode.select.MouseMove, mode.select)
+setfenv(mode.select.PointerDown, mode.select)
+setfenv(mode.select.PointerUp, mode.select)
+setfenv(mode.select.PointerMove, mode.select)
 setfenv(mode.select.delete_selected, mode.select)
 setmetatable(mode.select, mode.select)
 
