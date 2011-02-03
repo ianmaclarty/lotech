@@ -41,7 +41,7 @@ static LTImageBuffer *create_glyph(LTImageBuffer *buf, int start_col, int end_co
     LTpixel *dest_ptr = pxls;
     LTpixel *end = buf->bb_pixels + buf_w * h;
     while (src_ptr < end) {
-        memcpy(pxls, src_ptr, w * 4);
+        memcpy(dest_ptr, src_ptr, w * 4);
         src_ptr += buf_w;
         dest_ptr += w;
     }
