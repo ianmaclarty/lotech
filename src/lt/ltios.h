@@ -9,9 +9,9 @@ void ltIOSTeardown();
 
 void ltIOSRender();
 
-void ltIOSTouchesBegin(NSSet *touches);
-void ltLuaTouchesMove(NSSet *touches);
-void ltLuaTouchesEnd(NSSet *touches);
+void ltIOSTouchesBegan(NSSet *touches);
+void ltIOSTouchesMoved(NSSet *touches);
+void ltIOSTouchesEnded(NSSet *touches);
 
 #endif
 #endif

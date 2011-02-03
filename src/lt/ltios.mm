@@ -16,9 +16,9 @@ void ltIOSRender() {
     ltLuaRender();
 }
 
-void ltIOSTouchesBegin(NSSet *touches) {
+void ltIOSTouchesBegan(NSSet *touches) {
 }
-void ltLuaTouchesMove(NSSet *touches) {
+void ltIOSTouchesMoved(NSSet *touches) {
 }
-void ltLuaTouchesEnd(NSSet *touches) {
+void ltIOSTouchesEnded(NSSet *touches) {
 }
