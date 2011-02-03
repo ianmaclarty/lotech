@@ -2,16 +2,12 @@
 #ifndef LTCOMMON_H
 #define LTCOMMON_H
 
-#ifdef __APPLE__
-   #include "TargetConditionals.h"
-#endif
-
 #ifdef LINUX
     #define GL_GLEXT_PROTOTYPES
     #include <GL/gl.h>
     #include <GL/glext.h>
 #else
-    #ifdef TARGET_OS_IPHONE
+    #ifdef IOS
         #include <OpenGLES/ES1/gl.h>
         #include <OpenGLES/ES1/glext.h>
     #else
