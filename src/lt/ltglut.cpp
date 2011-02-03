@@ -6,18 +6,6 @@ extern "C" {
 #include <stdlib.h>
 #include <stdio.h>
 
-#ifdef LINUX
-#define GL_GLEXT_PROTOTYPES
-#define GLX_GLXEXT_PROTOTYPES
-#include <GL/gl.h>
-#include <GL/glext.h>
-#include <GL/glut.h>
-#else
-#include <OpenGL/GL.h>
-#include <GLUT/GLUT.h>
-#endif
-}
-
 #include "ltcommon.h"
 #include "ltgraphics.h"
 #include "ltharness.h"
