@@ -2,14 +2,6 @@
 #ifndef LTGRAPHICS_H
 #define LTGRAPHICS_H
 
-#ifdef LINUX
-#define GL_GLEXT_PROTOTYPES
-#include <GL/gl.h>
-#include <GL/glext.h>
-#else
-#include <OpenGL/GL.h>
-#endif
-
 #include <list>
 #include <map>
 
