@@ -1,5 +1,14 @@
-Add src dir to xcode project, renamed to lotech.
+Create new OpenGL ES project.
+
+Add lotech/src dir to xcode project, renamed to lotech.
 
 Target -> Get Info -> Build Settings:
     Other C flags: -I lotech -DIOS
     Target Device Family: iPhone/iPad
+
+Rename EAGLView.m -> EAGLView.mm and edit:
+    #include "lt.h"
+
+    Add:
+        self.multipleTouchEnabled = YES;
+    to initWithCoder method (just before "return self;").
