@@ -12,8 +12,8 @@ void ltLuaRender();
 
 void ltLuaKeyDown(LTKey);
 void ltLuaKeyUp(LTKey);
-void ltLuaPointerDown(int id, LTfloat x, LTfloat y);
-void ltLuaPointerUp(int id, LTfloat x, LTfloat y);
+void ltLuaPointerDown(int input_id, LTfloat x, LTfloat y);
+void ltLuaPointerUp(int input_id, LTfloat x, LTfloat y);
 void ltLuaPointerMove(LTfloat x, LTfloat y);
 void ltLuaResizeWindow(LTfloat w, LTfloat h);
 

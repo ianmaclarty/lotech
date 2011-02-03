@@ -45,3 +45,10 @@ void ltNormalizeIOSTouchCoords(float x, float y, float *nx, float *ny) {
         *ny = (1.0f - (y / 480.0f)) * 2.0f - 1.0f;
     }
 }
+
+const char *ltIOSBundlePath(const char *file) {
+    const char *dir = [[[NSBundle mainBundle] bundlePath] UTF8String];
+    char *path = new char[strlen(dir) + strlen(file) + 2];
+    sprintf(path, "%s/%s", dir, file);
+    return path;
+}
