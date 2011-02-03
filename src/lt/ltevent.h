@@ -16,13 +16,13 @@ struct LTPointerEvent {
     LTPointerEventType type;
     LTfloat orig_x;
     LTfloat orig_y;
-    int id;
+    int input_id;
 
-    LTPointerEvent(LTPointerEventType type, LTfloat x, LTfloat y, int id) {
+    LTPointerEvent(LTPointerEventType type, LTfloat x, LTfloat y, int input_id) {
         LTPointerEvent::type = type;
         LTPointerEvent::orig_x = x;
         LTPointerEvent::orig_y = y;
-        LTPointerEvent::id = id;
+        LTPointerEvent::input_id = input_id;
     }
 };
 

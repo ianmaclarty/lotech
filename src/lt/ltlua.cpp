@@ -399,12 +399,12 @@ static int lt_Rect(lua_State *L) {
 
 /************************* Events **************************/
 
-static bool call_pointer_event_handler(lua_State *L, int func, LTfloat x, LTfloat y, int id) {
+static bool call_pointer_event_handler(lua_State *L, int func, LTfloat x, LTfloat y, int input_id) {
     get_weak_ref(L, func);
     if (lua_isfunction(L, -1)) {
         lua_pushnumber(L, x);
         lua_pushnumber(L, y);
-        lua_pushinteger(L, id);
+        lua_pushinteger(L, input_id);
         lua_call(L, 3, 1);
         bool consumed = lua_toboolean(L, -1);
         lua_pop(L, 1);
@@ -424,7 +424,7 @@ struct LTLPointerDownInEventHandler : LTPointerEventHandler {
     virtual bool consume(LTfloat x, LTfloat y, LTSceneNode *node, LTPointerEvent *event) {
         if (event->type == LT_EVENT_POINTER_DOWN) {
             if (node->containsPoint(x, y)) {
-                return call_pointer_event_handler(g_L, lua_func_ref, x, y, event->id);
+                return call_pointer_event_handler(g_L, lua_func_ref, x, y, event->input_id);
             } else {
                 return false;
             }
@@ -443,7 +443,7 @@ struct LTLPointerMoveEventHandler : LTPointerEventHandler {
 
     virtual bool consume(LTfloat x, LTfloat y, LTSceneNode *node, LTPointerEvent *event) {
         if (event->type == LT_EVENT_POINTER_MOVE) {
-            return call_pointer_event_handler(g_L, lua_func_ref, x, y, event->id);
+            return call_pointer_event_handler(g_L, lua_func_ref, x, y, event->input_id);
         } else {
             return false;
         }
@@ -470,16 +470,16 @@ struct LTLPointerOverEventHandler : LTPointerEventHandler {
                 first_time = false;
                 in = containsPoint;
                 if (in) {
-                    return call_pointer_event_handler(g_L, lua_enter_func_ref, x, y, event->id);
+                    return call_pointer_event_handler(g_L, lua_enter_func_ref, x, y, event->input_id);
                 } else {
                     return false;
                 }
             } else {
                 bool res = false;
                 if (containsPoint && !in) {
-                    res = call_pointer_event_handler(g_L, lua_enter_func_ref, x, y, event->id);
+                    res = call_pointer_event_handler(g_L, lua_enter_func_ref, x, y, event->input_id);
                 } else if (!containsPoint && in) {
-                    res = call_pointer_event_handler(g_L, lua_exit_func_ref, x, y, event->id);
+                    res = call_pointer_event_handler(g_L, lua_exit_func_ref, x, y, event->input_id);
                 }
                 in = containsPoint;
                 return res;
@@ -512,10 +512,10 @@ static int lt_AddOnPointerOverHandler(lua_State *L) {
 static int lt_PropogatePointerDownEvent(lua_State *L) {
     check_nargs(L, 4);
     LTSceneNode *node = (LTSceneNode*)get_object(L, 1, LT_TYPE_SCENENODE);
-    int id = luaL_checkinteger(L, 2);
+    int input_id = luaL_checkinteger(L, 2);
     LTfloat x = luaL_checknumber(L, 3);
     LTfloat y = luaL_checknumber(L, 4);
-    LTPointerEvent event(LT_EVENT_POINTER_DOWN, x, y, id);
+    LTPointerEvent event(LT_EVENT_POINTER_DOWN, x, y, input_id);
     node->propogatePointerEvent(x, y, &event);
     return 0;
 }
@@ -1066,7 +1066,8 @@ static void check_status(int status, bool abort) {
         fprintf(stderr, "%s\n", msg);
         lua_pop(g_L, 1);
         if (abort) {
-            ltHarnessQuit();
+            //ltHarnessQuit();
+            exit(1);
         }
     }
 }
@@ -1212,18 +1213,18 @@ static LTfloat viewport_y(LTfloat screen_y) {
     return g_viewport_y2 - (screen_y / g_screen_h) * (g_viewport_y2 - g_viewport_y1);
 }
 
-void ltLuaPointerDown(int id, LTfloat x, LTfloat y) {
+void ltLuaPointerDown(int input_id, LTfloat x, LTfloat y) {
     if (g_L != NULL && push_lt_func("PointerDown")) {
-        lua_pushinteger(g_L, id);
+        lua_pushinteger(g_L, input_id);
         lua_pushnumber(g_L, viewport_x(x));
         lua_pushnumber(g_L, viewport_y(y));
         check_status(lua_pcall(g_L, 3, 0, 0), true);
     }
 }
 
-void ltLuaPointerUp(int id, LTfloat x, LTfloat y) {
+void ltLuaPointerUp(int input_id, LTfloat x, LTfloat y) {
     if (g_L != NULL && push_lt_func("PointerUp")) {
-        lua_pushinteger(g_L, id);
+        lua_pushinteger(g_L, input_id);
         lua_pushnumber(g_L, viewport_x(x));
         lua_pushnumber(g_L, viewport_y(y));
         check_status(lua_pcall(g_L, 3, 0, 0), true);
