@@ -57,6 +57,9 @@ static void get_weak_ref(lua_State *L, int ref) {
 // Extract LTObject from wrapper table at the given index.
 // Does not modify stack.
 static LTObject* get_object(lua_State *L, int index, LTType type) {
+    if (!lua_istable(L, index)) {
+        luaL_error(L, "Expecting a table in argument %d.", index);
+    }
     lua_rawgeti(L, index, 1);
     LTObject **ud = (LTObject**)luaL_checkudata(L, -1, LT_USERDATA_MT);
     lua_pop(L, 1);
