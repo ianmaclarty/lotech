@@ -95,13 +95,11 @@ lt.classes = {
 
 -- Populate lt.metatables.
 lt.metatables = {}
-local root_mt = {
-    __index = lt.GetObjectField,
-}
 for class, info in pairs(lt.classes) do
     local method_index = {}
+    local get = lt.GetObjectField
     lt.metatables[class] = {
-        __index = method_index,
+        __index = function(x, f) return method_index[f] or get(x, f) end,
         __newindex = lt.SetObjectField,
     }
     method_index.class = class
@@ -113,5 +111,4 @@ for class, info in pairs(lt.classes) do
         end
         info = lt.classes[info.super]
     end
-    setmetatable(method_index, root_mt)
 end

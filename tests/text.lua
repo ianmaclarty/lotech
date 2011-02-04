@@ -1,19 +1,12 @@
 dofile("../src/ltlua/lt.lua")
 
-lt.SetViewPort(-1, -1, 1, 1)
-
 local images = lt.LoadImages({
-    {font = "helvetica.png", glyphs = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"},
+    {font = "font.png", glyphs = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890.,?!"},
 })
 
-local letters = lt.Layer()
+local main = lt.Layer()
 
-letters:Insert(lt.Scale(images.helvetica.E, 1))
---letters:Insert(images.helvetica.B)
---letters:Insert(images.helvetica.B)
---letters:Insert(images.helvetica.C)
-
-local main = lt.Scale(letters, 2)
+main:Insert(lt.Translate(lt.Scale(lt.Text("Hello World!", images.font), 3), -0.5, 0))
 
 function lt.Render()
     main:Draw()

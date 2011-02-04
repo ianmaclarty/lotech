@@ -131,6 +131,7 @@ struct LTImage : LTSceneNode {
     virtual ~LTImage();
 
     virtual void draw();
+    virtual LTfloat* field_ptr(const char *field_name);
 
     void setAnchor(LTAnchor anchor);
 };

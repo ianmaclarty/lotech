@@ -18,9 +18,9 @@
 
 /*
 struct LTFont : LTObject {
-    LTImage *glyphs[LT_MAX_GLYPHS];
+    LTfloat gap; // Gap between glyphs.
     LTfloat space;
-    LTfloat base;
+    LTImage *glyphs[LT_MAX_GLYPHS];
 };
 
 enum LTTextJustification {

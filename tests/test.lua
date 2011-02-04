@@ -35,7 +35,7 @@ local function init()
 
     local things = {}
     local colors = {}
-    local n = 2000
+    local n = 1000
     for i = 1, n do
         things[i] = world:AddDynamicBody((i - n / 2) * (10 / n), math.sin(i) * 50 + 60, math.cos(i) * 180)
         local size = (math.random() + 0.5) * 0.25
@@ -84,6 +84,7 @@ function lt.Render()
     main_layer:Draw()
     --print_fps()
     --print_num_wrefs()
+    --print(collectgarbage("count") .. "k")
 end
 
 function lt.PointerDown(button, x, y)

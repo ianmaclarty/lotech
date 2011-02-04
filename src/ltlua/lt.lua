@@ -8,6 +8,7 @@ dofile(dir .. "ltgraphics.lua")
 dofile(dir .. "ltimage.lua")
 dofile(dir .. "ltio.lua")
 dofile(dir .. "ltscene.lua")
+dofile(dir .. "lttext.lua")
 dofile(dir .. "lttween.lua")
 
 

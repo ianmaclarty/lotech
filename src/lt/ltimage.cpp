@@ -586,6 +586,16 @@ void LTImage::draw() {
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
 
+LTfloat* LTImage::field_ptr(const char *field_name) {
+    if (strcmp(field_name, "w") == 0) {
+        return &orig_width;
+    }
+    if (strcmp(field_name, "h") == 0) {
+        return &orig_height;
+    }
+    return NULL;
+}
+
 void LTImage::setAnchor(LTAnchor anchor) {
     LTfloat l = 0.0f;
     LTfloat b = 0.0f;
