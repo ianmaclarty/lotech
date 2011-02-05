@@ -217,6 +217,17 @@ static int default_atlas_size() {
     #endif
 }
 
+static const char *resource_path(const char *resource, const char *suffix) {
+    #ifdef IOS
+        return ltIOSBundlePath(resource, suffix);
+    #else
+        int len = strlen(resource) + strlen(suffix) + 3;
+        char *path = new char[len];
+        snprintf(path, len, "./%s%s", resource, suffix);
+        return path;
+    #endif
+}
+
 static const char *image_path(const char *name) {
     #ifdef IOS
         if (ltIsIPad() || ltIsRetinaIPhone()) {
@@ -232,17 +243,6 @@ static const char *image_path(const char *name) {
         }
     #else
         return resource_path(name, ".png");
-    #endif
-}
-
-static const char *resource_path(const char *resource, const char *suffix) {
-    #ifdef IOS
-        return ltIOSBundlePath(resource, suffix);
-    #else
-        int len = strlen(resource) + strlen(suffix) + 3;
-        path = new char[len];
-        snprintf(path, len, "./%s%s", resource, suffix);
-        return path;
     #endif
 }
 
@@ -1110,7 +1110,7 @@ static void check_status(int status, bool abort) {
         fprintf(stderr, "%s\n", msg);
         lua_pop(g_L, 1);
         if (abort) {
-            //ltHarnessQuit();
+            // XXX should be: ltHarnessQuit();
             exit(1);
         }
     }

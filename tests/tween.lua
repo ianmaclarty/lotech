@@ -1,4 +1,4 @@
-dofile("../src/ltlua/lt.lua")
+import "lt"
 
 lt.SetViewPort(-10, -10, 10, 10)
 local tweens = lt.TweenSet()

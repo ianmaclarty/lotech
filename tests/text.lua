@@ -1,7 +1,7 @@
-dofile("../src/ltlua/lt.lua")
+import "lt"
 
 local images = lt.LoadImages({
-    {font = "font.png", glyphs = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890.,?!"},
+    {font = "font", glyphs = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890.,?!"},
 })
 
 images.font.kern = {
