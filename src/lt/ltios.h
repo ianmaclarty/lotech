@@ -4,10 +4,12 @@
 
 #import <UIKit/UIKit.h>
 
-void ltIOSInit(const char *file);
+void ltIOSInit();
 void ltIOSTeardown();
 
 void ltIOSRender();
+
+void ltIOSGarbageCollect();
 
 void ltIOSTouchesBegan(NSSet *touches);
 void ltIOSTouchesMoved(NSSet *touches);

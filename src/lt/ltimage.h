@@ -12,8 +12,11 @@
 #include "ltscene.h"
 #include "ltgraphics.h"
 
-#define LT_ALPHA(pxl)           (pxl & 0xFF)
-#define LT_TRANSPARENT(pxl)     (LT_ALPHA(pxl) == 0)
+#ifdef IOS
+    #define LT_PIXEL_VISIBLE(pxl)     (pxl & 0xFF000000)
+#else
+    #define LT_PIXEL_VISIBLE(pxl)     (pxl & 0xFF)
+#endif
 
 struct LTAtlas;
 
@@ -34,7 +37,7 @@ struct LTImageBuffer {
     /* Bounding box pixels from bottom-left to top-right, scanning left to right. */
     LTpixel *bb_pixels;
 
-    char *filename; // Originating file.
+    char *name; // Name used in lua code (usually basename of png file without extension).
     bool is_glyph;
     char glyph_char;
 
@@ -47,11 +50,16 @@ struct LTImageBuffer {
     int num_bb_pixels();
 };
 
-/* The caller is responsible for freeing the buffer (with delete). */
-LTImageBuffer *ltReadImage(const char *file);
+/*
+ * The caller is responsible for freeing the buffer (with delete).
+ * path is the full path to the file.  name is what is set in
+ * the generated LTImageBuffer file for use when generating a
+ * Lua table.
+ */
+LTImageBuffer *ltReadImage(const char *path, const char *name);
 
 /* Only the bounding box is written. */
-void ltWriteImage(const char *file, LTImageBuffer *img);
+void ltWriteImage(const char *path, LTImageBuffer *img);
 
 /*
  * x and y are left-bottom coordinates to paste src in dest, relative to 
@@ -86,7 +94,7 @@ struct LTImagePacker {
 bool ltPackImage(LTImagePacker *packer, LTImageBuffer *img);
 
 /* The caller is responsible for freeing the buffer (with delete). */
-LTImageBuffer *ltCreateAtlasImage(const char *file, LTImagePacker *packer);
+LTImageBuffer *ltCreateAtlasImage(const char *name, LTImagePacker *packer);
 
 enum LTAnchor {
     LT_ANCHOR_CENTER,

@@ -18,6 +18,10 @@ bool ltIsIPad() {
     }
 }
 
+bool ltIsRetinaIPhone() {
+    return !ltIsIPad() && scaling() == 2.0f;
+}
+
 int ltIOSPortaitPixelWidth() {
     float scale = scaling();
     if (ltIsIPad()) {
@@ -46,9 +50,17 @@ void ltNormalizeIOSTouchCoords(float x, float y, float *nx, float *ny) {
     }
 }
 
-const char *ltIOSBundlePath(const char *file) {
+const char *ltIOSBundlePath(const char *file, const char *suffix) {
     const char *dir = [[[NSBundle mainBundle] bundlePath] UTF8String];
-    char *path = new char[strlen(dir) + strlen(file) + 2];
-    sprintf(path, "%s/%s", dir, file);
+    int len = strlen(dir) + strlen(file) + 2;
+    if (suffix != NULL) {
+        len += strlen(suffix);
+    }
+    char *path = new char[len];
+    if (suffix == NULL) {
+        snprintf(path, len, "%s/%s", dir, file);
+    } else {
+        snprintf(path, len, "%s/%s%s", dir, file, suffix);
+    }
     return path;
 }

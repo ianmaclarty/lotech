@@ -13,7 +13,7 @@ static bool transparent_column(LTImageBuffer *buf, int col) {
     LTpixel *ptr = buf->bb_pixels + col;
     LTpixel *end = buf->bb_pixels + w * h;
     while (ptr < end) {
-        if (!LT_TRANSPARENT(*ptr)) {
+        if (LT_PIXEL_VISIBLE(*ptr)) {
             return false;
         }
         ptr += w;
@@ -22,7 +22,7 @@ static bool transparent_column(LTImageBuffer *buf, int col) {
 }
 
 static LTImageBuffer *create_glyph(LTImageBuffer *buf, int start_col, int end_col, char chr) {
-    LTImageBuffer *glyph = new LTImageBuffer(buf->filename);
+    LTImageBuffer *glyph = new LTImageBuffer(buf->name);
     int w = end_col - start_col + 1;
     int h = buf->bb_height();
     int buf_w = buf->bb_width();

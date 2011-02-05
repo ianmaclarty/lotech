@@ -12,6 +12,7 @@ extern "C" {
 #include "ltgraphics.h"
 #include "ltharness.h"
 #include "ltimage.h"
+#include "ltiosutil.h"
 #include "ltlua.h"
 #include "ltphysics.h"
 #include "lttext.h"
@@ -202,6 +203,47 @@ static int check_nargs(lua_State *L, int exp_args) {
     } else {
         return n;
     }
+}
+
+static int default_atlas_size() {
+    #ifdef IOS
+        if (ltIsIPad() || ltIsRetinaIPhone()) {
+            return 2048;
+        } else {
+            return 1024;
+        }
+    #else
+        return 2048;
+    #endif
+}
+
+static const char *image_path(const char *name) {
+    #ifdef IOS
+        if (ltIsIPad() || ltIsRetinaIPhone()) {
+            const char *path = ltIOSBundlePath(name, ".png2x");
+            if (ltFileExists(path)) {
+                return path;
+            } else {
+                delete[] path;
+                return ltIOSBundlePath(name, ".png1x");
+            }
+        } else {
+            return ltIOSBundlePath(name, ".png1x");
+        }
+    #else
+        return resource_path(name, ".png");
+    #endif
+}
+
+static const char *resource_path(const char *resource, const char *suffix) {
+    #ifdef IOS
+        return ltIOSBundlePath(resource, suffix);
+    #else
+        int len = strlen(resource) + strlen(suffix) + 3;
+        path = new char[len];
+        snprintf(path, len, "./%s%s", resource, suffix);
+        return path;
+    #endif
 }
 
 /************************* Graphics **************************/
@@ -533,34 +575,20 @@ static int lt_PropogatePointerMoveEvent(lua_State *L) {
 /************************* Images **************************/
 
 static void add_packer_images_to_lua_table(lua_State *L, int w, int h, LTImagePacker *packer, LTAtlas *atlas) {
-    char img_name[128];
-    int len;
-    const char *file;
+    const char *name;
     if (packer->occupant != NULL) {
         LTImage *img = new LTImage(atlas, w, h, packer);
-        file = packer->occupant->filename;
-        len = strlen(file);
-        if (len <= 4) {
-            ltAbort("PNG file name too short: %s.", file);
-        }
-        if (len > 120) {
-            ltAbort("PNG file name too long: %s.", file);
-        }
-        if (strcmp(".png", file + len - 4) != 0) {
-            ltAbort("File %s does not end in .png", file);
-        }
-        strncpy(img_name, file, len - 4); // Remove ".png" suffix.
-        img_name[len - 4] = '\0';
+        name = packer->occupant->name;
         if (!packer->occupant->is_glyph) {
             push_wrap(L, img);
-            lua_setfield(L, -2, img_name);
+            lua_setfield(L, -2, name);
         } else {
-            lua_getfield(L, -1, img_name);
+            lua_getfield(L, -1, name);
             if (lua_isnil(L, -1)) {
                 lua_pop(L, 1);
                 lua_newtable(L);
                 lua_pushvalue(L, -1);
-                lua_setfield(L, -3, img_name);
+                lua_setfield(L, -3, name);
             }
             // Font table now on top of stack.
             char glyph_name[2];
@@ -575,33 +603,32 @@ static void add_packer_images_to_lua_table(lua_State *L, int w, int h, LTImagePa
     }
 }
 
-static void pack_image(lua_State *L, LTImagePacker *packer, LTImageBuffer *buf, int *atlas_num) {
+static void pack_image(lua_State *L, LTImagePacker *packer, LTImageBuffer *buf) {
     if (!ltPackImage(packer, buf)) {
         // Packer full, so generate an atlas.
         LTAtlas *atlas = new LTAtlas(packer);
         add_packer_images_to_lua_table(L, packer->width, packer->height, packer, atlas);
         packer->deleteOccupants();
-        (*atlas_num)++;
 
         if (!ltPackImage(packer, buf)) {
-            luaL_error(L, "Image %s is too large.", buf->filename);
+            luaL_error(L, "Image %s is too large.", buf->name);
         }
     }
 }
 
-// Load images in 1st argument (an array) and return a table
-// indexed by image name (without the .png suffix).
-// The second argument is the size of the atlasses to generate
-// (1024 by default).
 static int lt_LoadImages(lua_State *L) {
+    // Load images in 1st argument (an array) and return a table
+    // indexed by image name.
+    // The second argument is the size of the atlasses to generate
+    // (default_atlas_size() if unset).
+    // If an entry in the array is a table, then process it as a font.
     int num_args = check_nargs(L, 1);
-    int size = 1024;
+    int size = default_atlas_size();
     if (num_args > 1) {
         size = (int)luaL_checkinteger(L, 2);
     }
     lua_newtable(L); // The table to be returned.
     LTImagePacker *packer = new LTImagePacker(0, 0, size, size);
-    int atlas_num = 1;
     int i = 1;
     while (true) {
         lua_pushinteger(L, i);
@@ -612,20 +639,21 @@ static int lt_LoadImages(lua_State *L) {
             break;
         }
         if (lua_isstring(L, -1)) {
-            const char* file = lua_tostring(L, -1);
+            const char* name = lua_tostring(L, -1);
             lua_pop(L, 1);
-            if (file == NULL) {
+            if (name == NULL) {
                 return luaL_error(L, "Expecting an array of strings.");
             }
-            
-            LTImageBuffer *buf = ltReadImage(file);
-            pack_image(L, packer, buf, &atlas_num);
+            const char *path = image_path(name); 
+            LTImageBuffer *buf = ltReadImage(path, name);
+            delete[] path;
+            pack_image(L, packer, buf);
         } else {
             // A table entry means we should load the image as a font.
             lua_getfield(L, -1, "font");
-            const char *file = lua_tostring(L, -1);
+            const char *name = lua_tostring(L, -1);
             lua_pop(L, 1);
-            if (file == NULL) {
+            if (name == NULL) {
                 return luaL_error(L, "Expecting a font field in table entry.");
             }
             lua_getfield(L, -1, "glyphs");
@@ -635,12 +663,14 @@ static int lt_LoadImages(lua_State *L) {
                 return luaL_error(L, "Expecting a glyphs field in table entry.");
             }
             lua_pop(L, 1); // Pop table entry.
-            LTImageBuffer *buf = ltReadImage(file);
+            const char *path = image_path(name); 
+            LTImageBuffer *buf = ltReadImage(path, name);
+            delete[] path;
             std::list<LTImageBuffer *> *glyph_list = ltImageBufferToGlyphs(buf, glyphs);
             delete buf;
             std::list<LTImageBuffer *>::iterator it;
             for (it = glyph_list->begin(); it != glyph_list->end(); it++) {
-                pack_image(L, packer, *it, &atlas_num);
+                pack_image(L, packer, *it);
             }
             delete glyph_list;
         }
@@ -653,7 +683,6 @@ static int lt_LoadImages(lua_State *L) {
         LTAtlas *atlas = new LTAtlas(packer);
         add_packer_images_to_lua_table(L, packer->width, packer->height, packer, atlas);
         packer->deleteOccupants();
-        atlas_num++;
     }
         
     delete packer;
@@ -997,6 +1026,21 @@ static int lt_World(lua_State *L) {
     return 1;
 }
 
+/********************* Misc *****************************/
+
+static int import(lua_State *L) {
+    check_nargs(L, 1);
+    const char *module = lua_tostring(L, -1);
+    if (module == NULL) {
+        return luaL_error(L, "The import function requires a string argument.");
+    }
+    const char *path;
+    path = resource_path(module, ".lua");
+    luaL_dofile(L, path);
+    delete[] path;
+    return 0;
+}
+
 /************************************************************/
 
 static const luaL_Reg ltlib[] = {
@@ -1103,6 +1147,8 @@ void ltLuaSetup(const char *file) {
     }
     lua_gc(g_L, LUA_GCSTOP, 0);  /* stop collector during library initialization */
     luaL_openlibs(g_L);
+    lua_pushcfunction(g_L, import);
+    lua_setglobal(g_L, "import");
     luaL_register(g_L, "lt", ltlib);
     lua_gc(g_L, LUA_GCRESTART, 0);
     check_status(luaL_loadfile(g_L, file), true);
@@ -1248,4 +1294,11 @@ void ltLuaResizeWindow(LTfloat w, LTfloat h) {
 
 int ltLuaInitRef() {
     return LUA_NOREF;
+}
+
+void ltLuaGarbageCollect() {
+    if (g_L != NULL) {
+        lua_gc(g_L, LUA_GCCOLLECT, 0);
+        lua_gc(g_L, LUA_GCCOLLECT, 0);
+    }
 }

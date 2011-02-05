@@ -32,8 +32,11 @@ void ltDisableTextures() {
 }
 
 LTAtlas::LTAtlas(LTImagePacker *packer, const char *dump_file) {
+    static int atlas_num = 1;
+    char atlas_name[64];
+    snprintf(atlas_name, 64, "atlas%d", atlas_num++);
     num_live_images = 0;
-    LTImageBuffer *buf = ltCreateAtlasImage("<atlas>", packer);
+    LTImageBuffer *buf = ltCreateAtlasImage(atlas_name, packer);
     if (dump_file != NULL) {
         ltLog("Dumping %s (%d x %d)", dump_file, buf->bb_width(), buf->bb_height());
         ltWriteImage(dump_file, buf);
@@ -43,13 +46,11 @@ LTAtlas::LTAtlas(LTImagePacker *packer, const char *dump_file) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-    GLenum type;
     #ifdef IOS
-        type = GL_UNSIGNED_BYTE;
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, buf->width, buf->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, buf->bb_pixels);
     #else
-        type = GL_UNSIGNED_INT_8_8_8_8;
+        glTexImage2D(GL_TEXTURE_2D, 0, 4, buf->width, buf->height, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, buf->bb_pixels);
     #endif
-    glTexImage2D(GL_TEXTURE_2D, 0, 4, buf->width, buf->height, 0, GL_RGBA, type, buf->bb_pixels);
     delete buf;
 }
 
@@ -57,16 +58,16 @@ LTAtlas::~LTAtlas() {
     glDeleteTextures(1, &texture_id);
 }
 
-LTImageBuffer::LTImageBuffer(const char *file) {
-    LTImageBuffer::filename = new char[strlen(file) + 1];
-    strcpy(LTImageBuffer::filename, file);
+LTImageBuffer::LTImageBuffer(const char *name) {
+    LTImageBuffer::name = new char[strlen(name) + 1];
+    strcpy(LTImageBuffer::name, name);
     is_glyph = false;
     glyph_char = '\0';
 }
 
 LTImageBuffer::~LTImageBuffer() {
     delete[] bb_pixels;
-    delete[] filename;
+    delete[] name;
 }
 
 int LTImageBuffer::bb_width() {
@@ -81,7 +82,7 @@ int LTImageBuffer::num_bb_pixels() {
     return bb_width() * bb_height();
 }
 
-static void compute_bbox(const char *file, LTpixel **rows, int w, int h,
+static void compute_bbox(const char *path, LTpixel **rows, int w, int h,
     int *bb_left, int *bb_top, int *bb_right, int *bb_bottom)
 {
     int row;
@@ -97,7 +98,7 @@ static void compute_bbox(const char *file, LTpixel **rows, int w, int h,
         row_clear = true;
         for (col = 0; col < w; col++) {
             pxl = rows[row][col];
-            if (!LT_TRANSPARENT(pxl)) {
+            if (LT_PIXEL_VISIBLE(pxl)) {
                 row_clear = false;
                 if (col < *bb_left) {
                     *bb_left = col;
@@ -117,12 +118,12 @@ static void compute_bbox(const char *file, LTpixel **rows, int w, int h,
     }
 
     if (*bb_left > *bb_right || *bb_top > *bb_bottom) {
-        fprintf(stderr, "Error: %s has no non-transparent pixels.\n", file);
+        fprintf(stderr, "Error: %s has no non-transparent pixels.\n", path);
         exit(1);
     }
 }
 
-LTImageBuffer *ltReadImage(const char *file) {
+LTImageBuffer *ltReadImage(const char *path, const char *name) {
     FILE *in;
     png_structp png_ptr; 
     png_infop info_ptr; 
@@ -142,9 +143,9 @@ LTImageBuffer *ltReadImage(const char *file) {
 
     png_byte **rows;
 
-    in = fopen(file, "rb");
+    in = fopen(path, "rb");
     if (!in) {
-        fprintf(stderr, "Error: Unable to open %s for reading.\n", file);
+        fprintf(stderr, "Error: Unable to open %s for reading.\n", path);
         exit(1);
     }
 
@@ -152,11 +153,11 @@ LTImageBuffer *ltReadImage(const char *file) {
     int n = fread(sig, 1, 8, in);
     if (n != 8) {
         fclose(in);
-        ltAbort("Unable to read first 8 bytes of %s.", file);
+        ltAbort("Unable to read first 8 bytes of %s.", path);
     }
     if (!png_check_sig(sig, 8)) {
         fclose(in);
-        ltAbort("%s has an invalid signature.", file);
+        ltAbort("%s has an invalid signature.", path);
     }
     
     png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
@@ -167,9 +168,15 @@ LTImageBuffer *ltReadImage(const char *file) {
     png_set_sig_bytes(png_ptr, 8);
 
     // Read the data.
-    png_transforms = PNG_TRANSFORM_STRIP_16 | PNG_TRANSFORM_PACKING |
-        PNG_TRANSFORM_GRAY_TO_RGB | PNG_TRANSFORM_SWAP_ALPHA | PNG_TRANSFORM_BGR;
-    png_set_filler(png_ptr, 0xFF, PNG_FILLER_BEFORE);
+    #ifdef IOS
+        png_transforms = PNG_TRANSFORM_STRIP_16 | PNG_TRANSFORM_PACKING |
+            PNG_TRANSFORM_GRAY_TO_RGB;
+        png_set_filler(png_ptr, 0xFF, PNG_FILLER_AFTER);
+    #else
+        png_transforms = PNG_TRANSFORM_STRIP_16 | PNG_TRANSFORM_PACKING |
+            PNG_TRANSFORM_GRAY_TO_RGB | PNG_TRANSFORM_SWAP_ALPHA | PNG_TRANSFORM_BGR;
+        png_set_filler(png_ptr, 0xFF, PNG_FILLER_BEFORE);
+    #endif
     png_read_png(png_ptr, info_ptr, png_transforms, NULL);
     fclose(in);
     png_get_IHDR(png_ptr, info_ptr, &uwidth, &uheight, &bit_depth, &color_type,
@@ -181,18 +188,18 @@ LTImageBuffer *ltReadImage(const char *file) {
     } else if (color_type == PNG_COLOR_TYPE_RGB) {
         has_alpha = false;
     } else {
-        fprintf(stderr, "Error: %s is not RGBA or RGB.\n", file);
+        fprintf(stderr, "Error: %s is not RGBA or RGB.\n", path);
         exit(1);
     }
     if (bit_depth != 8) {
-        fprintf(stderr, "Error: %s does not have bit depth 8.\n", file);
+        fprintf(stderr, "Error: %s does not have bit depth 8.\n", path);
         exit(1);
     }
     rows = png_get_rows(png_ptr, info_ptr);
 
     // Compute the bounding box.
     if (has_alpha) {
-        compute_bbox(file, (LTpixel**)rows, width, height, &bb_left, &bb_top, &bb_right,
+        compute_bbox(path, (LTpixel**)rows, width, height, &bb_left, &bb_top, &bb_right,
             &bb_bottom);
     } else {
         // No alpha, so bbox calculation trivial.
@@ -204,7 +211,7 @@ LTImageBuffer *ltReadImage(const char *file) {
     
     // Copy data to new LTImageBuffer.
 
-    LTImageBuffer *imgbuf = new LTImageBuffer(file);
+    LTImageBuffer *imgbuf = new LTImageBuffer(name);
     imgbuf->width = width;
     imgbuf->height = height;
     imgbuf->bb_left = bb_left;
@@ -230,7 +237,7 @@ LTImageBuffer *ltReadImage(const char *file) {
     return imgbuf;
 }
 
-void ltWriteImage(const char *file, LTImageBuffer *img) {
+void ltWriteImage(const char *path, LTImageBuffer *img) {
     FILE *out;
     png_structp png_ptr; 
     png_infop info_ptr; 
@@ -239,9 +246,9 @@ void ltWriteImage(const char *file, LTImageBuffer *img) {
     int bb_width = img->bb_width();
 
     // Open the file.
-    out = fopen(file, "wb");
+    out = fopen(path, "wb");
     if (!out) {
-        fprintf(stderr, "Error: Unable to open %s for writing.\n", file);
+        fprintf(stderr, "Error: Unable to open %s for writing.\n", path);
         exit(1);
     }
 
@@ -281,19 +288,19 @@ void ltPasteImage(LTImageBuffer *src, LTImageBuffer *dest, int x, int y, bool ro
     int dest_height = dest->bb_height();
     if (!rotate && (x + src_width > dest_width)) {
         ltAbort("%s too wide to be pasted into %s at x = %d.", 
-            src->filename, dest->filename, x);
+            src->name, dest->name, x);
     }
     if (!rotate && (y + src_height > dest_height)) {
         ltAbort("%s too high to be pasted into %s at y = %d.",
-            src->filename, dest->filename, y);
+            src->name, dest->name, y);
     }
     if (rotate && (x + src_height > dest_width)) {
         ltAbort("%s too high to be pasted into %s at x = %d after rotation.",
-            src->filename, dest->filename, x);
+            src->name, dest->name, x);
     }
     if (rotate && (y + src_width > dest_height)) {
         ltAbort("%s too wide to be pasted into %s at y = %d after rotation.",
-            src->filename, dest->filename, y);
+            src->name, dest->name, y);
     }
 
     LTpixel *dest_ptr = dest->bb_pixels + y * dest_width + x;
@@ -506,9 +513,9 @@ static void paste_packer_images(LTImageBuffer *img, LTImagePacker *packer) {
 
 //-----------------------------------------------------------------
 
-LTImageBuffer *ltCreateAtlasImage(const char *file, LTImagePacker *packer) {
+LTImageBuffer *ltCreateAtlasImage(const char *name, LTImagePacker *packer) {
     int num_pixels = packer->width * packer->height;
-    LTImageBuffer *atlas = new LTImageBuffer(file);
+    LTImageBuffer *atlas = new LTImageBuffer(name);
     atlas->width = packer->width;
     atlas->height = packer->height;
     atlas->bb_left = 0;

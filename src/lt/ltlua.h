@@ -17,6 +17,8 @@ void ltLuaPointerUp(int input_id, LTfloat x, LTfloat y);
 void ltLuaPointerMove(LTfloat x, LTfloat y);
 void ltLuaResizeWindow(LTfloat w, LTfloat h);
 
+void ltLuaGarbageCollect();
+
 int ltLuaInitRef();
 
 #endif /* LTLUA_H */

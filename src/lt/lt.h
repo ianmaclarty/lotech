@@ -16,5 +16,6 @@
 #include "ltscene.h"
 #include "lttime.h"
 #include "lttween.h"
+#include "ltutil.h"
 
 #endif

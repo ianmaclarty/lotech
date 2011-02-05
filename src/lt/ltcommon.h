@@ -18,6 +18,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "ltutil.h"
+
 #define ASSERT_CONCAT_(a, b) a##b
 #define ASSERT_CONCAT(a, b) ASSERT_CONCAT_(a, b)
 #define ct_assert(e) enum { ASSERT_CONCAT(assert_line_, __LINE__) = 1/(!!(e)) }
@@ -36,9 +38,6 @@ ct_assert(sizeof(LTuint32) == 4);
 typedef LTuint32        LTpixel;
 typedef GLuint          LTvertbuf;
 typedef GLuint          LTtexbuf;
-
-void ltAbort(const char *fmt, ...);
-void ltLog(const char *fmt, ...);
 
 // Used for reflection.  Any subclasses of LTObject that can be used
 // in Lua code should have an entry in this enumeration.
