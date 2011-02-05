@@ -21,8 +21,6 @@ void ltIOSRender() {
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
