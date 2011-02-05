@@ -1,14 +1,54 @@
+XCode 3.2.5:
+
 Create new OpenGL ES project.
 
 Add lotech/src dir to xcode project, renamed to lotech.
 
 Target -> Get Info -> Build Settings:
-    Other C flags: -I lotech -DIOS
+    Other C flags: -I lotech -DIOS -DPNG_SETJMP_NOT_SUPPORTED
     Target Device Family: iPhone/iPad
+    iOS deployment target: 3.1.2
+    Untick "Compile for Thumb".
+    Optimisation level: -O3
 
 Rename EAGLView.m -> EAGLView.mm and edit:
-    #include "lt.h"
+    Remove OpenGL ES2 imports.
+
+    Add:
+        #import <OpenGLES/EAGL.h>
+        #import <OpenGLES/EAGLDrawable.h>
+
+    Add:
+        #include "lt.h"
 
     Add:
         self.multipleTouchEnabled = YES;
+        if([[UIScreen mainScreen] respondsToSelector: NSSelectorFromString(@"scale")]) {
+            if([self respondsToSelector: NSSelectorFromString(@"contentScaleFactor")]) {
+                self.contentScaleFactor = [[UIScreen mainScreen] scale];
+            }
+        }
+        ltIOSInit();
     to initWithCoder method (just before "return self;").
+
+    Call "ltIOSTeardown();" in dealloc method (first thing).
+    
+    Fix compilation errors by adding OES suffix to opengl functions
+    and macros that need it.
+
+Rename MyGameViewController.m to MyGameViewController.mm and edit:
+    #include "lt.h"
+
+    Change drawFrame method to:
+
+        [(EAGLView *)self.view setFramebuffer];
+        ltIOSRender();
+        [(EAGLView *)self.view presentFramebuffer];
+
+    Call "ltIOSGarbageCollect();" in didReceiveMemoryWarning.
+
+    In awakeFromNib change the line:
+        EAGLContext *aContext = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
+    to:
+        EAGLContext *aContext = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES1];
+
