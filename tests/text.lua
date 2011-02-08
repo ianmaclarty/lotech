@@ -12,7 +12,11 @@ images.font.kern = {
 }
 local main = lt.Layer()
 
-main:Insert(lt.Translate(lt.Scale(lt.Text("Hello World!\nVooV.", images.font), 3), -0.5, 0))
+local text = lt.Text("Hello World!\nVooV.", images.font)
+local text_and_rect = lt.Layer()
+text_and_rect:Insert(text, 2)
+text_and_rect:Insert(lt.Tint(lt.Rect(0, 0.1, text.w, -0.1), 1, 0, 0, 0.5), 1)
+main:Insert(lt.Translate(lt.Scale(text_and_rect, 3), -0.5, 0))
 
 function lt.Render()
     main:Draw()
