@@ -9,6 +9,11 @@
 
 #include "png.h"
 
+#define BBCHUNK_KEY "LTBB"
+// w and h are the width and height of the original image.
+// l, b, r and t are the left, bottom, right and top dimensions of the bounding box.
+#define BBCHUNK_FORMAT "w%dh%dl%db%dr%dt%d"
+
 static bool g_textures_enabled = false;
 static GLuint g_current_bound_texture = 0;
 
@@ -128,8 +133,11 @@ LTImageBuffer *ltReadImage(const char *path, const char *name) {
     png_structp png_ptr; 
     png_infop info_ptr; 
     png_infop end_ptr; 
+    png_text *text_ptr;
     unsigned char sig[8];
     bool has_alpha;
+    bool has_bbchunk = false;
+    int num_txt_chunks;
 
     png_uint_32 uwidth;
     png_uint_32 uheight;
@@ -137,9 +145,9 @@ LTImageBuffer *ltReadImage(const char *path, const char *name) {
     int bit_depth;
     int color_type;
 
-    int bb_left, bb_top, bb_right, bb_bottom;
-
     int png_transforms;
+
+    int bb_left, bb_top, bb_right, bb_bottom; // Only valid if has_bbchunk == false.
 
     png_byte **rows;
 
@@ -197,36 +205,59 @@ LTImageBuffer *ltReadImage(const char *path, const char *name) {
     }
     rows = png_get_rows(png_ptr, info_ptr);
 
-    // Compute the bounding box.
-    if (has_alpha) {
-        compute_bbox(path, (LTpixel**)rows, width, height, &bb_left, &bb_top, &bb_right,
-            &bb_bottom);
-    } else {
-        // No alpha, so bbox calculation trivial.
-        bb_left = 0;
-        bb_top = 0;
-        bb_right = width - 1;
-        bb_bottom = height - 1;
+    LTImageBuffer *imgbuf = new LTImageBuffer(name);
+
+    // Check for bounding box chunk.
+    png_get_text(png_ptr, info_ptr, &text_ptr, &num_txt_chunks);
+    for (int i = 0; i < num_txt_chunks; i++) {
+        if (strcmp(text_ptr[i].key, BBCHUNK_KEY) == 0) {
+            has_bbchunk = true;   
+            sscanf(text_ptr[i].text, BBCHUNK_FORMAT,
+                &imgbuf->width, &imgbuf->height,
+                &imgbuf->bb_left, &imgbuf->bb_bottom, &imgbuf->bb_right, &imgbuf->bb_top);
+            break;
+        }
+    }
+
+    // Compute the bounding box if no bounding box chunk found.
+    if (!has_bbchunk) {
+        if (has_alpha) {
+            compute_bbox(path, (LTpixel**)rows, width, height, &bb_left, &bb_top, &bb_right,
+                &bb_bottom);
+        } else {
+            // No alpha, so bbox calculation trivial.
+            bb_left = 0;
+            bb_top = 0;
+            bb_right = width - 1;
+            bb_bottom = height - 1;
+        }
+        imgbuf->width = width;
+        imgbuf->height = height;
+        imgbuf->bb_left = bb_left;
+        imgbuf->bb_top = height - bb_top - 1; // Normalize coordinate system.
+        imgbuf->bb_right = bb_right;
+        imgbuf->bb_bottom = height - bb_bottom - 1;
     }
     
     // Copy data to new LTImageBuffer.
 
-    LTImageBuffer *imgbuf = new LTImageBuffer(name);
-    imgbuf->width = width;
-    imgbuf->height = height;
-    imgbuf->bb_left = bb_left;
-    imgbuf->bb_top = height - bb_top - 1; // Normalize coordinate system.
-    imgbuf->bb_right = bb_right;
-    imgbuf->bb_bottom = height - bb_bottom - 1;
-    
     int num_bb_pixels = imgbuf->num_bb_pixels();
     int bb_width = imgbuf->bb_width();
     LTpixel *pixels = new LTpixel[num_bb_pixels];
 
     LTpixel *pxl_ptr = pixels;
-    for (int row = bb_bottom; row >= bb_top; row--) {
-        memcpy(pxl_ptr, &rows[row][bb_left * 4], bb_width * 4);
-        pxl_ptr += bb_width;
+    if (has_bbchunk) {
+        // png contains only bounding box pixels so copy all of them.
+        for (int row = height - 1; row >= 0; row--) {
+            memcpy(pxl_ptr, &rows[row][0], bb_width * 4);
+            pxl_ptr += bb_width;
+        }
+    } else {
+        // Copy only the pixels in the bounding box.
+        for (int row = bb_bottom; row >= bb_top; row--) {
+            memcpy(pxl_ptr, &rows[row][bb_left * 4], bb_width * 4);
+            pxl_ptr += bb_width;
+        }
     }
 
     imgbuf->bb_pixels = pixels;
@@ -259,6 +290,20 @@ void ltWriteImage(const char *path, LTImageBuffer *img) {
     png_set_IHDR(png_ptr, info_ptr, bb_width, bb_height,
         8, PNG_COLOR_TYPE_RGB_ALPHA, PNG_INTERLACE_NONE,
         PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
+
+    // Record bounding box information in a private tEXt chunk.
+    png_text bbchunk;
+    char bbtext[128];
+    sprintf(bbtext, BBCHUNK_FORMAT, img->width, img->height,
+        img->bb_left, img->bb_bottom, img->bb_right, img->bb_top);
+    bbchunk.compression = PNG_TEXT_COMPRESSION_NONE;
+    bbchunk.key = (char*)BBCHUNK_KEY;
+    bbchunk.text = bbtext;
+    bbchunk.text_length = strlen(bbtext);
+    bbchunk.itxt_length = 0;
+    bbchunk.lang = 0;
+    bbchunk.lang_key = NULL;
+    png_set_text(png_ptr, info_ptr, &bbchunk, 1);
 
     // Tell libpng where the data is.
     rows = new png_byte*[bb_height];
