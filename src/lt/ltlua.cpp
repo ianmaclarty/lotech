@@ -31,6 +31,20 @@ static LTfloat g_viewport_y2 = 10.0f;
 
 /************************* General **************************/
 
+// Check lua_pcall return status.
+static void check_status(int status, bool abort) {
+    if (status) {
+        const char *msg = lua_tostring(g_L, -1);
+        lua_pop(g_L, 1);
+        if (msg == NULL) msg = "Unknown error (error object is not a string).";
+        fprintf(stderr, "%s\n", msg);
+        if (abort) {
+            // XXX should be: ltHarnessQuit();
+            exit(1);
+        }
+    }
+}
+
 // Returns a weak reference to value at the given index.  Does not
 // modify stack.
 static int make_weak_ref(lua_State *L, int index) {
@@ -1036,7 +1050,8 @@ static int import(lua_State *L) {
     }
     const char *path;
     path = resource_path(module, ".lua");
-    luaL_dofile(L, path);
+    check_status(luaL_loadfile(g_L, path), true);
+    check_status(lua_pcall(g_L, 0, 0, 0), true);
     delete[] path;
     return 0;
 }
@@ -1102,19 +1117,6 @@ static const luaL_Reg ltlib[] = {
 };
 
 /************************************************************/
-
-static void check_status(int status, bool abort) {
-    if (status && !lua_isnil(g_L, -1)) {
-        const char *msg = lua_tostring(g_L, -1);
-        if (msg == NULL) msg = "(error object is not a string)";
-        fprintf(stderr, "%s\n", msg);
-        lua_pop(g_L, 1);
-        if (abort) {
-            // XXX should be: ltHarnessQuit();
-            exit(1);
-        }
-    }
-}
 
 static bool push_lt_func(const char *func) {
     lua_getglobal(g_L, "lt");
