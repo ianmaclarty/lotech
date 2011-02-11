@@ -11,6 +11,7 @@
 #include "ltios.h"
 #include "ltiosutil.h"
 #include "ltlua.h"
+#include "ltnet.h"
 #include "ltphysics.h"
 #include "ltrandom.h"
 #include "ltscene.h"

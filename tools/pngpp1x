@@ -1,0 +1,7 @@
+#!/bin/sh
+for f in $@; do
+    b=`basename $f .png`
+    pngbb $f pngpp.tmp
+    pngcrush pngpp.tmp $b.png1x
+    rm pngpp.tmp
+done

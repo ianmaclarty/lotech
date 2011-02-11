@@ -87,8 +87,8 @@ static int server_check_for_broadcast(int lsock, sockaddr_in *client_addr) {
                 return 1;
             }
         }
-        errno = EBADE;
-        return -1;
+        // Ignore the packet if it doesn't contain the expected data.
+        return 0;
     } else {
         if (errno == EAGAIN) {
             return 0;
