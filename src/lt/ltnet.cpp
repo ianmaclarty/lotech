@@ -1,6 +1,8 @@
 /* Copyright (C) 2010 Ian MacLarty */
 #include "ltnet.h"
 
+#include "ltcommon.h"
+
 #define PORT 14091
 #define MAGIC_WORD "lotech"
 #define MAXBUFLEN 64
@@ -192,6 +194,8 @@ void LTServerState::connectStep() {
             return;
         case LT_SERVER_STATE_ERROR:
             return;
+        case LT_SERVER_STATE_CLOSED:
+            return;
     }
 }
 
@@ -201,6 +205,81 @@ bool LTServerState::isReady() {
 
 bool LTServerState::isError() {
     return state == LT_SERVER_STATE_ERROR;
+}
+
+static int write_all(int sock, const char *buf, int n) {
+    int r;
+    while (n > 0) {
+        r = write(sock, buf, n);
+        if (r < 0) {
+            if (errno == EAGAIN) {
+                continue;
+            } else {
+                return -1;
+            }
+        }
+        if (r == 0) {
+            continue;
+        }
+        n -= r;
+    }
+    return 0;
+}
+
+void LTServerState::sendMsg(const char *msg, int n) {
+    LTuint32 len = (LTuint32)n;
+    if (write_all(sock, (const char *)&len, 4) != 0) {
+        server_error_state(this);
+    }
+    if (write_all(sock, msg, n) != 0) {
+        server_error_state(this);
+    }
+}
+
+int LTServerState::recvMsg(char **msg, int *n) {
+    const char *reset_msg = "Connection reset by peer.";
+    const char *len_msg = "Unable to read message length.";
+    const char *missing_msg = "Message too short.";
+    LTuint32 len;
+    int r;
+    r = recvfrom(sock, &len, 4, 0, NULL, NULL);
+    if (r < 0) {
+        if (errno == EAGAIN) {
+            return 0;
+        } else {
+            return -1;
+        }
+    }
+    if (r == 0) {
+        state = LT_SERVER_STATE_ERROR;
+        errmsg = new char[strlen(reset_msg) + 1];
+        strcpy(errmsg, reset_msg);
+        return -1;
+    }
+    if (r != 4) {
+        state = LT_SERVER_STATE_ERROR;
+        errmsg = new char[strlen(len_msg) + 1];
+        strcpy(errmsg, len_msg);
+        return -1;
+    }
+    *msg = new char[len];
+    *n = (int)len;
+    r = recvfrom(sock, *msg, *n, MSG_WAITALL, NULL, NULL);
+    if (r < 0) {
+        return -1;
+    }
+    if (r < *n) {
+        state = LT_SERVER_STATE_ERROR;
+        errmsg = new char[strlen(missing_msg) + 1];
+        strcpy(errmsg, missing_msg);
+        return -1;
+    }
+    return 1;
+}
+
+void LTServerState::closeServer() {
+    close(sock);
+    state = LT_SERVER_STATE_CLOSED;
 }
 
 //-------------------------------------------------------------
@@ -347,6 +426,8 @@ void LTClientState::connectStep() {
             return;
         case LT_CLIENT_STATE_ERROR:
             return;
+        case LT_CLIENT_STATE_CLOSED:
+            return;
     }
 }
 
@@ -356,5 +437,61 @@ bool LTClientState::isReady() {
 
 bool LTClientState::isError() {
     return state == LT_CLIENT_STATE_ERROR;
+}
+
+void LTClientState::sendMsg(const char *msg, int n) {
+    LTuint32 len = (LTuint32)n;
+    if (write_all(sock, (const char *)&len, 4) != 0) {
+        client_error_state(this);
+    }
+    if (write_all(sock, msg, n) != 0) {
+        client_error_state(this);
+    }
+}
+
+int LTClientState::recvMsg(char **msg, int *n) {
+    const char *reset_msg = "Connection reset by peer.";
+    const char *len_msg = "Unable to read message length.";
+    const char *missing_msg = "Message too short.";
+    LTuint32 len;
+    int r;
+    r = recvfrom(sock, &len, 4, 0, NULL, NULL);
+    if (r < 0) {
+        if (errno == EAGAIN) {
+            return 0;
+        } else {
+            return -1;
+        }
+    }
+    if (r == 0) {
+        state = LT_CLIENT_STATE_ERROR;
+        errmsg = new char[strlen(reset_msg) + 1];
+        strcpy(errmsg, reset_msg);
+        return -1;
+    }
+    if (r != 4) {
+        state = LT_CLIENT_STATE_ERROR;
+        errmsg = new char[strlen(len_msg) + 1];
+        strcpy(errmsg, len_msg);
+        return -1;
+    }
+    *msg = new char[len];
+    *n = (int)len;
+    r = recvfrom(sock, *msg, *n, MSG_WAITALL, NULL, NULL);
+    if (r < 0) {
+        return -1;
+    }
+    if (r < *n) {
+        state = LT_CLIENT_STATE_ERROR;
+        errmsg = new char[strlen(missing_msg) + 1];
+        strcpy(errmsg, missing_msg);
+        return -1;
+    }
+    return 1;
+}
+
+void LTClientState::closeClient() {
+    close(sock);
+    state = LT_CLIENT_STATE_CLOSED;
 }
 

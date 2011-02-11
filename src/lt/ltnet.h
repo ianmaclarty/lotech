@@ -18,6 +18,7 @@ enum LTServerStateEnum {
     LT_SERVER_STATE_CONNECTING_TO_CLIENT,
     LT_SERVER_STATE_READY,
     LT_SERVER_STATE_ERROR,
+    LT_SERVER_STATE_CLOSED,
 };
 
 struct LTServerState {
@@ -33,6 +34,16 @@ struct LTServerState {
 
     bool isReady();
     bool isError();
+
+    void sendMsg(const char *buf, int n);
+    // Tries to recv one message.  Returns 1 on success, 0 if the
+    // message could not be completely retrieved (try again later)
+    // or -1 if an error occured (in which case errmsg is set).
+    // On success space for the data is allocated in buf.  The caller
+    // is responsible for freeing the data with delete[].
+    int recvMsg(char **buf, int *n);
+
+    void closeServer();
 };
 
 enum LTClientStateEnum {
@@ -41,6 +52,7 @@ enum LTClientStateEnum {
     LT_CLIENT_STATE_LISTENING,
     LT_CLIENT_STATE_READY,
     LT_CLIENT_STATE_ERROR,
+    LT_CLIENT_STATE_CLOSED,
 };
 
 struct LTClientState {
@@ -56,6 +68,12 @@ struct LTClientState {
 
     bool isReady();
     bool isError();
+
+    void sendMsg(const char *buf, int n);
+    // See LTServerState::recvMsg.
+    int recvMsg(char **buf, int *n);
+
+    void closeClient();
 };
 
 #endif
