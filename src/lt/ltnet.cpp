@@ -7,6 +7,16 @@
 #define MAGIC_WORD "lotech"
 #define MAXBUFLEN 64
 
+static void copy_string(char **dest, const char *src) {
+    *dest = new char[strlen(src) + 1];
+    strcpy(*dest, src);
+}
+
+static void copy_errmsg(char **errmsg) {
+    char *msg = strerror(errno);
+    copy_string(errmsg, msg);
+}
+
 static int enable_broadcast(int sock) {
     int opt = 1;
     return setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &opt, sizeof opt);
@@ -133,33 +143,121 @@ static int server_connection_is_complete(int sock) {
     return select(sock + 1, NULL, &writefds, NULL, &tv);
 }
 
-static void server_error_state(LTServerState *state) {
-    if (state->errmsg == NULL) {
-        char *e = strerror(errno);
-        state->errmsg = new char[strlen(e) + 1];
-        strcpy(state->errmsg, e);
+static void server_error_state(LTServerConnection *state, const char *msg) {
+    if (state->errmsg != NULL) {
+        delete[] state->errmsg;
+        state->errmsg = NULL;
+    }
+    if (msg == NULL) {
+        copy_errmsg(&state->errmsg);
+    } else {
+        copy_string(&state->errmsg, msg);
     }
     state->state = LT_SERVER_STATE_ERROR;
 }
 
-LTServerState::LTServerState() {
+/**
+ * Return 1 if the entire message was received, 0 if
+ * there is no message to receive yet (try again later)
+ * and -1 on error (and errmsg is set with newly allocated string
+ * that must be freed with delete[]).
+ */
+static int receive_msg(int sock, char **msg, int *n, char **errmsg) {
+    *errmsg = NULL;
+    *msg = NULL;
+    *n = 0;
+    LTuint32 len;
+    int r;
+    r = recvfrom(sock, &len, 4, 0, NULL, NULL);
+    if (r < 0) {
+        if (errno == EAGAIN) {
+            return 0;
+        } else {
+            copy_errmsg(errmsg);
+            return -1;
+        }
+    }
+    if (r == 0) {
+        copy_string(errmsg, "Connection reset by peer.");
+        return -1;
+    }
+    if (r != 4) {
+        copy_string(errmsg, "Unable to read message length.");
+        return -1;
+    }
+    *msg = new char[len];
+    *n = (int)len;
+    r = recvfrom(sock, *msg, *n, MSG_WAITALL, NULL, NULL);
+    if (r < 0) {
+        copy_errmsg(errmsg);
+        delete[] *msg;
+        return -1;
+    }
+    if (r < *n) {
+        copy_string(errmsg, "Message too short.");
+        delete[] *msg;
+        return -1;
+    }
+    return 1;
+}
+
+/**
+ * Write all the bytes in the buffer to the socket.
+ * Returns 0 on success and -1 on error (and sets errno).
+ */
+static int write_all(int sock, const char *buf, int n) {
+    int r;
+    while (n > 0) {
+        r = write(sock, buf, n);
+        if (r < 0) {
+            if (errno == EAGAIN) {
+                continue;
+            } else {
+                return -1;
+            }
+        }
+        n -= r;
+    }
+    return 0;
+}
+
+/**
+ * Sends the entire message.
+ * Returns 0 on success or -1 on error (and sets errmsg to a
+ * newly allocated string that must be freed with delete[]).
+ */
+static int send_msg(int sock, const char *msg, int n, char **errmsg) {
+    *errmsg = NULL;
+    LTuint32 len = (LTuint32)n;
+    if (write_all(sock, (const char *)&len, 4) != 0) {
+        copy_errmsg(errmsg);
+        return -1;
+    }
+    if (write_all(sock, msg, n) != 0) {
+        copy_errmsg(errmsg);
+        return -1;
+    }
+    return 0;
+}
+
+LTServerConnection::LTServerConnection() {
     state = LT_SERVER_STATE_INITIALIZED;
     errmsg = NULL;
 }
 
-LTServerState::~LTServerState() {
+LTServerConnection::~LTServerConnection() {
     if (errmsg != NULL) {
         delete[] errmsg;
     }
 }
 
-void LTServerState::connectStep() {
+void LTServerConnection::connectStep() {
     int rv;
     switch (state) {
         case LT_SERVER_STATE_INITIALIZED: 
             sock = server_start_listening();
             if (sock < 0) {
-                server_error_state(this);
+                server_error_state(this, NULL);
                 return;
             }
             state = LT_SERVER_STATE_WAITING_FOR_CLIENT_BROADCAST;
@@ -167,14 +265,14 @@ void LTServerState::connectStep() {
         case LT_SERVER_STATE_WAITING_FOR_CLIENT_BROADCAST:
             rv = server_check_for_broadcast(sock, &client_addr);
             if (rv < 0) {
-                server_error_state(this);
+                server_error_state(this, NULL);
                 return;
             }
             if (rv == 1) {
                 close(sock);
                 sock = server_start_connect_client(&client_addr);
                 if (sock < 0) {
-                    server_error_state(this);
+                    server_error_state(this, NULL);
                     return;
                 }
                 state = LT_SERVER_STATE_CONNECTING_TO_CLIENT;
@@ -183,7 +281,7 @@ void LTServerState::connectStep() {
         case LT_SERVER_STATE_CONNECTING_TO_CLIENT:
             rv = server_connection_is_complete(sock);
             if (rv < 0) {
-                server_error_state(this);
+                server_error_state(this, NULL);
                 return;
             }
             if (rv == 1) {
@@ -199,87 +297,61 @@ void LTServerState::connectStep() {
     }
 }
 
-bool LTServerState::isReady() {
+bool LTServerConnection::isReady() {
     return state == LT_SERVER_STATE_READY;
 }
 
-bool LTServerState::isError() {
+bool LTServerConnection::isError() {
     return state == LT_SERVER_STATE_ERROR;
 }
 
-static int write_all(int sock, const char *buf, int n) {
-    int r;
-    while (n > 0) {
-        r = write(sock, buf, n);
-        if (r < 0) {
-            if (errno == EAGAIN) {
-                continue;
-            } else {
-                return -1;
-            }
-        }
-        if (r == 0) {
-            continue;
-        }
-        n -= r;
+void LTServerConnection::sendMsg(const char *msg, int n) {
+    char *err;
+    if (state != LT_SERVER_STATE_READY) {
+        server_error_state(this, "Not ready");
+        return;
     }
-    return 0;
-}
-
-void LTServerState::sendMsg(const char *msg, int n) {
-    LTuint32 len = (LTuint32)n;
-    if (write_all(sock, (const char *)&len, 4) != 0) {
-        server_error_state(this);
-    }
-    if (write_all(sock, msg, n) != 0) {
-        server_error_state(this);
-    }
-}
-
-int LTServerState::recvMsg(char **msg, int *n) {
-    const char *reset_msg = "Connection reset by peer.";
-    const char *len_msg = "Unable to read message length.";
-    const char *missing_msg = "Message too short.";
-    LTuint32 len;
-    int r;
-    r = recvfrom(sock, &len, 4, 0, NULL, NULL);
+    int r = send_msg(sock, msg, n, &err);
     if (r < 0) {
-        if (errno == EAGAIN) {
-            return 0;
-        } else {
-            return -1;
-        }
+        server_error_state(this, err);
+        delete[] err;
+    }
+}
+
+bool LTServerConnection::recvMsg(char **msg, int *n) {
+    char *err;
+    if (state != LT_SERVER_STATE_READY) {
+        server_error_state(this, "Not ready");
+        return false;
+    }
+    int r = receive_msg(sock, msg, n, &err);
+    if (r < 0) {
+        server_error_state(this, err);
+        delete[] err;
+        return false;
     }
     if (r == 0) {
-        state = LT_SERVER_STATE_ERROR;
-        errmsg = new char[strlen(reset_msg) + 1];
-        strcpy(errmsg, reset_msg);
-        return -1;
+        // No error, but no message available either.
+        return false;
     }
-    if (r != 4) {
-        state = LT_SERVER_STATE_ERROR;
-        errmsg = new char[strlen(len_msg) + 1];
-        strcpy(errmsg, len_msg);
-        return -1;
-    }
-    *msg = new char[len];
-    *n = (int)len;
-    r = recvfrom(sock, *msg, *n, MSG_WAITALL, NULL, NULL);
-    if (r < 0) {
-        return -1;
-    }
-    if (r < *n) {
-        state = LT_SERVER_STATE_ERROR;
-        errmsg = new char[strlen(missing_msg) + 1];
-        strcpy(errmsg, missing_msg);
-        return -1;
-    }
-    return 1;
+    return true;
 }
 
-void LTServerState::closeServer() {
+void LTServerConnection::closeServer() {
     close(sock);
     state = LT_SERVER_STATE_CLOSED;
+}
+
+const char* LTServerConnection::stateStr() {
+    switch (state) {
+        case LT_SERVER_STATE_INITIALIZED: return "initialized";
+        case LT_SERVER_STATE_WAITING_FOR_CLIENT_BROADCAST: return "waiting for broadcast";
+        case LT_SERVER_STATE_CONNECTING_TO_CLIENT: return "connecting to client";
+        case LT_SERVER_STATE_READY: return "ready";
+        case LT_SERVER_STATE_ERROR: return "error";
+        case LT_SERVER_STATE_CLOSED: return "closed";
+    }
+    return "unknown";
 }
 
 //-------------------------------------------------------------
@@ -357,22 +429,26 @@ static int client_try_accept(int lsock) {
     }
 }
 
-static void client_error_state(LTClientState *state) {
-    if (state->errmsg == NULL) {
-        char *e = strerror(errno);
-        state->errmsg = new char[strlen(e) + 1];
-        strcpy(state->errmsg, e);
+static void client_error_state(LTClientConnection *state, const char *msg) {
+    if (state->errmsg != NULL) {
+        delete[] state->errmsg;
+        state->errmsg = NULL;
+    }
+    if (msg == NULL) {
+        copy_errmsg(&state->errmsg);
+    } else {
+        copy_string(&state->errmsg, msg);
     }
     state->state = LT_CLIENT_STATE_ERROR;
 }
 
-LTClientState::LTClientState() {
+LTClientConnection::LTClientConnection() {
     state = LT_CLIENT_STATE_INITIALIZED;
     errmsg = NULL;
     listen_step = 0;
 }
 
-LTClientState::~LTClientState() {
+LTClientConnection::~LTClientConnection() {
     if (errmsg != NULL) {
         delete[] errmsg;
     }
@@ -380,7 +456,7 @@ LTClientState::~LTClientState() {
 
 #define MAX_LISTENING_STEPS 30
 
-void LTClientState::connectStep() {
+void LTClientConnection::connectStep() {
     int rv;
     switch (state) {
         case LT_CLIENT_STATE_INITIALIZED: 
@@ -389,12 +465,12 @@ void LTClientState::connectStep() {
         case LT_CLIENT_STATE_BROADCASTING:
             rv = client_broadcast();
             if (rv < 0) {
-                client_error_state(this);
+                client_error_state(this, NULL);
                 return;
             }
             sock = client_start_listening();
             if (sock < 0) {
-                client_error_state(this);
+                client_error_state(this, NULL);
                 return;
             }
             state = LT_CLIENT_STATE_LISTENING;
@@ -403,7 +479,7 @@ void LTClientState::connectStep() {
         case LT_CLIENT_STATE_LISTENING:
             rv = client_try_accept(sock);
             if (rv < 0) {
-                client_error_state(this);
+                client_error_state(this, NULL);
                 return;
             }
             if (rv > 0) {
@@ -431,67 +507,59 @@ void LTClientState::connectStep() {
     }
 }
 
-bool LTClientState::isReady() {
+bool LTClientConnection::isReady() {
     return state == LT_CLIENT_STATE_READY;
 }
 
-bool LTClientState::isError() {
+bool LTClientConnection::isError() {
     return state == LT_CLIENT_STATE_ERROR;
 }
 
-void LTClientState::sendMsg(const char *msg, int n) {
-    LTuint32 len = (LTuint32)n;
-    if (write_all(sock, (const char *)&len, 4) != 0) {
-        client_error_state(this);
+void LTClientConnection::sendMsg(const char *msg, int n) {
+    char *err;
+    if (state != LT_CLIENT_STATE_READY) {
+        client_error_state(this, "Not ready");
+        return;
     }
-    if (write_all(sock, msg, n) != 0) {
-        client_error_state(this);
+    int r = send_msg(sock, msg, n, &err);
+    if (r < 0) {
+        client_error_state(this, err);
+        delete[] err;
+        return;
     }
 }
 
-int LTClientState::recvMsg(char **msg, int *n) {
-    const char *reset_msg = "Connection reset by peer.";
-    const char *len_msg = "Unable to read message length.";
-    const char *missing_msg = "Message too short.";
-    LTuint32 len;
-    int r;
-    r = recvfrom(sock, &len, 4, 0, NULL, NULL);
+bool LTClientConnection::recvMsg(char **msg, int *n) {
+    char *err;
+    if (state != LT_CLIENT_STATE_READY) {
+        client_error_state(this, "Not ready");
+        return false;
+    }
+    int r = receive_msg(sock, msg, n, &err);
     if (r < 0) {
-        if (errno == EAGAIN) {
-            return 0;
-        } else {
-            return -1;
-        }
+        client_error_state(this, err);
+        delete[] err;
+        return false;
     }
     if (r == 0) {
-        state = LT_CLIENT_STATE_ERROR;
-        errmsg = new char[strlen(reset_msg) + 1];
-        strcpy(errmsg, reset_msg);
-        return -1;
+        return false;
     }
-    if (r != 4) {
-        state = LT_CLIENT_STATE_ERROR;
-        errmsg = new char[strlen(len_msg) + 1];
-        strcpy(errmsg, len_msg);
-        return -1;
-    }
-    *msg = new char[len];
-    *n = (int)len;
-    r = recvfrom(sock, *msg, *n, MSG_WAITALL, NULL, NULL);
-    if (r < 0) {
-        return -1;
-    }
-    if (r < *n) {
-        state = LT_CLIENT_STATE_ERROR;
-        errmsg = new char[strlen(missing_msg) + 1];
-        strcpy(errmsg, missing_msg);
-        return -1;
-    }
-    return 1;
+    return true;
 }
 
-void LTClientState::closeClient() {
+void LTClientConnection::closeClient() {
     close(sock);
     state = LT_CLIENT_STATE_CLOSED;
 }
 
+const char* LTClientConnection::stateStr() {
+    switch (state) {
+        case LT_CLIENT_STATE_INITIALIZED: return "initialized";
+        case LT_CLIENT_STATE_BROADCASTING: return "broadcasting";
+        case LT_CLIENT_STATE_LISTENING: return "listening";
+        case LT_CLIENT_STATE_READY: return "ready";
+        case LT_CLIENT_STATE_ERROR: return "error";
+        case LT_CLIENT_STATE_CLOSED: return "closed";
+    }
+    return "unknown";
+}
