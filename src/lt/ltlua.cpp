@@ -29,6 +29,8 @@ static LTfloat g_viewport_y1 = -10.0f;
 static LTfloat g_viewport_x2 = 15.0f;
 static LTfloat g_viewport_y2 = 10.0f;
 
+static char *g_main_file = NULL;
+
 /************************* General **************************/
 
 // Check lua_pcall return status.
@@ -1142,6 +1144,11 @@ static void call_lt_func(const char *func) {
 }
 
 void ltLuaSetup(const char *file) {
+    if (g_main_file != NULL) {
+        delete[] g_main_file;
+    }
+    g_main_file = new char[strlen(file) + 1];
+    strcpy(g_main_file, file);
     g_L = luaL_newstate();
     if (g_L == NULL) {
         fprintf(stderr, "Cannot create lua state: not enough memory.\n");
@@ -1153,7 +1160,7 @@ void ltLuaSetup(const char *file) {
     lua_setglobal(g_L, "import");
     luaL_register(g_L, "lt", ltlib);
     lua_gc(g_L, LUA_GCRESTART, 0);
-    check_status(luaL_loadfile(g_L, file), true);
+    check_status(luaL_loadfile(g_L, g_main_file), true);
     check_status(lua_pcall(g_L, 0, 0, 0), true);
 }
 
@@ -1161,6 +1168,13 @@ void ltLuaTeardown() {
     if (g_L != NULL) {
         lua_close(g_L);
         g_L = NULL;
+    }
+}
+
+void ltLuaReset() {
+    if (g_main_file != NULL) {
+        ltLuaTeardown();
+        ltLuaSetup(g_main_file);
     }
 }
 

@@ -1,4 +1,4 @@
-/* Copyright (C) 2010 Ian MacLarty */
+/* Copyright (C) 2011 Ian MacLarty */
 #ifndef LTNET_H
 #define LTNET_H
 

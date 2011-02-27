@@ -6,6 +6,7 @@
 
 void ltLuaSetup(const char *file);
 void ltLuaTeardown();
+void ltLuaReset();
 
 void ltLuaAdvance();
 void ltLuaRender();
