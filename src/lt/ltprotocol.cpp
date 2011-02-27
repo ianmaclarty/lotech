@@ -101,6 +101,7 @@ void ltClientStep() {
             retry_count++;
             fprintf(stderr, "Retrying...\n");
             client_connection->closeClient();
+            delete client_connection;
             client_connection = NULL;
             ltClientInit();
         } else {
@@ -213,6 +214,7 @@ void ltServerStep() {
             retry_count++;
             fprintf(stderr, "Retrying...\n");
             server_connection->closeServer();
+            delete server_connection;
             server_connection = NULL;
             ltServerInit();
         } else {
