@@ -39,10 +39,15 @@ void ltInitGraphics() {
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
 }
 
 void ltSetViewPort(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2) {
     glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
     #ifdef LTIOS
     glOrthof(x1, x2, y1, y2, -1.0f, 1.0f);
     #else

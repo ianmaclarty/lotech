@@ -1160,8 +1160,10 @@ void ltLuaSetup(const char *file) {
     lua_setglobal(g_L, "import");
     luaL_register(g_L, "lt", ltlib);
     lua_gc(g_L, LUA_GCRESTART, 0);
-    check_status(luaL_loadfile(g_L, g_main_file), true);
-    check_status(lua_pcall(g_L, 0, 0, 0), true);
+    if (ltFileExists(g_main_file)) {
+        check_status(luaL_loadfile(g_L, g_main_file), true);
+        check_status(lua_pcall(g_L, 0, 0, 0), true);
+    }
 }
 
 void ltLuaTeardown() {

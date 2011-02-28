@@ -2,11 +2,15 @@
 #include "ltgraphics.h"
 #include "ltiosutil.h"
 #include "ltlua.h"
+#include "ltprotocol.h"
 
 // The following is required for converting UITouch objects to input_ids.
 ct_assert(sizeof(UITouch*) == sizeof(int));
 
 void ltIOSInit() {
+    #ifdef LTDEVMODE
+    ltClientInit();
+    #endif
     ltInitGraphics();
     const char *path = ltIOSBundlePath("main", ".lua");
     ltLuaSetup(path);
@@ -26,6 +30,9 @@ void ltIOSRender() {
 
     ltLuaRender();
     ltLuaAdvance();
+    #ifdef LTDEVMODE
+    ltClientStep();
+    #endif
 }
 
 void ltIOSGarbageCollect() {

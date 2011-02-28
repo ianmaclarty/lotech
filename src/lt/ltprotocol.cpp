@@ -164,7 +164,7 @@ struct LTCommandUpdateFile : LTCommand {
             if (r < (size_t)data_size) {
                 ltLog("Unable to write to %s: %s", file_name, strerror(errno));
             } else {
-                ltLog("Updated file %s", file_name);
+                ltLog("Synced %s", file_name);
             }
             fclose(f);
         } else {
