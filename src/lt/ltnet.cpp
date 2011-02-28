@@ -187,11 +187,19 @@ static int receive_msg(int sock, char **msg, int *n, char **errmsg) {
     }
     *msg = new char[len];
     *n = (int)len;
-    r = recvfrom(sock, *msg, *n, MSG_WAITALL, NULL, NULL);
-    if (r < 0) {
-        copy_errmsg(errmsg);
-        delete[] *msg;
-        return -1;
+    while (true) {
+        r = recvfrom(sock, *msg, *n, MSG_WAITALL, NULL, NULL);
+        if (r < 0) {
+            if (errno == EAGAIN) {
+                continue;
+            } else {
+                copy_errmsg(errmsg);
+                delete[] *msg;
+                return -1;
+            }
+        } else {
+            break;
+        }
     }
     if (r < *n) {
         copy_string(errmsg, "Message too short.");
@@ -419,6 +427,9 @@ static int client_start_listening() {
 static int client_try_accept(int lsock) {
     int fd = accept(lsock, NULL, NULL);
     if (fd > 0) {
+        if (make_nonblocking(fd) != 0) {
+            return -1;
+        }
         return fd;
     } else {
         if (errno == EAGAIN) {

@@ -45,7 +45,7 @@ struct LTCommandLog : LTCommand {
     }
 
     virtual void doCommand() {
-        printf("Log: %s\n", msg);
+        printf("Client says: %s\n", msg);
     }
 };
 
@@ -77,6 +77,7 @@ void ltClientStep() {
     }
     // Receive and execute commands from the server.
     while (client_connection->isReady() && client_connection->recvMsg(&buf, &len)) {
+        fprintf(stderr, "Received command\n");
         LTCommand *cmd = decode_command(buf, len);
         delete buf;
         if (cmd != NULL) {
@@ -150,6 +151,8 @@ struct LTCommandUpdateFile : LTCommand {
             size_t r = fwrite(data, 1, data_size, f);
             if (r < (size_t)data_size) {
                 ltLog("Unable to write to %s: %s\n", file_name, strerror(errno));
+            } else {
+                ltLog("Updated file %s\n", file_name);
             }
             fclose(f);
         } else {
@@ -223,6 +226,18 @@ void ltServerStep() {
     }
 }
 
+bool ltServerIsReady() {
+    return server_connection != NULL && server_connection->isReady();
+}
+
+void ltServerShutdown() {
+    if (server_connection != NULL) {
+        server_connection->closeServer();
+        delete server_connection;
+        server_connection = NULL;
+    }
+}
+
 void ltServerUpdateFile(const char *file) {
     struct stat info;
     int r = stat(file, &info);
@@ -244,6 +259,7 @@ void ltServerUpdateFile(const char *file) {
         fclose(f);
         LTCommandUpdateFile *cmd = new LTCommandUpdateFile(file, buf, size);
         server_command_queue.push_back(cmd);
+        fprintf(stderr, "size = %d\n", server_command_queue.size());
         delete[] buf;
     } else {
         ltLog("Unable to open %s for reading: %s\n", file, strerror(errno));
