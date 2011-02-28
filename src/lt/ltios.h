@@ -1,4 +1,4 @@
-#ifdef IOS
+#ifdef LTIOS
 #ifndef LTIOS_H
 #define LTIOS_H
 
