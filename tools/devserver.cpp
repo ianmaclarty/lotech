@@ -87,6 +87,7 @@ static void print_logs() {
         delete[] log;
         need_prompt = true;
     }
+    fflush(NULL);
 }
 
 int main() {

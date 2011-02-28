@@ -14,9 +14,6 @@ int main() {
             printf(".");
             fflush(NULL);
         }
-        if (t % 300 == 0) {
-            ltLog("Log test t = %d", t);
-        }
         t++;
     }
 }
