@@ -1,13 +1,17 @@
+#include <time.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include "lt.h"
 
 #define DELAY ((int)((1.0 / 60.0) * 1000000.0))
-
 #define MAX_CMD_LEN 1024
+
+static const char *sync_file_patterns[] = {"*.png", "*.lua", NULL};
 
 static bool need_prompt = true;
 static bool need_nl_before_logs = true;
+static time_t last_sync_time = 0;
 
 static char command[MAX_CMD_LEN];
 
@@ -32,7 +36,26 @@ static void prompt() {
 }
 
 static void cmd_sync() {
-    ltServerUpdateFile("test.png");
+    struct stat info;
+    char *matches = ltGlob(sync_file_patterns);
+    char *ptr = matches;
+    bool were_updates = false;
+    while (*ptr != '\0') {
+        if (stat(ptr, &info) == 0) {
+            if (info.st_mtime >= last_sync_time) {
+                ltServerUpdateFile(ptr);
+                were_updates = true;
+            }
+        } else {
+            fprintf(stderr, "Unable to stat %s: %s\n", ptr, strerror(errno));
+        }
+        ptr += strlen(ptr) + 1;
+    }
+    delete[] matches;
+    last_sync_time = time(NULL);
+    if (!were_updates) {
+        printf("No files changed since last sync\n");
+    }
 }
 
 static void execute_command() {
