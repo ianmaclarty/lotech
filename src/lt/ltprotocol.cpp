@@ -33,6 +33,10 @@ static LTCommand* decode_command(const char *buf, int size);
 
 //------------------ Client ------------------------------
 
+static LTClientConnection *client_connection = NULL;
+static std::list<LTCommand *> client_command_queue;
+static std::list<char *> client_logs;
+
 struct LTCommandLog : LTCommand {
     char *msg;
 
@@ -45,12 +49,11 @@ struct LTCommandLog : LTCommand {
     }
 
     virtual void doCommand() {
-        printf("Client says: %s\n", msg);
+        char *log = new char[strlen(msg) + 1];
+        strcpy(log, msg);
+        client_logs.push_back(log);
     }
 };
-
-static LTClientConnection *client_connection = NULL;
-static std::list<LTCommand *> client_command_queue;
 
 bool ltAmClient() {
     return client_connection != NULL;
@@ -77,7 +80,6 @@ void ltClientStep() {
     }
     // Receive and execute commands from the server.
     while (client_connection->isReady() && client_connection->recvMsg(&buf, &len)) {
-        fprintf(stderr, "Received command\n");
         LTCommand *cmd = decode_command(buf, len);
         delete buf;
         if (cmd != NULL) {
@@ -116,6 +118,16 @@ void ltClientLog(const char *msg) {
     client_command_queue.push_back(cmd);
 }
 
+char *ltPopClientLog() {
+    if (client_logs.size() > 0) {
+        char *log = client_logs.front();
+        client_logs.pop_front();
+        return log;
+    } else {
+        return NULL;
+    }
+}
+
 //------------------ Server ------------------------------
 
 static LTServerConnection *server_connection = NULL;
@@ -150,13 +162,13 @@ struct LTCommandUpdateFile : LTCommand {
         if (f != NULL) {
             size_t r = fwrite(data, 1, data_size, f);
             if (r < (size_t)data_size) {
-                ltLog("Unable to write to %s: %s\n", file_name, strerror(errno));
+                ltLog("Unable to write to %s: %s", file_name, strerror(errno));
             } else {
-                ltLog("Updated file %s\n", file_name);
+                ltLog("Updated file %s", file_name);
             }
             fclose(f);
         } else {
-            ltLog("Unable to open %s for writing: %s\n", file_name, strerror(errno));
+            ltLog("Unable to open %s for writing: %s", file_name, strerror(errno));
         }
     }
 };
@@ -242,7 +254,7 @@ void ltServerUpdateFile(const char *file) {
     struct stat info;
     int r = stat(file, &info);
     if (r != 0) {
-        ltLog("Cannot stat %s: %s\n", file, strerror(errno));
+        ltLog("Cannot stat %s: %s", file, strerror(errno));
         return;
     }
     int size = (int)info.st_size;
@@ -251,7 +263,7 @@ void ltServerUpdateFile(const char *file) {
         char *buf = new char[size];
         r = (int)fread(buf, 1, size, f);
         if (r < 0 || r != size) {
-            ltLog("Unable to read %s\n", file);
+            ltLog("Unable to read %s", file);
             fclose(f);
             delete[] buf;
             return;
@@ -259,10 +271,9 @@ void ltServerUpdateFile(const char *file) {
         fclose(f);
         LTCommandUpdateFile *cmd = new LTCommandUpdateFile(file, buf, size);
         server_command_queue.push_back(cmd);
-        fprintf(stderr, "size = %d\n", server_command_queue.size());
         delete[] buf;
     } else {
-        ltLog("Unable to open %s for reading: %s\n", file, strerror(errno));
+        ltLog("Unable to open %s for reading: %s", file, strerror(errno));
         return;
     }
 }

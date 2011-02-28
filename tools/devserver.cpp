@@ -6,6 +6,9 @@
 
 #define MAX_CMD_LEN 1024
 
+static bool need_prompt = true;
+static bool need_nl_before_logs = true;
+
 static char command[MAX_CMD_LEN];
 
 static void banner() {
@@ -14,8 +17,18 @@ static void banner() {
 }
 
 static void prompt() {
-    printf("[%s] ", command);
-    fflush(NULL);
+    static int steps_since_last_prompt = 10;
+    if (need_prompt) {
+        if (steps_since_last_prompt > 5) {
+            printf("[%s] ", command);
+            fflush(NULL);
+            need_prompt = false;
+            steps_since_last_prompt = 0;
+            need_nl_before_logs = true;
+        } else {
+            steps_since_last_prompt++;
+        }
+    }
 }
 
 static void cmd_sync() {
@@ -31,6 +44,25 @@ static void execute_command() {
         cmd_sync();
     } else {
         printf("Unrecognized command: %s\n", command);
+    }
+    need_prompt = true;
+}
+
+static void print_logs() {
+    char *log;
+    bool first = true;
+    while (true) {
+        log = ltPopClientLog();
+        if (log == NULL) {
+            break;
+        }
+        if (first && need_nl_before_logs) {
+            printf("\n");
+            first = false;
+        }
+        printf("%s\n", log);
+        delete[] log;
+        need_prompt = true;
     }
 }
 
@@ -53,11 +85,15 @@ int main() {
     printf("Connecting...");
     fflush(NULL);
     ltServerInit();
+    int t = 0;
     while (!ltServerIsReady()) {
         ltServerStep();
         usleep(DELAY);
-        printf(".");
-        fflush(NULL);
+        if (t % 30 == 0) {
+            printf(".");
+            fflush(NULL);
+        }
+        t++;
     }
     printf("\nConnection established.\n");
 
@@ -74,14 +110,16 @@ int main() {
             buf[r] = '\0';
             if (buf[r - 1] == '\n') {
                 buf[r - 1] = '\0';
+                need_nl_before_logs = false;
             }
             if (buf[0] != '\0') {
                 strcpy(command, buf);
             }
             execute_command();
-            prompt();
         }
         ltServerStep();
+        print_logs();
         usleep(DELAY);
+        prompt();
     }
 }

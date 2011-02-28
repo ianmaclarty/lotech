@@ -15,4 +15,7 @@ void ltServerUpdateFile(const char *file);
 void ltServerReset();
 void ltServerShutdown();
 
+// Returns NULL if no more logs.  Free the returned string with delete[].
+char *ltPopClientLog();
+
 #endif
