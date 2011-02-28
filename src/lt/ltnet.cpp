@@ -187,8 +187,10 @@ static int receive_msg(int sock, char **msg, int *n, char **errmsg) {
     }
     *msg = new char[len];
     *n = (int)len;
+    int bytes_left = *n;
+    char *ptr = *msg;
     while (true) {
-        r = recvfrom(sock, *msg, *n, MSG_WAITALL, NULL, NULL);
+        r = recvfrom(sock, ptr, bytes_left, MSG_WAITALL, NULL, NULL);
         if (r < 0) {
             if (errno == EAGAIN) {
                 continue;
@@ -197,14 +199,17 @@ static int receive_msg(int sock, char **msg, int *n, char **errmsg) {
                 delete[] *msg;
                 return -1;
             }
+        } else if (r == 0) {
+            copy_string(errmsg, "Message too short.");
+            delete[] *msg;
+            return -1;
         } else {
-            break;
+            bytes_left -= r;
+            ptr += r;
+            if (bytes_left <= 0) {
+                break;
+            }
         }
-    }
-    if (r < *n) {
-        copy_string(errmsg, "Message too short.");
-        delete[] *msg;
-        return -1;
     }
     return 1;
 }
