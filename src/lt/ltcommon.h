@@ -2,12 +2,12 @@
 #ifndef LTCOMMON_H
 #define LTCOMMON_H
 
-#ifdef LINUX
+#ifdef LTLINUX
     #define GL_GLEXT_PROTOTYPES
     #include <GL/gl.h>
     #include <GL/glext.h>
 #else
-    #ifdef IOS
+    #ifdef LTIOS
         #include <OpenGLES/ES1/gl.h>
         #include <OpenGLES/ES1/glext.h>
     #else

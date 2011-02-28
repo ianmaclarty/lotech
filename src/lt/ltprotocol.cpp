@@ -152,7 +152,7 @@ struct LTCommandUpdateFile : LTCommand {
 
     virtual void doCommand() {
         FILE *f;
-        #ifdef IOS
+        #ifdef LTIOS
             const char *path = ltIOSBundlePath(file_name, NULL);
             f = fopen(path, "w");
             delete[] path;

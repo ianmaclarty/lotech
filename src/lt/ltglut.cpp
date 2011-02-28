@@ -9,7 +9,7 @@ extern "C" {
 
 #include "ltcommon.h"
 
-#ifdef LINUX
+#ifdef LTLINUX
     #define GLX_GLXEXT_PROTOTYPES
     #include <GL/glut.h>
 #else

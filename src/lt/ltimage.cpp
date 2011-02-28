@@ -51,7 +51,7 @@ LTAtlas::LTAtlas(LTImagePacker *packer, const char *dump_file) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-    #ifdef IOS
+    #ifdef LTIOS
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, buf->width, buf->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, buf->bb_pixels);
     #else
         glTexImage2D(GL_TEXTURE_2D, 0, 4, buf->width, buf->height, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, buf->bb_pixels);
@@ -176,7 +176,7 @@ LTImageBuffer *ltReadImage(const char *path, const char *name) {
     png_set_sig_bytes(png_ptr, 8);
 
     // Read the data.
-    #ifdef IOS
+    #ifdef LTIOS
         png_transforms = PNG_TRANSFORM_STRIP_16 | PNG_TRANSFORM_PACKING |
             PNG_TRANSFORM_GRAY_TO_RGB;
         png_set_filler(png_ptr, 0xFF, PNG_FILLER_AFTER);

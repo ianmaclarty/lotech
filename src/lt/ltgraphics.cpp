@@ -43,7 +43,7 @@ void ltInitGraphics() {
 
 void ltSetViewPort(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2) {
     glMatrixMode(GL_PROJECTION);
-    #ifdef IOS
+    #ifdef LTIOS
     glOrthof(x1, x2, y1, y2, -1.0f, 1.0f);
     #else
     glOrtho(x1, x2, y1, y2, -1.0f, 1.0f);

@@ -222,7 +222,7 @@ static int check_nargs(lua_State *L, int exp_args) {
 }
 
 static int default_atlas_size() {
-    #ifdef IOS
+    #ifdef LTIOS
         if (ltIsIPad() || ltIsRetinaIPhone()) {
             return 2048;
         } else {
@@ -234,7 +234,7 @@ static int default_atlas_size() {
 }
 
 static const char *resource_path(const char *resource, const char *suffix) {
-    #ifdef IOS
+    #ifdef LTIOS
         return ltIOSBundlePath(resource, suffix);
     #else
         int len = strlen(resource) + strlen(suffix) + 3;
@@ -245,7 +245,7 @@ static const char *resource_path(const char *resource, const char *suffix) {
 }
 
 static const char *image_path(const char *name) {
-    #ifdef IOS
+    #ifdef LTIOS
         if (ltIsIPad() || ltIsRetinaIPhone()) {
             const char *path = ltIOSBundlePath(name, ".png2x");
             if (ltFileExists(path)) {
