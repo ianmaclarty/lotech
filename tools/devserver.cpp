@@ -56,6 +56,7 @@ static void cmd_sync() {
     if (!were_updates) {
         printf("No files changed since last sync\n");
     }
+    ltServerReset();
 }
 
 static void execute_command() {
