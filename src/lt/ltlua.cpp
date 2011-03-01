@@ -239,16 +239,20 @@ static const char *resource_path(const char *resource, const char *suffix) {
 
 static const char *image_path(const char *name) {
     #ifdef LTIOS
+        const char *path;
         if (ltIsIPad() || ltIsRetinaIPhone()) {
-            const char *path = ltIOSBundlePath(name, ".png2x");
+            path = ltIOSBundlePath(name, ".png2x");
             if (ltFileExists(path)) {
                 return path;
-            } else {
-                delete[] path;
-                return ltIOSBundlePath(name, ".png1x");
             }
+            delete[] path;
+        }
+        path = ltIOSBundlePath(name, ".png1x");
+        if (ltFileExists(path)) {
+            return path;
         } else {
-            return ltIOSBundlePath(name, ".png1x");
+            delete[] path;
+            return ltIOSBundlePath(name, ".png");
         }
     #else
         return resource_path(name, ".png");
