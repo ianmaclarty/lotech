@@ -28,8 +28,8 @@ static ltVoidCallback           g_render = NULL;
 static ltVoidCallback           g_advance = NULL;
 static ltKeyCallback            g_key_down = NULL;
 static ltKeyCallback            g_key_up = NULL;
-static ltPointerButtonCallback    g_mouse_down = NULL;
-static ltPointerButtonCallback    g_mouse_up = NULL;
+static ltPointerButtonCallback  g_mouse_down = NULL;
+static ltPointerButtonCallback  g_mouse_up = NULL;
 static ltPairCallback           g_mouse_move = NULL;
 static ltPairCallback           g_resize_window = NULL;
 
@@ -45,6 +45,9 @@ static void glut_setup(int unused) {
     int w = glutGet(GLUT_WINDOW_WIDTH);
     int h = glutGet(GLUT_WINDOW_HEIGHT);
     ltSetScreenSize(w, h);
+    ltInitGraphics();
+    glFlush();
+    glutSwapBuffers();
     if (g_setup != NULL) {
         g_setup();
     }

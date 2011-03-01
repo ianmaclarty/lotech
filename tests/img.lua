@@ -543,7 +543,7 @@ function lt.KeyDown(key)
     layer:Insert(curr_img, 1)
 end
 
-local main_layer = lt.Scale(layer, 30)
+local main_layer = layer
 layer:Insert(lt.Tint(lt.Rect(-10, -10, 10, 10), 0.5, 0.5, 0.5), 0);
 
 function lt.Advance()
