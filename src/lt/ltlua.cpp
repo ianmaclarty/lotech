@@ -22,14 +22,6 @@ extern "C" {
 static lua_State *g_L = NULL;
 static bool g_suspended = false;
 
-static LTfloat g_screen_w = 1024.0f;
-static LTfloat g_screen_h = 768.0f;
-
-static LTfloat g_viewport_x1 = -15.0f;
-static LTfloat g_viewport_y1 = -10.0f;
-static LTfloat g_viewport_x2 = 15.0f;
-static LTfloat g_viewport_y2 = 10.0f;
-
 static char *g_main_file = NULL;
 
 /************************* General **************************/
@@ -267,11 +259,11 @@ static const char *image_path(const char *name) {
 
 static int lt_SetViewPort(lua_State *L) {
     check_nargs(L, 4);
-    g_viewport_x1 = (LTfloat)luaL_checknumber(L, 1);
-    g_viewport_y1 = (LTfloat)luaL_checknumber(L, 2);
-    g_viewport_x2 = (LTfloat)luaL_checknumber(L, 3);
-    g_viewport_y2 = (LTfloat)luaL_checknumber(L, 4);
-    ltSetViewPort(g_viewport_x1, g_viewport_y1, g_viewport_x2, g_viewport_y2);
+    LTfloat viewport_x1 = (LTfloat)luaL_checknumber(L, 1);
+    LTfloat viewport_y1 = (LTfloat)luaL_checknumber(L, 2);
+    LTfloat viewport_x2 = (LTfloat)luaL_checknumber(L, 3);
+    LTfloat viewport_y2 = (LTfloat)luaL_checknumber(L, 4);
+    ltSetViewPort(viewport_x1, viewport_y1, viewport_x2, viewport_y2);
     return 0;
 }
 
@@ -1198,6 +1190,7 @@ void ltLuaAdvance() {
 
 void ltLuaRender() {
     if (g_L != NULL && !g_suspended) {
+        ltInitGraphics();
         call_lt_func("Render");
     }
 }
@@ -1279,19 +1272,11 @@ void ltLuaKeyUp(LTKey key) {
     }
 }
 
-static LTfloat viewport_x(LTfloat screen_x) {
-    return g_viewport_x1 + (screen_x / g_screen_w) * (g_viewport_x2 - g_viewport_x1);
-}
-
-static LTfloat viewport_y(LTfloat screen_y) {
-    return g_viewport_y2 - (screen_y / g_screen_h) * (g_viewport_y2 - g_viewport_y1);
-}
-
 void ltLuaPointerDown(int input_id, LTfloat x, LTfloat y) {
     if (g_L != NULL && !g_suspended && push_lt_func("PointerDown")) {
         lua_pushinteger(g_L, input_id);
-        lua_pushnumber(g_L, viewport_x(x));
-        lua_pushnumber(g_L, viewport_y(y));
+        lua_pushnumber(g_L, ltGetViewPortX(x));
+        lua_pushnumber(g_L, ltGetViewPortY(y));
         check_status(lua_pcall(g_L, 3, 0, 0), true);
     }
 }
@@ -1299,23 +1284,22 @@ void ltLuaPointerDown(int input_id, LTfloat x, LTfloat y) {
 void ltLuaPointerUp(int input_id, LTfloat x, LTfloat y) {
     if (g_L != NULL && !g_suspended && push_lt_func("PointerUp")) {
         lua_pushinteger(g_L, input_id);
-        lua_pushnumber(g_L, viewport_x(x));
-        lua_pushnumber(g_L, viewport_y(y));
+        lua_pushnumber(g_L, ltGetViewPortX(x));
+        lua_pushnumber(g_L, ltGetViewPortY(y));
         check_status(lua_pcall(g_L, 3, 0, 0), true);
     }
 }
 
 void ltLuaPointerMove(LTfloat x, LTfloat y) {
     if (g_L != NULL && !g_suspended && push_lt_func("PointerMove")) {
-        lua_pushnumber(g_L, viewport_x(x));
-        lua_pushnumber(g_L, viewport_y(y));
+        lua_pushnumber(g_L, ltGetViewPortX(x));
+        lua_pushnumber(g_L, ltGetViewPortY(y));
         check_status(lua_pcall(g_L, 2, 0, 0), true);
     }
 }
 
 void ltLuaResizeWindow(LTfloat w, LTfloat h) {
-    g_screen_w = w;
-    g_screen_h = h;
+    ltResizeScreen((int)w, (int)h);
 }
 
 /************************************************************/

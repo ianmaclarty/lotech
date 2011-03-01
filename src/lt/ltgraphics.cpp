@@ -8,6 +8,19 @@
 #include <stdlib.h>
 #include <string.h>
 
+static LTfloat screen_width = 100.0f;
+static LTfloat screen_height = 100.0f;
+
+static LTfloat viewport_left = -1.0f;
+static LTfloat viewport_bottom = -1.0f;
+static LTfloat viewport_right = 1.0f;
+static LTfloat viewport_top = 1.0f;
+static LTfloat viewport_width = 2.0f;
+static LTfloat viewport_height = 2.0f;
+
+static LTfloat pixel_width = viewport_width / screen_width;
+static LTfloat pixel_height = viewport_height / screen_height;
+
 struct LTColor {
     LTfloat r;
     LTfloat g;
@@ -23,8 +36,8 @@ struct LTColor {
 };
 
 #define LT_TINT_STACK_SIZE 64
-static LTColor g_tint_stack[LT_TINT_STACK_SIZE];
-static int g_tint_stack_top = 0;
+static LTColor tint_stack[LT_TINT_STACK_SIZE];
+static int tint_stack_top = 0;
 
 void ltInitGraphics() {
     glDisable(GL_DITHER);
@@ -32,34 +45,71 @@ void ltInitGraphics() {
     glDisable(GL_BLEND);
     glDisable(GL_STENCIL_TEST);
     glDisable(GL_FOG);
-    glDisable(GL_TEXTURE_2D);
+    ltDisableTextures();
     glDisable(GL_DEPTH_TEST);
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+    tint_stack_top = 0;
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
+    glViewport(0, 0, (int)screen_width, (int)screen_height);
+    #ifdef LTIOS
+    glOrthof(viewport_left, viewport_right, viewport_bottom, viewport_top, -1.0f, 1.0f);
+    #else
+    glOrtho(viewport_left, viewport_right, viewport_bottom, viewport_top, -1.0f, 1.0f);
+    #endif
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 }
 
 void ltSetViewPort(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2) {
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    #ifdef LTIOS
-    glOrthof(x1, x2, y1, y2, -1.0f, 1.0f);
-    #else
-    glOrtho(x1, x2, y1, y2, -1.0f, 1.0f);
-    #endif
-    glMatrixMode(GL_MODELVIEW);
+    viewport_left = x1;
+    viewport_right = x2;
+    viewport_bottom = y1;
+    viewport_top = y2;
+    viewport_width = viewport_right - viewport_left;
+    viewport_height = viewport_top - viewport_bottom;
+    pixel_width = viewport_width / screen_width;
+    pixel_height = viewport_height / screen_height;
+}
+
+void ltSetScreenSize(int width, int height) {
+    screen_width = (LTfloat)width;
+    screen_height = (LTfloat)height;
+    pixel_width = viewport_width / screen_width;
+    pixel_height = viewport_height / screen_height;
+}
+
+void ltResizeScreen(int width, int height) {
+    screen_width = (LTfloat)width;
+    screen_height = (LTfloat)height;
+}
+
+LTfloat ltGetPixelWidth() {
+    return pixel_width;
+}
+
+LTfloat ltGetPixelHeight() {
+    return pixel_height;
+}
+
+LTfloat ltGetViewPortX(LTfloat screen_x) {
+    return viewport_left + (screen_x / screen_width) * viewport_width;
+}
+
+LTfloat ltGetViewPortY(LTfloat screen_y) {
+    return viewport_top - (screen_y / screen_height) * (viewport_height);
 }
 
 void ltPushTint(LTfloat r, LTfloat g, LTfloat b, LTfloat a) {
-    if (g_tint_stack_top < (LT_TINT_STACK_SIZE - 1)) {
-        g_tint_stack_top++;
-        LTColor *top = &g_tint_stack[g_tint_stack_top];
+    if (tint_stack_top < (LT_TINT_STACK_SIZE - 1)) {
+        tint_stack_top++;
+        LTColor *top = &tint_stack[tint_stack_top];
         *top = *(top - 1);
         top->r *= r;
         top->g *= g;
@@ -70,9 +120,9 @@ void ltPushTint(LTfloat r, LTfloat g, LTfloat b, LTfloat a) {
 }
 
 void ltPopTint() {
-    if (g_tint_stack_top > 0) {
-        g_tint_stack_top--;
-        LTColor *top = &g_tint_stack[g_tint_stack_top];
+    if (tint_stack_top > 0) {
+        tint_stack_top--;
+        LTColor *top = &tint_stack[tint_stack_top];
         glColor4f(top->r, top->g, top->b, top->a);
     }
 }

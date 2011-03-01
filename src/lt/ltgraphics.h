@@ -10,9 +10,22 @@
 #include "ltcommon.h"
 #include "ltevent.h"
 
+// Should be called before rendering each frame.
 void ltInitGraphics();
 
+// The following two functions should be called only once.
 void ltSetViewPort(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2);
+void ltSetScreenSize(int width, int height);
+
+// This should be called whenever the screen is resized.
+void ltResizeScreen(int width, int height);
+
+LTfloat ltGetPixelWidth();
+LTfloat ltGetPixelHeight();
+
+// Convert screen coords to world coords.
+LTfloat ltGetViewPortX(LTfloat screen_x);
+LTfloat ltGetViewPortY(LTfloat screen_y);
 
 void ltPushTint(LTfloat r, LTfloat g, LTfloat b, LTfloat a);
 void ltPopTint();

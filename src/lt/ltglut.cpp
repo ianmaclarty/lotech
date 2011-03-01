@@ -42,12 +42,9 @@ static void glut_advance(int unused) {
 }
 
 static void glut_setup(int unused) {
-    ltInitGraphics();
-    glMatrixMode(GL_PROJECTION);
     int w = glutGet(GLUT_WINDOW_WIDTH);
     int h = glutGet(GLUT_WINDOW_HEIGHT);
-    glViewport(0, 0, w, h);
-    glMatrixMode(GL_MODELVIEW);
+    ltSetScreenSize(w, h);
     if (g_setup != NULL) {
         g_setup();
     }
@@ -58,9 +55,6 @@ static void glut_setup(int unused) {
 }
 
 static void glut_render() {
-    glMatrixMode(GL_MODELVIEW);
-    glClear(GL_COLOR_BUFFER_BIT);
-    glLoadIdentity();
     if (g_render != NULL) {
         g_render();
     }
@@ -99,9 +93,6 @@ static void glut_mouse_button(int button, int state, int x, int y) {
 }
 
 static void glut_resize_window(int w, int h) {
-    glMatrixMode(GL_PROJECTION);
-    glViewport(0, 0, w, h);
-    glMatrixMode(GL_MODELVIEW);
     if (g_resize_window != NULL) {
         g_resize_window((LTfloat)w, (LTfloat)h);
     }
@@ -281,7 +272,7 @@ void ltHarnessInit(bool fullscreen, const char *title, int fps,
     g_mouse_move = mouseMove;
     g_resize_window = resizeWindow;
 
-    glutInitWindowSize(900, 600);
+    glutInitWindowSize(1024, 768);
     glutInit(&argc, &argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
     if (g_fullscreen) {

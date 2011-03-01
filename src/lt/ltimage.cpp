@@ -587,6 +587,9 @@ LTImageBuffer *ltCreateAtlasImage(const char *name, LTImagePacker *packer) {
 //-----------------------------------------------------------------
 
 LTImage::LTImage(LTAtlas *atls, int atlas_w, int atlas_h, LTImagePacker *packer) : LTSceneNode(LT_TYPE_IMAGE) {
+    LTfloat pix_w = ltGetPixelWidth();
+    LTfloat pix_h = ltGetPixelHeight();
+
     if (packer->occupant == NULL) {
         ltLog("Packer occupant is NULL");
         ltAbort();
@@ -601,13 +604,15 @@ LTImage::LTImage(LTAtlas *atls, int atlas_w, int atlas_h, LTImagePacker *packer)
 
     tex_left = (LTfloat)packer->left / fatlas_w;
     tex_bottom = (LTfloat)packer->bottom / fatlas_h;
+    tex_width = (LTfloat)packer->occupant->bb_width() / fatlas_w;
+    tex_height = (LTfloat)packer->occupant->bb_height() / fatlas_h;
 
-    bb_left = (LTfloat)packer->occupant->bb_left / fatlas_w;
-    bb_bottom = (LTfloat)packer->occupant->bb_bottom / fatlas_h;
-    bb_width = (LTfloat)packer->occupant->bb_width() / fatlas_w;
-    bb_height = (LTfloat)packer->occupant->bb_height() / fatlas_h;
-    orig_width = (LTfloat)packer->occupant->width / fatlas_w;
-    orig_height = (LTfloat)packer->occupant->height / fatlas_h;
+    bb_left = (LTfloat)packer->occupant->bb_left * pix_w;
+    bb_bottom = (LTfloat)packer->occupant->bb_bottom * pix_h;
+    bb_width = (LTfloat)packer->occupant->bb_width() * pix_w;
+    bb_height = (LTfloat)packer->occupant->bb_height() * pix_h;
+    orig_width = (LTfloat)packer->occupant->width * pix_w;
+    orig_height = (LTfloat)packer->occupant->height * pix_h;
     pixel_width = packer->occupant->width;
     pixel_height = packer->occupant->height;
 
@@ -617,15 +622,15 @@ LTImage::LTImage(LTAtlas *atls, int atlas_w, int atlas_h, LTImagePacker *packer)
 
     GLfloat tex_coords[8];
     if (rotated) {
-        tex_coords[0] = tex_left + bb_height;   tex_coords[1] = tex_bottom + bb_width;
-        tex_coords[2] = tex_left + bb_height;   tex_coords[3] = tex_bottom;
-        tex_coords[4] = tex_left;               tex_coords[5] = tex_bottom;
-        tex_coords[6] = tex_left;               tex_coords[7] = tex_bottom + bb_width;
+        tex_coords[0] = tex_left + tex_height;   tex_coords[1] = tex_bottom + tex_width;
+        tex_coords[2] = tex_left + tex_height;   tex_coords[3] = tex_bottom;
+        tex_coords[4] = tex_left;                tex_coords[5] = tex_bottom;
+        tex_coords[6] = tex_left;                tex_coords[7] = tex_bottom + tex_width;
     } else {
-        tex_coords[0] = tex_left;               tex_coords[1] = tex_bottom + bb_height;
-        tex_coords[2] = tex_left + bb_width;    tex_coords[3] = tex_bottom + bb_height;
-        tex_coords[4] = tex_left + bb_width;    tex_coords[5] = tex_bottom;
-        tex_coords[6] = tex_left;               tex_coords[7] = tex_bottom;
+        tex_coords[0] = tex_left;                tex_coords[1] = tex_bottom + tex_height;
+        tex_coords[2] = tex_left + tex_width;    tex_coords[3] = tex_bottom + tex_height;
+        tex_coords[4] = tex_left + tex_width;    tex_coords[5] = tex_bottom;
+        tex_coords[6] = tex_left;                tex_coords[7] = tex_bottom;
     }
     glGenBuffers(1, &texbuf);
     glBindBuffer(GL_ARRAY_BUFFER, texbuf);

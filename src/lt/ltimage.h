@@ -117,14 +117,16 @@ struct LTImage : LTSceneNode {
     // Texture coords of image bounding box in atlas.
     LTfloat   tex_left;
     LTfloat   tex_bottom;
+    LTfloat   tex_width;
+    LTfloat   tex_height;
 
-    // Bounding box coords, as ratio of atlas dimensions.
+    // Bounding box dimensions in world coordinates.
     LTfloat   bb_left;
     LTfloat   bb_bottom;
     LTfloat   bb_width;
     LTfloat   bb_height;
 
-    // Original image size, as ratio of atlas dimensions.
+    // Original image size, in world coordinates.
     LTfloat   orig_width;
     LTfloat   orig_height;
 
