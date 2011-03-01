@@ -11,6 +11,7 @@ void ltIOSInit() {
     #ifdef LTDEVMODE
     ltClientInit();
     #endif
+    ltSetScreenSize(ltIOSPortaitPixelWidth(), ltIOSPortaitPixelHeight());
     const char *path = ltIOSBundlePath("main", ".lua");
     ltLuaSetup(path);
     delete[] path;
