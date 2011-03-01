@@ -20,6 +20,7 @@ extern "C" {
 #define LT_USERDATA_MT "ltud"
 
 static lua_State *g_L = NULL;
+static bool g_suspended = false;
 
 static LTfloat g_screen_w = 1024.0f;
 static LTfloat g_screen_h = 768.0f;
@@ -34,15 +35,15 @@ static char *g_main_file = NULL;
 /************************* General **************************/
 
 // Check lua_pcall return status.
-static void check_status(int status, bool abort) {
+static void check_status(int status, bool suspend_if_error) {
     if (status) {
         const char *msg = lua_tostring(g_L, -1);
         lua_pop(g_L, 1);
         if (msg == NULL) msg = "Unknown error (error object is not a string).";
-        fprintf(stderr, "%s\n", msg);
-        if (abort) {
-            // XXX should be: ltHarnessQuit();
-            exit(1);
+        ltLog(msg);
+        if (suspend_if_error) {
+            ltLog("Execution suspended");
+            g_suspended = true;
         }
     }
 }
@@ -663,7 +664,10 @@ static int lt_LoadImages(lua_State *L) {
             const char *path = image_path(name); 
             LTImageBuffer *buf = ltReadImage(path, name);
             delete[] path;
-            pack_image(L, packer, buf);
+            if (buf != NULL) {
+                // If buf is NULL ltReadImage would have already logged an error.
+                pack_image(L, packer, buf);
+            }
         } else {
             // A table entry means we should load the image as a font.
             lua_getfield(L, -1, "font");
@@ -682,13 +686,16 @@ static int lt_LoadImages(lua_State *L) {
             const char *path = image_path(name); 
             LTImageBuffer *buf = ltReadImage(path, name);
             delete[] path;
-            std::list<LTImageBuffer *> *glyph_list = ltImageBufferToGlyphs(buf, glyphs);
-            delete buf;
-            std::list<LTImageBuffer *>::iterator it;
-            for (it = glyph_list->begin(); it != glyph_list->end(); it++) {
-                pack_image(L, packer, *it);
+            if (buf != NULL) {
+                // If buf is NULL ltReadImage would already have logged an error.
+                std::list<LTImageBuffer *> *glyph_list = ltImageBufferToGlyphs(buf, glyphs);
+                delete buf;
+                std::list<LTImageBuffer *>::iterator it;
+                for (it = glyph_list->begin(); it != glyph_list->end(); it++) {
+                    pack_image(L, packer, *it);
+                }
+                delete glyph_list;
             }
-            delete glyph_list;
         }
 
         i++;
@@ -1144,6 +1151,7 @@ static void call_lt_func(const char *func) {
 }
 
 void ltLuaSetup(const char *file) {
+    g_suspended = false;
     if (g_main_file != NULL) {
         delete[] g_main_file;
     }
@@ -1151,8 +1159,8 @@ void ltLuaSetup(const char *file) {
     strcpy(g_main_file, file);
     g_L = luaL_newstate();
     if (g_L == NULL) {
-        fprintf(stderr, "Cannot create lua state: not enough memory.\n");
-        exit(1);
+        ltLog("Cannot create lua state: not enough memory.");
+        ltAbort();
     }
     lua_gc(g_L, LUA_GCSTOP, 0);  /* stop collector during library initialization */
     luaL_openlibs(g_L);
@@ -1162,7 +1170,9 @@ void ltLuaSetup(const char *file) {
     lua_gc(g_L, LUA_GCRESTART, 0);
     if (ltFileExists(g_main_file)) {
         check_status(luaL_loadfile(g_L, g_main_file), true);
-        check_status(lua_pcall(g_L, 0, 0, 0), true);
+        if (!g_suspended) {
+            check_status(lua_pcall(g_L, 0, 0, 0), true);
+        }
     }
 }
 
@@ -1181,13 +1191,13 @@ void ltLuaReset() {
 }
 
 void ltLuaAdvance() {
-    if (g_L != NULL) {
+    if (g_L != NULL && !g_suspended) {
         call_lt_func("Advance");
     }
 }
 
 void ltLuaRender() {
-    if (g_L != NULL) {
+    if (g_L != NULL && !g_suspended) {
         call_lt_func("Render");
     }
 }
@@ -1254,7 +1264,7 @@ static const char *lt_key_str(LTKey key) {
 }
 
 void ltLuaKeyDown(LTKey key) {
-    if (g_L != NULL && push_lt_func("KeyDown")) {
+    if (g_L != NULL && !g_suspended && push_lt_func("KeyDown")) {
         const char *str = lt_key_str(key);
         lua_pushstring(g_L, str);
         check_status(lua_pcall(g_L, 1, 0, 0), true);
@@ -1262,7 +1272,7 @@ void ltLuaKeyDown(LTKey key) {
 }
 
 void ltLuaKeyUp(LTKey key) {
-    if (g_L != NULL && push_lt_func("KeyUp")) {
+    if (g_L != NULL && !g_suspended && push_lt_func("KeyUp")) {
         const char *str = lt_key_str(key);
         lua_pushstring(g_L, str);
         check_status(lua_pcall(g_L, 1, 0, 0), true);
@@ -1278,7 +1288,7 @@ static LTfloat viewport_y(LTfloat screen_y) {
 }
 
 void ltLuaPointerDown(int input_id, LTfloat x, LTfloat y) {
-    if (g_L != NULL && push_lt_func("PointerDown")) {
+    if (g_L != NULL && !g_suspended && push_lt_func("PointerDown")) {
         lua_pushinteger(g_L, input_id);
         lua_pushnumber(g_L, viewport_x(x));
         lua_pushnumber(g_L, viewport_y(y));
@@ -1287,7 +1297,7 @@ void ltLuaPointerDown(int input_id, LTfloat x, LTfloat y) {
 }
 
 void ltLuaPointerUp(int input_id, LTfloat x, LTfloat y) {
-    if (g_L != NULL && push_lt_func("PointerUp")) {
+    if (g_L != NULL && !g_suspended && push_lt_func("PointerUp")) {
         lua_pushinteger(g_L, input_id);
         lua_pushnumber(g_L, viewport_x(x));
         lua_pushnumber(g_L, viewport_y(y));
@@ -1296,7 +1306,7 @@ void ltLuaPointerUp(int input_id, LTfloat x, LTfloat y) {
 }
 
 void ltLuaPointerMove(LTfloat x, LTfloat y) {
-    if (g_L != NULL && push_lt_func("PointerMove")) {
+    if (g_L != NULL && !g_suspended && push_lt_func("PointerMove")) {
         lua_pushnumber(g_L, viewport_x(x));
         lua_pushnumber(g_L, viewport_y(y));
         check_status(lua_pcall(g_L, 2, 0, 0), true);

@@ -2,6 +2,7 @@
 #include "ltimage.h"
 
 #include <assert.h>
+#include <errno.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -122,9 +123,11 @@ static void compute_bbox(const char *path, LTpixel **rows, int w, int h,
         }
     }
 
-    if (*bb_left > *bb_right || *bb_top > *bb_bottom) {
-        fprintf(stderr, "Error: %s has no non-transparent pixels.\n", path);
-        exit(1);
+    if (*bb_left > *bb_right) {
+        *bb_right = *bb_left;
+    }
+    if (*bb_top > *bb_bottom) {
+        *bb_top = *bb_bottom;
     }
 }
 
@@ -152,20 +155,22 @@ LTImageBuffer *ltReadImage(const char *path, const char *name) {
     png_byte **rows;
 
     in = fopen(path, "rb");
-    if (!in) {
-        fprintf(stderr, "Error: Unable to open %s for reading.\n", path);
-        exit(1);
+    if (in == NULL) {
+        ltLog("Error: Unable to open %s for reading: %s", path, strerror(errno));
+        return NULL;
     }
 
     // Check for 8 byte signature.
     int n = fread(sig, 1, 8, in);
     if (n != 8) {
         fclose(in);
-        ltAbort("Unable to read first 8 bytes of %s.", path);
+        ltLog("Unable to read first 8 bytes of %s", path);
+        return NULL;
     }
     if (!png_check_sig(sig, 8)) {
         fclose(in);
-        ltAbort("%s has an invalid signature.", path);
+        ltLog("%s has an invalid PNG signature", path);
+        return NULL;
     }
     
     png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
@@ -196,12 +201,14 @@ LTImageBuffer *ltReadImage(const char *path, const char *name) {
     } else if (color_type == PNG_COLOR_TYPE_RGB) {
         has_alpha = false;
     } else {
-        fprintf(stderr, "Error: %s is not RGBA or RGB.\n", path);
-        exit(1);
+        ltLog("Error: %s is not RGBA or RGB.\n", path);
+        png_destroy_read_struct(&png_ptr, &info_ptr, &end_ptr);
+        return NULL;
     }
     if (bit_depth != 8) {
-        fprintf(stderr, "Error: %s does not have bit depth 8.\n", path);
-        exit(1);
+        ltLog("Error: %s does not have bit depth 8.\n", path);
+        png_destroy_read_struct(&png_ptr, &info_ptr, &end_ptr);
+        return NULL;
     }
     rows = png_get_rows(png_ptr, info_ptr);
 
@@ -278,9 +285,9 @@ void ltWriteImage(const char *path, LTImageBuffer *img) {
 
     // Open the file.
     out = fopen(path, "wb");
-    if (!out) {
-        fprintf(stderr, "Error: Unable to open %s for writing.\n", path);
-        exit(1);
+    if (out == NULL) {
+        ltLog("Error: Unable to open %s for writing: %s.\n", path, strerror(errno));
+        return;
     }
 
     // Setup.
@@ -332,20 +339,24 @@ void ltPasteImage(LTImageBuffer *src, LTImageBuffer *dest, int x, int y, bool ro
     int dest_width = dest->bb_width();
     int dest_height = dest->bb_height();
     if (!rotate && (x + src_width > dest_width)) {
-        ltAbort("%s too wide to be pasted into %s at x = %d.", 
+        ltLog("%s too wide to be pasted into %s at x = %d", 
             src->name, dest->name, x);
+        return;
     }
     if (!rotate && (y + src_height > dest_height)) {
-        ltAbort("%s too high to be pasted into %s at y = %d.",
+        ltLog("%s too high to be pasted into %s at y = %d",
             src->name, dest->name, y);
+        return;
     }
     if (rotate && (x + src_height > dest_width)) {
-        ltAbort("%s too high to be pasted into %s at x = %d after rotation.",
+        ltLog("%s too high to be pasted into %s at x = %d after rotation",
             src->name, dest->name, x);
+        return;
     }
     if (rotate && (y + src_width > dest_height)) {
-        ltAbort("%s too wide to be pasted into %s at y = %d after rotation.",
+        ltLog("%s too wide to be pasted into %s at y = %d after rotation",
             src->name, dest->name, y);
+        return;
     }
 
     LTpixel *dest_ptr = dest->bb_pixels + y * dest_width + x;
@@ -577,7 +588,8 @@ LTImageBuffer *ltCreateAtlasImage(const char *name, LTImagePacker *packer) {
 
 LTImage::LTImage(LTAtlas *atls, int atlas_w, int atlas_h, LTImagePacker *packer) : LTSceneNode(LT_TYPE_IMAGE) {
     if (packer->occupant == NULL) {
-        ltAbort("Packer occupant is NULL.");
+        ltLog("Packer occupant is NULL");
+        ltAbort();
     }
 
     atlas = atls;
