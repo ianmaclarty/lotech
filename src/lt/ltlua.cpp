@@ -21,7 +21,6 @@ extern "C" {
 
 static lua_State *g_L = NULL;
 static bool g_suspended = false;
-
 static char *g_main_file = NULL;
 
 /************************* General **************************/
@@ -1055,9 +1054,14 @@ static int import(lua_State *L) {
     }
     const char *path;
     path = resource_path(module, ".lua");
-    check_status(luaL_loadfile(g_L, path), true);
-    check_status(lua_pcall(g_L, 0, 0, 0), true);
+    int r = luaL_loadfile(g_L, path);
     delete[] path;
+    if (r != 0) {
+        const char *msg = lua_tostring(g_L, -1);
+        lua_pop(L, 1);
+        return luaL_error(L, "%s", msg);
+    }
+    lua_call(g_L, 0, 0);
     return 0;
 }
 
@@ -1147,7 +1151,6 @@ static void call_lt_func(const char *func) {
 }
 
 void ltLuaSetup(const char *file) {
-    g_suspended = false;
     if (g_main_file != NULL) {
         delete[] g_main_file;
     }
@@ -1182,6 +1185,7 @@ void ltLuaTeardown() {
 void ltLuaReset() {
     if (g_main_file != NULL) {
         ltLuaTeardown();
+        g_suspended = false;
         ltLuaSetup(g_main_file);
     }
 }
