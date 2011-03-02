@@ -1,5 +1,31 @@
 #include "lt3d.h"
 #include "ltgraphics.h"
+#include "ltimage.h"
+
+LTPerspective::LTPerspective(LTfloat near, LTfloat origin, LTfloat far, LTSceneNode *child) : LTSceneNode(LT_TYPE_PERSPECTIVE) {
+    LTPerspective::near = near;
+    LTPerspective::origin = origin;
+    LTPerspective::far = far;
+    LTPerspective::child = child;
+}
+
+void LTPerspective::draw() {
+    ltPushPerspective(near, origin, far);
+    child->draw();
+    ltPopPerspective();
+}
+
+LTfloat* LTPerspective::field_ptr(const char *field_name) {
+    if (strcmp(field_name, "near") == 0) {
+        return &near;
+    } else if (strcmp(field_name, "origin") == 0) {
+        return &origin;
+    } else if (strcmp(field_name, "far") == 0) {
+        return &far;
+    } else {
+        return NULL;
+    }
+}
 
 LTCuboidNode::LTCuboidNode(LTfloat width, LTfloat height, LTfloat depth) : LTSceneNode(LT_TYPE_CUBOID) {
     GLfloat w2 = width * 0.5f;
@@ -60,20 +86,12 @@ LTCuboidNode::~LTCuboidNode() {
 }
 
 void LTCuboidNode::draw() {
+    ltDisableTextures();
     glBindBuffer(GL_ARRAY_BUFFER, vertbuf);
+    glVertexPointer(3, GL_FLOAT, 0, 0);
 
     ltPushTint(0.4f, 0.4f, 0.4f, 1.0f);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, backbuf);
-    glDrawElements(GL_TRIANGLE_FAN, 4, GL_UNSIGNED_BYTE, 0);
-    ltPopTint();
-
-    ltPushTint(0.5f, 0.5f, 0.5f, 1.0f);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, topbuf);
-    glDrawElements(GL_TRIANGLE_FAN, 4, GL_UNSIGNED_BYTE, 0);
-    ltPopTint();
-
-    ltPushTint(0.6f, 0.6f, 0.6f, 1.0f);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bottombuf);
     glDrawElements(GL_TRIANGLE_FAN, 4, GL_UNSIGNED_BYTE, 0);
     ltPopTint();
 
@@ -84,6 +102,16 @@ void LTCuboidNode::draw() {
 
     ltPushTint(0.8f, 0.8f, 0.8f, 1.0f);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, rightbuf);
+    glDrawElements(GL_TRIANGLE_FAN, 4, GL_UNSIGNED_BYTE, 0);
+    ltPopTint();
+
+    ltPushTint(0.5f, 0.5f, 0.5f, 1.0f);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, topbuf);
+    glDrawElements(GL_TRIANGLE_FAN, 4, GL_UNSIGNED_BYTE, 0);
+    ltPopTint();
+
+    ltPushTint(0.6f, 0.6f, 0.6f, 1.0f);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bottombuf);
     glDrawElements(GL_TRIANGLE_FAN, 4, GL_UNSIGNED_BYTE, 0);
     ltPopTint();
 

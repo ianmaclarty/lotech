@@ -3,6 +3,7 @@
 #define LT_H
 
 #include "ltcommon.h"
+#include "lt3d.h"
 #include "ltevent.h"
 #include "ltgraphics.h"
 #include "ltharness.h"

@@ -9,6 +9,7 @@ extern "C" {
 }
 
 #include "Box2D/Box2D.h"
+#include "lt3d.h"
 #include "ltgraphics.h"
 #include "ltharness.h"
 #include "ltimage.h"
@@ -403,6 +404,17 @@ static int lt_Scale(lua_State *L) {
     return 1;
 }
 
+static int lt_Perspective(lua_State *L) {
+    check_nargs(L, 4);
+    LTSceneNode *child = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
+    LTfloat near = (LTfloat)luaL_checknumber(L, 2);
+    LTfloat origin = (LTfloat)luaL_checknumber(L, 3);
+    LTfloat far = (LTfloat)luaL_checknumber(L, 4);
+    LTPerspective *node = new LTPerspective(near, origin, far, child);
+    push_wrap(L, node);
+    return 1;
+}
+
 static int lt_Tint(lua_State *L) {
     int num_args = check_nargs(L, 4);
     LTSceneNode *target = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
@@ -450,6 +462,16 @@ static int lt_Rect(lua_State *L) {
     LTfloat x2 = (LTfloat)luaL_checknumber(L, 3);
     LTfloat y2 = (LTfloat)luaL_checknumber(L, 4);
     LTRectNode *node = new LTRectNode(x1, y1, x2, y2);
+    push_wrap(L, node);
+    return 1;
+}
+
+static int lt_Cuboid(lua_State *L) {
+    check_nargs(L, 3);
+    LTfloat w = (LTfloat)luaL_checknumber(L, 1);
+    LTfloat h = (LTfloat)luaL_checknumber(L, 2);
+    LTfloat d = (LTfloat)luaL_checknumber(L, 3);
+    LTCuboidNode *node = new LTCuboidNode(w, h, d);
     push_wrap(L, node);
     return 1;
 }
@@ -1089,8 +1111,10 @@ static const luaL_Reg ltlib[] = {
     {"Line",                    lt_Line},
     {"Triangle",                lt_Triangle},
     {"Rect",                    lt_Rect},
+    {"Cuboid",                  lt_Cuboid},
     {"Tint",                    lt_Tint},
     {"Scale",                   lt_Scale},
+    {"Perspective",             lt_Perspective},
     {"Translate",               lt_Translate},
     {"Rotate",                  lt_Rotate},
 

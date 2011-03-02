@@ -1,7 +1,7 @@
 import "lt"
 
 local layer = lt.Layer()
-local curr_img;
+local curr_img
 
 lt.SetViewPort(-10, -10, 10, 10)
 
@@ -544,7 +544,7 @@ function lt.KeyDown(key)
 end
 
 local main_layer = layer
-layer:Insert(lt.Tint(lt.Rect(-10, -10, 10, 10), 0.5, 0.5, 0.5), 0);
+layer:Insert(lt.Tint(lt.Rect(-10, -10, 10, 10), 0.5, 0.5, 0.5), 0)
 
 function lt.Advance()
 end

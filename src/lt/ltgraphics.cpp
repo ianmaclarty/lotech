@@ -17,8 +17,6 @@ static LTfloat viewport_right = 1.0f;
 static LTfloat viewport_top = 1.0f;
 static LTfloat viewport_width = 2.0f;
 static LTfloat viewport_height = 2.0f;
-static LTfloat viewport_near = 1.0f;
-static LTfloat viewport_far = 2.0f;
 
 static LTfloat pixel_width = viewport_width / screen_width;
 static LTfloat pixel_height = viewport_height / screen_height;
@@ -54,6 +52,7 @@ void ltInitGraphics() {
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
     tint_stack_top = 0;
     glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_INDEX_ARRAY);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -61,13 +60,12 @@ void ltInitGraphics() {
     glLoadIdentity();
     glViewport(0, 0, (int)screen_width, (int)screen_height);
     #ifdef LTIOS
-    glFrustumf(viewport_left, viewport_right, viewport_bottom, viewport_top, viewport_near, viewport_far);
+    glOrthof(viewport_left, viewport_right, viewport_bottom, viewport_top, -1.0f, 1.0f);
     #else
-    glFrustum(viewport_left, viewport_right, viewport_bottom, viewport_top, viewport_near, viewport_far);
+    glOrtho(viewport_left, viewport_right, viewport_bottom, viewport_top, -1.0f, 1.0f);
     #endif
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslatef(0.0f, 0.0f, -viewport_near);
 }
 
 void ltSetViewPort(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2) {
@@ -107,6 +105,30 @@ LTfloat ltGetViewPortX(LTfloat screen_x) {
 
 LTfloat ltGetViewPortY(LTfloat screen_y) {
     return viewport_top - (screen_y / screen_height) * (viewport_height);
+}
+
+void ltPushPerspective(LTfloat near, LTfloat origin, LTfloat far) {
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    LTfloat r = (origin - near) / origin; 
+    LTfloat dx = r * viewport_width * 0.5;
+    LTfloat dy = r * viewport_height * 0.5;
+    #ifdef LTIOS
+        glFrustumf(viewport_left + dx, viewport_right - dx, viewport_bottom + dy, viewport_top - dy, near, far);
+    #else
+        glFrustum(viewport_left + dx, viewport_right - dx, viewport_bottom + dy, viewport_top - dy, near, far);
+    #endif
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glTranslatef(0.0f, 0.0f, -origin);
+}
+
+void ltPopPerspective() {
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
 }
 
 void ltPushTint(LTfloat r, LTfloat g, LTfloat b, LTfloat a) {

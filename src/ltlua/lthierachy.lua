@@ -60,7 +60,7 @@ lt.classes = {
         super = "SceneNode",
         methods = {}
     },
-    Projection3D = {
+    Perspective = {
         super = "SceneNode",
         methods = {}
     },

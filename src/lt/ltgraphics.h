@@ -27,6 +27,9 @@ LTfloat ltGetPixelHeight();
 LTfloat ltGetViewPortX(LTfloat screen_x);
 LTfloat ltGetViewPortY(LTfloat screen_y);
 
+void ltPushPerspective(LTfloat near, LTfloat origin, LTfloat far);
+void ltPopPerspective();
+
 void ltPushTint(LTfloat r, LTfloat g, LTfloat b, LTfloat a);
 void ltPopTint();
 void ltTranslate(LTfloat x, LTfloat y, LTfloat z);
