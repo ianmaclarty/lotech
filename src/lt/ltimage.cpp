@@ -131,6 +131,17 @@ static void compute_bbox(const char *path, LTpixel **rows, int w, int h,
     }
 }
 
+static void lt_png_error_fn(png_structp png_ptr, png_const_charp error_msg) {
+    const char *file = (const char*)png_get_error_ptr(png_ptr);
+    ltLog("libpng error while reading %s: %s", file, error_msg);
+    longjmp(png_jmpbuf(png_ptr), 1);
+}
+
+static void lt_png_warning_fn(png_structp png_ptr, png_const_charp warning_msg) {
+    const char *file = (const char*)png_get_error_ptr(png_ptr);
+    ltLog("libpng warning while reading %s: %s", file, warning_msg);
+}
+
 LTImageBuffer *ltReadImage(const char *path, const char *name) {
     FILE *in;
     png_structp png_ptr; 
@@ -176,6 +187,14 @@ LTImageBuffer *ltReadImage(const char *path, const char *name) {
     png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
     info_ptr = png_create_info_struct(png_ptr);
     end_ptr = png_create_info_struct(png_ptr);
+
+    png_set_error_fn(png_ptr, (void*)path, lt_png_error_fn, lt_png_warning_fn);
+
+    if (setjmp(png_jmpbuf(png_ptr))) {
+        png_destroy_read_struct(&png_ptr, &info_ptr, &end_ptr);
+        fclose(in);
+        return NULL;
+    }
 
     png_init_io(png_ptr, in);
     png_set_sig_bytes(png_ptr, 8);
