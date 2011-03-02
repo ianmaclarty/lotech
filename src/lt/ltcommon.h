@@ -57,6 +57,7 @@ enum LTType {
     LT_TYPE_LINE,
     LT_TYPE_TRIANGLE,
     LT_TYPE_RECT,
+    LT_TYPE_CUBOID,
     LT_NUM_TYPES
 };
 

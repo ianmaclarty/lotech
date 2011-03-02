@@ -25,7 +25,7 @@ struct LTSceneNode : LTObject {
     virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
 
     // Returns true iff this node, or one of its descendents, contains the given point.
-    virtual bool containsPoint(LTfloat x, LTfloat y) { return false; } // XXX make abstract.
+    virtual bool containsPoint(LTfloat x, LTfloat y) { return false; }
 
     void addHandler(LTPointerEventHandler *handler);
 };

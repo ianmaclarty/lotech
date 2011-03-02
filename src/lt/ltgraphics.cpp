@@ -17,6 +17,8 @@ static LTfloat viewport_right = 1.0f;
 static LTfloat viewport_top = 1.0f;
 static LTfloat viewport_width = 2.0f;
 static LTfloat viewport_height = 2.0f;
+static LTfloat viewport_near = 1.0f;
+static LTfloat viewport_far = 2.0f;
 
 static LTfloat pixel_width = viewport_width / screen_width;
 static LTfloat pixel_height = viewport_height / screen_height;
@@ -59,12 +61,13 @@ void ltInitGraphics() {
     glLoadIdentity();
     glViewport(0, 0, (int)screen_width, (int)screen_height);
     #ifdef LTIOS
-    glOrthof(viewport_left, viewport_right, viewport_bottom, viewport_top, -1.0f, 1.0f);
+    glFrustumf(viewport_left, viewport_right, viewport_bottom, viewport_top, viewport_near, viewport_far);
     #else
-    glOrtho(viewport_left, viewport_right, viewport_bottom, viewport_top, -1.0f, 1.0f);
+    glFrustum(viewport_left, viewport_right, viewport_bottom, viewport_top, viewport_near, viewport_far);
     #endif
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
+    glTranslatef(0.0f, 0.0f, -viewport_near);
 }
 
 void ltSetViewPort(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2) {

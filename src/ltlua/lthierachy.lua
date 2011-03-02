@@ -55,6 +55,15 @@ lt.classes = {
         super = "SceneNode",
         methods = {}
     },
+    -- 3D
+    Cuboid = {
+        super = "SceneNode",
+        methods = {}
+    },
+    Projection3D = {
+        super = "SceneNode",
+        methods = {}
+    },
 
     -- Physics
     World = {

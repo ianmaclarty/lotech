@@ -26,6 +26,7 @@ const LTTypeInfo types[] = {
     {"Line",        LT_TYPE_SCENENODE},
     {"Triangle",    LT_TYPE_SCENENODE},
     {"Rect",        LT_TYPE_SCENENODE},
+    {"Cuboid",      LT_TYPE_SCENENODE},
 };
 
 ct_assert(sizeof(types) == (int)LT_NUM_TYPES * sizeof(LTTypeInfo));
