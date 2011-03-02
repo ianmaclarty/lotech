@@ -9,6 +9,7 @@
 #include <string.h>
 
 #include "png.h"
+#include "pngconf.h"
 
 #define BBCHUNK_KEY "LTBB"
 // w and h are the width and height of the original image.
