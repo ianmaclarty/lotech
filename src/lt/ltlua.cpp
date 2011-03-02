@@ -26,21 +26,24 @@ static char *g_main_file = NULL;
 /************************* General **************************/
 
 // Check lua_pcall return status.
-static void check_status(int status, bool suspend_if_error) {
+static void check_status(int status) {
     if (status) {
         const char *msg = lua_tostring(g_L, -1);
         lua_pop(g_L, 1);
         if (msg == NULL) msg = "Unknown error (error object is not a string).";
         ltLog(msg);
-        if (suspend_if_error) {
-            ltLog("Execution suspended");
-            g_suspended = true;
-        }
+        #ifdef LTDEVMODE
+        ltLog("Execution suspended");
+        g_suspended = true;
+        #else
+        // TODO Notify the user of the error and offer them the option of emailing a report.
+        ltAbort();
+        #endif
     }
 }
 
-// Returns a weak reference to value at the given index.  Does not
-// modify stack.
+// Returns a weak reference to the value at the given index.  Does not
+// modify the stack.
 static int make_weak_ref(lua_State *L, int index) {
     lua_getglobal(L, "lt");
     lua_getfield(L, -1, "wrefs");
@@ -1146,7 +1149,7 @@ static bool push_lt_func(const char *func) {
 
 static void call_lt_func(const char *func) {
     if (push_lt_func(func)) {
-        check_status(lua_pcall(g_L, 0, 0, 0), true);
+        check_status(lua_pcall(g_L, 0, 0, 0));
     }
 }
 
@@ -1168,9 +1171,9 @@ void ltLuaSetup(const char *file) {
     luaL_register(g_L, "lt", ltlib);
     lua_gc(g_L, LUA_GCRESTART, 0);
     if (ltFileExists(g_main_file)) {
-        check_status(luaL_loadfile(g_L, g_main_file), true);
+        check_status(luaL_loadfile(g_L, g_main_file));
         if (!g_suspended) {
-            check_status(lua_pcall(g_L, 0, 0, 0), true);
+            check_status(lua_pcall(g_L, 0, 0, 0));
         }
     }
 }
@@ -1268,7 +1271,7 @@ void ltLuaKeyDown(LTKey key) {
     if (g_L != NULL && !g_suspended && push_lt_func("KeyDown")) {
         const char *str = lt_key_str(key);
         lua_pushstring(g_L, str);
-        check_status(lua_pcall(g_L, 1, 0, 0), true);
+        check_status(lua_pcall(g_L, 1, 0, 0));
     }
 }
 
@@ -1276,7 +1279,7 @@ void ltLuaKeyUp(LTKey key) {
     if (g_L != NULL && !g_suspended && push_lt_func("KeyUp")) {
         const char *str = lt_key_str(key);
         lua_pushstring(g_L, str);
-        check_status(lua_pcall(g_L, 1, 0, 0), true);
+        check_status(lua_pcall(g_L, 1, 0, 0));
     }
 }
 
@@ -1285,7 +1288,7 @@ void ltLuaPointerDown(int input_id, LTfloat x, LTfloat y) {
         lua_pushinteger(g_L, input_id);
         lua_pushnumber(g_L, ltGetViewPortX(x));
         lua_pushnumber(g_L, ltGetViewPortY(y));
-        check_status(lua_pcall(g_L, 3, 0, 0), true);
+        check_status(lua_pcall(g_L, 3, 0, 0));
     }
 }
 
@@ -1294,7 +1297,7 @@ void ltLuaPointerUp(int input_id, LTfloat x, LTfloat y) {
         lua_pushinteger(g_L, input_id);
         lua_pushnumber(g_L, ltGetViewPortX(x));
         lua_pushnumber(g_L, ltGetViewPortY(y));
-        check_status(lua_pcall(g_L, 3, 0, 0), true);
+        check_status(lua_pcall(g_L, 3, 0, 0));
     }
 }
 
@@ -1302,7 +1305,7 @@ void ltLuaPointerMove(LTfloat x, LTfloat y) {
     if (g_L != NULL && !g_suspended && push_lt_func("PointerMove")) {
         lua_pushnumber(g_L, ltGetViewPortX(x));
         lua_pushnumber(g_L, ltGetViewPortY(y));
-        check_status(lua_pcall(g_L, 2, 0, 0), true);
+        check_status(lua_pcall(g_L, 2, 0, 0));
     }
 }
 
