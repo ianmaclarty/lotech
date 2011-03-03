@@ -277,7 +277,11 @@ void ltHarnessInit(bool fullscreen, const char *title, int fps,
 
     glutInitWindowSize(1024, 768);
     glutInit(&argc, &argv);
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
+    unsigned int mode = GLUT_DOUBLE | GLUT_RGBA;
+    #ifdef LTDEPTHBUF
+    mode |= GLUT_DEPTH;
+    #endif
+    glutInitDisplayMode(mode);
     if (g_fullscreen) {
         glutGameModeString("1680x1050:32@60");
         glutEnterGameMode();

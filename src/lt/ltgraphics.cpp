@@ -47,8 +47,13 @@ void ltInitGraphics() {
     glDisable(GL_FOG);
     ltDisableTextures();
     glDisable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
+    GLbitfield clear_mask = GL_COLOR_BUFFER_BIT;
+    #ifdef LTDEPTHBUF
+        clear_mask |= GL_DEPTH_BUFFER_BIT;
+    #endif
+    glClear(clear_mask);
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
     tint_stack_top = 0;
     glEnableClientState(GL_VERTEX_ARRAY);

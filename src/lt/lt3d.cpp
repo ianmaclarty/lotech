@@ -11,7 +11,13 @@ LTPerspective::LTPerspective(LTfloat near, LTfloat origin, LTfloat far, LTSceneN
 
 void LTPerspective::draw() {
     ltPushPerspective(near, origin, far);
+    #ifdef LTDEPTHBUF
+    glEnable(GL_DEPTH_TEST);
+    #endif
     child->draw();
+    #ifdef LTDEPTHBUF
+    glDisable(GL_DEPTH_TEST);
+    #endif
     ltPopPerspective();
 }
 
