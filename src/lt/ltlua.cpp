@@ -371,40 +371,40 @@ static int lt_Layer(lua_State *L) {
 
 static int lt_Translate(lua_State *L) {
     int num_args = check_nargs(L, 3);
-    LTSceneNode *target = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
+    LTSceneNode *child = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
     LTfloat x = (LTfloat)luaL_checknumber(L, 2);
     LTfloat y = (LTfloat)luaL_checknumber(L, 3);
     LTfloat z = 0.0f;
     if (num_args > 3) {
         z = (LTfloat)luaL_checknumber(L, 4);
     }
-    LTTranslateNode *node = new LTTranslateNode(x, y, z, target);
+    LTTranslateNode *node = new LTTranslateNode(x, y, z, child);
     push_wrap(L, node);
-    add_ref(L, -1, 1); // Add reference from new node to target.
+    add_ref(L, -1, 1); // Add reference from new node to child.
     return 1;
 }
 
 static int lt_Rotate(lua_State *L) {
     check_nargs(L, 2);
-    LTSceneNode *target = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
+    LTSceneNode *child = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
     LTdegrees angle = (LTfloat)luaL_checknumber(L, 2);
-    LTRotateNode *node = new LTRotateNode(angle, target);
+    LTRotateNode *node = new LTRotateNode(angle, child);
     push_wrap(L, node);
-    add_ref(L, -1, 1); // Add reference from new node to target.
+    add_ref(L, -1, 1); // Add reference from new node to child.
     return 1;
 }
 
 static int lt_Scale(lua_State *L) {
     int num_args = check_nargs(L, 2);
-    LTSceneNode *target = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
+    LTSceneNode *child = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
     LTfloat sx = (LTfloat)luaL_checknumber(L, 2);
     LTfloat sy = sx;
     if (num_args > 2) {
         sy = (LTfloat)luaL_checknumber(L, 3);
     }
-    LTScaleNode *node = new LTScaleNode(sx, sy, target);
+    LTScaleNode *node = new LTScaleNode(sx, sy, child);
     push_wrap(L, node);
-    add_ref(L, -1, 1); // Add reference from new node to target.
+    add_ref(L, -1, 1); // Add reference from new node to child.
     return 1;
 }
 
@@ -422,7 +422,7 @@ static int lt_Perspective(lua_State *L) {
 
 static int lt_Tint(lua_State *L) {
     int num_args = check_nargs(L, 4);
-    LTSceneNode *target = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
+    LTSceneNode *child = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
     LTfloat r = (LTfloat)luaL_checknumber(L, 2);
     LTfloat g = (LTfloat)luaL_checknumber(L, 3);
     LTfloat b = (LTfloat)luaL_checknumber(L, 4);
@@ -430,9 +430,9 @@ static int lt_Tint(lua_State *L) {
     if (num_args > 4) {
         a = (LTfloat)luaL_checknumber(L, 5);
     }
-    LTTintNode *tinter = new LTTintNode(r, g, b, a, target);
+    LTTintNode *tinter = new LTTintNode(r, g, b, a, child);
     push_wrap(L, tinter);
-    add_ref(L, -1, 1); // Add reference from new node to target.
+    add_ref(L, -1, 1); // Add reference from new node to child.
     return 1;
 }
 
