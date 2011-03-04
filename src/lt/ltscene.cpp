@@ -85,21 +85,22 @@ bool LTLayer::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event)
     }
 }
 
-LTTranslateNode::LTTranslateNode(LTfloat x, LTfloat y, LTSceneNode *child) : LTSceneNode(LT_TYPE_TRANSLATE) {
+LTTranslateNode::LTTranslateNode(LTfloat x, LTfloat y, LTfloat z, LTSceneNode *child) : LTSceneNode(LT_TYPE_TRANSLATE) {
     LTTranslateNode::x = x;
     LTTranslateNode::y = y;
+    LTTranslateNode::z = z;
     LTTranslateNode::child = child;
 }
 
 void LTTranslateNode::draw() {
     ltPushMatrix();
-    ltTranslate(x, y, 0.0f);
+    ltTranslate(x, y, z);
     child->draw();
     ltPopMatrix();
 }
 
 bool LTTranslateNode::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
-    if (!consumePointerEvent(x, y, event)) {
+    if (z != 0.0f || !consumePointerEvent(x, y, event)) {
         return child->propogatePointerEvent(x - LTTranslateNode::x, y - LTTranslateNode::y, event);
     } else {
         return true;
@@ -112,6 +113,9 @@ LTfloat* LTTranslateNode::field_ptr(const char *field_name) {
     }
     if (strcmp(field_name, "y") == 0) {
         return &y;
+    }
+    if (strcmp(field_name, "z") == 0) {
+        return &z;
     }
     return NULL;
 }

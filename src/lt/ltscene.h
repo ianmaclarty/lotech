@@ -47,9 +47,10 @@ struct LTLayer : LTSceneNode {
 struct LTTranslateNode : LTSceneNode {
     LTfloat x;
     LTfloat y;
+    LTfloat z;
     LTSceneNode *child;
 
-    LTTranslateNode(LTfloat x, LTfloat y, LTSceneNode *child);
+    LTTranslateNode(LTfloat x, LTfloat y, LTfloat z, LTSceneNode *child);
 
     virtual void draw();
     virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);

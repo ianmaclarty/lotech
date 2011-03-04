@@ -370,11 +370,15 @@ static int lt_Layer(lua_State *L) {
 }
 
 static int lt_Translate(lua_State *L) {
-    check_nargs(L, 3);
+    int num_args = check_nargs(L, 3);
     LTSceneNode *target = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
     LTfloat x = (LTfloat)luaL_checknumber(L, 2);
     LTfloat y = (LTfloat)luaL_checknumber(L, 3);
-    LTTranslateNode *node = new LTTranslateNode(x, y, target);
+    LTfloat z = 0.0f;
+    if (num_args > 3) {
+        z = (LTfloat)luaL_checknumber(L, 4);
+    }
+    LTTranslateNode *node = new LTTranslateNode(x, y, z, target);
     push_wrap(L, node);
     add_ref(L, -1, 1); // Add reference from new node to target.
     return 1;
@@ -412,6 +416,7 @@ static int lt_Perspective(lua_State *L) {
     LTfloat far = (LTfloat)luaL_checknumber(L, 4);
     LTPerspective *node = new LTPerspective(near, origin, far, child);
     push_wrap(L, node);
+    add_ref(L, -1, 1); // Add reference from new node to child.
     return 1;
 }
 
