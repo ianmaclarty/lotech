@@ -14,6 +14,11 @@ lt.classes = {
             OnPointerOver               = lt.AddOnPointerOverHandler,
             PropogatePointerDownEvent   = lt.PropogatePointerDownEvent,
             PropogatePointerMoveEvent   = lt.PropogatePointerMoveEvent,
+            Tint                        = lt.Tint,
+            Translate                   = lt.Translate,
+            Rotate                      = lt.Rotate,
+            Scale                       = lt.Scale,
+            Perspective                 = lt.Perspective,
         }
     },
     Layer = {
