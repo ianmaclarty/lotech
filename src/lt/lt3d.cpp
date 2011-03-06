@@ -33,6 +33,25 @@ LTfloat* LTPerspective::field_ptr(const char *field_name) {
     }
 }
 
+LTPitch::LTPitch(LTfloat pitch, LTSceneNode *child) : LTSceneNode(LT_TYPE_PITCH) {
+    LTPitch::pitch = pitch;
+    LTPitch::child = child;
+}
+
+void LTPitch::draw() {
+    ltPushMatrix();
+    glRotatef(pitch, 1, 0, 0);
+    child->draw();
+    ltPopMatrix();
+}
+
+LTfloat* LTPitch::field_ptr(const char *field_name) {
+    if (strcmp(field_name, "pitch") == 0) {
+        return &pitch;
+    }
+    return NULL;
+}
+
 LTCuboidNode::LTCuboidNode(LTfloat width, LTfloat height, LTfloat depth) : LTSceneNode(LT_TYPE_CUBOID) {
     GLfloat w2 = width * 0.5f;
     GLfloat h2 = height * 0.5f;

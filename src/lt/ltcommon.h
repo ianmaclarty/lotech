@@ -59,6 +59,7 @@ enum LTType {
     LT_TYPE_RECT,
     LT_TYPE_CUBOID,
     LT_TYPE_PERSPECTIVE,
+    LT_TYPE_PITCH,
     LT_NUM_TYPES
 };
 

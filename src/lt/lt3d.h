@@ -32,6 +32,16 @@ struct LTPerspective : LTSceneNode {
     virtual LTfloat* field_ptr(const char *field_name);
 };
 
+struct LTPitch : LTSceneNode {
+    LTfloat pitch;
+    LTSceneNode *child;
+
+    LTPitch(LTfloat pitch, LTSceneNode *child);
+
+    virtual void draw();
+    virtual LTfloat* field_ptr(const char *field_name);
+};
+
 /*
 struct LTTranslateZNode : LTSceneNode {
     LTfloat z;

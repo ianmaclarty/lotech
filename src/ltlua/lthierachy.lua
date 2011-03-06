@@ -19,6 +19,7 @@ lt.classes = {
             Rotate                      = lt.Rotate,
             Scale                       = lt.Scale,
             Perspective                 = lt.Perspective,
+            Pitch                       = lt.Pitch,
         }
     },
     Layer = {
@@ -66,6 +67,10 @@ lt.classes = {
         methods = {}
     },
     Perspective = {
+        super = "SceneNode",
+        methods = {}
+    },
+    Pitch = {
         super = "SceneNode",
         methods = {}
     },
