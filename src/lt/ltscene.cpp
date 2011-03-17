@@ -117,7 +117,7 @@ LTfloat* LTTranslateNode::field_ptr(const char *field_name) {
     if (strcmp(field_name, "z") == 0) {
         return &z;
     }
-    return NULL;
+    return child->field_ptr(field_name);
 }
 
 LTRotateNode::LTRotateNode(LTdegrees angle, LTSceneNode *child) : LTSceneNode(LT_TYPE_ROTATE) {
@@ -147,7 +147,7 @@ LTfloat* LTRotateNode::field_ptr(const char *field_name) {
     if (strcmp(field_name, "angle") == 0) {
         return &angle;
     }
-    return NULL;
+    return child->field_ptr(field_name);
 }
 
 LTScaleNode::LTScaleNode(LTfloat sx, LTfloat sy, LTSceneNode *child) : LTSceneNode(LT_TYPE_SCALE) {
@@ -182,7 +182,7 @@ LTfloat* LTScaleNode::field_ptr(const char *field_name) {
     if (strcmp(field_name, "sy") == 0) {
         return &sy;
     }
-    return NULL;
+    return child->field_ptr(field_name);
 }
 
 LTTintNode::LTTintNode(LTfloat r, LTfloat g, LTfloat b, LTfloat a, LTSceneNode *child) : LTSceneNode(LT_TYPE_TINT) {
@@ -220,7 +220,7 @@ LTfloat* LTTintNode::field_ptr(const char *field_name) {
     if (strcmp(field_name, "a") == 0) {
         return &a;
     }
-    return NULL;
+    return child->field_ptr(field_name);
 }
 
 LTLineNode::LTLineNode(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2) : LTSceneNode(LT_TYPE_LINE) {

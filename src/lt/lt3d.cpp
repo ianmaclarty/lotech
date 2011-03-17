@@ -28,9 +28,8 @@ LTfloat* LTPerspective::field_ptr(const char *field_name) {
         return &origin;
     } else if (strcmp(field_name, "far") == 0) {
         return &far;
-    } else {
-        return NULL;
     }
+    return child->field_ptr(field_name);
 }
 
 LTPitch::LTPitch(LTfloat pitch, LTSceneNode *child) : LTSceneNode(LT_TYPE_PITCH) {
@@ -49,7 +48,7 @@ LTfloat* LTPitch::field_ptr(const char *field_name) {
     if (strcmp(field_name, "pitch") == 0) {
         return &pitch;
     }
-    return NULL;
+    return child->field_ptr(field_name);
 }
 
 LTCuboidNode::LTCuboidNode(LTfloat width, LTfloat height, LTfloat depth) : LTSceneNode(LT_TYPE_CUBOID) {
