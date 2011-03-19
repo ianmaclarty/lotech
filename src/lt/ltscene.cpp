@@ -64,6 +64,11 @@ void LTLayer::remove(LTSceneNode *node) {
     node_index.erase(range.first, range.second);
 }
 
+void LTLayer::clear() {
+    layer.clear();
+    node_index.clear();
+}
+
 void LTLayer::draw() {
     std::multimap<LTfloat, LTSceneNode*>::iterator it;
     for (it = layer.begin(); it != layer.end(); it++) {
@@ -326,4 +331,3 @@ LTfloat* LTRectNode::field_ptr(const char *field_name) {
     }
     return NULL;
 }
-

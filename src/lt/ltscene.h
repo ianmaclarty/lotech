@@ -39,6 +39,7 @@ struct LTLayer : LTSceneNode {
 
     void insert(LTSceneNode *node, LTfloat depth);
     void remove(LTSceneNode *node);
+    void clear();
 
     virtual void draw();
     virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
