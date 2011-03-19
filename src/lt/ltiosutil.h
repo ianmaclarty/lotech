@@ -4,8 +4,8 @@
 
 bool ltIsIPad();
 bool ltIsRetinaIPhone();
-int ltIOSPortaitPixelWidth();
-int ltIOSPortaitPixelHeight();
+int ltIOSScreenWidth();
+int ltIOSScreenHeight();
 void ltNormalizeIOSTouchCoords(float x, float y, float *nx, float *ny);
 
 // The caller should free the returned string with delete[].

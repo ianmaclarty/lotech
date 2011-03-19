@@ -16,12 +16,12 @@ void ltIOSInit() {
     ltClientInit();
     #endif
 
-    ltSetScreenSize(ltIOSPortaitPixelWidth(), ltIOSPortaitPixelHeight());
+    ltSetScreenSize(ltIOSScreenWidth(), ltIOSScreenHeight());
 
     #ifdef LTDEPTHBUF
     glGenRenderbuffersOES(1, &depth_buf);
     glBindRenderbufferOES(GL_RENDERBUFFER_OES, depth_buf);
-    glRenderbufferStorageOES(GL_RENDERBUFFER_OES, GL_DEPTH_COMPONENT16_OES, ltIOSPortaitPixelWidth(), ltIOSPortaitPixelHeight());
+    glRenderbufferStorageOES(GL_RENDERBUFFER_OES, GL_DEPTH_COMPONENT16_OES, ltIOSScreenWidth(), ltIOSScreenHeight());
     glFramebufferRenderbufferOES(GL_FRAMEBUFFER_OES, GL_DEPTH_ATTACHMENT_OES, GL_RENDERBUFFER_OES, depth_buf);
     #endif
 
@@ -52,12 +52,29 @@ void ltIOSGarbageCollect() {
 }
 
 void ltIOSTouchesBegan(NSSet *touches) {
-    ltLuaPointerDown(0, 0.0f, 0.0f);
+    [touches enumerateObjectsUsingBlock:^(id obj, BOOL *stop) {
+        UITouch *touch = (UITouch*)obj;
+        CGPoint pos = [touch locationInView:touch.view];
+        ltLuaPointerDown((int)touch, pos.x, pos.y);
+    }];
 }
+
 void ltIOSTouchesMoved(NSSet *touches) {
+    [touches enumerateObjectsUsingBlock:^(id obj, BOOL *stop) {
+        UITouch *touch = (UITouch*)obj;
+        CGPoint pos = [touch locationInView:touch.view];
+        ltLuaPointerMove((int)touch, pos.x, pos.y);
+    }];
 }
+
 void ltIOSTouchesEnded(NSSet *touches) {
+    [touches enumerateObjectsUsingBlock:^(id obj, BOOL *stop) {
+        UITouch *touch = (UITouch*)obj;
+        CGPoint pos = [touch locationInView:touch.view];
+        ltLuaPointerUp((int)touch, pos.x, pos.y);
+    }];
 }
+
 void ltIOSTouchesCancelled(NSSet *touches) {
     ltIOSTouchesEnded(touches);
 }

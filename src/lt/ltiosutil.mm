@@ -23,7 +23,7 @@ bool ltIsRetinaIPhone() {
     return !ltIsIPad() && scaling() == 2.0f;
 }
 
-int ltIOSPortaitPixelWidth() {
+int ltIOSScreenWidth() {
     float scale = scaling();
     if (ltIsIPad()) {
         return (int)(768.0f * scale);
@@ -32,7 +32,7 @@ int ltIOSPortaitPixelWidth() {
     }
 }
 
-int ltIOSPortaitPixelHeight() {
+int ltIOSScreenHeight() {
     float scale = scaling();
     if (ltIsIPad()) {
         return (int)(1024.0f * scale);

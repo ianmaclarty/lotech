@@ -1341,11 +1341,12 @@ void ltLuaPointerUp(int input_id, LTfloat x, LTfloat y) {
     }
 }
 
-void ltLuaPointerMove(LTfloat x, LTfloat y) {
+void ltLuaPointerMove(int input_id, LTfloat x, LTfloat y) {
     if (g_L != NULL && !g_suspended && push_lt_func("PointerMove")) {
+        lua_pushinteger(g_L, input_id);
         lua_pushnumber(g_L, ltGetViewPortX(x));
         lua_pushnumber(g_L, ltGetViewPortY(y));
-        check_status(lua_pcall(g_L, 2, 0, 0));
+        check_status(lua_pcall(g_L, 3, 0, 0));
     }
 }
 
