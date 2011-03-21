@@ -1,29 +1,23 @@
+#include "ltios.h"
 #include "ltcommon.h"
 #include "ltgraphics.h"
 #include "ltiosutil.h"
 #include "ltlua.h"
 #include "ltprotocol.h"
 
+static UIViewController *view_controller = nil;
+
 // The following is required for converting UITouch objects to input_ids.
 ct_assert(sizeof(UITouch*) == sizeof(int));
 
-#ifdef LTDEPTHBUF
-    GLuint depth_buf;
-#endif
+void ltIOSInit(UIViewController *vc) {
+    view_controller = vc;
 
-void ltIOSInit() {
     #ifdef LTDEVMODE
     ltClientInit();
     #endif
 
     ltSetScreenSize(ltIOSScreenWidth(), ltIOSScreenHeight());
-
-    #ifdef LTDEPTHBUF
-    glGenRenderbuffersOES(1, &depth_buf);
-    glBindRenderbufferOES(GL_RENDERBUFFER_OES, depth_buf);
-    glRenderbufferStorageOES(GL_RENDERBUFFER_OES, GL_DEPTH_COMPONENT16_OES, ltIOSScreenWidth(), ltIOSScreenHeight());
-    glFramebufferRenderbufferOES(GL_FRAMEBUFFER_OES, GL_DEPTH_ATTACHMENT_OES, GL_RENDERBUFFER_OES, depth_buf);
-    #endif
 
     const char *path = ltIOSBundlePath("main", ".lua");
     ltLuaSetup(path);
@@ -32,10 +26,6 @@ void ltIOSInit() {
 
 void ltIOSTeardown() {
     ltLuaTeardown();
-
-    #ifdef LTDEPTHBUF
-    glDeleteRenderbuffersOES(1, &depth_buf);
-    #endif
 }
 
 void ltIOSRender() {
@@ -78,3 +68,23 @@ void ltIOSTouchesEnded(NSSet *touches) {
 void ltIOSTouchesCancelled(NSSet *touches) {
     ltIOSTouchesEnded(touches);
 }
+
+static float scaling() {
+    float scale = 1.0f;
+    if([[UIScreen mainScreen] respondsToSelector: NSSelectorFromString(@"scale")]) {
+        scale = [[UIScreen mainScreen] scale];
+    }
+    return scale;
+}
+
+int ltIOSScreenWidth() {
+    float scale = scaling();
+    int w = view_controller.view.bounds.size.width * scale;
+    return w;
+}
+
+int ltIOSScreenHeight() {
+    float scale = scaling();
+    return view_controller.view.bounds.size.height * scale;
+}
+

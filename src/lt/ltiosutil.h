@@ -4,9 +4,6 @@
 
 bool ltIsIPad();
 bool ltIsRetinaIPhone();
-int ltIOSScreenWidth();
-int ltIOSScreenHeight();
-void ltNormalizeIOSTouchCoords(float x, float y, float *nx, float *ny);
 
 // The caller should free the returned string with delete[].
 // If suffix is not null, it is appended to the end of the returned

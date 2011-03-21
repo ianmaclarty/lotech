@@ -1088,7 +1088,7 @@ static int lt_World(lua_State *L) {
 
 static int import(lua_State *L) {
     check_nargs(L, 1);
-    const char *module = lua_tostring(L, -1);
+    const char *module = lua_tostring(L, 1);
     if (module == NULL) {
         return luaL_error(L, "The import function requires a string argument.");
     }
@@ -1102,6 +1102,13 @@ static int import(lua_State *L) {
         return luaL_error(L, "%s", msg);
     }
     lua_call(g_L, 0, 0);
+    return 0;
+}
+
+static int log(lua_State *L) {
+    check_nargs(L, 1);
+    const char *msg = lua_tostring(L, 1);
+    ltLog(msg);
     return 0;
 }
 
@@ -1208,6 +1215,8 @@ void ltLuaSetup(const char *file) {
     luaL_openlibs(g_L);
     lua_pushcfunction(g_L, import);
     lua_setglobal(g_L, "import");
+    lua_pushcfunction(g_L, log);
+    lua_setglobal(g_L, "log");
     luaL_register(g_L, "lt", ltlib);
     lua_gc(g_L, LUA_GCRESTART, 0);
     if (ltFileExists(g_main_file)) {

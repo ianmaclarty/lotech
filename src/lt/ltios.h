@@ -4,7 +4,7 @@
 
 #import <UIKit/UIKit.h>
 
-void ltIOSInit();
+void ltIOSInit(UIViewController *vc);
 void ltIOSTeardown();
 
 void ltIOSRender();
@@ -15,6 +15,9 @@ void ltIOSTouchesBegan(NSSet *touches);
 void ltIOSTouchesMoved(NSSet *touches);
 void ltIOSTouchesEnded(NSSet *touches);
 void ltIOSTouchesCancelled(NSSet *touches);
+
+int ltIOSScreenWidth();
+int ltIOSScreenHeight();
 
 #endif
 #endif
