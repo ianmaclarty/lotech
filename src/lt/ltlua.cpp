@@ -511,11 +511,16 @@ static int lt_Cuboid(lua_State *L) {
 static bool call_pointer_event_handler(lua_State *L, int func, LTfloat x, LTfloat y, int input_id) {
     get_weak_ref(L, func);
     if (lua_isfunction(L, -1)) {
+        lua_pushinteger(L, input_id);
         lua_pushnumber(L, x);
         lua_pushnumber(L, y);
-        lua_pushinteger(L, input_id);
         lua_call(L, 3, 1);
-        bool consumed = lua_toboolean(L, -1);
+        bool consumed;
+        if (lua_isnil(L, -1)) {
+            consumed = true; // callback didn't return anything, so don't propogate by default.
+        } else {
+            consumed = lua_toboolean(L, -1);
+        }
         lua_pop(L, 1);
         return consumed;
     } else {
@@ -537,6 +542,38 @@ struct LTLPointerDownInEventHandler : LTPointerEventHandler {
             } else {
                 return false;
             }
+        } else {
+            return false;
+        }
+    }
+};
+
+struct LTLPointerUpEventHandler : LTPointerEventHandler {
+    int lua_func_ref;
+
+    LTLPointerUpEventHandler(int func_index) {
+        lua_func_ref = make_weak_ref(g_L, func_index);
+    }
+
+    virtual bool consume(LTfloat x, LTfloat y, LTSceneNode *node, LTPointerEvent *event) {
+        if (event->type == LT_EVENT_POINTER_UP) {
+            return call_pointer_event_handler(g_L, lua_func_ref, x, y, event->input_id);
+        } else {
+            return false;
+        }
+    }
+};
+
+struct LTLPointerDownEventHandler : LTPointerEventHandler {
+    int lua_func_ref;
+
+    LTLPointerDownEventHandler(int func_index) {
+        lua_func_ref = make_weak_ref(g_L, func_index);
+    }
+
+    virtual bool consume(LTfloat x, LTfloat y, LTSceneNode *node, LTPointerEvent *event) {
+        if (event->type == LT_EVENT_POINTER_DOWN) {
+            return call_pointer_event_handler(g_L, lua_func_ref, x, y, event->input_id);
         } else {
             return false;
         }
@@ -599,10 +636,28 @@ struct LTLPointerOverEventHandler : LTPointerEventHandler {
     }
 };
 
+static int lt_AddOnPointerUpHandler(lua_State *L) {
+    check_nargs(L, 2);
+    LTSceneNode *node = (LTSceneNode*)get_object(L, 1, LT_TYPE_SCENENODE);
+    LTLPointerUpEventHandler *handler = new LTLPointerUpEventHandler(2);
+    node->addHandler(handler);
+    add_ref(L, 1, 2);
+    return 0;
+}
+
 static int lt_AddOnPointerDownHandler(lua_State *L) {
     check_nargs(L, 2);
     LTSceneNode *node = (LTSceneNode*)get_object(L, 1, LT_TYPE_SCENENODE);
-    LTLPointerDownInEventHandler *handler = new LTLPointerDownInEventHandler(2);
+    LTLPointerDownEventHandler *handler = new LTLPointerDownEventHandler(2);
+    node->addHandler(handler);
+    add_ref(L, 1, 2);
+    return 0;
+}
+
+static int lt_AddOnPointerMoveHandler(lua_State *L) {
+    check_nargs(L, 2);
+    LTSceneNode *node = (LTSceneNode*)get_object(L, 1, LT_TYPE_SCENENODE);
+    LTLPointerMoveEventHandler *handler = new LTLPointerMoveEventHandler(2);
     node->addHandler(handler);
     add_ref(L, 1, 2);
     return 0;
@@ -618,6 +673,17 @@ static int lt_AddOnPointerOverHandler(lua_State *L) {
     return 0;
 }
 
+static int lt_PropogatePointerUpEvent(lua_State *L) {
+    check_nargs(L, 4);
+    LTSceneNode *node = (LTSceneNode*)get_object(L, 1, LT_TYPE_SCENENODE);
+    int input_id = luaL_checkinteger(L, 2);
+    LTfloat x = luaL_checknumber(L, 3);
+    LTfloat y = luaL_checknumber(L, 4);
+    LTPointerEvent event(LT_EVENT_POINTER_UP, x, y, input_id);
+    node->propogatePointerEvent(x, y, &event);
+    return 0;
+}
+
 static int lt_PropogatePointerDownEvent(lua_State *L) {
     check_nargs(L, 4);
     LTSceneNode *node = (LTSceneNode*)get_object(L, 1, LT_TYPE_SCENENODE);
@@ -630,11 +696,12 @@ static int lt_PropogatePointerDownEvent(lua_State *L) {
 }
 
 static int lt_PropogatePointerMoveEvent(lua_State *L) {
-    check_nargs(L, 3);
+    check_nargs(L, 4);
     LTSceneNode *node = (LTSceneNode*)get_object(L, 1, LT_TYPE_SCENENODE);
-    LTfloat x = luaL_checknumber(L, 2);
-    LTfloat y = luaL_checknumber(L, 3);
-    LTPointerEvent event(LT_EVENT_POINTER_MOVE, x, y, 0);
+    int input_id = luaL_checkinteger(L, 2);
+    LTfloat x = luaL_checknumber(L, 3);
+    LTfloat y = luaL_checknumber(L, 4);
+    LTPointerEvent event(LT_EVENT_POINTER_MOVE, x, y, input_id);
     node->propogatePointerEvent(x, y, &event);
     return 0;
 }
@@ -1158,8 +1225,11 @@ static const luaL_Reg ltlib[] = {
     {"Rotate",                  lt_Rotate},
 
     {"DrawSceneNode",           lt_DrawSceneNode},
+    {"AddOnPointerUpHandler",   lt_AddOnPointerUpHandler},
     {"AddOnPointerDownHandler", lt_AddOnPointerDownHandler},
+    {"AddOnPointerMoveHandler", lt_AddOnPointerMoveHandler},
     {"AddOnPointerOverHandler", lt_AddOnPointerOverHandler},
+    {"PropogatePointerUpEvent", lt_PropogatePointerUpEvent},
     {"PropogatePointerDownEvent",lt_PropogatePointerDownEvent},
     {"PropogatePointerMoveEvent",lt_PropogatePointerMoveEvent},
     {"InsertIntoLayer",         lt_InsertIntoLayer},
