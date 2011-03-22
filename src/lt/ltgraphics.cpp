@@ -21,6 +21,8 @@ static LTfloat viewport_height = 2.0f;
 static LTfloat pixel_width = viewport_width / screen_width;
 static LTfloat pixel_height = viewport_height / screen_height;
 
+static LTDisplayOrientation display_orientation = LT_DISPLAY_ORIENTATION_LANDSCAPE;
+
 struct LTColor {
     LTfloat r;
     LTfloat g;
@@ -42,7 +44,6 @@ static int tint_stack_top = 0;
 void ltInitGraphics() {
     glDisable(GL_DITHER);
     glDisable(GL_ALPHA_TEST);
-    glDisable(GL_BLEND);
     glDisable(GL_STENCIL_TEST);
     glDisable(GL_FOG);
     ltDisableTextures();
@@ -91,6 +92,17 @@ void ltSetScreenSize(int width, int height) {
     screen_height = (LTfloat)height;
     pixel_width = viewport_width / screen_width;
     pixel_height = viewport_height / screen_height;
+}
+
+void ltSetDisplayOrientation(LTDisplayOrientation orientation) {
+    if (orientation != display_orientation) {
+        display_orientation = orientation;
+        ltSetScreenSize((int)screen_height, (int)screen_width);
+    }
+}
+
+LTDisplayOrientation ltGetDisplayOrientation() {
+    return display_orientation;
 }
 
 void ltResizeScreen(int width, int height) {

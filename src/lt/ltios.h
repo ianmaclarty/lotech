@@ -4,7 +4,7 @@
 
 #import <UIKit/UIKit.h>
 
-void ltIOSInit(UIViewController *vc);
+void ltIOSInit(UIView *view);
 void ltIOSTeardown();
 
 void ltIOSRender();

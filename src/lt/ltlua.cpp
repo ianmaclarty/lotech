@@ -274,6 +274,21 @@ static int lt_SetViewPort(lua_State *L) {
     return 0;
 }
 
+static int lt_SetOrientation(lua_State *L) {
+    check_nargs(L, 1);
+    const char *orientation_str = lua_tostring(L, 1);
+    LTDisplayOrientation orientation;
+    if (strcmp(orientation_str, "portrait") == 0) {
+        orientation = LT_DISPLAY_ORIENTATION_PORTRAIT;
+    } else if (strcmp(orientation_str, "landscape") == 0) {
+        orientation = LT_DISPLAY_ORIENTATION_LANDSCAPE;
+    } else {
+        luaL_error(L, "Invalid orientation: %s", orientation_str);
+    }
+    ltSetDisplayOrientation(orientation);
+    return 0;
+}
+
 static int lt_PushTint(lua_State *L) {
     int num_args = check_nargs(L, 3);
     LTfloat r = (LTfloat)luaL_checknumber(L, 1);
@@ -1120,6 +1135,7 @@ static const luaL_Reg ltlib[] = {
     {"SetObjectFields",         lt_SetObjectFields},
 
     {"SetViewPort",             lt_SetViewPort},
+    {"SetOrientation",          lt_SetOrientation},
     {"PushTint",                lt_PushTint},
     {"PopTint",                 lt_PopTint},
     {"PushMatrix",              lt_PushMatrix},

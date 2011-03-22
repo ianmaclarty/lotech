@@ -5,13 +5,36 @@
 #include "ltlua.h"
 #include "ltprotocol.h"
 
-static UIViewController *view_controller = nil;
+@interface LTViewController : UIViewController
+- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation;
+@end
+
+@implementation LTViewController
+- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation {
+    switch(ltGetDisplayOrientation()) {
+        case LT_DISPLAY_ORIENTATION_PORTRAIT: 
+            return (interfaceOrientation == UIInterfaceOrientationPortrait
+                || interfaceOrientation == UIInterfaceOrientationPortraitUpsideDown);
+        case LT_DISPLAY_ORIENTATION_LANDSCAPE:
+            return (interfaceOrientation == UIInterfaceOrientationLandscapeRight
+                || interfaceOrientation == UIInterfaceOrientationLandscapeLeft);
+    }
+    return NO;
+}
+@end
+
+static LTViewController *view_controller = nil;
 
 // The following is required for converting UITouch objects to input_ids.
 ct_assert(sizeof(UITouch*) == sizeof(int));
 
-void ltIOSInit(UIViewController *vc) {
-    view_controller = vc;
+void ltIOSInit(UIView *view) {
+    view_controller = [[LTViewController alloc] init];
+    view_controller.view = view;
+    [view_controller retain];
+    [view removeFromSuperview];
+    UIWindow *win = [[UIApplication sharedApplication] keyWindow];
+    [win addSubview:view_controller.view];
 
     #ifdef LTDEVMODE
     ltClientInit();
@@ -26,6 +49,8 @@ void ltIOSInit(UIViewController *vc) {
 
 void ltIOSTeardown() {
     ltLuaTeardown();
+    [view_controller release];
+    view_controller = nil;
 }
 
 void ltIOSRender() {
