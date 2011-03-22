@@ -199,11 +199,11 @@ LTTintNode::LTTintNode(LTfloat r, LTfloat g, LTfloat b, LTfloat a, LTSceneNode *
 }
 
 void LTTintNode::draw() {
-    ltPushTint(r, g, b, a);
     if (a != 0.0f) {
+        ltPushTint(r, g, b, a);
         child->draw();
+        ltPopTint();
     }
-    ltPopTint();
 }
 
 bool LTTintNode::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
