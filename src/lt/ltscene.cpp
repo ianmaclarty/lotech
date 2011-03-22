@@ -200,7 +200,9 @@ LTTintNode::LTTintNode(LTfloat r, LTfloat g, LTfloat b, LTfloat a, LTSceneNode *
 
 void LTTintNode::draw() {
     ltPushTint(r, g, b, a);
-    child->draw();
+    if (a != 0.0f) {
+        child->draw();
+    }
     ltPopTint();
 }
 
