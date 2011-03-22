@@ -67,27 +67,30 @@ void ltIOSGarbageCollect() {
 }
 
 void ltIOSTouchesBegan(NSSet *touches) {
-    [touches enumerateObjectsUsingBlock:^(id obj, BOOL *stop) {
-        UITouch *touch = (UITouch*)obj;
+    NSEnumerator *e = [touches objectEnumerator];
+    UITouch *touch;
+    while (touch = [e nextObject]) {
         CGPoint pos = [touch locationInView:touch.view];
         ltLuaPointerDown((int)touch, pos.x, pos.y);
-    }];
+    }
 }
 
 void ltIOSTouchesMoved(NSSet *touches) {
-    [touches enumerateObjectsUsingBlock:^(id obj, BOOL *stop) {
-        UITouch *touch = (UITouch*)obj;
+    NSEnumerator *e = [touches objectEnumerator];
+    UITouch *touch;
+    while (touch = [e nextObject]) {
         CGPoint pos = [touch locationInView:touch.view];
         ltLuaPointerMove((int)touch, pos.x, pos.y);
-    }];
+    }
 }
 
 void ltIOSTouchesEnded(NSSet *touches) {
-    [touches enumerateObjectsUsingBlock:^(id obj, BOOL *stop) {
-        UITouch *touch = (UITouch*)obj;
+    NSEnumerator *e = [touches objectEnumerator];
+    UITouch *touch;
+    while (touch = [e nextObject]) {
         CGPoint pos = [touch locationInView:touch.view];
         ltLuaPointerUp((int)touch, pos.x, pos.y);
-    }];
+    }
 }
 
 void ltIOSTouchesCancelled(NSSet *touches) {
