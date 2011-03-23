@@ -8,9 +8,16 @@
 #include <stdlib.h>
 #include <string.h>
 
-static LTfloat screen_width = 100.0f;
-static LTfloat screen_height = 100.0f;
+// Actual screen dimensions in pixels.
+static int screen_width;
+static int screen_height;
 
+// Screen dimensions used to compute size of pixels in loaded
+// images.  These don't have to match the actual screen dimensions.
+static LTfloat design_width;
+static LTfloat design_height;
+
+// User space dimensions.
 static LTfloat viewport_left = -1.0f;
 static LTfloat viewport_bottom = -1.0f;
 static LTfloat viewport_right = 1.0f;
@@ -18,8 +25,10 @@ static LTfloat viewport_top = 1.0f;
 static LTfloat viewport_width = 2.0f;
 static LTfloat viewport_height = 2.0f;
 
-static LTfloat pixel_width = viewport_width / screen_width;
-static LTfloat pixel_height = viewport_height / screen_height;
+// Dimensions of a (design) pixel in user space.
+// Used to decide how to scale images by default.
+static LTfloat pixel_width = viewport_width / design_width;
+static LTfloat pixel_height = viewport_height / design_height;
 
 static LTDisplayOrientation display_orientation = LT_DISPLAY_ORIENTATION_LANDSCAPE;
 
@@ -66,7 +75,7 @@ void ltInitGraphics() {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glViewport(0, 0, (int)screen_width, (int)screen_height);
+    glViewport(0, 0, screen_width, screen_height);
     #ifdef LTIOS
     glOrthof(viewport_left, viewport_right, viewport_bottom, viewport_top, -1.0f, 1.0f);
     #else
@@ -83,22 +92,24 @@ void ltSetViewPort(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2) {
     viewport_top = y2;
     viewport_width = viewport_right - viewport_left;
     viewport_height = viewport_top - viewport_bottom;
-    pixel_width = viewport_width / screen_width;
-    pixel_height = viewport_height / screen_height;
+    pixel_width = viewport_width / design_width;
+    pixel_height = viewport_height / design_height;
 }
 
 void ltSetScreenSize(int width, int height) {
-    screen_width = (LTfloat)width;
-    screen_height = (LTfloat)height;
-    pixel_width = viewport_width / screen_width;
-    pixel_height = viewport_height / screen_height;
+    screen_width = width;
+    screen_height = height;
+}
+
+void ltSetDesignScreenSize(LTfloat width, LTfloat height) {
+    design_width = width;
+    design_height = height;
+    pixel_width = viewport_width / design_width;
+    pixel_height = viewport_height / design_height;
 }
 
 void ltSetDisplayOrientation(LTDisplayOrientation orientation) {
-    if (orientation != display_orientation) {
-        display_orientation = orientation;
-        ltSetScreenSize((int)screen_height, (int)screen_width);
-    }
+    display_orientation = orientation;
 }
 
 LTDisplayOrientation ltGetDisplayOrientation() {
@@ -106,8 +117,7 @@ LTDisplayOrientation ltGetDisplayOrientation() {
 }
 
 void ltResizeScreen(int width, int height) {
-    screen_width = (LTfloat)width;
-    screen_height = (LTfloat)height;
+    ltSetScreenSize(width, height);
 }
 
 LTfloat ltGetPixelWidth() {
@@ -119,11 +129,11 @@ LTfloat ltGetPixelHeight() {
 }
 
 LTfloat ltGetViewPortX(LTfloat screen_x) {
-    return viewport_left + (screen_x / screen_width) * viewport_width;
+    return viewport_left + (screen_x / (LTfloat)screen_width) * viewport_width;
 }
 
 LTfloat ltGetViewPortY(LTfloat screen_y) {
-    return viewport_top - (screen_y / screen_height) * (viewport_height);
+    return viewport_top - (screen_y / (LTfloat)screen_height) * viewport_height;
 }
 
 void ltPushPerspective(LTfloat near, LTfloat origin, LTfloat far) {

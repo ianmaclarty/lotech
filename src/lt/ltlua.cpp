@@ -274,6 +274,14 @@ static int lt_SetViewPort(lua_State *L) {
     return 0;
 }
 
+static int lt_SetDesignScreenSize(lua_State *L) {
+    check_nargs(L, 2);
+    LTfloat w = (LTfloat)luaL_checknumber(L, 1);
+    LTfloat h = (LTfloat)luaL_checknumber(L, 2);
+    ltSetDesignScreenSize(w, h);
+    return 0;
+}
+
 static int lt_SetOrientation(lua_State *L) {
     check_nargs(L, 1);
     const char *orientation_str = lua_tostring(L, 1);
@@ -1202,6 +1210,7 @@ static const luaL_Reg ltlib[] = {
     {"SetObjectFields",         lt_SetObjectFields},
 
     {"SetViewPort",             lt_SetViewPort},
+    {"SetDesignScreenSize",     lt_SetDesignScreenSize},
     {"SetOrientation",          lt_SetOrientation},
     {"PushTint",                lt_PushTint},
     {"PopTint",                 lt_PopTint},

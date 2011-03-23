@@ -21,6 +21,7 @@ void ltInitGraphics();
 // The following functions should be called only once.
 void ltSetViewPort(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2);
 void ltSetScreenSize(int width, int height);
+void ltSetDesignScreenSize(LTfloat width, LTfloat height);
 void ltSetDisplayOrientation(LTDisplayOrientation orientation);
 
 // This should be called whenever the screen is resized.
