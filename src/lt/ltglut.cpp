@@ -28,9 +28,9 @@ static ltVoidCallback           g_render = NULL;
 static ltVoidCallback           g_advance = NULL;
 static ltKeyCallback            g_key_down = NULL;
 static ltKeyCallback            g_key_up = NULL;
-static ltPointerButtonCallback  g_mouse_down = NULL;
-static ltPointerButtonCallback  g_mouse_up = NULL;
-static ltPairCallback           g_mouse_move = NULL;
+static ltPointerCallback        g_mouse_down = NULL;
+static ltPointerCallback        g_mouse_up = NULL;
+static ltPointerCallback        g_mouse_move = NULL;
 static ltPairCallback           g_resize_window = NULL;
 
 static void glut_advance(int unused) {
@@ -67,7 +67,7 @@ static void glut_render() {
 
 static void glut_mouse_move(int x, int y) {
     if (g_mouse_move != NULL) {
-        g_mouse_move((LTfloat)x, (LTfloat)y);
+        g_mouse_move(0, (LTfloat)x, (LTfloat)y);
     }
 }
 
@@ -255,8 +255,8 @@ void ltHarnessInit(bool fullscreen, const char *title, int fps,
     ltVoidCallback setup, ltVoidCallback teardown,
     ltVoidCallback render, ltVoidCallback advance,
     ltKeyCallback keyDown, ltKeyCallback keyUp,
-    ltPointerButtonCallback mouseDown, ltPointerButtonCallback mouseUp,
-    ltPairCallback mouseMove,
+    ltPointerCallback mouseDown, ltPointerCallback mouseUp,
+    ltPointerCallback mouseMove,
     ltPairCallback resizeWindow)
 {
     int argc = 0;
