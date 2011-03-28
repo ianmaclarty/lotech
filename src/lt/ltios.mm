@@ -14,15 +14,8 @@ void ltIOSInit() {
     #endif
 
     const char *path = ltIOSBundlePath("main", ".lua");
-    if (ltFileExists(path)) {
-        ltLuaSetup(path);
-        delete[] path;
-    } else {
-        delete[] path;
-        path = ltIOSBundlePath("lotech_default", ".lua");
-        ltLuaSetup(path);
-        delete[] path;
-    }
+    ltLuaSetup(path);
+    delete[] path;
 }
 
 void ltIOSTeardown() {
