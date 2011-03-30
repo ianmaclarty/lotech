@@ -15,6 +15,11 @@ enum LTDisplayOrientation {
     LT_DISPLAY_ORIENTATION_LANDSCAPE,
 };
 
+enum LTBlendMode {
+    LT_BLEND_MODE_NORMAL,
+    LT_BLEND_MODE_ADD,
+};
+
 // Should be called before rendering each frame.
 void ltInitGraphics();
 
@@ -42,6 +47,8 @@ void ltPopPerspective();
 
 void ltPushTint(LTfloat r, LTfloat g, LTfloat b, LTfloat a);
 void ltPopTint();
+void ltPushBlendMode(LTBlendMode mode);
+void ltPopBlendMode();
 void ltTranslate(LTfloat x, LTfloat y, LTfloat z);
 void ltRotate(LTdegrees degrees, LTfloat x, LTfloat y, LTfloat z);
 void ltScale(LTfloat x, LTfloat y, LTfloat z);

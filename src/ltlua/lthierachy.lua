@@ -18,6 +18,7 @@ lt.classes = {
             PropogatePointerDownEvent   = lt.PropogatePointerDownEvent,
             PropogatePointerMoveEvent   = lt.PropogatePointerMoveEvent,
             Tint                        = lt.Tint,
+            BlendMode                   = lt.BlendMode,
             Translate                   = lt.Translate,
             Rotate                      = lt.Rotate,
             Scale                       = lt.Scale,
@@ -45,6 +46,10 @@ lt.classes = {
         methods = {}
     },
     Tint = {
+        super = "SceneNode",
+        methods = {}
+    },
+    BlendMode = {
         super = "SceneNode",
         methods = {}
     },

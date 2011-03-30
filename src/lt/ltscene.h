@@ -6,6 +6,7 @@
 #include <map>
 
 #include "ltevent.h"
+#include "ltgraphics.h"
 
 struct LTSceneNode : LTObject {
     std::list<LTPointerEventHandler *> *event_handlers;
@@ -95,6 +96,17 @@ struct LTTintNode : LTSceneNode {
 
     virtual void draw();
     virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
+
+    virtual LTfloat* field_ptr(const char *field_name);
+};
+
+struct LTBlendModeNode : LTSceneNode {
+    LTBlendMode blend_mode;
+    LTSceneNode *child;
+
+    LTBlendModeNode(LTBlendMode mode, LTSceneNode *child);
+
+    virtual void draw();
 
     virtual LTfloat* field_ptr(const char *field_name);
 };

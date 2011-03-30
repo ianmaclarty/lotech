@@ -38,6 +38,13 @@ struct LTColor {
     LTfloat b;
     LTfloat a;
 
+    LTColor(LTfloat r, LTfloat g, LTfloat b, LTfloat a) {
+        LTColor::r = r;
+        LTColor::g = g;
+        LTColor::b = b;
+        LTColor::a = a;
+    }
+
     LTColor() {
         r = 1.0f;
         g = 1.0f;
@@ -46,9 +53,8 @@ struct LTColor {
     }
 };
 
-#define LT_TINT_STACK_SIZE 64
-static LTColor tint_stack[LT_TINT_STACK_SIZE];
-static int tint_stack_top = 0;
+static std::list<LTColor> tint_stack;
+static std::list<LTBlendMode> blend_mode_stack;
 
 void ltInitGraphics() {
     glDisable(GL_DITHER);
@@ -65,7 +71,8 @@ void ltInitGraphics() {
     #endif
     glClear(clear_mask);
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-    tint_stack_top = 0;
+    tint_stack.clear();
+    blend_mode_stack.clear();
     glEnableClientState(GL_VERTEX_ARRAY);
     #ifndef LTIOS
     glEnableClientState(GL_INDEX_ARRAY);
@@ -161,23 +168,54 @@ void ltPopPerspective() {
 }
 
 void ltPushTint(LTfloat r, LTfloat g, LTfloat b, LTfloat a) {
-    if (tint_stack_top < (LT_TINT_STACK_SIZE - 1)) {
-        tint_stack_top++;
-        LTColor *top = &tint_stack[tint_stack_top];
-        *top = *(top - 1);
-        top->r *= r;
-        top->g *= g;
-        top->b *= b;
-        top->a *= a;
-        glColor4f(top->r, top->g, top->b, top->a);
+    LTColor new_top(r, g, b, a);
+    if (!tint_stack.empty()) {
+        LTColor *top = &tint_stack.front();
+        new_top.r *= top->r;
+        new_top.g *= top->g;
+        new_top.b *= top->b;
+        new_top.a *= top->a;
     }
+    tint_stack.push_front(new_top);
+    glColor4f(new_top.r, new_top.g, new_top.b, new_top.a);
 }
 
 void ltPopTint() {
-    if (tint_stack_top > 0) {
-        tint_stack_top--;
-        LTColor *top = &tint_stack[tint_stack_top];
-        glColor4f(top->r, top->g, top->b, top->a);
+    if (!tint_stack.empty()) {
+        tint_stack.pop_front();
+        if (!tint_stack.empty()) {
+            LTColor *top = &tint_stack.front();
+            glColor4f(top->r, top->g, top->b, top->a);
+        } else {
+            glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+        }
+    }
+}
+
+static void apply_blend_mode(LTBlendMode mode) {
+    switch (mode) {
+        case LT_BLEND_MODE_NORMAL:
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            break;
+        case LT_BLEND_MODE_ADD:
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+            break;
+    }
+}
+
+void ltPushBlendMode(LTBlendMode mode) {
+    blend_mode_stack.push_front(mode);
+    apply_blend_mode(mode);
+}
+
+void ltPopBlendMode() {
+    if (!blend_mode_stack.empty()) {
+        tint_stack.pop_front();
+        if (!tint_stack.empty()) {
+            apply_blend_mode(blend_mode_stack.front());
+        } else {
+            apply_blend_mode(LT_BLEND_MODE_NORMAL);
+        }
     }
 }
 

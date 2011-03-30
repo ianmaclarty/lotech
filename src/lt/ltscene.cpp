@@ -2,7 +2,6 @@
 
 #include <math.h>
 
-#include "ltgraphics.h"
 #include "ltimage.h"
 #include "ltscene.h"
 
@@ -227,6 +226,21 @@ LTfloat* LTTintNode::field_ptr(const char *field_name) {
     if (strcmp(field_name, "a") == 0) {
         return &a;
     }
+    return child->field_ptr(field_name);
+}
+
+LTBlendModeNode::LTBlendModeNode(LTBlendMode mode, LTSceneNode *child) : LTSceneNode(LT_TYPE_TINT) {
+    LTBlendModeNode::blend_mode = mode;
+    LTBlendModeNode::child = child;
+}
+
+void LTBlendModeNode::draw() {
+    ltPushBlendMode(blend_mode);
+    child->draw();
+    ltPopBlendMode();
+}
+
+LTfloat* LTBlendModeNode::field_ptr(const char *field_name) {
     return child->field_ptr(field_name);
 }
 

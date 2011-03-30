@@ -469,6 +469,24 @@ static int lt_Tint(lua_State *L) {
     return 1;
 }
 
+static int lt_BlendMode(lua_State *L) {
+    int num_args = check_nargs(L, 2);
+    LTSceneNode *child = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
+    const char *modestr = lua_tostring(L, 2);
+    LTBlendMode mode;
+    if (strcmp(modestr, "add") == 0) {
+        mode = LT_BLEND_MODE_ADD;
+    } else if (strcmp(modestr, "normal") == 0) {
+        mode = LT_BLEND_MODE_NORMAL;
+    } else {
+        luaL_error(L, "Invalid blend mode: %s", modestr);
+    }
+    LTBlendModeNode *blend = new LTBlendModeNode(mode, child);
+    push_wrap(L, blend);
+    add_ref(L, -1, 1); // Add reference from new node to child.
+    return 1;
+}
+
 static int lt_Line(lua_State *L) {
     check_nargs(L, 4);
     LTfloat x1 = (LTfloat)luaL_checknumber(L, 1);
@@ -1227,6 +1245,7 @@ static const luaL_Reg ltlib[] = {
     {"Rect",                    lt_Rect},
     {"Cuboid",                  lt_Cuboid},
     {"Tint",                    lt_Tint},
+    {"BlendMode",               lt_BlendMode},
     {"Scale",                   lt_Scale},
     {"Perspective",             lt_Perspective},
     {"Pitch",                   lt_Pitch},

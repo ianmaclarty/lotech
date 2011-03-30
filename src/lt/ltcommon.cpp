@@ -17,6 +17,7 @@ const LTTypeInfo types[] = {
     {"Rotate",      LT_TYPE_SCENENODE},  
     {"Scale",       LT_TYPE_SCENENODE},  
     {"Tint",        LT_TYPE_SCENENODE},  
+    {"BlendMode",   LT_TYPE_SCENENODE},  
     {"Layer",       LT_TYPE_SCENENODE},  
     {"Image",       LT_TYPE_SCENENODE},  
     {"Atlas",       LT_TYPE_OBJECT},
