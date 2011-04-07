@@ -2,6 +2,8 @@
 #include "ltcommon.h"
 #include "ltlua.h"
 
+ct_assert(sizeof(LTuint32) == 4);
+
 //-----------------------------------------------------------------------
 // LTObject.
 
@@ -30,6 +32,7 @@ const LTTypeInfo types[] = {
     {"Cuboid",      LT_TYPE_SCENENODE},
     {"Perspective", LT_TYPE_SCENENODE},
     {"Pitch",       LT_TYPE_SCENENODE},
+    {"HitFilter",   LT_TYPE_SCENENODE},
 };
 
 ct_assert(sizeof(types) == (int)LT_NUM_TYPES * sizeof(LTTypeInfo));

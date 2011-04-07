@@ -33,7 +33,6 @@ typedef unsigned int    LTuint;
 typedef float           LTsecs;
 typedef float           LTdegrees;
 typedef unsigned int    LTuint32;
-ct_assert(sizeof(LTuint32) == 4);
 
 typedef LTuint32        LTpixel;
 typedef GLuint          LTvertbuf;
@@ -61,6 +60,7 @@ enum LTType {
     LT_TYPE_CUBOID,
     LT_TYPE_PERSPECTIVE,
     LT_TYPE_PITCH,
+    LT_TYPE_HITFILTER,
     LT_NUM_TYPES
 };
 

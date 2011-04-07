@@ -24,6 +24,7 @@ lt.classes = {
             Scale                       = lt.Scale,
             Perspective                 = lt.Perspective,
             Pitch                       = lt.Pitch,
+            HitFilter                   = lt.HitFilter,
         }
     },
     Layer = {
@@ -79,6 +80,10 @@ lt.classes = {
         methods = {}
     },
     Pitch = {
+        super = "SceneNode",
+        methods = {}
+    },
+    HitFilter = {
         super = "SceneNode",
         methods = {}
     },

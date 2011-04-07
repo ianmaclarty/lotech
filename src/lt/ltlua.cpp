@@ -532,6 +532,19 @@ static int lt_Cuboid(lua_State *L) {
     return 1;
 }
 
+static int lt_HitFilter(lua_State *L) {
+    int num_args = check_nargs(L, 5);
+    LTSceneNode *child = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
+    LTfloat left = (LTfloat)luaL_checknumber(L, 2);
+    LTfloat bottom = (LTfloat)luaL_checknumber(L, 3);
+    LTfloat right = (LTfloat)luaL_checknumber(L, 4);
+    LTfloat top = (LTfloat)luaL_checknumber(L, 5);
+    LTHitFilter *filter = new LTHitFilter(left, bottom, right, top, child);
+    push_wrap(L, filter);
+    add_ref(L, -1, 1); // Add reference from new node to child.
+    return 1;
+}
+
 /************************* Events **************************/
 
 static bool call_pointer_event_handler(lua_State *L, int func, LTfloat x, LTfloat y, int input_id) {
@@ -1251,6 +1264,7 @@ static const luaL_Reg ltlib[] = {
     {"Pitch",                   lt_Pitch},
     {"Translate",               lt_Translate},
     {"Rotate",                  lt_Rotate},
+    {"HitFilter",               lt_HitFilter},
 
     {"DrawSceneNode",           lt_DrawSceneNode},
     {"AddOnPointerUpHandler",   lt_AddOnPointerUpHandler},

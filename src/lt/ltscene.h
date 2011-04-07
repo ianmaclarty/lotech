@@ -141,4 +141,15 @@ struct LTRectNode : LTSceneNode {
     virtual LTfloat* field_ptr(const char *field_name);
 };
 
+struct LTHitFilter : LTSceneNode {
+    LTfloat left, bottom, right, top;
+    LTSceneNode *child;
+
+    LTHitFilter(LTfloat left, LTfloat bottom, LTfloat right, LTfloat top, LTSceneNode *child);
+    
+    virtual void draw();
+    virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
+    virtual LTfloat* field_ptr(const char *field_name);
+};
+
 #endif
