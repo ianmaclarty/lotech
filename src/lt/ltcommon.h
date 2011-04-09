@@ -61,6 +61,7 @@ enum LTType {
     LT_TYPE_PERSPECTIVE,
     LT_TYPE_PITCH,
     LT_TYPE_HITFILTER,
+    LT_TYPE_WRAP,
     LT_NUM_TYPES
 };
 

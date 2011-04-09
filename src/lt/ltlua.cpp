@@ -110,6 +110,7 @@ static int lt_SetObjectField(lua_State *L) {
         lua_pushvalue(L, 2);
         lua_pushvalue(L, 3);
         lua_rawset(L, -3);
+        lua_pop(L, 1);
         return 0;
     } else {
         luaL_error(L, "Attempt to set non-string field.");
@@ -545,6 +546,28 @@ static int lt_HitFilter(lua_State *L) {
     return 1;
 }
 
+static int lt_Wrap(lua_State *L) {
+    int num_args = check_nargs(L, 1);
+    LTSceneNode *child = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
+    LTWrapNode *wrap = new LTWrapNode(child);
+    push_wrap(L, wrap);
+    add_ref(L, -1, 1); // Add reference from wrapper to child.
+    return 1;
+}
+
+static int lt_ReplaceWrappedChild(lua_State *L) {
+    int num_args = check_nargs(L, 2);
+    LTWrapNode *wrap = (LTWrapNode *)get_object(L, 1, LT_TYPE_WRAP);
+    LTSceneNode *new_child = (LTSceneNode *)get_object(L, 2, LT_TYPE_SCENENODE);
+    LTSceneNode *old_child = wrap->child;
+    wrap->child = new_child;
+    get_weak_ref(L, old_child->lua_wrap);
+    del_ref(L, 1, -1); // Remove reference from wrapper to old child.
+    lua_pop(L, 1); // Pop reference to old child.
+    add_ref(L, 1, 2); // Add reference from wrapper to new child
+    return 1;
+}
+
 /************************* Events **************************/
 
 static bool call_pointer_event_handler(lua_State *L, int func, LTfloat x, LTfloat y, int input_id) {
@@ -563,6 +586,7 @@ static bool call_pointer_event_handler(lua_State *L, int func, LTfloat x, LTfloa
         lua_pop(L, 1);
         return consumed;
     } else {
+        lua_pop(L, 1);
         return false;
     }
 }
@@ -998,6 +1022,7 @@ static int lt_DestroyBody(lua_State *L) {
     get_weak_ref(L, world->lua_wrap);
     del_ref(L, -1, 1); // Remove reference from world to body.
     del_ref(L, 1, -1); // Remove reference from body to world.
+    lua_pop(L, 1);
     return 0;
 }
 
@@ -1265,6 +1290,7 @@ static const luaL_Reg ltlib[] = {
     {"Translate",               lt_Translate},
     {"Rotate",                  lt_Rotate},
     {"HitFilter",               lt_HitFilter},
+    {"Wrap",                    lt_Wrap},
 
     {"DrawSceneNode",           lt_DrawSceneNode},
     {"AddOnPointerUpHandler",   lt_AddOnPointerUpHandler},
@@ -1276,6 +1302,7 @@ static const luaL_Reg ltlib[] = {
     {"PropogatePointerMoveEvent",lt_PropogatePointerMoveEvent},
     {"InsertIntoLayer",         lt_InsertIntoLayer},
     {"RemoveFromLayer",         lt_RemoveFromLayer},
+    {"ReplaceWrappedChild",     lt_ReplaceWrappedChild},
 
     {"LoadImages",              lt_LoadImages},
 

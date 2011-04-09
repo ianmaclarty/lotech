@@ -396,3 +396,23 @@ LTfloat* LTHitFilter::field_ptr(const char *field_name) {
     }
     return child->field_ptr(field_name);
 }
+
+LTWrapNode::LTWrapNode(LTSceneNode *child) : LTSceneNode(LT_TYPE_WRAP) {
+    LTWrapNode::child = child;
+}
+
+void LTWrapNode::draw() {
+    child->draw();
+}
+
+bool LTWrapNode::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
+    if (!consumePointerEvent(x, y, event)) {
+        return child->propogatePointerEvent(x, y, event);
+    } else {
+        return true;
+    }
+}
+
+LTfloat* LTWrapNode::field_ptr(const char *field_name) {
+    return child->field_ptr(field_name);
+}

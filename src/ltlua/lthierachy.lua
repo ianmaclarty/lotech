@@ -25,6 +25,7 @@ lt.classes = {
             Perspective                 = lt.Perspective,
             Pitch                       = lt.Pitch,
             HitFilter                   = lt.HitFilter,
+            Wrap                        = lt.Wrap,
         }
     },
     Layer = {
@@ -86,6 +87,12 @@ lt.classes = {
     HitFilter = {
         super = "SceneNode",
         methods = {}
+    },
+    Wrap = {
+        super = "SceneNode",
+        methods = {
+            ReplaceChild    = lt.ReplaceWrappedChild,
+        }
     },
 
     -- Physics
