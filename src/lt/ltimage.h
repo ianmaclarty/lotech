@@ -123,6 +123,8 @@ struct LTImage : LTSceneNode {
     // Bounding box dimensions in world coordinates.
     LTfloat   bb_left;
     LTfloat   bb_bottom;
+    LTfloat   bb_right;
+    LTfloat   bb_top;
     LTfloat   bb_width;
     LTfloat   bb_height;
 

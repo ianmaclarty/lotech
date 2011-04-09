@@ -631,6 +631,8 @@ LTImage::LTImage(LTAtlas *atls, int atlas_w, int atlas_h, LTImagePacker *packer)
     bb_bottom = (LTfloat)packer->occupant->bb_bottom * pix_h;
     bb_width = (LTfloat)packer->occupant->bb_width() * pix_w;
     bb_height = (LTfloat)packer->occupant->bb_height() * pix_h;
+    bb_right = bb_left + bb_width;
+    bb_top = bb_bottom + bb_height;
     orig_width = (LTfloat)packer->occupant->width * pix_w;
     orig_height = (LTfloat)packer->occupant->height * pix_h;
     pixel_width = packer->occupant->width;
@@ -676,11 +678,23 @@ void LTImage::draw() {
 }
 
 LTfloat* LTImage::field_ptr(const char *field_name) {
-    if (strcmp(field_name, "w") == 0) {
+    if (strcmp(field_name, "width") == 0) {
         return &orig_width;
     }
-    if (strcmp(field_name, "h") == 0) {
+    if (strcmp(field_name, "height") == 0) {
         return &orig_height;
+    }
+    if (strcmp(field_name, "left") == 0) {
+        return &bb_left;
+    }
+    if (strcmp(field_name, "bottom") == 0) {
+        return &bb_bottom;
+    }
+    if (strcmp(field_name, "right") == 0) {
+        return &bb_right;
+    }
+    if (strcmp(field_name, "top") == 0) {
+        return &bb_top;
     }
     return NULL;
 }
