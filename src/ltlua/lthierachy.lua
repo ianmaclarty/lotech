@@ -91,7 +91,7 @@ lt.classes = {
     Wrap = {
         super = "SceneNode",
         methods = {
-            ReplaceChild    = lt.ReplaceWrappedChild,
+            Replace         = lt.ReplaceWrappedChild,
         }
     },
 
