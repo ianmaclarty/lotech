@@ -13,7 +13,7 @@ LTSceneNode::~LTSceneNode() {
     if (event_handlers != NULL) {
         std::list<LTPointerEventHandler*>::iterator it;
         for (it = event_handlers->begin(); it != event_handlers->end(); it++) {
-            delete (*it);
+            delete *it;
         }
         delete event_handlers;
     }
@@ -41,6 +41,30 @@ void LTSceneNode::addHandler(LTPointerEventHandler *handler) {
         event_handlers = new std::list<LTPointerEventHandler *>();
     }
     event_handlers->push_front(handler);
+}
+
+LTWrapNode::LTWrapNode(LTSceneNode *child) : LTSceneNode(LT_TYPE_WRAP) {
+    LTWrapNode::child = child;
+}
+
+LTWrapNode::LTWrapNode(LTSceneNode *child, LTType type) : LTSceneNode(type) {
+    LTWrapNode::child = child;
+}
+
+void LTWrapNode::draw() {
+    child->draw();
+}
+
+bool LTWrapNode::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
+    if (!consumePointerEvent(x, y, event)) {
+        return child->propogatePointerEvent(x, y, event);
+    } else {
+        return true;
+    }
+}
+
+LTfloat* LTWrapNode::field_ptr(const char *field_name) {
+    return NULL;
 }
 
 LTLayer::LTLayer() : LTSceneNode(LT_TYPE_LAYER) {
@@ -89,11 +113,10 @@ bool LTLayer::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event)
     }
 }
 
-LTTranslateNode::LTTranslateNode(LTfloat x, LTfloat y, LTfloat z, LTSceneNode *child) : LTSceneNode(LT_TYPE_TRANSLATE) {
+LTTranslateNode::LTTranslateNode(LTfloat x, LTfloat y, LTfloat z, LTSceneNode *child) : LTWrapNode(child, LT_TYPE_TRANSLATE) {
     LTTranslateNode::x = x;
     LTTranslateNode::y = y;
     LTTranslateNode::z = z;
-    LTTranslateNode::child = child;
 }
 
 void LTTranslateNode::draw() {
@@ -124,12 +147,11 @@ LTfloat* LTTranslateNode::field_ptr(const char *field_name) {
     if (strcmp(field_name, "z") == 0) {
         return &z;
     }
-    return child->field_ptr(field_name);
+    return NULL;
 }
 
-LTRotateNode::LTRotateNode(LTdegrees angle, LTSceneNode *child) : LTSceneNode(LT_TYPE_ROTATE) {
+LTRotateNode::LTRotateNode(LTdegrees angle, LTSceneNode *child) : LTWrapNode(child, LT_TYPE_ROTATE) {
     LTRotateNode::angle = angle;
-    LTRotateNode::child = child;
 }
 
 void LTRotateNode::draw() {
@@ -157,13 +179,12 @@ LTfloat* LTRotateNode::field_ptr(const char *field_name) {
     if (strcmp(field_name, "angle") == 0) {
         return &angle;
     }
-    return child->field_ptr(field_name);
+    return NULL;
 }
 
-LTScaleNode::LTScaleNode(LTfloat sx, LTfloat sy, LTSceneNode *child) : LTSceneNode(LT_TYPE_SCALE) {
+LTScaleNode::LTScaleNode(LTfloat sx, LTfloat sy, LTSceneNode *child) : LTWrapNode(child, LT_TYPE_SCALE) {
     LTScaleNode::sx = sx;
     LTScaleNode::sy = sy;
-    LTScaleNode::child = child;
 }
 
 void LTScaleNode::draw() {
@@ -195,15 +216,14 @@ LTfloat* LTScaleNode::field_ptr(const char *field_name) {
     if (strcmp(field_name, "sy") == 0) {
         return &sy;
     }
-    return child->field_ptr(field_name);
+    return NULL;
 }
 
-LTTintNode::LTTintNode(LTfloat r, LTfloat g, LTfloat b, LTfloat a, LTSceneNode *child) : LTSceneNode(LT_TYPE_TINT) {
+LTTintNode::LTTintNode(LTfloat r, LTfloat g, LTfloat b, LTfloat a, LTSceneNode *child) : LTWrapNode(child, LT_TYPE_TINT) {
     LTTintNode::r = r;
     LTTintNode::g = g;
     LTTintNode::b = b;
     LTTintNode::a = a;
-    LTTintNode::child = child;
 }
 
 void LTTintNode::draw() {
@@ -235,12 +255,11 @@ LTfloat* LTTintNode::field_ptr(const char *field_name) {
     if (strcmp(field_name, "a") == 0) {
         return &a;
     }
-    return child->field_ptr(field_name);
+    return NULL;
 }
 
-LTBlendModeNode::LTBlendModeNode(LTBlendMode mode, LTSceneNode *child) : LTSceneNode(LT_TYPE_TINT) {
+LTBlendModeNode::LTBlendModeNode(LTBlendMode mode, LTSceneNode *child) : LTWrapNode(child, LT_TYPE_TINT) {
     LTBlendModeNode::blend_mode = mode;
-    LTBlendModeNode::child = child;
 }
 
 void LTBlendModeNode::draw() {
@@ -250,7 +269,7 @@ void LTBlendModeNode::draw() {
 }
 
 LTfloat* LTBlendModeNode::field_ptr(const char *field_name) {
-    return child->field_ptr(field_name);
+    return NULL;
 }
 
 LTLineNode::LTLineNode(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2) : LTSceneNode(LT_TYPE_LINE) {
@@ -357,12 +376,11 @@ LTfloat* LTRectNode::field_ptr(const char *field_name) {
     return NULL;
 }
 
-LTHitFilter::LTHitFilter(LTfloat left, LTfloat bottom, LTfloat right, LTfloat top, LTSceneNode *child) : LTSceneNode(LT_TYPE_HITFILTER) {
+LTHitFilter::LTHitFilter(LTfloat left, LTfloat bottom, LTfloat right, LTfloat top, LTSceneNode *child) : LTWrapNode(child, LT_TYPE_HITFILTER) {
     LTHitFilter::left = left;
     LTHitFilter::bottom = bottom;
     LTHitFilter::right = right;
     LTHitFilter::top = top;
-    LTHitFilter::child = child;
 }
 
 void LTHitFilter::draw() {
@@ -394,25 +412,5 @@ LTfloat* LTHitFilter::field_ptr(const char *field_name) {
     if (strcmp(field_name, "top") == 0) {
         return &top;
     }
-    return child->field_ptr(field_name);
-}
-
-LTWrapNode::LTWrapNode(LTSceneNode *child) : LTSceneNode(LT_TYPE_WRAP) {
-    LTWrapNode::child = child;
-}
-
-void LTWrapNode::draw() {
-    child->draw();
-}
-
-bool LTWrapNode::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
-    if (!consumePointerEvent(x, y, event)) {
-        return child->propogatePointerEvent(x, y, event);
-    } else {
-        return true;
-    }
-}
-
-LTfloat* LTWrapNode::field_ptr(const char *field_name) {
-    return child->field_ptr(field_name);
+    return NULL;
 }

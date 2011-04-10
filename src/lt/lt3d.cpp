@@ -2,11 +2,10 @@
 #include "ltgraphics.h"
 #include "ltimage.h"
 
-LTPerspective::LTPerspective(LTfloat near, LTfloat origin, LTfloat far, LTSceneNode *child) : LTSceneNode(LT_TYPE_PERSPECTIVE) {
+LTPerspective::LTPerspective(LTfloat near, LTfloat origin, LTfloat far, LTSceneNode *child) : LTWrapNode(child, LT_TYPE_PERSPECTIVE) {
     LTPerspective::near = near;
     LTPerspective::origin = origin;
     LTPerspective::far = far;
-    LTPerspective::child = child;
 }
 
 void LTPerspective::draw() {
@@ -29,12 +28,11 @@ LTfloat* LTPerspective::field_ptr(const char *field_name) {
     } else if (strcmp(field_name, "far") == 0) {
         return &far;
     }
-    return child->field_ptr(field_name);
+    return NULL;
 }
 
-LTPitch::LTPitch(LTfloat pitch, LTSceneNode *child) : LTSceneNode(LT_TYPE_PITCH) {
+LTPitch::LTPitch(LTfloat pitch, LTSceneNode *child) : LTWrapNode(child, LT_TYPE_PITCH) {
     LTPitch::pitch = pitch;
-    LTPitch::child = child;
 }
 
 void LTPitch::draw() {
@@ -48,7 +46,7 @@ LTfloat* LTPitch::field_ptr(const char *field_name) {
     if (strcmp(field_name, "pitch") == 0) {
         return &pitch;
     }
-    return child->field_ptr(field_name);
+    return NULL;
 }
 
 LTCuboidNode::LTCuboidNode(LTfloat width, LTfloat height, LTfloat depth) : LTSceneNode(LT_TYPE_CUBOID) {

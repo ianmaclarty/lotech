@@ -20,11 +20,10 @@ struct LTCuboidNode : LTSceneNode {
     virtual void draw();
 };
 
-struct LTPerspective : LTSceneNode {
+struct LTPerspective : LTWrapNode {
     LTfloat near;
     LTfloat origin;
     LTfloat far;
-    LTSceneNode *child;
 
     LTPerspective(LTfloat near, LTfloat origin, LTfloat far, LTSceneNode *child);
     
@@ -32,27 +31,13 @@ struct LTPerspective : LTSceneNode {
     virtual LTfloat* field_ptr(const char *field_name);
 };
 
-struct LTPitch : LTSceneNode {
+struct LTPitch : LTWrapNode {
     LTfloat pitch;
-    LTSceneNode *child;
 
     LTPitch(LTfloat pitch, LTSceneNode *child);
 
     virtual void draw();
     virtual LTfloat* field_ptr(const char *field_name);
 };
-
-/*
-struct LTTranslateZNode : LTSceneNode {
-    LTfloat z;
-    LTSceneNode *child;
-
-    LTTranslateZNode(LTfloat z);
-    virtual ~LTTranslateZNode();
-
-    virtual LTfloat* field_ptr(const char *field_name);
-    virtual void draw();
-}
-*/
 
 #endif

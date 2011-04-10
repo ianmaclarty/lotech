@@ -1,5 +1,7 @@
 local tweens_mt = {__mode = "k"}
 
+-------------------------------------------------------------
+
 function lt.TweenSet()
     local tweens = {}
     setmetatable(tweens, tweens_mt) -- make tweens' keys weak references
@@ -169,4 +171,50 @@ function lt.CubicBezierEase(p1x, p1y, p2x, p2y)
         local t2 = solveCurveX(t, 0.001)
         return ((ay * t2 + by) * t2 + cy) * t2
     end
+end
+
+-------------------------------------------------------------
+
+local global_tweens = lt.TweenSet()
+
+-- node:Tween{x = 5, y = 6, time = 2.5, easing = "linear", tweens = my_tween_set, action = function() log("done!") end}
+function lt.Tween(node, tween_info)
+    local tweens = global_tweens
+    local fields = {}
+    local time = 0
+    local easing = lt.LinearEase
+    local action = nil
+    for field, value in pairs(tween_info) do
+        if field == "time" then
+            time = value
+        elseif field == "easing" then
+            easing = value
+        elseif field == "action" then
+            action = value
+        elseif field == "tweens" then
+            tweens = value
+        else
+            fields[field] = value
+        end
+    end
+    for field, value in pairs(fields) do
+        if time == 0 then
+            -- If time == 0 don't bother adding a new tween
+            if tweens[node] then
+                tweens[node][field] = nil -- delete existing tween
+            end
+            node[field] = value
+            if action then
+                action()
+            end
+        else
+            lt.AddTween(tweens, node, field, value, time, easing, action)
+        end
+        action = nil -- only attach action to one field
+    end
+    return node
+end
+
+function lt.AdvanceGlobalTweens()
+    lt.AdvanceTweens(global_tweens, lt.secs_per_frame)
 end

@@ -93,48 +93,15 @@ static int lt_SetObjectField(lua_State *L) {
     const char *fname;
     LTfloat val;
     LTObject *obj = get_object(L, 1, LT_TYPE_OBJECT);
-    // Only allow setting string fields.
-    if (lua_isstring(L, 2)) {
-        // First try to set the field on the LTObject.
-        if (lua_isnumber(L, 3)) {
-            fname = luaL_checkstring(L, 2);
-            val = (LTfloat)luaL_checknumber(L, 3);
-            LTfloat *f = obj->field_ptr(fname);
-            if (f != NULL) {
-                *f = val;
-                return 0;
-            }
-        }
-        // Otherwise set the field in the wrapper table.
-        get_weak_ref(L, obj->lua_wrap);
-        lua_pushvalue(L, 2);
-        lua_pushvalue(L, 3);
-        lua_rawset(L, -3);
-        lua_pop(L, 1);
-        return 0;
-    } else {
-        luaL_error(L, "Attempt to set non-string field.");
+    fname = luaL_checkstring(L, 2);
+    val = (LTfloat)luaL_checknumber(L, 3);
+    LTfloat *f = obj->field_ptr(fname);
+    if (f != NULL) {
+        *f = val;
     }
     return 0;
 }
     
-static int lt_SetObjectFields(lua_State *L) {
-    const char *fname;
-    LTfloat val;
-    LTObject *obj = get_object(L, 1, LT_TYPE_OBJECT);
-    lua_pushnil(L);
-    while (lua_next(L, 2) != 0) {
-        fname = luaL_checkstring(L, -2);
-        val = (LTfloat)luaL_checknumber(L, -1);
-        LTfloat *f = obj->field_ptr(fname);
-        if (f != NULL) {
-            *f = val;
-        }
-        lua_pop(L, 1);
-    }
-    return 0;
-}
-
 static int lt_GetObjectField(lua_State *L) {
     LTObject *obj = get_object(L, 1, LT_TYPE_OBJECT);
     const char *fname = luaL_checkstring(L, 2);
@@ -202,6 +169,19 @@ static void add_ref(lua_State *L, int wrap_index, int ref_index) {
 static void del_ref(lua_State *L, int wrap_index, int ref_index) {
     lua_pushvalue(L, ref_index);
     lua_pushnil(L);
+    if (wrap_index > 0) {
+        lua_rawset(L, wrap_index);
+    } else {
+        lua_rawset(L, wrap_index - 2);
+    }
+}
+
+// Set a field of a wrapper table to point to a reference.
+// Sometimes we use this instead of add_ref,
+// so the other object can be more easily accessed from lua code.
+static void set_ref_field(lua_State *L, int wrap_index, const char *field, int ref_index) {
+    lua_pushstring(L, field);
+    lua_pushvalue(L, ref_index);
     if (wrap_index > 0) {
         lua_rawset(L, wrap_index);
     } else {
@@ -404,7 +384,7 @@ static int lt_Translate(lua_State *L) {
     }
     LTTranslateNode *node = new LTTranslateNode(x, y, z, child);
     push_wrap(L, node);
-    add_ref(L, -1, 1); // Add reference from new node to child.
+    set_ref_field(L, -1, "child", 1); // Add reference from new node to child.
     return 1;
 }
 
@@ -414,7 +394,7 @@ static int lt_Rotate(lua_State *L) {
     LTdegrees angle = (LTfloat)luaL_checknumber(L, 2);
     LTRotateNode *node = new LTRotateNode(angle, child);
     push_wrap(L, node);
-    add_ref(L, -1, 1); // Add reference from new node to child.
+    set_ref_field(L, -1, "child", 1); // Add reference from new node to child.
     return 1;
 }
 
@@ -428,7 +408,7 @@ static int lt_Scale(lua_State *L) {
     }
     LTScaleNode *node = new LTScaleNode(sx, sy, child);
     push_wrap(L, node);
-    add_ref(L, -1, 1); // Add reference from new node to child.
+    set_ref_field(L, -1, "child", 1); // Add reference from new node to child.
     return 1;
 }
 
@@ -440,7 +420,7 @@ static int lt_Perspective(lua_State *L) {
     LTfloat far = (LTfloat)luaL_checknumber(L, 4);
     LTPerspective *node = new LTPerspective(near, origin, far, child);
     push_wrap(L, node);
-    add_ref(L, -1, 1); // Add reference from new node to child.
+    set_ref_field(L, -1, "child", 1); // Add reference from new node to child.
     return 1;
 }
 
@@ -450,7 +430,7 @@ static int lt_Pitch(lua_State *L) {
     LTfloat pitch = (LTfloat)luaL_checknumber(L, 2);
     LTPitch *node = new LTPitch(pitch, child);
     push_wrap(L, node);
-    add_ref(L, -1, 1); // Add reference from new node to child.
+    set_ref_field(L, -1, "child", 1); // Add reference from new node to child.
     return 1;
 }
 
@@ -466,7 +446,7 @@ static int lt_Tint(lua_State *L) {
     }
     LTTintNode *tinter = new LTTintNode(r, g, b, a, child);
     push_wrap(L, tinter);
-    add_ref(L, -1, 1); // Add reference from new node to child.
+    set_ref_field(L, -1, "child", 1); // Add reference from new node to child.
     return 1;
 }
 
@@ -484,7 +464,7 @@ static int lt_BlendMode(lua_State *L) {
     }
     LTBlendModeNode *blend = new LTBlendModeNode(mode, child);
     push_wrap(L, blend);
-    add_ref(L, -1, 1); // Add reference from new node to child.
+    set_ref_field(L, -1, "child", 1); // Add reference from new node to child.
     return 1;
 }
 
@@ -542,7 +522,7 @@ static int lt_HitFilter(lua_State *L) {
     LTfloat top = (LTfloat)luaL_checknumber(L, 5);
     LTHitFilter *filter = new LTHitFilter(left, bottom, right, top, child);
     push_wrap(L, filter);
-    add_ref(L, -1, 1); // Add reference from new node to child.
+    set_ref_field(L, -1, "child", 1); // Add reference from new node to child.
     return 1;
 }
 
@@ -551,7 +531,7 @@ static int lt_Wrap(lua_State *L) {
     LTSceneNode *child = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
     LTWrapNode *wrap = new LTWrapNode(child);
     push_wrap(L, wrap);
-    add_ref(L, -1, 1); // Add reference from wrapper to child.
+    set_ref_field(L, -1, "child", 1); // Add reference from wrapper to child.
     return 1;
 }
 
@@ -559,12 +539,8 @@ static int lt_ReplaceWrappedChild(lua_State *L) {
     int num_args = check_nargs(L, 2);
     LTWrapNode *wrap = (LTWrapNode *)get_object(L, 1, LT_TYPE_WRAP);
     LTSceneNode *new_child = (LTSceneNode *)get_object(L, 2, LT_TYPE_SCENENODE);
-    LTSceneNode *old_child = wrap->child;
     wrap->child = new_child;
-    get_weak_ref(L, old_child->lua_wrap);
-    del_ref(L, 1, -1); // Remove reference from wrapper to old child.
-    lua_pop(L, 1); // Pop reference to old child.
-    add_ref(L, 1, 2); // Add reference from wrapper to new child
+    set_ref_field(L, 1, "child", 2); // Replace the child field with the new child.
     return 1;
 }
 
@@ -1263,7 +1239,6 @@ static int log(lua_State *L) {
 static const luaL_Reg ltlib[] = {
     {"GetObjectField",          lt_GetObjectField},
     {"SetObjectField",          lt_SetObjectField},
-    {"SetObjectFields",         lt_SetObjectFields},
 
     {"SetViewPort",             lt_SetViewPort},
     {"SetDesignScreenSize",     lt_SetDesignScreenSize},

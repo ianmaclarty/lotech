@@ -26,8 +26,11 @@ struct LTSceneNode : LTObject {
     virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
 
     // Returns true iff this node, or one of its descendents, contains the given point.
+    // XXX deprecated in favour of LTHitFilter.
     virtual bool containsPoint(LTfloat x, LTfloat y) { return false; }
 
+    // The scene node takes over ownership of the handler and
+    // will free it when the scene node is freed.
     void addHandler(LTPointerEventHandler *handler);
 };
 
@@ -46,11 +49,21 @@ struct LTLayer : LTSceneNode {
     virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
 };
 
-struct LTTranslateNode : LTSceneNode {
+struct LTWrapNode : LTSceneNode {
+    LTSceneNode *child;
+
+    LTWrapNode(LTSceneNode *child);
+    LTWrapNode(LTSceneNode *child, LTType type);
+    
+    virtual void draw();
+    virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
+    virtual LTfloat* field_ptr(const char *field_name);
+};
+
+struct LTTranslateNode : LTWrapNode {
     LTfloat x;
     LTfloat y;
     LTfloat z;
-    LTSceneNode *child;
 
     LTTranslateNode(LTfloat x, LTfloat y, LTfloat z, LTSceneNode *child);
 
@@ -60,9 +73,8 @@ struct LTTranslateNode : LTSceneNode {
     virtual LTfloat* field_ptr(const char *field_name);
 };
 
-struct LTRotateNode : LTSceneNode {
+struct LTRotateNode : LTWrapNode {
     LTdegrees angle;
-    LTSceneNode *child;
 
     LTRotateNode(LTdegrees angle, LTSceneNode *child);
 
@@ -72,10 +84,9 @@ struct LTRotateNode : LTSceneNode {
     virtual LTfloat* field_ptr(const char *field_name);
 };
 
-struct LTScaleNode : LTSceneNode {
+struct LTScaleNode : LTWrapNode {
     LTfloat sx;
     LTfloat sy;
-    LTSceneNode *child;
 
     LTScaleNode(LTfloat sx, LTfloat sy, LTSceneNode *child);
 
@@ -85,12 +96,11 @@ struct LTScaleNode : LTSceneNode {
     virtual LTfloat* field_ptr(const char *field_name);
 };
 
-struct LTTintNode : LTSceneNode {
+struct LTTintNode : LTWrapNode {
     LTfloat r;
     LTfloat g;
     LTfloat b;
     LTfloat a;
-    LTSceneNode *child;
 
     LTTintNode(LTfloat r, LTfloat g, LTfloat b, LTfloat a, LTSceneNode *child);
 
@@ -100,9 +110,8 @@ struct LTTintNode : LTSceneNode {
     virtual LTfloat* field_ptr(const char *field_name);
 };
 
-struct LTBlendModeNode : LTSceneNode {
+struct LTBlendModeNode : LTWrapNode {
     LTBlendMode blend_mode;
-    LTSceneNode *child;
 
     LTBlendModeNode(LTBlendMode mode, LTSceneNode *child);
 
@@ -141,21 +150,10 @@ struct LTRectNode : LTSceneNode {
     virtual LTfloat* field_ptr(const char *field_name);
 };
 
-struct LTHitFilter : LTSceneNode {
+struct LTHitFilter : LTWrapNode {
     LTfloat left, bottom, right, top;
-    LTSceneNode *child;
 
     LTHitFilter(LTfloat left, LTfloat bottom, LTfloat right, LTfloat top, LTSceneNode *child);
-    
-    virtual void draw();
-    virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
-    virtual LTfloat* field_ptr(const char *field_name);
-};
-
-struct LTWrapNode : LTSceneNode {
-    LTSceneNode *child;
-
-    LTWrapNode(LTSceneNode *child);
     
     virtual void draw();
     virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
