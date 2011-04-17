@@ -1,3 +1,4 @@
+#ifdef LTIOS
 #include "ltios.h"
 #include "ltcommon.h"
 #include "ltgraphics.h"
@@ -77,3 +78,4 @@ static float scaling() {
     }
     return scale;
 }
+#endif // LTIOS

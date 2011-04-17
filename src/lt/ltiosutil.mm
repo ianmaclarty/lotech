@@ -1,3 +1,4 @@
+#ifdef LTIOS
 #import <UIKit/UIKit.h>
 
 #include "ltiosutil.h"
@@ -64,3 +65,4 @@ const char *ltIOSBundlePath(const char *file, const char *suffix) {
     #endif
     return path;
 }
+#endif //LTIOS
