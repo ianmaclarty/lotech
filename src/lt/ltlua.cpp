@@ -1,6 +1,7 @@
 /* Copyright (C) 2010 Ian MacLarty */
 
 #include <string.h>
+#include <errno.h>
 
 extern "C" {
 #include "lua.h"
@@ -1206,7 +1207,84 @@ static int lt_World(lua_State *L) {
     return 1;
 }
 
-/********************* Misc *****************************/
+/********************* Loading *****************************/
+
+/*
+ * These come from lauxlib.c.  We have modified luaL_loadfile
+ * to use only the base file name as the chunk name.
+ */
+
+typedef struct LoadF {
+  int extraline;
+  FILE *f;
+  char buff[LUAL_BUFFERSIZE];
+} LoadF;
+
+
+static const char *getF (lua_State *L, void *ud, size_t *size) {
+  LoadF *lf = (LoadF *)ud;
+  (void)L;
+  if (lf->extraline) {
+    lf->extraline = 0;
+    *size = 1;
+    return "\n";
+  }
+  if (feof(lf->f)) return NULL;
+  *size = fread(lf->buff, 1, sizeof(lf->buff), lf->f);
+  return (*size > 0) ? lf->buff : NULL;
+}
+
+
+static int errfile (lua_State *L, const char *what, int fnameindex) {
+  const char *serr = strerror(errno);
+  const char *filename = lua_tostring(L, fnameindex) + 1;
+  lua_pushfstring(L, "cannot %s %s: %s", what, filename, serr);
+  lua_remove(L, fnameindex);
+  return LUA_ERRFILE;
+}
+
+
+static int loadfile (lua_State *L, const char *filename) {
+  LoadF lf;
+  int status, readstatus;
+  int c;
+  int fnameindex = lua_gettop(L) + 1;  /* index of filename on the stack */
+
+  const char *basename = strrchr(filename, '/');
+  if (basename == NULL) {
+    basename = filename;
+  } else {
+    basename++;
+  }
+
+  lf.extraline = 0;
+  lua_pushfstring(L, "@%s", basename);
+  lf.f = fopen(filename, "r");
+  if (lf.f == NULL) return errfile(L, "open", fnameindex);
+  c = getc(lf.f);
+  if (c == '#') {  /* Unix exec. file? */
+    lf.extraline = 1;
+    while ((c = getc(lf.f)) != EOF && c != '\n') ;  /* skip first line */
+    if (c == '\n') c = getc(lf.f);
+  }
+  if (c == LUA_SIGNATURE[0]) {  /* binary file? */
+    lf.f = freopen(filename, "rb", lf.f);  /* reopen in binary mode */
+    if (lf.f == NULL) return errfile(L, "reopen", fnameindex);
+    /* skip eventual `#!...' */
+   while ((c = getc(lf.f)) != EOF && c != LUA_SIGNATURE[0]) ;
+    lf.extraline = 0;
+  }
+  ungetc(c, lf.f);
+  status = lua_load(L, getF, &lf, lua_tostring(L, -1));
+  readstatus = ferror(lf.f);
+  fclose(lf.f);  /* close file (even in case of errors) */
+  if (readstatus) {
+    lua_settop(L, fnameindex);  /* ignore results from `lua_load' */
+    return errfile(L, "read", fnameindex);
+  }
+  lua_remove(L, fnameindex);
+  return status;
+}
 
 static int import(lua_State *L) {
     check_nargs(L, 1);
@@ -1216,7 +1294,7 @@ static int import(lua_State *L) {
     }
     const char *path;
     path = resource_path(module, ".lua");
-    int r = luaL_loadfile(g_L, path);
+    int r = loadfile(g_L, path);
     delete[] path;
     if (r != 0) {
         const char *msg = lua_tostring(g_L, -1);
@@ -1350,7 +1428,7 @@ void ltLuaSetup(const char *file) {
     luaL_register(g_L, "lt", ltlib);
     lua_gc(g_L, LUA_GCRESTART, 0);
     if (ltFileExists(g_main_file)) {
-        check_status(luaL_loadfile(g_L, g_main_file));
+        check_status(loadfile(g_L, g_main_file));
         if (!g_suspended) {
             check_status(lua_pcall(g_L, 0, 0, 0));
         }
