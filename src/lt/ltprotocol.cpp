@@ -9,6 +9,8 @@
 #include "ltlua.h"
 #include "ltutil.h"
 
+#define MAX_BASENAME_LEN 512
+
 enum LTCommandOpcode {
     LT_CMD_OP_LOG = 'L',
     LT_CMD_OP_UPDATEFILE = 'U',
@@ -65,8 +67,6 @@ void ltClientInit() {
     }
 }
 
-#define MAX_RETRIES 100
-
 void ltClientStep() {
     static int retry_count = 0;
     int len;
@@ -99,17 +99,13 @@ void ltClientStep() {
         }
     }
     if (client_connection->isError()) {
-        if (retry_count < MAX_RETRIES) {
-            fprintf(stderr, "Client connection error: %s\n", client_connection->errmsg);
-            retry_count++;
-            fprintf(stderr, "Retrying...\n");
-            client_connection->closeClient();
-            delete client_connection;
-            client_connection = NULL;
-            ltClientInit();
-        } else {
-            fprintf(stderr, "Too many client errors.  Giving up.\n");
-        }
+        fprintf(stderr, "Client connection error: %s\n", client_connection->errmsg);
+        retry_count++;
+        fprintf(stderr, "Retrying...\n");
+        client_connection->closeClient();
+        delete client_connection;
+        client_connection = NULL;
+        ltClientInit();
     }
 }
 
@@ -224,17 +220,13 @@ void ltServerStep() {
         }
     }
     if (server_connection->isError()) {
-        if (retry_count < MAX_RETRIES) {
-            fprintf(stderr, "Server connection error: %s\n", server_connection->errmsg);
-            retry_count++;
-            fprintf(stderr, "Retrying...\n");
-            server_connection->closeServer();
-            delete server_connection;
-            server_connection = NULL;
-            ltServerInit();
-        } else {
-            fprintf(stderr, "Too many server errors.  Giving up.\n");
-        }
+        fprintf(stderr, "Server connection error: %s\n", server_connection->errmsg);
+        retry_count++;
+        fprintf(stderr, "Retrying...\n");
+        server_connection->closeServer();
+        delete server_connection;
+        server_connection = NULL;
+        ltServerInit();
     }
 }
 
@@ -269,7 +261,14 @@ void ltServerUpdateFile(const char *file) {
             return;
         }
         fclose(f);
-        LTCommandUpdateFile *cmd = new LTCommandUpdateFile(file, buf, size);
+        // Only send the base file name to the client.
+        const char *basename = strrchr(file, '/');
+        if (basename == NULL) {
+            basename = file;
+        } else {
+            basename++;
+        }
+        LTCommandUpdateFile *cmd = new LTCommandUpdateFile(basename, buf, size);
         server_command_queue.push_back(cmd);
         delete[] buf;
     } else {
@@ -281,6 +280,14 @@ void ltServerUpdateFile(const char *file) {
 void ltServerReset() {
     LTCommandReset *cmd = new LTCommandReset();
     server_command_queue.push_back(cmd);
+}
+
+const char* ltServerStateStr() {
+    if (server_connection != NULL) {
+        return server_connection->stateStr();
+    } else {
+        return "Uninitialized";
+    }
 }
 
 //------------------------------------------------

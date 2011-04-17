@@ -356,12 +356,12 @@ void LTServerConnection::closeServer() {
 
 const char* LTServerConnection::stateStr() {
     switch (state) {
-        case LT_SERVER_STATE_INITIALIZED: return "initialized";
-        case LT_SERVER_STATE_WAITING_FOR_CLIENT_BROADCAST: return "waiting for broadcast";
-        case LT_SERVER_STATE_CONNECTING_TO_CLIENT: return "connecting to client";
-        case LT_SERVER_STATE_READY: return "ready";
-        case LT_SERVER_STATE_ERROR: return "error";
-        case LT_SERVER_STATE_CLOSED: return "closed";
+        case LT_SERVER_STATE_INITIALIZED: return "Initialized";
+        case LT_SERVER_STATE_WAITING_FOR_CLIENT_BROADCAST: return "Waiting for broadcast";
+        case LT_SERVER_STATE_CONNECTING_TO_CLIENT: return "Connecting to client";
+        case LT_SERVER_STATE_READY: return "Ready";
+        case LT_SERVER_STATE_ERROR: return "Error";
+        case LT_SERVER_STATE_CLOSED: return "Closed";
     }
     return "unknown";
 }
