@@ -1,4 +1,3 @@
-# lotech lua library
 import "ltutil"
 import "ltrefs"
 import "lttween"
