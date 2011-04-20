@@ -218,7 +218,7 @@ static int receive_msg(int sock, char **msg, int *n, char **errmsg) {
             }
         }
     }
-    checksum("received", *msg, len);
+    checksum("received", *msg, n);
     return 1;
 }
 
