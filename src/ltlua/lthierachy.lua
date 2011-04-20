@@ -95,6 +95,14 @@ lt.classes = {
         }
     },
 
+    -- Audio
+    AudioBuffer = {
+        super = "Object",
+        methods = {
+            Play            = lt.PlaySoundOnce,
+        }
+    },
+
     -- Physics
     World = {
         super = "Object",

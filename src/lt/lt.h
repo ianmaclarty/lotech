@@ -20,5 +20,6 @@
 #include "lttime.h"
 #include "lttween.h"
 #include "ltutil.h"
+#include "ltaudio.h"
 
 #endif

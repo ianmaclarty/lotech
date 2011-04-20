@@ -1,0 +1,33 @@
+/* Copyright (C) 2010-2011 Ian MacLarty */
+#ifndef LTAUDIO_H
+#define LTAUDIO_H
+
+#include <stdlib.h>
+#include <OpenAL/al.h>
+#include <OpenAL/alc.h>
+
+#include "ltcommon.h"
+
+void ltAudioInit();
+void ltAudioTeardown();
+
+struct LTAudioBuffer : LTObject {
+    ALuint buffer_id;
+    char *name;
+
+    // name is copied.
+    LTAudioBuffer(ALuint buffer_id, const char *name);
+    virtual ~LTAudioBuffer();
+
+    // Create a new source, play it, and delete the source.
+    // Requires ltAudioGC() to be called after audio has finished playing.
+    void play(LTfloat pitch = 1.0f, LTfloat gain = 1.0f);
+};
+
+// name is copied.
+LTAudioBuffer *ltReadAudio(const char *path, const char *name);
+
+// Collect temporary sources created for oneoff buffer playing.
+void ltAudioGC();
+
+#endif

@@ -10,6 +10,7 @@ extern "C" {
 }
 
 #include "Box2D/Box2D.h"
+#include "ltaudio.h"
 #include "lt3d.h"
 #include "ltgraphics.h"
 #include "ltharness.h"
@@ -242,6 +243,10 @@ static const char *image_path(const char *name) {
     #else
         return resource_path(name, ".png");
     #endif
+}
+
+static const char *sound_path(const char *name) {
+    return resource_path(name, ".wav");
 }
 
 /************************* Graphics **************************/
@@ -870,6 +875,57 @@ static int lt_LoadImages(lua_State *L) {
     return 1;
 }
 
+/************************* Audio **************************/
+
+static int lt_LoadSounds(lua_State *L) {
+    // Load sounds in 1st argument (an array) and return a table
+    // indexed by sound name.
+    int num_args = check_nargs(L, 1);
+    lua_newtable(L); // The table to be returned.
+    int i = 1;
+    while (true) {
+        lua_pushinteger(L, i);
+        lua_gettable(L, 1);
+        // The top of the stack now contains the ith entry of the array argument.
+        if (lua_isnil(L, -1)) {
+            // We've reached the end of the array.
+            lua_pop(L, 1);
+            break;
+        }
+        const char* name = lua_tostring(L, -1);
+        lua_pop(L, 1);
+        // The top of the stack now contains the table to be returned.
+        if (name == NULL) {
+            return luaL_error(L, "Expecting an array of strings.");
+        }
+        const char *path = sound_path(name); 
+        LTAudioBuffer *buf = ltReadAudio(path, name);
+        delete[] path;
+        if (buf != NULL) {
+            // If buf is NULL ltReadAudio would have already logged an error.
+            push_wrap(L, buf);
+            lua_setfield(L, -2, name);
+        }
+        i++;
+    }
+    return 1;
+}
+
+static int lt_PlaySoundOnce(lua_State *L) {
+    int num_args = check_nargs(L, 1);
+    LTfloat pitch = 1.0f;
+    LTfloat gain = 1.0f;
+    if (num_args > 1) {
+        pitch = luaL_checknumber(L, 2);
+    }
+    if (num_args > 2) {
+        gain = luaL_checknumber(L, 3);
+    }
+    LTAudioBuffer *buf = (LTAudioBuffer*)get_object(L, 1, LT_TYPE_AUDIOBUFFER);
+    buf->play(pitch, gain);
+    return 0;
+}
+
 /************************* Box2D **************************/
 
 static int lt_FixtureContainsPoint(lua_State *L) {
@@ -1359,6 +1415,9 @@ static const luaL_Reg ltlib[] = {
 
     {"LoadImages",              lt_LoadImages},
 
+    {"LoadSounds",              lt_LoadSounds},
+    {"PlaySoundOnce",           lt_PlaySoundOnce},
+    
     {"World",                   lt_World},
     {"FixtureContainsPoint",    lt_FixtureContainsPoint},
     {"DestroyFixture",          lt_DestroyFixture},
@@ -1409,6 +1468,7 @@ static void call_lt_func(const char *func) {
 }
 
 void ltLuaSetup(const char *file) {
+    ltAudioInit();
     if (g_main_file != NULL) {
         delete[] g_main_file;
     }
@@ -1440,6 +1500,7 @@ void ltLuaTeardown() {
         lua_close(g_L);
         g_L = NULL;
     }
+    ltAudioTeardown();
 }
 
 void ltLuaReset() {
@@ -1454,6 +1515,7 @@ void ltLuaAdvance() {
     if (g_L != NULL && !g_suspended) {
         call_lt_func("Advance");
     }
+    ltAudioGC();
 }
 
 void ltLuaRender() {

@@ -34,6 +34,7 @@ const LTTypeInfo types[] = {
     {"Pitch",       LT_TYPE_WRAP},
     {"HitFilter",   LT_TYPE_WRAP},
     {"Wrap",        LT_TYPE_SCENENODE},
+    {"AudioBuffer", LT_TYPE_OBJECT},
 };
 
 ct_assert(sizeof(types) == (int)LT_NUM_TYPES * sizeof(LTTypeInfo));

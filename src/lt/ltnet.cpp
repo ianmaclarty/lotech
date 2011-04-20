@@ -7,6 +7,14 @@
 #define MAGIC_WORD "lotech"
 #define MAXBUFLEN 64
 
+static void checksum(const char *msg, const char *packet, int len) {
+    int sum = 0;
+    for (int i = 0; i < len; i++) {
+        sum += packet[i];
+    }
+    fprintf(stderr, "%s checksum = %d\n", msg, sum);
+}
+
 static void copy_string(char **dest, const char *src) {
     *dest = new char[strlen(src) + 1];
     strcpy(*dest, src);
@@ -210,6 +218,7 @@ static int receive_msg(int sock, char **msg, int *n, char **errmsg) {
             }
         }
     }
+    checksum("received", *msg, len);
     return 1;
 }
 
@@ -245,6 +254,7 @@ static int send_msg(int sock, const char *msg, int n, char **errmsg) {
         copy_errmsg(errmsg);
         return -1;
     }
+    checksum("send", msg, len);
     if (write_all(sock, msg, n) != 0) {
         copy_errmsg(errmsg);
         return -1;
