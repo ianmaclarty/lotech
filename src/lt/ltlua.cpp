@@ -877,7 +877,7 @@ static int lt_LoadImages(lua_State *L) {
 
 /************************* Audio **************************/
 
-static int lt_LoadSounds(lua_State *L) {
+static int lt_LoadSamples(lua_State *L) {
     // Load sounds in 1st argument (an array) and return a table
     // indexed by sound name.
     int num_args = check_nargs(L, 1);
@@ -899,11 +899,11 @@ static int lt_LoadSounds(lua_State *L) {
             return luaL_error(L, "Expecting an array of strings.");
         }
         const char *path = sound_path(name); 
-        LTAudioBuffer *buf = ltReadAudio(path, name);
+        LTAudioSample *sample = ltReadAudioSample(path, name);
         delete[] path;
-        if (buf != NULL) {
+        if (sample != NULL) {
             // If buf is NULL ltReadAudio would have already logged an error.
-            push_wrap(L, buf);
+            push_wrap(L, sample);
             lua_setfield(L, -2, name);
         }
         i++;
@@ -911,7 +911,7 @@ static int lt_LoadSounds(lua_State *L) {
     return 1;
 }
 
-static int lt_PlaySoundOnce(lua_State *L) {
+static int lt_PlaySampleOnce(lua_State *L) {
     int num_args = check_nargs(L, 1);
     LTfloat pitch = 1.0f;
     LTfloat gain = 1.0f;
@@ -921,7 +921,7 @@ static int lt_PlaySoundOnce(lua_State *L) {
     if (num_args > 2) {
         gain = luaL_checknumber(L, 3);
     }
-    LTAudioBuffer *buf = (LTAudioBuffer*)get_object(L, 1, LT_TYPE_AUDIOBUFFER);
+    LTAudioSample *buf = (LTAudioSample*)get_object(L, 1, LT_TYPE_AUDIOSAMPLE);
     buf->play(pitch, gain);
     return 0;
 }
@@ -1415,8 +1415,8 @@ static const luaL_Reg ltlib[] = {
 
     {"LoadImages",              lt_LoadImages},
 
-    {"LoadSounds",              lt_LoadSounds},
-    {"PlaySoundOnce",           lt_PlaySoundOnce},
+    {"LoadSamples",             lt_LoadSamples},
+    {"PlaySampleOnce",          lt_PlaySampleOnce},
     
     {"World",                   lt_World},
     {"FixtureContainsPoint",    lt_FixtureContainsPoint},

@@ -11,13 +11,13 @@
 void ltAudioInit();
 void ltAudioTeardown();
 
-struct LTAudioBuffer : LTObject {
+struct LTAudioSample : LTObject {
     ALuint buffer_id;
     char *name;
 
     // name is copied.
-    LTAudioBuffer(ALuint buffer_id, const char *name);
-    virtual ~LTAudioBuffer();
+    LTAudioSample(ALuint buffer_id, const char *name);
+    virtual ~LTAudioSample();
 
     // Create a new source, play it, and delete the source.
     // Requires ltAudioGC() to be called after audio has finished playing.
@@ -25,7 +25,7 @@ struct LTAudioBuffer : LTObject {
 };
 
 // name is copied.
-LTAudioBuffer *ltReadAudio(const char *path, const char *name);
+LTAudioSample *ltReadAudioSample(const char *path, const char *name);
 
 // Collect temporary sources created for oneoff buffer playing.
 void ltAudioGC();

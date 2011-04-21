@@ -96,10 +96,10 @@ lt.classes = {
     },
 
     -- Audio
-    AudioBuffer = {
+    Sample = {
         super = "Object",
         methods = {
-            Play            = lt.PlaySoundOnce,
+            Play            = lt.PlaySampleOnce,
         }
     },
 

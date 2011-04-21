@@ -45,18 +45,18 @@ void ltAudioTeardown() {
     }
 }
 
-LTAudioBuffer::LTAudioBuffer(ALuint buf_id, const char *name) : LTObject(LT_TYPE_AUDIOBUFFER) {
-    LTAudioBuffer::name = new char[strlen(name) + 1];
-    strcpy(LTAudioBuffer::name, name);
-    LTAudioBuffer::buffer_id = buf_id;
+LTAudioSample::LTAudioSample(ALuint buf_id, const char *name) : LTObject(LT_TYPE_AUDIOSAMPLE) {
+    LTAudioSample::name = new char[strlen(name) + 1];
+    strcpy(LTAudioSample::name, name);
+    LTAudioSample::buffer_id = buf_id;
 }
 
-LTAudioBuffer::~LTAudioBuffer() {
+LTAudioSample::~LTAudioSample() {
     alDeleteBuffers(1, &buffer_id);
     delete[] name;
 }
 
-void LTAudioBuffer::play(LTfloat pitch, LTfloat gain) {
+void LTAudioSample::play(LTfloat pitch, LTfloat gain) {
     if (!mute) {
         ALuint source_id;
         alGenSources(1, &source_id);
@@ -96,7 +96,7 @@ static int read_2_byte_little_endian_int(FILE *file) {
     return val;
 }
 
-LTAudioBuffer *ltReadAudio(const char *path, const char *name) {
+LTAudioSample *ltReadAudioSample(const char *path, const char *name) {
     char chunkid[5];
     memset(chunkid, 0, 5);
 
@@ -218,6 +218,6 @@ LTAudioBuffer *ltReadAudio(const char *path, const char *name) {
         return NULL;
     }
     
-    LTAudioBuffer *buf = new LTAudioBuffer(buf_id, name);
+    LTAudioSample *buf = new LTAudioSample(buf_id, name);
     return buf;
 }
