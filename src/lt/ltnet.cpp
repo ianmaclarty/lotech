@@ -7,12 +7,30 @@
 #define MAGIC_WORD "lotech"
 #define MAXBUFLEN 64
 
+/*
+ * A (blocking) TCP socket is set up between the client and server as follows:
+ * - The client broadcasts a udp packet on port PORT and then
+ *   listens for TCP connections on the same port with a non-blocking socket.
+ *   It does this repeatedly, everytime LTClientConnection::connectStep is
+ *   called.
+ * - The server listens for udp broadcasts on port PORT.  If it receives
+ *   one, it tries to open a (blocking) TCP connection to the IP address
+ *   the udp packet came from on PORT.
+ * - The client accepts the TCP connection initiated by the server and
+ *   creates a new (blocking) TCP socket for it.
+ * - The new (blocking) TCP connection is then used for sending and receiving
+ *   by the client and server.  Sending always blocks until the message
+ *   is completely sent.  Receiving uses select to check if there is anything
+ *   to be read on the socket, and if there is the whole message is read
+ *   in one go.
+ */
+
 static void checksum(const char *msg, const char *packet, int len) {
     int sum = 0;
     for (int i = 0; i < len; i++) {
         sum += packet[i];
     }
-    fprintf(stderr, "%s checksum = %d\n", msg, sum);
+    fprintf(stderr, "%s: len = %d, checksum = %d\n", msg, len, sum);
 }
 
 static void copy_string(char **dest, const char *src) {
@@ -43,15 +61,20 @@ static int make_nonblocking(int sock) {
     return fcntl(sock, F_SETFL, flags | O_NONBLOCK);
 }
 
+static int make_blocking(int sock) {
+    long flags = fcntl(sock, F_GETFL, 0);
+    if (flags < 0) {
+        return -1;
+    }
+    return fcntl(sock, F_SETFL, flags & ~O_NONBLOCK);
+}
+
 static int tcp_socket() {
     int sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock < 0) {
         return -1;
     }
     if (enable_reuse(sock) != 0) {
-        return -1;
-    }
-    if (make_nonblocking(sock) != 0) {
         return -1;
     }
     return sock;
@@ -138,17 +161,31 @@ static int server_start_connect_client(sockaddr_in *their_addr) {
 }
 
 /**
- * Return 1 if the connection completed, 0 if it is still
- * connecting, and -1 if there was an error (errno is set).
+ * Return 1 if the socket is ready for writing, 0 if it isn't
+ * and -1 if there was an error (errno is set).
  */
-static int server_connection_is_complete(int sock) {
+static int socket_can_write(int sock) {
     fd_set writefds;
     struct timeval tv;
-    tv.tv_sec = 1;
-    tv.tv_usec = 1;
+    tv.tv_sec = 1;  //  XXX Should be 0?
+    tv.tv_usec = 1; //  XXX Should be 0?
     FD_ZERO(&writefds);
     FD_SET(sock, &writefds);
     return select(sock + 1, NULL, &writefds, NULL, &tv);
+}
+
+/**
+ * Return 1 if the socket is ready for reading, 0 if it isn't
+ * and -1 if there was an error (errno is set).
+ */
+static int socket_can_read(int sock) {
+    fd_set readfds;
+    struct timeval tv;
+    tv.tv_sec = 0;
+    tv.tv_usec = 0;
+    FD_ZERO(&readfds);
+    FD_SET(sock, &readfds);
+    return select(sock + 1, &readfds, NULL, NULL, &tv);
 }
 
 static void server_error_state(LTServerConnection *state, const char *msg) {
@@ -176,70 +213,43 @@ static int receive_msg(int sock, char **msg, int *n, char **errmsg) {
     *n = 0;
     LTuint32 len;
     int r;
-    r = recvfrom(sock, &len, 4, 0, NULL, NULL);
-    if (r < 0) {
-        if (errno == EAGAIN) {
-            return 0;
-        } else {
+    r = socket_can_read(sock);
+    if (r > 0) {
+        r = read(sock, &len, 4);
+        if (r < 0) {
             copy_errmsg(errmsg);
             return -1;
         }
-    }
-    if (r == 0) {
-        copy_string(errmsg, "Connection reset by peer.");
-        return -1;
-    }
-    if (r != 4) {
-        copy_string(errmsg, "Unable to read message length.");
-        return -1;
-    }
-    *msg = new char[len];
-    *n = (int)len;
-    char *ptr = *msg;
-    while (true) {
-        r = recvfrom(sock, ptr, len, MSG_WAITALL, NULL, NULL);
-        if (r < 0) {
-            if (errno == EAGAIN) {
-                continue;
-            } else {
+        if (r == 0) {
+            copy_string(errmsg, "Connection reset by peer.");
+            return -1;
+        }
+        if (r != 4) {
+            copy_string(errmsg, "Unable to read message length.");
+            return -1;
+        }
+        *msg = new char[len];
+        *n = (int)len;
+        char *ptr = *msg;
+        while (len > 0) {
+            // read doesn't have to read all the bytes before returning.
+            r = read(sock, ptr, len);
+            if (r < 0) {
                 copy_errmsg(errmsg);
                 delete[] *msg;
                 return -1;
-            }
-        } else if (r == 0) {
-            copy_string(errmsg, "Message too short.");
-            delete[] *msg;
-            return -1;
-        } else {
+            } 
             len -= r;
             ptr += r;
-            if (len <= 0) {
-                break;
-            }
         }
+        //checksum("received", *msg, *n);
+        return 1;
+    } else if (r < 0) {
+        copy_errmsg(errmsg);
+        return -1;
+    } else {
+        return 0;
     }
-    checksum("received", *msg, n);
-    return 1;
-}
-
-/**
- * Write all the bytes in the buffer to the socket.
- * Returns 0 on success and -1 on error (and sets errno).
- */
-static int write_all(int sock, const char *buf, int n) {
-    int r;
-    while (n > 0) {
-        r = write(sock, buf, n);
-        if (r < 0) {
-            if (errno == EAGAIN) {
-                continue;
-            } else {
-                return -1;
-            }
-        }
-        n -= r;
-    }
-    return 0;
 }
 
 /**
@@ -250,15 +260,25 @@ static int write_all(int sock, const char *buf, int n) {
 static int send_msg(int sock, const char *msg, int n, char **errmsg) {
     *errmsg = NULL;
     LTuint32 len = (LTuint32)n;
-    if (write_all(sock, (const char *)&len, 4) != 0) {
+    int r = write(sock, (const char *)&len, 4);
+    if (r < 0) {
         copy_errmsg(errmsg);
         return -1;
     }
-    checksum("send", msg, len);
-    if (write_all(sock, msg, n) != 0) {
+    if (r != 4) {
+        copy_string(errmsg, "Unable to send length.");
+        return -1;
+    }
+    r = write(sock, msg, n);
+    if (r < 0) {
         copy_errmsg(errmsg);
         return -1;
     }
+    if (r != n) {
+        copy_string(errmsg, "Unable to send entire message.");
+        return -1;
+    }
+    //checksum("send", msg, len);
     return 0;
 }
 
@@ -301,7 +321,7 @@ void LTServerConnection::connectStep() {
             }
             return;
         case LT_SERVER_STATE_CONNECTING_TO_CLIENT:
-            rv = server_connection_is_complete(sock);
+            rv = socket_can_write(sock);
             if (rv < 0) {
                 server_error_state(this, NULL);
                 return;
@@ -429,6 +449,10 @@ static int client_start_listening() {
     if (listen(lsock, 1) != 0) {
         return -1;
     }
+    // Make non-blocking so accept doesn't block.
+    if (make_nonblocking(lsock) != 0) {
+        return -1;
+    }
     return lsock;
 }
 
@@ -441,7 +465,8 @@ static int client_start_listening() {
 static int client_try_accept(int lsock) {
     int fd = accept(lsock, NULL, NULL);
     if (fd > 0) {
-        if (make_nonblocking(fd) != 0) {
+        if (make_blocking(fd) != 0) {
+            close(fd);
             return -1;
         }
         return fd;
