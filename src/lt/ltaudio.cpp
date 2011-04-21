@@ -58,42 +58,20 @@ LTAudioBuffer::~LTAudioBuffer() {
 
 void LTAudioBuffer::play(LTfloat pitch, LTfloat gain) {
     if (!mute) {
-        if (alIsBuffer(buffer_id)) {
-            ltLog("buf valid %d", buffer_id);
-        } else {
-            ltLog("buf invalid %d", buffer_id);
-        }
         ALuint source_id;
         alGenSources(1, &source_id);
-        if (alIsSource(source_id)) {
-            ltLog("gen src valid %d", source_id);
-        } else {
-            ltLog("gen src invalid %d", source_id);
-        }
         alSourcei(source_id, AL_BUFFER, buffer_id);
-        if (alIsSource(source_id)) {
-            ltLog("b src valid %d", source_id);
-        } else {
-            ltLog("b src invalid %d", source_id);
-        }
         alSourcef(source_id, AL_PITCH, pitch);
         alSourcef(source_id, AL_GAIN, gain);
         alSourcei(source_id, AL_LOOPING, AL_FALSE);
         alSourcePlay(source_id);
         temp_sources.push_back(source_id);
-        ltLog("pushed %d", source_id);
     }
 }
 
 static bool delete_source_if_finished(ALuint source_id) {
-    if (alIsSource(source_id)) {
-        ltLog("src valid %d", source_id);
-    } else {
-        ltLog("src invalid %d", source_id);
-    }
     ALint state;
     alGetSourcei(source_id, AL_SOURCE_STATE, &state);
-    ltLog("state = %d %d %d %d %d", state, AL_INITIAL, AL_PLAYING, AL_PAUSED, AL_STOPPED);
     if (!mute && state == AL_PLAYING) {
         return false;
     } else {
