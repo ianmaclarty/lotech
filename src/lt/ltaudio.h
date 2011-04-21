@@ -24,6 +24,17 @@ struct LTAudioSample : LTObject {
     void play(LTfloat pitch = 1.0f, LTfloat gain = 1.0f);
 };
 
+struct LTTrack : LTObject {
+    ALuint source_id;
+
+    LTTrack();
+    virtual ~LTTrack();
+
+    void queueSample(LTAudioSample *sample);
+    void setLoop(bool loop);
+    void play();
+};
+
 // name is copied.
 LTAudioSample *ltReadAudioSample(const char *path, const char *name);
 

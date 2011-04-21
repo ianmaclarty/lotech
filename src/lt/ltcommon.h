@@ -63,6 +63,7 @@ enum LTType {
     LT_TYPE_HITFILTER,
     LT_TYPE_WRAP,
     LT_TYPE_AUDIOSAMPLE,
+    LT_TYPE_TRACK,
     LT_NUM_TYPES
 };
 

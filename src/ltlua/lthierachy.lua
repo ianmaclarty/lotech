@@ -102,6 +102,14 @@ lt.classes = {
             Play            = lt.PlaySampleOnce,
         }
     },
+    Track = {
+        super = "Object",
+        methods = {
+            Play            = lt.PlayTrack,
+            Queue           = lt.QueueSampleInTrack,
+            SetLoop         = lt.SetTrackLoop,
+        }
+    },
 
     -- Physics
     World = {

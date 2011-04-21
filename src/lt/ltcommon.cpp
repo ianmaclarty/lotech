@@ -35,6 +35,7 @@ const LTTypeInfo types[] = {
     {"HitFilter",   LT_TYPE_WRAP},
     {"Wrap",        LT_TYPE_SCENENODE},
     {"Sample",      LT_TYPE_OBJECT},
+    {"Track",       LT_TYPE_OBJECT},
 };
 
 ct_assert(sizeof(types) == (int)LT_NUM_TYPES * sizeof(LTTypeInfo));

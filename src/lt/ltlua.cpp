@@ -902,7 +902,7 @@ static int lt_LoadSamples(lua_State *L) {
         LTAudioSample *sample = ltReadAudioSample(path, name);
         delete[] path;
         if (sample != NULL) {
-            // If buf is NULL ltReadAudio would have already logged an error.
+            // If sample is NULL ltReadAudioSample would have already logged an error.
             push_wrap(L, sample);
             lua_setfield(L, -2, name);
         }
@@ -921,8 +921,38 @@ static int lt_PlaySampleOnce(lua_State *L) {
     if (num_args > 2) {
         gain = luaL_checknumber(L, 3);
     }
-    LTAudioSample *buf = (LTAudioSample*)get_object(L, 1, LT_TYPE_AUDIOSAMPLE);
-    buf->play(pitch, gain);
+    LTAudioSample *sample = (LTAudioSample*)get_object(L, 1, LT_TYPE_AUDIOSAMPLE);
+    sample->play(pitch, gain);
+    return 0;
+}
+
+static int lt_PlayTrack(lua_State *L) {
+    int num_args = check_nargs(L, 1);
+    LTTrack *track = (LTTrack*)get_object(L, 1, LT_TYPE_TRACK);
+    track->play();
+    return 0;
+}
+
+static int lt_QueueSampleInTrack(lua_State *L) {
+    int num_args = check_nargs(L, 2);
+    LTTrack *track = (LTTrack*)get_object(L, 1, LT_TYPE_TRACK);
+    LTAudioSample *sample = (LTAudioSample*)get_object(L, 2, LT_TYPE_AUDIOSAMPLE);
+    track->queueSample(sample);
+    add_ref(L, 1, 2); // Add ref from track to sample.
+    return 0;
+}
+
+static int lt_Track(lua_State *L) {
+    LTTrack *track = new LTTrack();
+    push_wrap(L, track);
+    return 1;
+}
+
+static int lt_SetTrackLoop(lua_State *L) {
+    int num_args = check_nargs(L, 2);
+    LTTrack *track = (LTTrack*)get_object(L, 1, LT_TYPE_TRACK);
+    bool loop = lua_toboolean(L, 2);
+    track->setLoop(loop);
     return 0;
 }
 
@@ -1416,7 +1446,11 @@ static const luaL_Reg ltlib[] = {
     {"LoadImages",              lt_LoadImages},
 
     {"LoadSamples",             lt_LoadSamples},
+    {"Track",                   lt_Track},
     {"PlaySampleOnce",          lt_PlaySampleOnce},
+    {"PlayTrack",               lt_PlayTrack},
+    {"QueueSampleInTrack",      lt_QueueSampleInTrack},
+    {"SetTrackLoop",            lt_SetTrackLoop},
     
     {"World",                   lt_World},
     {"FixtureContainsPoint",    lt_FixtureContainsPoint},

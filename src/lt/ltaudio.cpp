@@ -69,6 +69,29 @@ void LTAudioSample::play(LTfloat pitch, LTfloat gain) {
     }
 }
 
+LTTrack::LTTrack() : LTObject(LT_TYPE_TRACK) {
+    alGenSources(1, &source_id);
+    alSourcef(source_id, AL_PITCH, 1.0f);
+    alSourcef(source_id, AL_GAIN, 1.0f);
+    alSourcei(source_id, AL_LOOPING, AL_FALSE);
+}
+
+LTTrack::~LTTrack() {
+    alDeleteSources(1, &source_id);
+}
+
+void LTTrack::queueSample(LTAudioSample *sample) {
+    alSourceQueueBuffers(source_id, 1, &sample->buffer_id);
+}
+
+void LTTrack::play() {
+    alSourcePlay(source_id);
+}
+
+void LTTrack::setLoop(bool loop) {
+    alSourcei(source_id, AL_LOOPING, loop ? AL_TRUE : AL_FALSE);
+}
+
 static bool delete_source_if_finished(ALuint source_id) {
     ALint state;
     alGetSourcei(source_id, AL_SOURCE_STATE, &state);
