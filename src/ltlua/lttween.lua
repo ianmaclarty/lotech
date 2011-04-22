@@ -12,20 +12,25 @@ function lt.AdvanceTweens(tweens, dt)
     local actions = {}
     for table, fields in pairs(tweens) do
         for field, tween in pairs(fields) do
-            local t = tween.t
-            if t < 1 then
-                local v0 = tween.v0
-                local v = v0 + (tween.v - v0) * tween.ease(t)
-                tween.t = t + dt / tween.period
-                table[field] = v
-            else
-                table[field] = tween.v
-                if tween.done then
-                    actions[tween.done] = true
-                end
-                fields[field] = nil
-                if next(fields) == nil then
-                    tweens[table] = nil
+            local delay = tween.delay
+            if delay > 0 then
+                tween.delay = delay - dt
+            else 
+                local t = tween.t
+                if t < 1 then
+                    local v0 = tween.v0
+                    local v = v0 + (tween.v - v0) * tween.ease(t)
+                    tween.t = t + dt / tween.period
+                    table[field] = v
+                else
+                    table[field] = tween.v
+                    if tween.done then
+                        actions[tween.done] = true
+                    end
+                    fields[field] = nil
+                    if next(fields) == nil then
+                        tweens[table] = nil
+                    end
                 end
             end
         end
@@ -35,7 +40,7 @@ function lt.AdvanceTweens(tweens, dt)
     end
 end
 
-function lt.AddTween(tweens, table, field, to, secs, ease, onDone)
+function lt.AddTween(tweens, table, field, to, secs, delay, ease, onDone)
     if ease == nil then
         ease = lt.LinearEase
     end
@@ -44,6 +49,7 @@ function lt.AddTween(tweens, table, field, to, secs, ease, onDone)
         v = to,
         t = 0,
         period = secs,
+        delay = delay,
         ease = ease,
         done = onDone
     }
@@ -182,6 +188,7 @@ function lt.Tween(node, tween_info)
     local tweens = global_tweens
     local fields = {}
     local time = 0
+    local delay = 0
     local easing = lt.LinearEase
     local action = nil
     for field, value in pairs(tween_info) do
@@ -193,12 +200,14 @@ function lt.Tween(node, tween_info)
             action = value
         elseif field == "tweens" then
             tweens = value
+        elseif field == "delay" then
+            delay = value
         else
             fields[field] = value
         end
     end
     for field, value in pairs(fields) do
-        if time == 0 then
+        if time == 0 and delay == 0 then
             -- If time == 0 don't bother adding a new tween
             if tweens[node] then
                 tweens[node][field] = nil -- delete existing tween
@@ -208,7 +217,7 @@ function lt.Tween(node, tween_info)
                 action()
             end
         else
-            lt.AddTween(tweens, node, field, value, time, easing, action)
+            lt.AddTween(tweens, node, field, value, time, delay, easing, action)
         end
         action = nil -- only attach action to one field
     end
