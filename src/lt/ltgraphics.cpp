@@ -210,8 +210,8 @@ void ltPushBlendMode(LTBlendMode mode) {
 
 void ltPopBlendMode() {
     if (!blend_mode_stack.empty()) {
-        tint_stack.pop_front();
-        if (!tint_stack.empty()) {
+        blend_mode_stack.pop_front();
+        if (!blend_mode_stack.empty()) {
             apply_blend_mode(blend_mode_stack.front());
         } else {
             apply_blend_mode(LT_BLEND_MODE_NORMAL);
