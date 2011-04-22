@@ -191,6 +191,7 @@ function lt.Tween(node, tween_info)
     local delay = 0
     local easing = lt.LinearEase
     local action = nil
+    local reverse = false
     for field, value in pairs(tween_info) do
         if field == "time" then
             time = value
@@ -202,23 +203,17 @@ function lt.Tween(node, tween_info)
             tweens = value
         elseif field == "delay" then
             delay = value
+        elseif field == "reverse" then
+            reverse = value
         else
             fields[field] = value
         end
     end
     for field, value in pairs(fields) do
-        if time == 0 and delay == 0 then
-            -- If time == 0 don't bother adding a new tween
-            if tweens[node] then
-                tweens[node][field] = nil -- delete existing tween
-            end
-            node[field] = value
-            if action then
-                action()
-            end
-        else
-            lt.AddTween(tweens, node, field, value, time, delay, easing, action)
+        if reverse then
+            node[field], value = value, node[field]
         end
+        lt.AddTween(tweens, node, field, value, time, delay, easing, action)
         action = nil -- only attach action to one field
     end
     return node
