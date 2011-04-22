@@ -92,6 +92,34 @@ void LTTrack::setLoop(bool loop) {
     alSourcei(source_id, AL_LOOPING, loop ? AL_TRUE : AL_FALSE);
 }
 
+bool LTTrack::has_field(const char *field_name) {
+    return strcmp(field_name, "gain") == 0 || strcmp(field_name, "pitch") == 0;
+}
+
+LTfloat LTTrack::get_field(const char *field_name) {
+    LTfloat val;
+    if (strcmp(field_name, "gain") == 0) {
+        alGetSourcef(source_id, AL_GAIN, &val);
+        return val;
+    }
+    if (strcmp(field_name, "pitch") == 0) {
+        alGetSourcef(source_id, AL_PITCH, &val);
+        return val;
+    }
+    return 0.0f;
+}
+
+void LTTrack::set_field(const char *field_name, LTfloat value) {
+    if (strcmp(field_name, "gain") == 0) {
+        alSourcef(source_id, AL_GAIN, value);
+        return;
+    }
+    if (strcmp(field_name, "pitch") == 0) {
+        alSourcef(source_id, AL_PITCH, value);
+        return;
+    }
+}
+
 static bool delete_source_if_finished(ALuint source_id) {
     ALint state;
     alGetSourcei(source_id, AL_SOURCE_STATE, &state);

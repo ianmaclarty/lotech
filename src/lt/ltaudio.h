@@ -33,6 +33,10 @@ struct LTTrack : LTObject {
     void queueSample(LTAudioSample *sample);
     void setLoop(bool loop);
     void play();
+
+    virtual bool has_field(const char *field_name);
+    virtual LTfloat get_field(const char *field_name);
+    virtual void set_field(const char *field_name, LTfloat value);
 };
 
 // name is copied.
