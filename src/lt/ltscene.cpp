@@ -210,10 +210,10 @@ bool LTScaleNode::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *ev
 }
 
 LTfloat* LTScaleNode::field_ptr(const char *field_name) {
-    if (strcmp(field_name, "sx") == 0) {
+    if (strcmp(field_name, "scale_x") == 0) {
         return &sx;
     }
-    if (strcmp(field_name, "sy") == 0) {
+    if (strcmp(field_name, "scale_y") == 0) {
         return &sy;
     }
     return NULL;
@@ -243,16 +243,16 @@ bool LTTintNode::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *eve
 }
 
 LTfloat* LTTintNode::field_ptr(const char *field_name) {
-    if (strcmp(field_name, "r") == 0) {
+    if (strcmp(field_name, "red") == 0) {
         return &r;
     }
-    if (strcmp(field_name, "g") == 0) {
+    if (strcmp(field_name, "green") == 0) {
         return &g;
     }
-    if (strcmp(field_name, "b") == 0) {
+    if (strcmp(field_name, "blue") == 0) {
         return &b;
     }
-    if (strcmp(field_name, "a") == 0) {
+    if (strcmp(field_name, "alpha") == 0) {
         return &a;
     }
     return NULL;
