@@ -97,19 +97,15 @@ static int lt_SetObjectField(lua_State *L) {
     LTObject *obj = get_object(L, 1, LT_TYPE_OBJECT);
     fname = luaL_checkstring(L, 2);
     val = (LTfloat)luaL_checknumber(L, 3);
-    LTfloat *f = obj->field_ptr(fname);
-    if (f != NULL) {
-        *f = val;
-    }
+    obj->set_field(fname, val);
     return 0;
 }
     
 static int lt_GetObjectField(lua_State *L) {
     LTObject *obj = get_object(L, 1, LT_TYPE_OBJECT);
     const char *fname = luaL_checkstring(L, 2);
-    LTfloat *f = obj->field_ptr(fname);
-    if (f != NULL) {
-        lua_pushnumber(L, *f);
+    if (obj->has_field(fname)) {
+        lua_pushnumber(L, obj->get_field(fname));
         return 1;
     } else {
         lua_pushnil(L);

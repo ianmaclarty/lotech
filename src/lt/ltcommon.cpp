@@ -52,6 +52,26 @@ LTObject::LTObject(LTType type) {
 LTObject::~LTObject() {
 }
 
+bool LTObject::has_field(const char *field_name) {
+    return field_ptr(field_name) != NULL;
+}
+
+LTfloat LTObject::get_field(const char *field_name) {
+    LTfloat *ptr = field_ptr(field_name);
+    if (ptr != NULL) {
+        return *ptr;
+    } else {
+        return 0.0f;
+    }
+}
+
+void LTObject::set_field(const char *field_name, LTfloat value) {
+    LTfloat *ptr = field_ptr(field_name);
+    if (ptr != NULL) {
+        *ptr = value;
+    }
+}
+
 LTfloat* LTObject::field_ptr(const char *field_name) {
     return NULL;
 }

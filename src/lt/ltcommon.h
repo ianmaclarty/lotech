@@ -77,6 +77,9 @@ struct LTObject {
     virtual ~LTObject();
 
     // For tweening and modification from lua.
+    virtual bool has_field(const char *field_name);
+    virtual LTfloat get_field(const char *field_name);
+    virtual void set_field(const char *field_name, LTfloat value);
     virtual LTfloat* field_ptr(const char *field_name);
 
     // Is this object of a certain type?
