@@ -42,7 +42,7 @@ LTAtlas::LTAtlas(LTImagePacker *packer, const char *dump_file) {
     static int atlas_num = 1;
     char atlas_name[64];
     snprintf(atlas_name, 64, "atlas%d", atlas_num++);
-    num_live_images = 0;
+    ref_count = 0;
     LTImageBuffer *buf = ltCreateAtlasImage(atlas_name, packer);
     if (dump_file != NULL) {
         ltLog("Dumping %s (%d x %d)", dump_file, buf->bb_width(), buf->bb_height());
@@ -616,33 +616,44 @@ LTImage::LTImage(LTAtlas *atls, int atlas_w, int atlas_h, LTImagePacker *packer)
     }
 
     atlas = atls;
-    atlas->num_live_images++;
+    atlas->ref_count++;
     rotated = packer->rotated;
 
     LTfloat fatlas_w = (LTfloat)atlas_w;
     LTfloat fatlas_h = (LTfloat)atlas_h;
 
-    tex_left = (LTfloat)packer->left / fatlas_w;
-    tex_bottom = (LTfloat)packer->bottom / fatlas_h;
-    tex_width = (LTfloat)packer->occupant->bb_width() / fatlas_w;
-    tex_height = (LTfloat)packer->occupant->bb_height() / fatlas_h;
+    LTfloat tex_left = (LTfloat)packer->left / fatlas_w;
+    LTfloat tex_bottom = (LTfloat)packer->bottom / fatlas_h;
+    LTfloat tex_width = (LTfloat)packer->occupant->bb_width() / fatlas_w;
+    LTfloat tex_height = (LTfloat)packer->occupant->bb_height() / fatlas_h;
 
-    bb_left = (LTfloat)packer->occupant->bb_left * pix_w;
-    bb_bottom = (LTfloat)packer->occupant->bb_bottom * pix_h;
+    LTfloat bb_left = (LTfloat)packer->occupant->bb_left * pix_w;
+    LTfloat bb_bottom = (LTfloat)packer->occupant->bb_bottom * pix_h;
     bb_width = (LTfloat)packer->occupant->bb_width() * pix_w;
     bb_height = (LTfloat)packer->occupant->bb_height() * pix_h;
-    bb_right = bb_left + bb_width;
-    bb_top = bb_bottom + bb_height;
+    LTfloat bb_right = bb_left + bb_width;
+    LTfloat bb_top = bb_bottom + bb_height;
     orig_width = (LTfloat)packer->occupant->width * pix_w;
     orig_height = (LTfloat)packer->occupant->height * pix_h;
     pixel_width = packer->occupant->width;
     pixel_height = packer->occupant->height;
 
+    LTfloat world_left = bb_left - orig_width * 0.5f;
+    LTfloat world_bottom = bb_bottom - orig_height * 0.5f;
+    LTfloat world_top = world_bottom + bb_height;
+    LTfloat world_right = world_left + bb_width;
+    world_vertices[0] = world_left;
+    world_vertices[1] = world_top;
+    world_vertices[2] = world_right;
+    world_vertices[3] = world_top;
+    world_vertices[4] = world_right;
+    world_vertices[5] = world_bottom;
+    world_vertices[6] = world_left;
+    world_vertices[7] = world_bottom;
     glGenBuffers(1, &vertbuf);
     glBindBuffer(GL_ARRAY_BUFFER, vertbuf);
-    setAnchor(LT_ANCHOR_CENTER);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 8, world_vertices, GL_STATIC_DRAW);
 
-    GLfloat tex_coords[8];
     if (rotated) {
         tex_coords[0] = tex_left + tex_height;   tex_coords[1] = tex_bottom + tex_width;
         tex_coords[2] = tex_left + tex_height;   tex_coords[3] = tex_bottom;
@@ -662,8 +673,8 @@ LTImage::LTImage(LTAtlas *atls, int atlas_w, int atlas_h, LTImagePacker *packer)
 LTImage::~LTImage() {
     glDeleteBuffers(1, &vertbuf);
     glDeleteBuffers(1, &texbuf);
-    atlas->num_live_images--;
-    if (atlas->num_live_images <= 0) {
+    atlas->ref_count--;
+    if (atlas->ref_count <= 0) {
         delete atlas;
     }
 }
@@ -685,42 +696,16 @@ LTfloat* LTImage::field_ptr(const char *field_name) {
         return &orig_height;
     }
     if (strcmp(field_name, "left") == 0) {
-        return &bb_left;
+        return &world_vertices[0];
     }
     if (strcmp(field_name, "bottom") == 0) {
-        return &bb_bottom;
+        return &world_vertices[5];
     }
     if (strcmp(field_name, "right") == 0) {
-        return &bb_right;
+        return &world_vertices[2];
     }
     if (strcmp(field_name, "top") == 0) {
-        return &bb_top;
+        return &world_vertices[1];
     }
     return NULL;
-}
-
-void LTImage::setAnchor(LTAnchor anchor) {
-    LTfloat l = 0.0f;
-    LTfloat b = 0.0f;
-    switch (anchor) {
-        case LT_ANCHOR_CENTER: {
-            l = bb_left - orig_width * 0.5f;
-            b = bb_bottom - orig_height * 0.5f;
-            break;
-        }
-        case LT_ANCHOR_BOTTOM_LEFT: {
-            l = bb_left;
-            b = bb_bottom;
-            break;
-        }
-    }
-    LTfloat t = b + bb_height;
-    LTfloat r = l + bb_width;
-    GLfloat v[] = {
-        l, t,
-        r, t,
-        r, b,
-        l, b
-    };
-    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 8, v, GL_STATIC_DRAW);
 }

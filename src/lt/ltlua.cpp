@@ -19,6 +19,8 @@ extern "C" {
 #include "ltlua.h"
 #include "ltphysics.h"
 #include "lttext.h"
+#include "ltutil.h"
+#include "ltvector.h"
 
 #define LT_USERDATA_MT "ltud"
 
@@ -543,6 +545,118 @@ static int lt_ReplaceWrappedChild(lua_State *L) {
     LTSceneNode *new_child = (LTSceneNode *)get_object(L, 2, LT_TYPE_SCENENODE);
     wrap->child = new_child;
     set_ref_field(L, 1, "child", 2); // Replace the child field with the new child.
+    return 1;
+}
+
+/************************* Vectors **************************/
+
+static int lt_Vector(lua_State *L) {
+    check_nargs(L, 2);
+    int capacity = luaL_checkinteger(L, 1);
+    int stride = luaL_checkinteger(L, 2);
+    LTVector *v = new LTVector(capacity, stride);
+    v->size = capacity;
+    push_wrap(L, v);
+    return 1;
+}
+
+static int lt_GenerateVectorColumn(lua_State *L) {
+    int num_args = check_nargs(L, 3);
+    LTVector *v = (LTVector *)get_object(L, 1, LT_TYPE_VECTOR);
+    int col = luaL_checkinteger(L, 2);
+    int stride = v->stride;
+    LTfloat lo = luaL_checknumber(L, 3);
+    LTfloat hi = lo;
+    if (num_args > 3) {
+        hi = luaL_checknumber(L, 4);
+    }
+    if (col > stride || col < 1) {
+        return luaL_error(L, "Invalid column: %d", col);
+    }
+    LTfloat *ptr = v->data + col - 1;
+    LTfloat *end = ptr + v->size * stride;
+    if (lo == hi) {
+        while (ptr != end) {
+            *ptr = lo;
+            ptr += stride;
+        }
+    } else {
+        while (ptr != end) {
+            *ptr = ltRandBetween(lo, hi);
+            ptr += stride;
+        }
+    }
+    return 0;
+}
+
+static int lt_FillVectorColumnsWithImageQuads(lua_State *L) {
+    int num_args = check_nargs(L, 5);
+    LTVector *vector = (LTVector *)get_object(L, 1, LT_TYPE_VECTOR);
+    int col = luaL_checkinteger(L, 2) - 1;
+    LTImage *img = (LTImage *)get_object(L, 3, LT_TYPE_IMAGE);
+    LTVector *offsets = (LTVector *)get_object(L, 4, LT_TYPE_VECTOR);
+    int offsets_col = luaL_checkinteger(L, 5) - 1;
+    if (vector->size < 4) {
+        return luaL_error(L, "Vector size must be at least 4");
+    }
+    if (vector->size & 3 > 0) {
+        return luaL_error(L, "Vector size must be divisible by 4");
+    }
+    if (offsets->size != (vector->size >> 2)) {
+        return luaL_error(L, "Offsets vector must be a quarter of the size of the target vector");
+    }
+    if (vector->stride - col < 4) {
+        return luaL_error(L, "Vector stride to small (must be at least 4)");
+    }
+    if (offsets->stride - offsets_col < 2) {
+        return luaL_error(L, "Not enough columns in offsets vector (must be at least 2)");
+    }
+    int n = offsets->size;
+    //fprintf(stderr, "n = %d, col = %d, offsets_col = %d, offsets = %p, vector = %p\n", n, col, offsets_col, offsets->data, vector->data);
+    LTfloat *data = vector->data + col;
+    LTfloat *os_data = offsets->data + offsets_col;
+    for (int i = 0; i < n; i++) {
+        data[0] = img->world_vertices[0] + os_data[0];
+        data[1] = img->world_vertices[1] + os_data[1];
+        data[2] = img->tex_coords[0];
+        data[3] = img->tex_coords[1];
+        data += vector->stride;
+        data[0] = img->world_vertices[2] + os_data[0];
+        data[1] = img->world_vertices[3] + os_data[1];
+        data[2] = img->tex_coords[2];
+        data[3] = img->tex_coords[3];
+        data += vector->stride;
+        data[0] = img->world_vertices[6] + os_data[0];
+        data[1] = img->world_vertices[7] + os_data[1];
+        data[2] = img->tex_coords[6];
+        data[3] = img->tex_coords[7];
+        data += vector->stride;
+        data[0] = img->world_vertices[4] + os_data[0];
+        data[1] = img->world_vertices[5] + os_data[1];
+        data[2] = img->tex_coords[4];
+        data[3] = img->tex_coords[5];
+        data += vector->stride;
+        os_data += offsets->stride;
+    }
+    return 0;
+}
+
+static int lt_DrawQuads(lua_State *L) {
+    int num_args = check_nargs(L, 2);
+    LTVector *vector = (LTVector *)get_object(L, 1, LT_TYPE_VECTOR);
+    LTImage *img = (LTImage *)get_object(L, 2, LT_TYPE_IMAGE);
+    int col = 0;
+    if (num_args > 2) {
+        col = luaL_checkinteger(L, 3) - 1;
+    }
+    if (vector->stride - col < 4) {
+        return luaL_error(L, "Not enough columns (need 4)");
+    }
+    LTDrawTexturedQuads *draw_quads = new LTDrawTexturedQuads(vector, col, img->atlas);
+    push_wrap(L, draw_quads);
+    add_ref(L, -1, 1); // Add reference from node to vector.
+    // We don't need a reference from the node to the image, because we
+    // use reference counting for the texture (see LTAtlas).
     return 1;
 }
 
@@ -1440,6 +1554,11 @@ static const luaL_Reg ltlib[] = {
     {"ReplaceWrappedChild",     lt_ReplaceWrappedChild},
 
     {"LoadImages",              lt_LoadImages},
+
+    {"Vector",                  lt_Vector},
+    {"GenerateVectorColumn",    lt_GenerateVectorColumn},
+    {"FillVectorColumnsWithImageQuads", lt_FillVectorColumnsWithImageQuads},
+    {"DrawQuads",               lt_DrawQuads},
 
     {"LoadSamples",             lt_LoadSamples},
     {"Track",                   lt_Track},

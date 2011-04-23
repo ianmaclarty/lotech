@@ -96,14 +96,9 @@ bool ltPackImage(LTImagePacker *packer, LTImageBuffer *img);
 /* The caller is responsible for freeing the buffer (with delete). */
 LTImageBuffer *ltCreateAtlasImage(const char *name, LTImagePacker *packer);
 
-enum LTAnchor {
-    LT_ANCHOR_CENTER,
-    LT_ANCHOR_BOTTOM_LEFT
-};
-
 struct LTAtlas {
     GLuint texture_id;
-    int num_live_images;
+    int ref_count;
 
     LTAtlas(LTImagePacker *packer, const char *dump_file = NULL);
     virtual ~LTAtlas();
@@ -115,16 +110,10 @@ struct LTImage : LTSceneNode {
     LTtexbuf  texbuf;
 
     // Texture coords of image bounding box in atlas.
-    LTfloat   tex_left;
-    LTfloat   tex_bottom;
-    LTfloat   tex_width;
-    LTfloat   tex_height;
+    LTfloat   tex_coords[8];
 
     // Bounding box dimensions in world coordinates.
-    LTfloat   bb_left;
-    LTfloat   bb_bottom;
-    LTfloat   bb_right;
-    LTfloat   bb_top;
+    LTfloat   world_vertices[8];
     LTfloat   bb_width;
     LTfloat   bb_height;
 
@@ -144,8 +133,6 @@ struct LTImage : LTSceneNode {
 
     virtual void draw();
     virtual LTfloat* field_ptr(const char *field_name);
-
-    void setAnchor(LTAnchor anchor);
 };
 
 #endif

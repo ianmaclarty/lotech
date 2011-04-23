@@ -95,6 +95,19 @@ lt.classes = {
         }
     },
 
+    -- Vectors
+    Vector = {
+        super = "Object",
+        methods = {
+            GenerateColumn = lt.GenerateVectorColumn,
+            FillWithImage  = lt.FillVectorColumnsWithImageQuads,
+        },
+    },
+    DrawQuads = {
+        super = "SceneNode",
+        methods = {},
+    },
+
     -- Audio
     Sample = {
         super = "Object",

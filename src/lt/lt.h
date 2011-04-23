@@ -21,5 +21,6 @@
 #include "lttween.h"
 #include "ltutil.h"
 #include "ltaudio.h"
+#include "ltvector.h"
 
 #endif

@@ -3,6 +3,9 @@
 #include "ltlua.h"
 
 ct_assert(sizeof(LTuint32) == 4);
+ct_assert(sizeof(LTfloat) == 4);
+ct_assert(sizeof(GLfloat) == 4);
+ct_assert(sizeof(float) == 4);
 
 //-----------------------------------------------------------------------
 // LTObject.
@@ -36,6 +39,9 @@ const LTTypeInfo types[] = {
     {"Wrap",        LT_TYPE_SCENENODE},
     {"Sample",      LT_TYPE_OBJECT},
     {"Track",       LT_TYPE_OBJECT},
+    {"Vector",      LT_TYPE_OBJECT},
+    {"DrawVector",  LT_TYPE_SCENENODE},
+    {"DrawQuads",   LT_TYPE_SCENENODE},
 };
 
 ct_assert(sizeof(types) == (int)LT_NUM_TYPES * sizeof(LTTypeInfo));
