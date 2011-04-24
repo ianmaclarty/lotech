@@ -689,23 +689,50 @@ void LTImage::draw() {
 }
 
 LTfloat* LTImage::field_ptr(const char *field_name) {
+    // None of the image fields are updatable.
+    return NULL;
+}
+
+bool LTImage::has_field(const char *field_name) {
     if (strcmp(field_name, "width") == 0) {
-        return &orig_width;
+        return true;
     }
     if (strcmp(field_name, "height") == 0) {
-        return &orig_height;
+        return true;
     }
     if (strcmp(field_name, "left") == 0) {
-        return &world_vertices[0];
+        return true;
     }
     if (strcmp(field_name, "bottom") == 0) {
-        return &world_vertices[5];
+        return true;
     }
     if (strcmp(field_name, "right") == 0) {
-        return &world_vertices[2];
+        return true;
     }
     if (strcmp(field_name, "top") == 0) {
-        return &world_vertices[1];
+        return true;
     }
-    return NULL;
+    return false;
+}
+
+LTfloat LTImage::get_field(const char *field_name) {
+    if (strcmp(field_name, "width") == 0) {
+        return orig_width;
+    }
+    if (strcmp(field_name, "height") == 0) {
+        return orig_height;
+    }
+    if (strcmp(field_name, "left") == 0) {
+        return world_vertices[0];
+    }
+    if (strcmp(field_name, "bottom") == 0) {
+        return world_vertices[5];
+    }
+    if (strcmp(field_name, "right") == 0) {
+        return world_vertices[2];
+    }
+    if (strcmp(field_name, "top") == 0) {
+        return world_vertices[1];
+    }
+    return 0.0f;
 }

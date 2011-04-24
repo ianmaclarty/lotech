@@ -132,6 +132,8 @@ struct LTImage : LTSceneNode {
     virtual ~LTImage();
 
     virtual void draw();
+    virtual bool has_field(const char *field_name);
+    virtual LTfloat get_field(const char *field_name);
     virtual LTfloat* field_ptr(const char *field_name);
 };
 
