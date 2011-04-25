@@ -5,17 +5,31 @@
 #include "ltcommon.h"
 #include "ltevent.h"
 
-struct LTTween {
-    LTfloat *field;
-    LTfloat initial_value;
-    LTfloat final_value;
-    LTfloat time;
-    LTfloat (*easing)(LTfloat);
-    LTAction *action;
+typedef LTfloat(*LTEaseFunc)(LTfloat);
 
-    LTTween(LTfloat *field, LTfloat v0, LTfloat v, LTfloat time, LTfloat (*easing)(LTfloat), LTAction *action);
-    void advance(LTfloat step);
-    bool finished();
+struct LTTween {
+    LTfloat *field_ptr;
+    LTfloat delay;
+    LTfloat t;
+    LTfloat v0;
+    LTfloat v;
+    LTfloat period;
+    LTEaseFunc ease;
 };
+
+// Returns true if finished.
+bool ltAdvanceTween(LTTween *tween, LTfloat dt);
+
+void ltInitTween(LTTween *tween, LTfloat *field_ptr, LTfloat delay,
+    LTfloat v, LTfloat period, LTEaseFunc ease);
+
+LTfloat ltLinearEase(LTfloat t);
+LTfloat ltEaseIn(LTfloat t);
+LTfloat ltEaseOut(LTfloat t);
+LTfloat ltEaseInOut(LTfloat t);
+LTfloat ltBackInEase(LTfloat t);
+LTfloat ltBackOutEase(LTfloat t);
+LTfloat ltElasticEase(LTfloat t);
+LTfloat ltBounceEase(LTfloat t);
 
 #endif

@@ -19,6 +19,7 @@ extern "C" {
 #include "ltlua.h"
 #include "ltphysics.h"
 #include "lttext.h"
+#include "lttween.h"
 #include "ltutil.h"
 #include "ltvector.h"
 
@@ -657,6 +658,59 @@ static int lt_DrawQuads(lua_State *L) {
     add_ref(L, -1, 1); // Add reference from node to vector.
     // We don't need a reference from the node to the image, because we
     // use reference counting for the texture (see LTAtlas).
+    return 1;
+}
+
+/************************* Tweens **************************/
+
+static int lt_MakeNativeTween(lua_State *L) {
+    LTObject **ud = (LTObject**)lua_touserdata(L, 1);
+    LTObject *obj = *ud;
+    if (obj == NULL) {
+        return luaL_error(L, "object is NULL");
+    }
+    const char *field = lua_tostring(L, 2);
+    if (field == NULL) {
+        lua_pushnil(L);
+        return 1;
+    }
+    LTfloat *field_ptr = obj->field_ptr(field);
+    if (field_ptr == NULL) {
+        lua_pushnil(L);
+        return 1;
+    }
+    LTfloat delay = luaL_checknumber(L, 3);
+    LTfloat value = luaL_checknumber(L, 4);
+    LTfloat period = luaL_checknumber(L, 5);
+    LTEaseFunc ease_func = NULL;
+    if (lua_isnil(L, 6)) {
+        ease_func = ltLinearEase;
+    } else {
+        const char *ease_func_str = lua_tostring(L, 6);
+        if (ease_func_str == NULL) {
+            lua_pushnil(L);
+            return 1;
+        }
+        if (strcmp(ease_func_str, "easein") == 0) {
+            ease_func = ltEaseIn;
+        } else if (strcmp(ease_func_str, "easeout") == 0) {
+            ease_func = ltEaseOut;
+        } else if (strcmp(ease_func_str, "linear") == 0) {
+            ease_func = ltLinearEase;
+        } else {
+            lua_pushnil(L);
+            return 1;
+        }
+    }
+    LTTween *tween = (LTTween*)lua_newuserdata(L, sizeof(LTTween));
+    ltInitTween(tween, field_ptr, delay, value, period, ease_func);
+    return 1;
+}
+
+static int lt_AdvanceNativeTween(lua_State *L) {
+    LTTween *tween = (LTTween*)lua_touserdata(L, 1);
+    LTfloat dt = luaL_checknumber(L, 2);
+    lua_pushboolean(L, ltAdvanceTween(tween, dt) ? 1 : 0);
     return 1;
 }
 
@@ -1559,6 +1613,9 @@ static const luaL_Reg ltlib[] = {
     {"GenerateVectorColumn",    lt_GenerateVectorColumn},
     {"FillVectorColumnsWithImageQuads", lt_FillVectorColumnsWithImageQuads},
     {"DrawQuads",               lt_DrawQuads},
+
+    {"MakeNativeTween",         lt_MakeNativeTween},
+    {"AdvanceNativeTween",      lt_AdvanceNativeTween},
 
     {"LoadSamples",             lt_LoadSamples},
     {"Track",                   lt_Track},

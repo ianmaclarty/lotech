@@ -8,29 +8,40 @@ function lt.TweenSet()
     return tweens
 end
 
+local lt_advance_native_tween = lt.AdvanceNativeTween
+
 function lt.AdvanceTweens(tweens, dt)
     local actions = {}
     for table, fields in pairs(tweens) do
         for field, tween in pairs(fields) do
-            local delay = tween.delay
-            if delay > 0 then
-                tween.delay = delay - dt
-            else 
-                local t = tween.t
-                if t < 1 then
-                    local v0 = tween.v0
-                    local v = v0 + (tween.v - v0) * tween.ease(t)
-                    tween.t = t + dt / tween.period
-                    table[field] = v
-                else
-                    table[field] = tween.v
-                    if tween.done then
-                        actions[tween.done] = true
+            local finished = false
+            local native = tween.native
+            if native then
+                finished = lt_advance_native_tween(native, dt)
+            else
+                local delay = tween.delay
+                if delay > 0 then
+                    tween.delay = delay - dt
+                else 
+                    local t = tween.t
+                    if t < 1 then
+                        local v0 = tween.v0
+                        local v = v0 + (tween.v - v0) * tween.ease(t)
+                        tween.t = t + dt / tween.period
+                        table[field] = v
+                    else
+                        table[field] = tween.v
+                        finished = true
                     end
-                    fields[field] = nil
-                    if next(fields) == nil then
-                        tweens[table] = nil
-                    end
+                end
+            end
+            if finished then
+                if tween.done then
+                    actions[tween.done] = true
+                end
+                fields[field] = nil
+                if next(fields) == nil then
+                    tweens[table] = nil
                 end
             end
         end
@@ -40,23 +51,58 @@ function lt.AdvanceTweens(tweens, dt)
     end
 end
 
-function lt.AddTween(tweens, table, field, to, secs, delay, ease, onDone)
-    if ease == nil then
-        ease = lt.LinearEase
+local lt_get = lt.GetObjectField
+-- Finds the owner of the field in the obj or its
+-- descendents.  Returns the owner or nil if the field
+-- doesn't exist.  Also returns true if the field is a
+-- C field (and therefore a candidate for fast tweening).
+local
+function find_field_owner(obj, field)
+    local value = rawget(obj, field)
+    if value then
+        return obj
     end
-    local tween = {
-        v0 = table[field],
-        v = to,
-        t = 0,
-        period = secs,
-        delay = delay,
-        ease = ease,
-        done = onDone
-    }
-    if tweens[table] == nil then
-        tweens[table] = {[field] = tween}
+    value = lt_get(obj, field)
+    if value then
+        return obj, true
+    end
+    local child = rawget(obj, "child")
+    if child then
+        return find_field_owner(child, field)
     else
-        tweens[table][field] = tween
+        return nil
+    end
+end
+
+local make_native_tween = lt.MakeNativeTween
+
+function lt.AddTween(tweens, table, field, to, secs, delay, ease, onDone)
+    local owner, c_field = find_field_owner(table, field)
+    local tween
+    if c_field then
+        local native = make_native_tween(owner[1], field, delay, to, secs, ease)
+        if native then
+            tween = {native = native, done = onDone}
+        end
+    end
+    if not tween then
+        if ease == nil then
+            ease = lt.LinearEase
+        end
+        tween = {
+            v0 = owner[field],
+            v = to,
+            t = 0,
+            period = secs,
+            delay = delay,
+            ease = ease,
+            done = onDone
+        }
+    end
+    if tweens[owner] == nil then
+        tweens[owner] = {[field] = tween}
+    else
+        tweens[owner][field] = tween
     end
 end
 
@@ -189,7 +235,7 @@ function lt.Tween(node, tween_info)
     local fields = {}
     local time = 0
     local delay = 0
-    local easing = lt.LinearEase
+    local easing = nil
     local action = nil
     local reverse = false
     for field, value in pairs(tween_info) do
