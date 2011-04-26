@@ -1,18 +1,16 @@
--- node:Button(bbox, onDown, onHit, onMiss) or
--- node:Button(onDown, onHit, onMiss) (node itself is the bbox)
-function lt.Button(node, arg1, arg2, arg3, arg4)
-    local bbox, onDown, onHit, onMiss
+-- node:Button(bbox, onDown, onUp) or
+-- node:Button(onDown, onUp) (node itself is the bbox)
+function lt.Button(node, arg1, arg2, arg3)
+    local bbox, onDown, onUp
     local arg1type = type(arg1)
     if arg1type == "table" then
         bbox = arg1
         onDown = arg2
-        onHit = arg3
-        onMiss = arg4
+        onUp = arg3
     elseif arg1type == "function" then
         bbox = node
         onDown = arg1
-        onHit = arg2
-        onMiss = arg3
+        onUp = arg2
     else
         error("argument 1 should be a table or a function")
     end
@@ -30,17 +28,17 @@ function lt.Button(node, arg1, arg2, arg3, arg4)
         hit_filter.input = down_input
         hit_filter_wrap:OnPointerUp(function(up_input, up_x, up_y)
             if hit_filter.input == up_input then
-                if up_x >= left and up_x <= right and up_y >= bottom and up_y <= top then
-                    onHit()
-                else
-                    onMiss()
+                if onUp then
+                    onUp()
                 end
                 hit_filter_wrap = hit_filter:Wrap()
                 button:Replace(hit_filter_wrap)
                 hit_filter.input = nil
             end
         end)
-        onDown()
+        if onDown then
+            onDown()
+        end
     end)
     return button
 end
