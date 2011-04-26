@@ -5,6 +5,21 @@
 #include "ltimage.h"
 #include "ltscene.h"
 
+static bool matrix_push_required = true;
+
+#define PUSH \
+    bool need_pop = false; \
+    if (matrix_push_required) { \
+        ltPushMatrix(); \
+        need_pop = true; \
+        matrix_push_required = false; \
+    }
+#define POP \
+    if (need_pop) { \
+        ltPopMatrix(); \
+        matrix_push_required = true; \
+    }
+
 LTSceneNode::LTSceneNode(LTType type) : LTObject(type) {
     event_handlers = NULL;
 }
@@ -93,6 +108,7 @@ void LTLayer::clear() {
 }
 
 void LTLayer::draw() {
+    matrix_push_required = true;
     std::multimap<LTfloat, LTSceneNode*>::iterator it;
     for (it = layer.begin(); it != layer.end(); it++) {
         ((*it).second)->draw();
@@ -120,10 +136,10 @@ LTTranslateNode::LTTranslateNode(LTfloat x, LTfloat y, LTfloat z, LTSceneNode *c
 }
 
 void LTTranslateNode::draw() {
-    ltPushMatrix();
+    PUSH
     ltTranslate(x, y, z);
     child->draw();
-    ltPopMatrix();
+    POP
 }
 
 bool LTTranslateNode::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
@@ -155,10 +171,10 @@ LTRotateNode::LTRotateNode(LTdegrees angle, LTSceneNode *child) : LTWrapNode(chi
 }
 
 void LTRotateNode::draw() {
-    ltPushMatrix();
+    PUSH
     ltRotate(angle, 0.0f, 0.0f, 1.0f);
     child->draw();
-    ltPopMatrix();
+    POP
 }
 
 bool LTRotateNode::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
@@ -188,10 +204,10 @@ LTScaleNode::LTScaleNode(LTfloat sx, LTfloat sy, LTSceneNode *child) : LTWrapNod
 }
 
 void LTScaleNode::draw() {
-    ltPushMatrix();
+    PUSH
     ltScale(sx, sy, 1.0f);
     child->draw();
-    ltPopMatrix();
+    POP
 }
 
 bool LTScaleNode::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
