@@ -1,4 +1,4 @@
-/* Copyright (C) 2010 Ian MacLarty */
+/* Copyright (C) 2010, 2011 Ian MacLarty */
 
 #include <string.h>
 #include <errno.h>
