@@ -24,6 +24,7 @@ extern "C" {
 #include "ltvector.h"
 
 #define LT_USERDATA_MT "ltud"
+#define LT_USERDATA_KEY "_ud"
 
 static lua_State *g_L = NULL;
 static bool g_suspended = false;
@@ -78,7 +79,8 @@ static LTObject* get_object(lua_State *L, int index, LTType type) {
     if (!lua_istable(L, index)) {
         luaL_error(L, "Expecting a table in argument %d.", index);
     }
-    lua_rawgeti(L, index, 1);
+    lua_pushstring(L, LT_USERDATA_KEY);
+    lua_rawget(L, index);
     LTObject **ud = (LTObject**)luaL_checkudata(L, -1, LT_USERDATA_MT);
     lua_pop(L, 1);
     if (ud == NULL) {
@@ -138,6 +140,8 @@ static void push_wrap(lua_State *L, LTObject *obj) {
     lua_getfield(L, -1, ltTypeName(obj->type));
     lua_setmetatable(L, -4);
     lua_pop(L, 2); // pop lt, metatables. wrapper table now on top.
+    // Push wrapper table field that will point to the C++ object.
+    lua_pushstring(L, LT_USERDATA_KEY);
     // Push user data for C++ obj.
     LTObject **ud = (LTObject **)lua_newuserdata(L, sizeof(LTObject *));
     *ud = obj;
@@ -147,8 +151,7 @@ static void push_wrap(lua_State *L, LTObject *obj) {
         lua_setfield(L, -2, "__gc");
     }
     lua_setmetatable(L, -2);
-    // Set key 1 in wrapper table to user data.
-    lua_rawseti(L, -2, 1);
+    lua_rawset(L, -3);
     // Wrapper table should now be on the top of the stack.
     obj->lua_wrap = make_weak_ref(L, -1);
 }
