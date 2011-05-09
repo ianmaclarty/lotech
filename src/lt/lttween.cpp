@@ -56,7 +56,7 @@ LTfloat ltEaseInOut(LTfloat t) {
 }
 
 LTfloat ltBackInEase(LTfloat t) {
-    LTfloat s = 1.70158f;
+    static const LTfloat s = 1.70158f;
     return t * t * ((s + 1.0f) * t - s);
 }
 
@@ -76,8 +76,8 @@ LTfloat ltElasticEase(LTfloat t) {
 }
 
 LTfloat ltBounceEase(LTfloat t) {
-    LTfloat s = 7.5625f;
-    LTfloat p = 2.75f;
+    static const LTfloat s = 7.5625f;
+    static const LTfloat p = 2.75f;
     LTfloat l;
     if (t < 1.0f / p) {
         l = s * t * t;
@@ -96,4 +96,23 @@ LTfloat ltBounceEase(LTfloat t) {
         }
     }
     return l;
+}
+
+LTfloat ltAccelEase(LTfloat t) {
+    return t * t;
+}
+
+LTfloat ltDeccelEase(LTfloat t) {
+    LTfloat t1 = 1.0f - t;
+    return 1.0f - (t1 * t1);
+}
+
+LTfloat ltZoomInEase(LTfloat t) {
+    static const LTfloat s = 0.05f;
+    return (1.0f / (1.0f + s - t) - 1.0f) * s;
+}
+
+LTfloat ltZoomOutEase(LTfloat t) {
+    static const LTfloat s = 0.05f;
+    return 1.0f + s - s / (s + t);
 }

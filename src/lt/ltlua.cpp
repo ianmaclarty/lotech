@@ -694,10 +694,28 @@ static int lt_MakeNativeTween(lua_State *L) {
             lua_pushnil(L);
             return 1;
         }
-        if (strcmp(ease_func_str, "easein") == 0) {
+        if (strcmp(ease_func_str, "in") == 0) {
             ease_func = ltEaseIn;
-        } else if (strcmp(ease_func_str, "easeout") == 0) {
+        } else if (strcmp(ease_func_str, "out") == 0) {
             ease_func = ltEaseOut;
+        } else if (strcmp(ease_func_str, "accel") == 0) {
+            ease_func = ltAccelEase;
+        } else if (strcmp(ease_func_str, "decel") == 0) {
+            ease_func = ltDeccelEase;
+        } else if (strcmp(ease_func_str, "inout") == 0) {
+            ease_func = ltEaseInOut;
+        } else if (strcmp(ease_func_str, "backin") == 0) {
+            ease_func = ltBackInEase;
+        } else if (strcmp(ease_func_str, "backout") == 0) {
+            ease_func = ltBackOutEase;
+        } else if (strcmp(ease_func_str, "elastic") == 0) {
+            ease_func = ltElasticEase;
+        } else if (strcmp(ease_func_str, "bounce") == 0) {
+            ease_func = ltBounceEase;
+        } else if (strcmp(ease_func_str, "zoomin") == 0) {
+            ease_func = ltZoomInEase;
+        } else if (strcmp(ease_func_str, "zoomout") == 0) {
+            ease_func = ltZoomOutEase;
         } else if (strcmp(ease_func_str, "linear") == 0) {
             ease_func = ltLinearEase;
         } else {

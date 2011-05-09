@@ -31,5 +31,11 @@ LTfloat ltBackInEase(LTfloat t);
 LTfloat ltBackOutEase(LTfloat t);
 LTfloat ltElasticEase(LTfloat t);
 LTfloat ltBounceEase(LTfloat t);
+// Squares
+LTfloat ltAccelEase(LTfloat t);
+LTfloat ltDeccelEase(LTfloat t);
+// Hyperbola
+LTfloat ltZoomInEase(LTfloat t);
+LTfloat ltZoomOutEase(LTfloat t);
 
 #endif
