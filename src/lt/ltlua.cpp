@@ -667,11 +667,7 @@ static int lt_DrawQuads(lua_State *L) {
 /************************* Tweens **************************/
 
 static int lt_MakeNativeTween(lua_State *L) {
-    LTObject **ud = (LTObject**)lua_touserdata(L, 1);
-    LTObject *obj = *ud;
-    if (obj == NULL) {
-        return luaL_error(L, "object is NULL");
-    }
+    LTObject *obj = get_object(L, 1, LT_TYPE_OBJECT);
     const char *field = lua_tostring(L, 2);
     if (field == NULL) {
         lua_pushnil(L);

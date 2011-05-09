@@ -80,7 +80,7 @@ function lt.AddTween(tweens, table, field, to, secs, delay, ease, onDone)
     local owner, c_field = find_field_owner(table, field)
     local tween
     if c_field then
-        local native = make_native_tween(owner._ud, field, delay, to, secs, ease)
+        local native = make_native_tween(owner, field, delay, to, secs, ease)
         if native then
             tween = {native = native, done = onDone}
         end
