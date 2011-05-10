@@ -102,6 +102,26 @@ void ltSetViewPort(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2) {
     viewport_top = y2;
     viewport_width = viewport_right - viewport_left;
     viewport_height = viewport_top - viewport_bottom;
+
+    LTfloat design_w_over_h = design_width / design_height;
+    LTfloat actual_w_over_h = (LTfloat)screen_width / (LTfloat)screen_height;
+    LTfloat distortion = 1.0f + fabsf(design_w_over_h - actual_w_over_h);
+    if (distortion > 1.01f) {
+        if (actual_w_over_h < design_w_over_h) {
+            // too fat
+            design_height *= distortion;
+            viewport_bottom -= viewport_height * distortion * 0.5f;
+            viewport_top += viewport_height * distortion * 0.5f;
+            viewport_height = viewport_top - viewport_bottom;
+        } else {
+            // too thin
+            design_width *= distortion;
+            viewport_left -= viewport_width * distortion * 0.5f;
+            viewport_right += viewport_width * distortion * 0.5f;
+            viewport_width = viewport_right - viewport_left;
+        }
+    }
+
     pixel_width = viewport_width / design_width;
     pixel_height = viewport_height / design_height;
 }

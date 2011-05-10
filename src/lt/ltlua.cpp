@@ -1,4 +1,4 @@
-/* Copyright (C) 2010 Ian MacLarty */
+/* Copyright (C) 2010, 2011 Ian MacLarty */
 
 #include <string.h>
 #include <errno.h>
@@ -24,6 +24,7 @@ extern "C" {
 #include "ltvector.h"
 
 #define LT_USERDATA_MT "ltud"
+#define LT_USERDATA_KEY "_ud"
 
 static lua_State *g_L = NULL;
 static bool g_suspended = false;
@@ -78,7 +79,8 @@ static LTObject* get_object(lua_State *L, int index, LTType type) {
     if (!lua_istable(L, index)) {
         luaL_error(L, "Expecting a table in argument %d.", index);
     }
-    lua_rawgeti(L, index, 1);
+    lua_pushstring(L, LT_USERDATA_KEY);
+    lua_rawget(L, index);
     LTObject **ud = (LTObject**)luaL_checkudata(L, -1, LT_USERDATA_MT);
     lua_pop(L, 1);
     if (ud == NULL) {
@@ -138,6 +140,8 @@ static void push_wrap(lua_State *L, LTObject *obj) {
     lua_getfield(L, -1, ltTypeName(obj->type));
     lua_setmetatable(L, -4);
     lua_pop(L, 2); // pop lt, metatables. wrapper table now on top.
+    // Push wrapper table field that will point to the C++ object.
+    lua_pushstring(L, LT_USERDATA_KEY);
     // Push user data for C++ obj.
     LTObject **ud = (LTObject **)lua_newuserdata(L, sizeof(LTObject *));
     *ud = obj;
@@ -147,8 +151,7 @@ static void push_wrap(lua_State *L, LTObject *obj) {
         lua_setfield(L, -2, "__gc");
     }
     lua_setmetatable(L, -2);
-    // Set key 1 in wrapper table to user data.
-    lua_rawseti(L, -2, 1);
+    lua_rawset(L, -3);
     // Wrapper table should now be on the top of the stack.
     obj->lua_wrap = make_weak_ref(L, -1);
 }
@@ -664,11 +667,7 @@ static int lt_DrawQuads(lua_State *L) {
 /************************* Tweens **************************/
 
 static int lt_MakeNativeTween(lua_State *L) {
-    LTObject **ud = (LTObject**)lua_touserdata(L, 1);
-    LTObject *obj = *ud;
-    if (obj == NULL) {
-        return luaL_error(L, "object is NULL");
-    }
+    LTObject *obj = get_object(L, 1, LT_TYPE_OBJECT);
     const char *field = lua_tostring(L, 2);
     if (field == NULL) {
         lua_pushnil(L);
@@ -691,10 +690,28 @@ static int lt_MakeNativeTween(lua_State *L) {
             lua_pushnil(L);
             return 1;
         }
-        if (strcmp(ease_func_str, "easein") == 0) {
+        if (strcmp(ease_func_str, "in") == 0) {
             ease_func = ltEaseIn;
-        } else if (strcmp(ease_func_str, "easeout") == 0) {
+        } else if (strcmp(ease_func_str, "out") == 0) {
             ease_func = ltEaseOut;
+        } else if (strcmp(ease_func_str, "accel") == 0) {
+            ease_func = ltAccelEase;
+        } else if (strcmp(ease_func_str, "decel") == 0) {
+            ease_func = ltDeccelEase;
+        } else if (strcmp(ease_func_str, "inout") == 0) {
+            ease_func = ltEaseInOut;
+        } else if (strcmp(ease_func_str, "backin") == 0) {
+            ease_func = ltBackInEase;
+        } else if (strcmp(ease_func_str, "backout") == 0) {
+            ease_func = ltBackOutEase;
+        } else if (strcmp(ease_func_str, "elastic") == 0) {
+            ease_func = ltElasticEase;
+        } else if (strcmp(ease_func_str, "bounce") == 0) {
+            ease_func = ltBounceEase;
+        } else if (strcmp(ease_func_str, "zoomin") == 0) {
+            ease_func = ltZoomInEase;
+        } else if (strcmp(ease_func_str, "zoomout") == 0) {
+            ease_func = ltZoomOutEase;
         } else if (strcmp(ease_func_str, "linear") == 0) {
             ease_func = ltLinearEase;
         } else {
