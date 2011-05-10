@@ -1,6 +1,9 @@
 /* Copyright (C) 2010 Ian MacLarty */
 #include "ltgraphics.h"
 #include "ltimage.h"
+#ifdef LTIOS
+#   include "ltiosutil.h"
+#endif
 
 #include <assert.h>
 #include <math.h>
@@ -136,11 +139,27 @@ LTfloat ltGetPixelHeight() {
 }
 
 LTfloat ltGetViewPortX(LTfloat screen_x) {
+#ifdef LTIOS
+    static LTfloat scaling = 0.0f;
+    if (scaling == 0.0f) {
+        scaling = ltIOSScaling();
+    }
+    return viewport_left + ((screen_x * scaling) / (LTfloat)screen_width) * viewport_width;
+#else
     return viewport_left + (screen_x / (LTfloat)screen_width) * viewport_width;
+#endif
 }
 
 LTfloat ltGetViewPortY(LTfloat screen_y) {
+#ifdef LTIOS
+    static LTfloat scaling = 0.0f;
+    if (scaling == 0.0f) {
+        scaling = ltIOSScaling();
+    }
+    return viewport_top - ((screen_y * scaling) / (LTfloat)screen_height) * viewport_height;
+#else
     return viewport_top - (screen_y / (LTfloat)screen_height) * viewport_height;
+#endif
 }
 
 void ltPushPerspective(LTfloat near, LTfloat origin, LTfloat far) {

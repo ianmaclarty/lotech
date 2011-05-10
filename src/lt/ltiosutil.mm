@@ -4,7 +4,7 @@
 #include "ltiosutil.h"
 #include "ltutil.h"
 
-static float scaling() {
+LTfloat ltIOSScaling() {
     float scale = 1.0f;
     if([[UIScreen mainScreen] respondsToSelector: NSSelectorFromString(@"scale")]) {
         scale = [[UIScreen mainScreen] scale];
@@ -21,7 +21,7 @@ bool ltIsIPad() {
 }
 
 bool ltIsRetinaIPhone() {
-    return !ltIsIPad() && scaling() == 2.0f;
+    return !ltIsIPad() && ltIOSScaling() == 2.0f;
 }
 
 const char *ltIOSDocPath(const char *file, const char *suffix) {
