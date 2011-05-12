@@ -163,65 +163,78 @@ lt.classes = {
 
 -- Populate lt.metatables.
 lt.metatables = {}
-for class, info in pairs(lt.classes) do
-    local method_index = {}
-    local lt_get = lt.GetObjectField
-    local lt_set = lt.SetObjectField
-    local function get(obj, field)
-        local value = rawget(obj, field)
-        if value then
-            return value
-        end
-        value = lt_get(obj, field)
-        if value then
-            return value
-        end
-        local child = rawget(obj, "child")
-        if child then
-            return get(child, field)
+local lt_get = lt.GetObjectField
+local lt_set = lt.SetObjectField
+local function get(obj, field, is_child)
+    local value = rawget(obj, field)
+    if value then
+        return value
+    end
+    value = lt_get(obj, field)
+    if value then
+        return value
+    end
+    local mt = getmetatable(obj)
+    value = rawget(mt, field)
+    if value then
+        if is_child and type(value) == "function" then
+            -- Dynamiclly generate a method that will have the child
+            -- node as its self value.
+            return function(_, ...)
+                return value(obj, ...)
+            end
         else
-            return nil
+            return value
         end
     end
-    local function set(obj, field, value)
-        local owner = obj
-        local raw_field = false
-        local lt_field = false
-        while true do
-            if rawget(owner, field) then
-                raw_field = true
-                break
-            end
-            if lt_get(owner, field) then
-                lt_field = true
-                break
-            end
-            local child = rawget(owner, "child")
-            if child then
-                owner = child
-            else
-                break
-            end
-        end
-        if raw_field then
-            rawset(owner, field, value)
-            return
-        end
-        if lt_field then
-            lt_set(owner, field, value)
-            return
-        end
-        rawset(obj, field, value)
+    local child = rawget(obj, "child")
+    if child then
+        return get(child, field, true)
+    else
+        return nil
     end
-    lt.metatables[class] = {
-        __index = function(x, f) return method_index[f] or get(x, f) end,
+end
+local function set(obj, field, value)
+    local owner = obj
+    local raw_field = false
+    local lt_field = false
+    while true do
+        if rawget(owner, field) then
+            raw_field = true
+            break
+        end
+        if lt_get(owner, field) then
+            lt_field = true
+            break
+        end
+        local child = rawget(owner, "child")
+        if child then
+            owner = child
+        else
+            break
+        end
+    end
+    if raw_field then
+        rawset(owner, field, value)
+        return
+    end
+    if lt_field then
+        lt_set(owner, field, value)
+        return
+    end
+    rawset(obj, field, value)
+end
+for class, info in pairs(lt.classes) do
+    local metatable = {
+        __index = get,
         __newindex = set,
     }
-    method_index.class = class
+    lt.metatables[class] = metatable
+    metatable.class = class
     while info do
         for method, impl in pairs(info.methods) do
-            if not method_index[method] then 
-                method_index[method] = impl
+            if not metatable[method] then 
+                metatable[method] = impl
             end
         end
         info = lt.classes[info.super]
