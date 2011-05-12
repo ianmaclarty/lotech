@@ -36,10 +36,8 @@ LTPitch::LTPitch(LTfloat pitch, LTSceneNode *child) : LTWrapNode(child, LT_TYPE_
 }
 
 void LTPitch::draw() {
-    ltPushMatrix();
     glRotatef(pitch, 1, 0, 0);
     child->draw();
-    ltPopMatrix();
 }
 
 LTfloat* LTPitch::field_ptr(const char *field_name) {

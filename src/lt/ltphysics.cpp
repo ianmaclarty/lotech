@@ -36,17 +36,15 @@ void LTBody::destroy() {
 
 void LTBody::draw() {
     if (body != NULL) {
-        ltPushMatrix();
-            b2Vec2 pos = body->GetPosition();
-            ltTranslate(pos.x, pos.y, 0.0f);
-            ltRotate(body->GetAngle() * LT_DEGREES_PER_RADIAN, 0.0f, 0.0f, 1.0f);
-            b2Fixture *fixture = body->GetFixtureList();
-            while (fixture != NULL) {
-                LTFixture *f = (LTFixture*)fixture->GetUserData();
-                f->draw();
-                fixture = fixture->GetNext();
-            }
-        ltPopMatrix();
+        b2Vec2 pos = body->GetPosition();
+        ltTranslate(pos.x, pos.y, 0.0f);
+        ltRotate(body->GetAngle() * LT_DEGREES_PER_RADIAN, 0.0f, 0.0f, 1.0f);
+        b2Fixture *fixture = body->GetFixtureList();
+        while (fixture != NULL) {
+            LTFixture *f = (LTFixture*)fixture->GetUserData();
+            f->draw();
+            fixture = fixture->GetNext();
+        }
     }
 }
 
@@ -86,10 +84,8 @@ void LTFixture::draw() {
             case b2Shape::e_unknown:
                 break;
             case b2Shape::e_circle: {
-                ltPushMatrix();
-                    ltScale(shape->m_radius, shape->m_radius, 1.0f);
-                    ltDrawUnitCircle();
-                ltPopMatrix();
+                ltScale(shape->m_radius, shape->m_radius, 1.0f);
+                ltDrawUnitCircle();
                 break;
             }
             case b2Shape::e_polygon: {
