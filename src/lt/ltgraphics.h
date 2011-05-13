@@ -54,6 +54,7 @@ void ltRotate(LTdegrees degrees, LTfloat x, LTfloat y, LTfloat z);
 void ltScale(LTfloat x, LTfloat y, LTfloat z);
 void ltPushMatrix();
 void ltPopMatrix();
+void ltMultMatrix(LTfloat *m);
 
 void ltDrawUnitSquare();
 void ltDrawUnitCircle();

@@ -1425,6 +1425,99 @@ static int lt_AddTriangleToBody(lua_State *L) {
     return 1;
 }
 
+static int lt_AddPolygonToBody(lua_State *L) {
+    int num_args = check_nargs(L, 3);
+    LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
+    if (body->body != NULL) {
+        // Second argument is array of polygon vertices.
+        int i = 1;
+        int num_vertices = 0;
+        b2PolygonShape poly;
+        b2Vec2 vertices[b2_maxPolygonVertices];
+        while (num_vertices < b2_maxPolygonVertices) {
+            lua_pushinteger(L, i);
+            lua_gettable(L, 2);
+            if (lua_isnil(L, -1)) {
+                lua_pop(L, 1);
+                break;
+            }
+            vertices[num_vertices].x = lua_tonumber(L, -1);
+            lua_pop(L, 1);
+            i++;
+            lua_pushinteger(L, i);
+            lua_gettable(L, 2);
+            if (lua_isnil(L, -1)) {
+                lua_pop(L, 1);
+                break;
+            }
+            vertices[num_vertices].y = lua_tonumber(L, -1);
+            lua_pop(L, 1);
+            i++;
+            num_vertices++;
+        }
+        if (!ltCheckB2Poly(vertices, num_vertices)) {
+            // Reverse vertices.
+            for (int j = 0; j < (num_vertices >> 1); j++) {
+                b2Vec2 tmp = vertices[j];
+                vertices[j] = vertices[num_vertices - j - 1];
+                vertices[num_vertices - j - 1] = tmp;
+            }
+            if (!ltCheckB2Poly(vertices, num_vertices)) {
+                lua_pushnil(L);
+                return 1;
+            }
+        }
+        poly.Set(vertices, num_vertices);
+
+        // Third argument is a table of fixture properties.
+        b2FixtureDef fixture_def;
+        lua_getfield(L, 3, "friction");
+        if (!lua_isnil(L, -1)) {
+            fixture_def.friction = lua_tonumber(L, -1);
+        }
+        lua_pop(L, 1);
+        lua_getfield(L, 3, "restitution");
+        if (!lua_isnil(L, -1)) {
+            fixture_def.restitution = lua_tonumber(L, -1);
+        }
+        lua_pop(L, 1);
+        lua_getfield(L, 3, "density");
+        if (!lua_isnil(L, -1)) {
+            fixture_def.density = lua_tonumber(L, -1);
+        }
+        lua_pop(L, 1);
+        lua_getfield(L, 3, "category");
+        if (!lua_isnil(L, -1)) {
+            fixture_def.filter.categoryBits = lua_tointeger(L, -1);
+        }
+        lua_pop(L, 1);
+        lua_getfield(L, 3, "mask");
+        if (!lua_isnil(L, -1)) {
+            fixture_def.filter.maskBits = lua_tointeger(L, -1);
+        }
+        lua_pop(L, 1);
+        lua_getfield(L, 3, "group");
+        if (!lua_isnil(L, -1)) {
+            fixture_def.filter.groupIndex = lua_tointeger(L, -1);
+        }
+        lua_pop(L, 1);
+        lua_getfield(L, 3, "sensor");
+        if (!lua_isnil(L, -1)) {
+            fixture_def.isSensor = lua_toboolean(L, -1);
+        }
+        lua_pop(L, 1);
+
+        fixture_def.shape = &poly;
+        LTFixture *fixture = new LTFixture(body, &fixture_def);
+        push_wrap(L, fixture);
+        add_ref(L, 1, -1); // Add reference from body to new fixture.
+        set_ref_field(L, -1, "body", 1); // Add reference from fixture to body.
+    } else {
+        lua_pushnil(L);
+    }
+    return 1;
+}
+
 static int lt_GetFixtureBody(lua_State *L) {
     check_nargs(L, 1);
     LTFixture *fixture = (LTFixture*)get_object(L, 1, LT_TYPE_FIXTURE);
@@ -1471,6 +1564,21 @@ static int lt_AddDynamicBodyToWorld(lua_State *L) {
 static int lt_World(lua_State *L) {
     LTWorld *world = new LTWorld(b2Vec2(0.0f, -10.0f), true);
     push_wrap(L, world);
+    return 1;
+}
+
+static int lt_BodyTracker(lua_State *L) {
+    int num_args = check_nargs(L, 2);
+    LTSceneNode *child = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
+    LTBody *body = (LTBody *)get_object(L, 2, LT_TYPE_BODY);
+    LTfloat scaling = 1.0f;
+    if (num_args > 2) {
+        scaling = (LTfloat)luaL_checknumber(L, 3);
+    }
+    LTBodyTracker *node = new LTBodyTracker(body, scaling, child);
+    push_wrap(L, node);
+    set_ref_field(L, -1, "child", 1); // Add reference from new node to child.
+    set_ref_field(L, -1, "body", 2);  // Add reference from new node to body.
     return 1;
 }
 
@@ -1658,9 +1766,11 @@ static const luaL_Reg ltlib[] = {
     {"SetBodyAngularVelocity",  lt_SetBodyAngularVelocity},
     {"AddRectToBody",           lt_AddRectToBody},
     {"AddTriangleToBody",       lt_AddTriangleToBody},
+    {"AddPolygonToBody",        lt_AddPolygonToBody},
     {"GetFixtureBody",          lt_GetFixtureBody},
     {"AddStaticBodyToWorld",    lt_AddStaticBodyToWorld},
     {"AddDynamicBodyToWorld",   lt_AddDynamicBodyToWorld},
+    {"BodyTracker",             lt_BodyTracker},
 
     {NULL, NULL}
 };

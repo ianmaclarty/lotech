@@ -23,7 +23,7 @@ function lt.Button(node, arg1, arg2, arg3)
     local button = hit_filter_wrap:Wrap()
     hit_filter:OnPointerDown(function(down_input, down_x, down_y)
         if hit_filter.input then
-            return
+            return false
         end
         hit_filter.input = down_input
         hit_filter_wrap:OnPointerUp(function(up_input, up_x, up_y)
@@ -34,11 +34,14 @@ function lt.Button(node, arg1, arg2, arg3)
                 hit_filter_wrap = hit_filter:Wrap()
                 button:Replace(hit_filter_wrap)
                 hit_filter.input = nil
+                return true
             end
+            return false
         end)
         if onDown then
             onDown()
         end
+        return true
     end)
     return button
 end

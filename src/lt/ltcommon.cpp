@@ -42,6 +42,7 @@ const LTTypeInfo types[] = {
     {"Vector",      LT_TYPE_OBJECT},
     {"DrawVector",  LT_TYPE_SCENENODE},
     {"DrawQuads",   LT_TYPE_SCENENODE},
+    {"BodyTracker", LT_TYPE_WRAP},
 };
 
 ct_assert(sizeof(types) == (int)LT_NUM_TYPES * sizeof(LTTypeInfo));

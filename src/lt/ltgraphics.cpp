@@ -350,3 +350,7 @@ void ltPushMatrix() {
 void ltPopMatrix() {
     glPopMatrix();
 }
+
+void ltMultMatrix(LTfloat *m) {
+    glMultMatrixf(m);
+}

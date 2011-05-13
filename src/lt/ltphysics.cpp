@@ -99,6 +99,56 @@ void LTFixture::draw() {
     }
 }
 
+LTBodyTracker::LTBodyTracker(LTBody *body, LTfloat scaling, LTSceneNode *child)
+    : LTWrapNode(child, LT_TYPE_BODYTRACKER)
+{
+    LTBodyTracker::scaling = scaling;
+    LTBodyTracker::body = body;
+}
+
+void LTBodyTracker::draw() {
+    static GLfloat glmat[16] = {
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f,
+    };
+    b2Body *b = body->body;
+    if (b != NULL) {
+        const b2Transform b2t = b->GetTransform();
+        glmat[0] = b2t.R.col1.x;
+        glmat[1] = b2t.R.col1.y;
+        glmat[4] = b2t.R.col2.x;
+        glmat[5] = b2t.R.col2.y;
+        glmat[12] = b2t.position.x * scaling;
+        glmat[13] = b2t.position.y * scaling;
+        ltMultMatrix(glmat);
+        child->draw();
+    }
+}
+
+bool LTBodyTracker::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
+    b2Body *b = body->body;
+    if (b != NULL) {
+        LTfloat angle = b->GetAngle();
+        b2Vec2 pos = b->GetPosition();
+        x = x - pos.x;
+        y = y - pos.y;
+        LTfloat x1, y1;
+        LTfloat s = sinf(angle);
+        LTfloat c = cosf(angle);
+        x1 = c * x - s * y;
+        y1 = s * x + c * y;
+        if (!consumePointerEvent(x1, y1, event)) {
+            return child->propogatePointerEvent(x1, y1, event);
+        } else {
+            return true;
+        }
+    } else {
+        return false;
+    }
+}
+
 bool ltCheckB2Poly(const b2Vec2* vs, int32 count) {
     // This code copied from Box2D (b2PolygonShape.cpp, ComputeCentroid).
 

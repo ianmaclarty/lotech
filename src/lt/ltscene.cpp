@@ -123,7 +123,9 @@ bool LTLayer::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event)
     }
 }
 
-LTTranslateNode::LTTranslateNode(LTfloat x, LTfloat y, LTfloat z, LTSceneNode *child) : LTWrapNode(child, LT_TYPE_TRANSLATE) {
+LTTranslateNode::LTTranslateNode(LTfloat x, LTfloat y, LTfloat z, LTSceneNode *child)
+    : LTWrapNode(child, LT_TYPE_TRANSLATE)
+{
     LTTranslateNode::x = x;
     LTTranslateNode::y = y;
     LTTranslateNode::z = z;

@@ -26,6 +26,8 @@ lt.classes = {
             Pitch                       = lt.Pitch,
             HitFilter                   = lt.HitFilter,
             Wrap                        = lt.Wrap,
+            TrackBody                   = lt.BodyTracker,
+            Button                      = lt.Button,
         }
     },
     Layer = {
@@ -36,23 +38,23 @@ lt.classes = {
         }
     },
     Translate = {
-        super = "SceneNode",
+        super = "Wrap",
         methods = {}
     },
     Rotate = {
-        super = "SceneNode",
+        super = "Wrap",
         methods = {}
     },
     Scale = {
-        super = "SceneNode",
+        super = "Wrap",
         methods = {}
     },
     Tint = {
-        super = "SceneNode",
+        super = "Wrap",
         methods = {}
     },
     BlendMode = {
-        super = "SceneNode",
+        super = "Wrap",
         methods = {}
     },
     Line = {
@@ -77,15 +79,15 @@ lt.classes = {
         methods = {}
     },
     Perspective = {
-        super = "SceneNode",
+        super = "Wrap",
         methods = {}
     },
     Pitch = {
-        super = "SceneNode",
+        super = "Wrap",
         methods = {}
     },
     HitFilter = {
-        super = "SceneNode",
+        super = "Wrap",
         methods = {}
     },
     Wrap = {
@@ -148,6 +150,7 @@ lt.classes = {
             SetAngularVelocity = lt.SetBodyAngularVelocity,
             AddRect     = lt.AddRectToBody,
             AddTriangle = lt.AddTriangleToBody,
+            AddPoly     = lt.AddPolygonToBody,
         }
     },
     Fixture = {
@@ -158,6 +161,10 @@ lt.classes = {
             IsDestroyed     = lt.FixtureIsDestroyed,
             GetBody         = lt.GetFixtureBody,
         }
+    },
+    BodyTracker = {
+        super = "Wrap",
+        methods = {}
     },
 }
 
