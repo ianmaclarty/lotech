@@ -109,6 +109,10 @@ lt.classes = {
         super = "SceneNode",
         methods = {},
     },
+    DrawVector = {
+        super = "SceneNode",
+        methods = {},
+    },
 
     -- Audio
     Sample = {

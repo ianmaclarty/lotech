@@ -555,12 +555,54 @@ static int lt_ReplaceWrappedChild(lua_State *L) {
 /************************* Vectors **************************/
 
 static int lt_Vector(lua_State *L) {
-    check_nargs(L, 2);
-    int capacity = luaL_checkinteger(L, 1);
-    int stride = luaL_checkinteger(L, 2);
-    LTVector *v = new LTVector(capacity, stride);
-    v->size = capacity;
-    push_wrap(L, v);
+    int num_args = check_nargs(L, 1);
+    int capacity;
+    int stride;
+    LTVector *vec;
+    if (num_args == 1 && lua_istable(L, 1)) {
+        capacity = lua_objlen(L, 1);
+        if (capacity > 0) {
+            // Get first row to compute stride.
+            lua_rawgeti(L, 1, 1);
+            if (!lua_isnil(L, -1)) {
+                stride = lua_objlen(L, -1);
+            } else {
+                stride = 0;
+            }
+            lua_pop(L, 1);
+        } else {
+            stride = 0;
+        }
+        vec = new LTVector(capacity, stride);
+        for (int i = 1; i <= capacity; i++) {
+            lua_rawgeti(L, 1, i);
+            for (int j = 1; j <= stride; j++) {
+                lua_rawgeti(L, -1, j);
+                vec->data[(i - 1) * stride + (j - 1)] = lua_tonumber(L, -1);
+                lua_pop(L, 1);
+            }
+            lua_pop(L, 1);
+        }
+        vec->size = capacity;
+    } else if (num_args == 2) {
+        int capacity = luaL_checkinteger(L, 1);
+        int stride = luaL_checkinteger(L, 2);
+        vec = new LTVector(capacity, stride);
+        vec->size = capacity;
+    } else {
+        return luaL_error(L, "Invalid arguments");
+    }
+    push_wrap(L, vec);
+
+    /*
+    for (int i = 0; i < capacity; i++) {
+        for (int j = 0; j < stride; j++) {
+            fprintf(stderr, "%10f ", vec->data[i * stride + j]);
+        }
+        fprintf(stderr, "\n");
+    }
+    */
+
     return 1;
 }
 
@@ -661,6 +703,39 @@ static int lt_DrawQuads(lua_State *L) {
     add_ref(L, -1, 1); // Add reference from node to vector.
     // We don't need a reference from the node to the image, because we
     // use reference counting for the texture (see LTAtlas).
+    return 1;
+}
+
+static int lt_DrawVector(lua_State *L) {
+    int num_args = check_nargs(L, 3);
+    LTVector *vector = (LTVector *)get_object(L, 1, LT_TYPE_VECTOR);
+    const char *mode_str = lua_tostring(L, 2);
+    int dims = lua_tonumber(L, 3);
+    if (dims != 2 && dims != 3) {
+        return luaL_error(L, "Dimensions must be 2 or 3");
+    }
+    int color_os = -1;
+    if (num_args > 3) {
+        color_os = lua_tonumber(L, 4) - 1;
+        if (color_os != -1 && color_os > (vector->stride - 4)) {
+            return luaL_error(L, "Invalid color offset");
+        }
+    }
+    LTDrawMode mode;
+    if (strcmp(mode_str, "triangle_strip") == 0) {
+        mode = LT_DRAWMODE_TRIANGLE_STRIP;
+    } else if (strcmp(mode_str, "triangle_fan") == 0) {
+        mode = LT_DRAWMODE_TRIANGLE_FAN;
+    } else if (strcmp(mode_str, "triangles") == 0) {
+        mode = LT_DRAWMODE_TRIANGLES;
+    } else {
+        return luaL_error(L, "Invalid draw mode");
+    }
+
+    LTDrawVector *draw_vec = new LTDrawVector(mode, vector, dims, 0, color_os, -1, NULL);
+    push_wrap(L, draw_vec);
+    add_ref(L, -1, 1); // Add reference from node to vector.
+
     return 1;
 }
 
@@ -1435,8 +1510,7 @@ static int lt_AddPolygonToBody(lua_State *L) {
         b2PolygonShape poly;
         b2Vec2 vertices[b2_maxPolygonVertices];
         while (num_vertices < b2_maxPolygonVertices) {
-            lua_pushinteger(L, i);
-            lua_gettable(L, 2);
+            lua_rawgeti(L, 2, i);
             if (lua_isnil(L, -1)) {
                 lua_pop(L, 1);
                 break;
@@ -1444,8 +1518,7 @@ static int lt_AddPolygonToBody(lua_State *L) {
             vertices[num_vertices].x = lua_tonumber(L, -1);
             lua_pop(L, 1);
             i++;
-            lua_pushinteger(L, i);
-            lua_gettable(L, 2);
+            lua_rawgeti(L, 2, i);
             if (lua_isnil(L, -1)) {
                 lua_pop(L, 1);
                 break;
@@ -1738,6 +1811,7 @@ static const luaL_Reg ltlib[] = {
     {"GenerateVectorColumn",    lt_GenerateVectorColumn},
     {"FillVectorColumnsWithImageQuads", lt_FillVectorColumnsWithImageQuads},
     {"DrawQuads",               lt_DrawQuads},
+    {"DrawVector",              lt_DrawVector},
 
     {"MakeNativeTween",         lt_MakeNativeTween},
     {"AdvanceNativeTween",      lt_AdvanceNativeTween},

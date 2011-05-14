@@ -23,28 +23,33 @@ LTDrawVector::LTDrawVector(LTDrawMode mode, LTVector *vector,
     LTDrawVector::color_offset = color_os;
     LTDrawVector::texture_offset = tex_os;
     LTDrawVector::texture = tex;
-    texture->ref_count++;
+    if (tex != NULL) {
+        texture->ref_count++;
+    }
 }
 
 LTDrawVector::~LTDrawVector() {
-    texture->ref_count--;
-    if (texture->ref_count <= 0) {
-        delete texture;
+    if (texture != NULL) {
+        texture->ref_count--;
+        if (texture->ref_count <= 0) {
+            delete texture;
+        }
     }
 }
 
 void LTDrawVector::draw() {
+    int stride = vector->stride * sizeof(LTfloat);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glVertexPointer(dimensions, GL_FLOAT, vector->stride, vector->data + vertex_offset);
-    if (texture_offset >= 0) {
+    glVertexPointer(dimensions, GL_FLOAT, stride, vector->data + vertex_offset);
+    if (texture_offset >= 0 && texture != NULL) {
         ltEnableAtlas(texture);
-        glTexCoordPointer(2, GL_FLOAT, vector->stride, vector->data + texture_offset);
+        glTexCoordPointer(2, GL_FLOAT, stride, vector->data + texture_offset);
     } else {
         ltDisableTextures();
     }
     if (color_offset >= 0) {
         glEnableClientState(GL_COLOR_ARRAY);
-        glColorPointer(4, GL_FLOAT, vector->stride, vector->data + color_offset);
+        glColorPointer(4, GL_FLOAT, stride, vector->data + color_offset);
     }
     glDrawArrays(mode, 0, vector->size);
     if (color_offset >= 0) {
