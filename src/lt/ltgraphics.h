@@ -41,6 +41,11 @@ LTfloat ltGetPixelHeight();
 LTfloat ltGetViewPortX(LTfloat screen_x);
 LTfloat ltGetViewPortY(LTfloat screen_y);
 
+LTfloat ltGetViewPortLeftEdge();
+LTfloat ltGetViewPortRightEdge();
+LTfloat ltGetViewPortBottomEdge();
+LTfloat ltGetViewPortTopEdge();
+
 LTDisplayOrientation ltGetDisplayOrientation();
 
 void ltPushPerspective(LTfloat near, LTfloat origin, LTfloat far);

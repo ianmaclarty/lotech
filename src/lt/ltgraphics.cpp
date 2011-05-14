@@ -190,6 +190,22 @@ LTfloat ltGetViewPortY(LTfloat screen_y) {
 #endif
 }
 
+LTfloat ltGetViewPortLeftEdge() {
+    return viewport_left;
+}
+
+LTfloat ltGetViewPortRightEdge() {
+    return viewport_right;
+}
+
+LTfloat ltGetViewPortBottomEdge() {
+    return viewport_bottom;
+}
+
+LTfloat ltGetViewPortTopEdge() {
+    return viewport_top;
+}
+
 void ltPushPerspective(LTfloat near, LTfloat origin, LTfloat far) {
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();

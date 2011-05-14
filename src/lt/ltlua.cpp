@@ -1811,6 +1811,25 @@ static void run_lua_file(const char *file) {
     }
 }
 
+static void set_edge_globals() {
+    if (g_L != NULL) {
+        lua_getglobal(g_L, "lt");
+        lua_pushnumber(g_L, ltGetViewPortLeftEdge());
+        lua_setfield(g_L, -2, "left");
+        lua_pushnumber(g_L, ltGetViewPortBottomEdge());
+        lua_setfield(g_L, -2, "bottom");
+        lua_pushnumber(g_L, ltGetViewPortRightEdge());
+        lua_setfield(g_L, -2, "right");
+        lua_pushnumber(g_L, ltGetViewPortTopEdge());
+        lua_setfield(g_L, -2, "top");
+        lua_pushnumber(g_L, ltGetViewPortRightEdge() - ltGetViewPortLeftEdge());
+        lua_setfield(g_L, -2, "width");
+        lua_pushnumber(g_L, ltGetViewPortTopEdge() - ltGetViewPortBottomEdge());
+        lua_setfield(g_L, -2, "height");
+        lua_pop(g_L, 1); // pop lt
+    }
+}
+
 void ltLuaSetup() {
     ltAudioInit();
     g_L = luaL_newstate();
@@ -1856,6 +1875,7 @@ void ltLuaRender() {
     if (g_L != NULL && !g_suspended) {
         if (!g_initialized) {
             ltAdjustViewportAspectRatio();
+            set_edge_globals();
             run_lua_file("main");
             g_initialized = true;
         }
