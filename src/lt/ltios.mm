@@ -14,9 +14,7 @@ void ltIOSInit() {
     ltClientInit();
     #endif
 
-    const char *path = ltIOSBundlePath("main", ".lua");
-    ltLuaSetup(path);
-    delete[] path;
+    ltLuaSetup();
 }
 
 void ltIOSTeardown() {
@@ -69,13 +67,5 @@ void ltIOSTouchesEnded(NSSet *touches) {
 
 void ltIOSTouchesCancelled(NSSet *touches) {
     ltIOSTouchesEnded(touches);
-}
-
-static float scaling() {
-    float scale = 1.0f;
-    if([[UIScreen mainScreen] respondsToSelector: NSSelectorFromString(@"scale")]) {
-        scale = [[UIScreen mainScreen] scale];
-    }
-    return scale;
 }
 #endif // LTIOS

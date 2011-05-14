@@ -28,7 +28,7 @@ extern "C" {
 
 static lua_State *g_L = NULL;
 static bool g_suspended = false;
-static char *g_main_file = NULL;
+static bool g_initialized = false;
 
 /************************* General **************************/
 
@@ -1800,13 +1800,19 @@ static void call_lt_func(const char *func) {
     }
 }
 
-void ltLuaSetup(const char *file) {
-    ltAudioInit();
-    if (g_main_file != NULL) {
-        delete[] g_main_file;
+static void run_lua_file(const char *file) {
+    if (!g_suspended) {
+        const char *f = resource_path(file, ".lua");
+        if (ltFileExists(f)) {
+            check_status(loadfile(g_L, f));
+            check_status(lua_pcall(g_L, 0, 0, 0));
+        }
+        delete[] f;
     }
-    g_main_file = new char[strlen(file) + 1];
-    strcpy(g_main_file, file);
+}
+
+void ltLuaSetup() {
+    ltAudioInit();
     g_L = luaL_newstate();
     if (g_L == NULL) {
         ltLog("Cannot create lua state: not enough memory.");
@@ -1820,12 +1826,8 @@ void ltLuaSetup(const char *file) {
     lua_setglobal(g_L, "log");
     luaL_register(g_L, "lt", ltlib);
     lua_gc(g_L, LUA_GCRESTART, 0);
-    if (ltFileExists(g_main_file)) {
-        check_status(loadfile(g_L, g_main_file));
-        if (!g_suspended) {
-            check_status(lua_pcall(g_L, 0, 0, 0));
-        }
-    }
+    run_lua_file("lt");
+    run_lua_file("config");
 }
 
 void ltLuaTeardown() {
@@ -1837,11 +1839,10 @@ void ltLuaTeardown() {
 }
 
 void ltLuaReset() {
-    if (g_main_file != NULL) {
-        ltLuaTeardown();
-        g_suspended = false;
-        ltLuaSetup(g_main_file);
-    }
+    ltLuaTeardown();
+    g_suspended = false;
+    g_initialized = false;
+    ltLuaSetup();
 }
 
 void ltLuaAdvance() {
@@ -1852,9 +1853,16 @@ void ltLuaAdvance() {
 }
 
 void ltLuaRender() {
-    ltInitGraphics();
     if (g_L != NULL && !g_suspended) {
-        call_lt_func("Render");
+        if (!g_initialized) {
+            ltAdjustViewportAspectRatio();
+            run_lua_file("main");
+            g_initialized = true;
+        }
+        if (!g_suspended) {
+            ltInitGraphics();
+            call_lt_func("Render");
+        }
     }
 }
 

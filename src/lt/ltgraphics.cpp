@@ -12,13 +12,13 @@
 #include <string.h>
 
 // Actual screen dimensions in pixels.
-static int screen_width;
-static int screen_height;
+static int screen_width = 480;
+static int screen_height = 320;
 
 // Screen dimensions used to compute size of pixels in loaded
 // images.  These don't have to match the actual screen dimensions.
-static LTfloat design_width;
-static LTfloat design_height;
+static LTfloat design_width = 960.0f;
+static LTfloat design_height = 640.0f;
 
 // User space dimensions.
 static LTfloat viewport_left = -1.0f;
@@ -102,28 +102,36 @@ void ltSetViewPort(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2) {
     viewport_top = y2;
     viewport_width = viewport_right - viewport_left;
     viewport_height = viewport_top - viewport_bottom;
+    pixel_width = viewport_width / design_width;
+    pixel_height = viewport_height / design_height;
+}
 
+void ltAdjustViewportAspectRatio() {
+    LTfloat actual_w_over_h;
+    if (display_orientation == LT_DISPLAY_ORIENTATION_LANDSCAPE
+        && screen_width < screen_height
+        || display_orientation == LT_DISPLAY_ORIENTATION_PORTRAIT
+        && screen_width > screen_height)
+    {
+        actual_w_over_h = (LTfloat)screen_height / (LTfloat)screen_width;
+    } else {
+        actual_w_over_h = (LTfloat)screen_width / (LTfloat)screen_height;
+    }
     LTfloat design_w_over_h = design_width / design_height;
-    LTfloat actual_w_over_h = (LTfloat)screen_width / (LTfloat)screen_height;
-    LTfloat distortion = 1.0f + fabsf(design_w_over_h - actual_w_over_h);
-    if (distortion > 1.01f) {
+    LTfloat distortion = fabsf(design_w_over_h - actual_w_over_h);
+    if (distortion > 0.01f) {
         if (actual_w_over_h < design_w_over_h) {
             // too fat
-            design_height *= distortion;
             viewport_bottom -= viewport_height * distortion * 0.5f;
             viewport_top += viewport_height * distortion * 0.5f;
             viewport_height = viewport_top - viewport_bottom;
         } else {
             // too thin
-            design_width *= distortion;
             viewport_left -= viewport_width * distortion * 0.5f;
             viewport_right += viewport_width * distortion * 0.5f;
             viewport_width = viewport_right - viewport_left;
         }
     }
-
-    pixel_width = viewport_width / design_width;
-    pixel_height = viewport_height / design_height;
 }
 
 void ltSetScreenSize(int width, int height) {

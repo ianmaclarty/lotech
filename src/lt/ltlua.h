@@ -4,7 +4,7 @@
 
 #include "ltinput.h"
 
-void ltLuaSetup(const char *file);
+void ltLuaSetup();
 void ltLuaTeardown();
 void ltLuaReset();
 
