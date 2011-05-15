@@ -1760,7 +1760,11 @@ static int import(lua_State *L) {
 static int log(lua_State *L) {
     check_nargs(L, 1);
     const char *msg = lua_tostring(L, 1);
-    ltLog(msg);
+    if (msg != NULL) {
+        ltLog("%s", msg);
+    } else {
+        ltLog("Unable to log NULL message");
+    }
     return 0;
 }
 
