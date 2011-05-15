@@ -190,21 +190,22 @@ LTfloat* LTRotateNode::field_ptr(const char *field_name) {
     return NULL;
 }
 
-LTScaleNode::LTScaleNode(LTfloat sx, LTfloat sy, LTSceneNode *child) : LTWrapNode(child, LT_TYPE_SCALE) {
+LTScaleNode::LTScaleNode(LTfloat sx, LTfloat sy, LTfloat s, LTSceneNode *child) : LTWrapNode(child, LT_TYPE_SCALE) {
     LTScaleNode::sx = sx;
     LTScaleNode::sy = sy;
+    LTScaleNode::s = s;
 }
 
 void LTScaleNode::draw() {
-    ltScale(sx, sy, 1.0f);
+    ltScale(sx * s, sy * s, 1.0f);
     child->draw();
 }
 
 bool LTScaleNode::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
     LTfloat x1, y1;
-    if (sx != 0.0f && sy != 0.0f) {
-        x1 = x / sx;
-        y1 = y / sy;
+    if (sx != 0.0f && sy != 0.0f && s != 0.0f) {
+        x1 = x / (sx * s);
+        y1 = y / (sy * s);
         if (!consumePointerEvent(x1, y1, event)) {
             return child->propogatePointerEvent(x1, y1, event);
         } else {
@@ -216,6 +217,9 @@ bool LTScaleNode::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *ev
 }
 
 LTfloat* LTScaleNode::field_ptr(const char *field_name) {
+    if (strcmp(field_name, "scale") == 0) {
+        return &s;
+    }
     if (strcmp(field_name, "scale_x") == 0) {
         return &sx;
     }

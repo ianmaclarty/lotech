@@ -409,12 +409,16 @@ static int lt_Rotate(lua_State *L) {
 static int lt_Scale(lua_State *L) {
     int num_args = check_nargs(L, 2);
     LTSceneNode *child = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
-    LTfloat sx = (LTfloat)luaL_checknumber(L, 2);
-    LTfloat sy = sx;
-    if (num_args > 2) {
-        sy = (LTfloat)luaL_checknumber(L, 3);
+    LTfloat sx = 1.0f;
+    LTfloat sy = 1.0f;
+    LTfloat s = 1.0f;
+    if (num_args == 2) {
+        s = luaL_checknumber(L, 2);
+    } else {
+        sx = luaL_checknumber(L, 2);
+        sy = luaL_checknumber(L, 3);
     }
-    LTScaleNode *node = new LTScaleNode(sx, sy, child);
+    LTScaleNode *node = new LTScaleNode(sx, sy, s, child);
     push_wrap(L, node);
     set_ref_field(L, -1, "child", 1); // Add reference from new node to child.
     return 1;

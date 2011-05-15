@@ -87,8 +87,9 @@ struct LTRotateNode : LTWrapNode {
 struct LTScaleNode : LTWrapNode {
     LTfloat sx;
     LTfloat sy;
+    LTfloat s;
 
-    LTScaleNode(LTfloat sx, LTfloat sy, LTSceneNode *child);
+    LTScaleNode(LTfloat sx, LTfloat sy, LTfloat s, LTSceneNode *child);
 
     virtual void draw();
     virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
