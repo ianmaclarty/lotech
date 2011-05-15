@@ -151,6 +151,7 @@ lt.classes = {
             GetAngle    = lt.GetBodyAngle,
             SetAngle    = lt.SetBodyAngle,
             GetPosition = lt.GetBodyPosition,
+            SetPosition = lt.SetBodyPosition,
             SetAngularVelocity = lt.SetBodyAngularVelocity,
             AddRect     = lt.AddRectToBody,
             AddTriangle = lt.AddTriangleToBody,

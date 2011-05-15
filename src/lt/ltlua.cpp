@@ -1418,6 +1418,17 @@ static int lt_GetBodyPosition(lua_State *L) {
     return 0;
 }
 
+static int lt_SetBodyPosition(lua_State *L) {
+    check_nargs(L, 3);
+    LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
+    LTfloat x = lua_tonumber(L, 2);
+    LTfloat y = lua_tonumber(L, 3);
+    if (body->body != NULL) {
+        body->body->SetTransform(b2Vec2(x, y), body->body->GetAngle());
+    }
+    return 0;
+}
+
 static int lt_SetBodyAngularVelocity(lua_State *L) {
     check_nargs(L, 2);
     LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
@@ -1845,6 +1856,7 @@ static const luaL_Reg ltlib[] = {
     {"GetBodyAngle",            lt_GetBodyAngle},
     {"SetBodyAngle",            lt_SetBodyAngle},
     {"GetBodyPosition" ,        lt_GetBodyPosition},
+    {"SetBodyPosition" ,        lt_SetBodyPosition},
     {"SetBodyAngularVelocity",  lt_SetBodyAngularVelocity},
     {"AddRectToBody",           lt_AddRectToBody},
     {"AddTriangleToBody",       lt_AddTriangleToBody},
