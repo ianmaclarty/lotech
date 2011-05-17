@@ -425,12 +425,16 @@ static int lt_Scale(lua_State *L) {
 }
 
 static int lt_Perspective(lua_State *L) {
-    check_nargs(L, 4);
+    int num_args = check_nargs(L, 4);
     LTSceneNode *child = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
-    LTfloat near = (LTfloat)luaL_checknumber(L, 2);
-    LTfloat origin = (LTfloat)luaL_checknumber(L, 3);
-    LTfloat far = (LTfloat)luaL_checknumber(L, 4);
-    LTPerspective *node = new LTPerspective(near, origin, far, child);
+    LTfloat near = luaL_checknumber(L, 2);
+    LTfloat origin = luaL_checknumber(L, 3);
+    LTfloat far = luaL_checknumber(L, 4);
+    bool depth_buf_on = true;
+    if (num_args > 4) {
+        depth_buf_on = lua_toboolean(L, 5);
+    }
+    LTPerspective *node = new LTPerspective(near, origin, far, depth_buf_on, child);
     push_wrap(L, node);
     set_ref_field(L, -1, "child", 1); // Add reference from new node to child.
     return 1;

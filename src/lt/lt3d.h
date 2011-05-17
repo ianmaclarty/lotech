@@ -24,8 +24,9 @@ struct LTPerspective : LTWrapNode {
     LTfloat near;
     LTfloat origin;
     LTfloat far;
+    bool depth_buffer_on;
 
-    LTPerspective(LTfloat near, LTfloat origin, LTfloat far, LTSceneNode *child);
+    LTPerspective(LTfloat near, LTfloat origin, LTfloat far, bool depth_buf_on, LTSceneNode *child);
     
     virtual void draw();
     virtual LTfloat* field_ptr(const char *field_name);

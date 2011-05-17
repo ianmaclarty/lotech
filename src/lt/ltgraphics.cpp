@@ -211,16 +211,16 @@ void ltPushPerspective(LTfloat near, LTfloat origin, LTfloat far) {
     glPushMatrix();
     glLoadIdentity();
     LTfloat r = (origin - near) / origin; 
-    LTfloat dx = r * viewport_width * 0.5;
-    LTfloat dy = r * viewport_height * 0.5;
+    LTfloat near_half_width = 0.5f * (viewport_width - r * viewport_width);
+    LTfloat near_half_height = 0.5f * (viewport_height - r * viewport_height);
     #ifdef LTIOS
-        glFrustumf(viewport_left + dx, viewport_right - dx, viewport_bottom + dy, viewport_top - dy, near, far);
+        glFrustumf(-near_half_width, near_half_width, -near_half_height, near_half_height, near, far);
     #else
-        glFrustum(viewport_left + dx, viewport_right - dx, viewport_bottom + dy, viewport_top - dy, near, far);
+        glFrustum(-near_half_width, near_half_width, -near_half_height, near_half_height, near, far);
     #endif
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
-    glTranslatef(0.0f, 0.0f, -origin);
+    glTranslatef(-(viewport_width * 0.5f + viewport_left), -(viewport_height * 0.5f + viewport_bottom), -origin);
 }
 
 void ltPopPerspective() {
