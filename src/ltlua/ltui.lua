@@ -45,3 +45,7 @@ function lt.Button(node, arg1, arg2, arg3)
     end)
     return button
 end
+
+function lt.HitBarrier(child)
+    return lt.HitFilter(child, 1, 1, -1, -1)
+end

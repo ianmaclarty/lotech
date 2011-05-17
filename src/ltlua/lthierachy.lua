@@ -25,6 +25,7 @@ lt.classes = {
             Perspective                 = lt.Perspective,
             Pitch                       = lt.Pitch,
             HitFilter                   = lt.HitFilter,
+            HitBarrier                  = lt.HitBarrier,
             Wrap                        = lt.Wrap,
             TrackBody                   = lt.BodyTracker,
             Button                      = lt.Button,
