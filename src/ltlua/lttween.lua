@@ -75,8 +75,9 @@ function find_field_owner(obj, field)
 end
 
 local make_native_tween = lt.MakeNativeTween
+local ease_func_table
 
-function lt.AddTween(tweens, table, field, to, secs, delay, ease, onDone)
+function lt.AddTween(tweens, table, field, to, secs, delay, ease, onDone, called_from_tween_method)
     local owner, c_field = find_field_owner(table, field)
     local tween
     if c_field then
@@ -88,6 +89,16 @@ function lt.AddTween(tweens, table, field, to, secs, delay, ease, onDone)
     if not tween then
         if ease == nil then
             ease = lt.LinearEase
+        elseif type(ease) == "string" then
+            local func = ease_func_table[ease]
+            if not func then
+                local level = 2
+                if called_from_tween_method then
+                    level = 3
+                end
+                error("Unsupported easing function: " .. ease, level)
+            end
+            ease = func
         end
         tween = {
             v0 = owner[field],
@@ -225,6 +236,39 @@ function lt.CubicBezierEase(p1x, p1y, p2x, p2y)
     end
 end
 
+function lt.AccelEase(t)
+    return t * t
+end
+
+function lt.DeccelEase(t)
+    local t1 = 1 - t
+    return 1 - (t1 * t1)
+end
+
+function lt.ZoomInEase(t)
+    local s = 0.05
+    return (1 / (1 + s - t) - 1) * s
+end
+
+function lt.ZoomOutEase(t)
+    local s = 0.05
+    return 1 + s - s / (s + t)
+end
+
+ease_func_table = {
+    bounce = lt.BounceEase,
+    elastic = lt.ElasticEase,
+    backin = lt.BackInEase,
+    backout = lt.BackOutEase,
+    ["in"] = lt.EaseIn,
+    out = lt.EaseOut,
+    linear = lt.LinearEase,
+    accel = lt.AccelEase,
+    decel = lt.DeccelEase,
+    zoomin = lt.ZoomInEase,
+    zoomout = lt.ZoomOutEase,
+}
+
 -------------------------------------------------------------
 
 local global_tweens = lt.TweenSet()
@@ -259,7 +303,7 @@ function lt.Tween(node, tween_info)
         if reverse then
             node[field], value = value, node[field]
         end
-        lt.AddTween(tweens, node, field, value, time, delay, easing, action)
+        lt.AddTween(tweens, node, field, value, time, delay, easing, action, true)
         action = nil -- only attach action to one field
     end
     return node
