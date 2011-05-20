@@ -1,4 +1,4 @@
-local tweens_mt = {__mode = "k"}
+local tweens_mt = {__mode = "v"}
 
 -------------------------------------------------------------
 
@@ -12,12 +12,17 @@ local lt_advance_native_tween = lt.AdvanceNativeTween
 
 function lt.AdvanceTweens(tweens, dt)
     local actions = {}
-    for table, fields in pairs(tweens) do
-        for field, tween in pairs(fields) do
+    --local count = 0
+    --local sample_field = "nothing"
+    for obj_index, obj in pairs(tweens) do
+        local obj_tweens = rawget(obj, "_tweens")
+        for field, tween in pairs(obj_tweens) do
+            --count = count + 1
+            --sample_field = field
             local finished = false
-            local native = tween.native
-            if native then
-                finished = lt_advance_native_tween(native, dt)
+            if type(tween) == "userdata" then
+                -- native tween
+                finished = lt_advance_native_tween(tween, dt)
             else
                 local delay = tween.delay
                 if delay > 0 then
@@ -28,27 +33,38 @@ function lt.AdvanceTweens(tweens, dt)
                         local v0 = tween.v0
                         local v = v0 + (tween.v - v0) * tween.ease(t)
                         tween.t = t + dt / tween.period
-                        table[field] = v
+                        obj[field] = v
                     else
-                        table[field] = tween.v
+                        obj[field] = tween.v
                         finished = true
                     end
                 end
             end
             if finished then
-                if tween.done then
-                    actions[tween.done] = true
+                local tween_actions = rawget(obj, "_tween_actions")
+                if tween_actions then
+                    local action = tween_actions[field]
+                    if action then
+                        table.insert(actions, action)
+                        tween_actions[field] = nil
+                    end
                 end
-                fields[field] = nil
-                if next(fields) == nil then
-                    tweens[table] = nil
-                end
+                obj_tweens[field] = nil
             end
         end
+        if next(obj_tweens) == nil then
+            -- No more tweens on object, so remove from tween set and clean up.
+            rawset(obj, "_tweens", nil)
+            rawset(obj, "_tween_actions", nil)
+            rawset(obj, "_tween_index", nil)
+            rawset(obj, "_tweenset", nil)
+            tweens[obj_index] = nil
+        end
     end
-    for action in next, actions do
+    for _, action in ipairs(actions) do
         action()
     end
+    --log("tween count = " .. count .. " field = " .. sample_field)
 end
 
 local lt_get = lt.GetObjectField
@@ -77,14 +93,15 @@ end
 local make_native_tween = lt.MakeNativeTween
 local ease_func_table
 
-function lt.AddTween(tweens, table, field, to, secs, delay, ease, onDone, called_from_tween_method)
-    local owner, c_field = find_field_owner(table, field)
+function lt.AddTween(tweens, table, field, to, secs, delay, ease, action, called_from_tween_method)
+    local obj, c_field = find_field_owner(table, field)
+    if not obj then
+        local level = called_from_tween_method and 3 or 2
+        error("No such field: " .. field, level)
+    end
     local tween
     if c_field then
-        local native = make_native_tween(owner, field, delay, to, secs, ease)
-        if native then
-            tween = {native = native, done = onDone}
-        end
+        tween = make_native_tween(obj, field, delay, to, secs, ease)
     end
     if not tween then
         if ease == nil then
@@ -92,29 +109,51 @@ function lt.AddTween(tweens, table, field, to, secs, delay, ease, onDone, called
         elseif type(ease) == "string" then
             local func = ease_func_table[ease]
             if not func then
-                local level = 2
-                if called_from_tween_method then
-                    level = 3
-                end
+                local level = called_from_tween_method and 3 or 2
                 error("Unsupported easing function: " .. ease, level)
             end
             ease = func
         end
         tween = {
-            v0 = owner[field],
+            v0 = obj[field],
             v = to,
             t = 0,
             period = secs,
             delay = delay,
             ease = ease,
-            done = onDone
         }
     end
-    if tweens[owner] == nil then
-        tweens[owner] = {[field] = tween}
-    else
-        tweens[owner][field] = tween
+    local obj_tweens = rawget(obj, "_tweens")
+    if not obj_tweens then
+        obj_tweens = {}
+        rawset(obj, "_tweens", obj_tweens)
     end
+    obj_tweens[field] = tween
+    local obj_actions = rawget(obj, "_tween_actions")
+    if action then
+        if not obj_actions then
+            obj_actions = {}
+            rawset(obj, "_tween_actions", obj_actions)
+        end
+        obj_actions[field] = action
+    elseif obj_actions then
+        -- Remove any action that might have been there before
+        obj_actions[field] = nil
+    end
+    local obj_tweenset = rawget(obj, "_tweenset")
+    if obj_tweenset == nil then
+        obj_tweenset = tweens
+        rawset(obj, "_tweenset", obj_tweenset)
+    elseif obj_tweenset ~= tweens then
+        local level = called_from_tween_method and 3 or 2
+        error("Attempt to add object to two different tween sets (that's not supported, sorry).", level)
+    end
+    local obj_index = rawget(obj, "_tween_index")
+    if not obj_index then
+        obj_index = #tweens + 1
+        rawset(obj, "_tween_index", obj_index)
+    end
+    tweens[obj_index] = obj
 end
 
 -------------------------------------------------------------
