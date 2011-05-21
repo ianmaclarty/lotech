@@ -30,7 +30,7 @@ static lua_State *g_L = NULL;
 static bool g_suspended = false;
 static bool g_initialized = false;
 
-/************************* General **************************/
+/************************* Functions for calling lua **************************/
 
 // Check lua_pcall return status.
 static void check_status(int status) {
@@ -48,6 +48,43 @@ static void check_status(int status) {
         #endif
     }
 }
+
+// Copied from lua source.
+static int traceback(lua_State *L) {
+  if (!lua_isstring(L, 1))  /* 'message' not a string? */
+    return 1;  /* keep it intact */
+  lua_getfield(L, LUA_GLOBALSINDEX, "debug");
+  if (!lua_istable(L, -1)) {
+    lua_pop(L, 1);
+    return 1;
+  }
+  lua_getfield(L, -1, "traceback");
+  if (!lua_isfunction(L, -1)) {
+    lua_pop(L, 2);
+    return 1;
+  }
+  lua_pushvalue(L, 1);  /* pass error message */
+  lua_pushinteger(L, 2);  /* skip this function and traceback */
+  lua_call(L, 2, 1);  /* call debug.traceback */
+  return 1;
+}
+
+// Copied from lua source and modified.
+static void docall(lua_State *L, int nargs) {
+  int status;
+#ifdef LTDEVMODE
+  int base = lua_gettop(L) - nargs;  /* function index */
+  lua_pushcfunction(L, traceback);  /* push traceback function */
+  lua_insert(L, base);  /* put it under chunk and args */
+  status = lua_pcall(L, nargs, 0, base);
+  lua_remove(L, base);  /* remove traceback function */
+#else
+  status = lua_pcall(L, nargs, 0, 0);
+#endif
+  check_status(status);
+}
+
+/************************* Weak references **************************/
 
 // Returns a weak reference to the value at the given index.  Does not
 // modify the stack.
@@ -72,6 +109,8 @@ static void get_weak_ref(lua_State *L, int ref) {
     lua_remove(L, -2); // remove wrefs.
     lua_remove(L, -2); // remove lt.
 }
+
+/************************* Wrapping/unwrapping of c++ objects ******/
 
 // Extract LTObject from wrapper table at the given index.
 // Does not modify stack.
@@ -193,6 +232,8 @@ static void set_ref_field(lua_State *L, int wrap_index, const char *field, int r
     }
 }
 
+/************************** General utility functions ************/
+
 static int check_nargs(lua_State *L, int exp_args) {
     int n = lua_gettop(L);
     if (n < exp_args) {
@@ -203,6 +244,7 @@ static int check_nargs(lua_State *L, int exp_args) {
 }
 
 static int default_atlas_size() {
+    // XXX Too big.
     #ifdef LTIOS
         if (ltIsIPad() || ltIsRetinaIPhone()) {
             return 2048;
@@ -213,6 +255,8 @@ static int default_atlas_size() {
         return 2048;
     #endif
 }
+
+/************************** Resolve paths ****************/
 
 static const char *resource_path(const char *resource, const char *suffix) {
     #ifdef LTIOS
@@ -653,7 +697,7 @@ static int lt_FillVectorColumnsWithImageQuads(lua_State *L) {
     if (vector->size < 4) {
         return luaL_error(L, "Vector size must be at least 4");
     }
-    if (vector->size & 3 > 0) {
+    if ((vector->size & 3) > 0) {
         return luaL_error(L, "Vector size must be divisible by 4");
     }
     if (offsets->size != (vector->size >> 2)) {
@@ -1894,7 +1938,7 @@ static bool push_lt_func(const char *func) {
 
 static void call_lt_func(const char *func) {
     if (push_lt_func(func)) {
-        check_status(lua_pcall(g_L, 0, 0, 0));
+        docall(g_L, 0);
     }
 }
 
@@ -1903,7 +1947,7 @@ static void run_lua_file(const char *file) {
         const char *f = resource_path(file, ".lua");
         if (ltFileExists(f)) {
             check_status(loadfile(g_L, f));
-            check_status(lua_pcall(g_L, 0, 0, 0));
+            docall(g_L, 0);
         }
         delete[] f;
     }
@@ -2049,7 +2093,7 @@ void ltLuaKeyDown(LTKey key) {
     if (g_L != NULL && !g_suspended && push_lt_func("KeyDown")) {
         const char *str = lt_key_str(key);
         lua_pushstring(g_L, str);
-        check_status(lua_pcall(g_L, 1, 0, 0));
+        docall(g_L, 1);
     }
 }
 
@@ -2057,7 +2101,7 @@ void ltLuaKeyUp(LTKey key) {
     if (g_L != NULL && !g_suspended && push_lt_func("KeyUp")) {
         const char *str = lt_key_str(key);
         lua_pushstring(g_L, str);
-        check_status(lua_pcall(g_L, 1, 0, 0));
+        docall(g_L, 1);
     }
 }
 
@@ -2066,7 +2110,7 @@ void ltLuaPointerDown(int input_id, LTfloat x, LTfloat y) {
         lua_pushinteger(g_L, input_id);
         lua_pushnumber(g_L, ltGetViewPortX(x));
         lua_pushnumber(g_L, ltGetViewPortY(y));
-        check_status(lua_pcall(g_L, 3, 0, 0));
+        docall(g_L, 3);
     }
 }
 
@@ -2075,7 +2119,7 @@ void ltLuaPointerUp(int input_id, LTfloat x, LTfloat y) {
         lua_pushinteger(g_L, input_id);
         lua_pushnumber(g_L, ltGetViewPortX(x));
         lua_pushnumber(g_L, ltGetViewPortY(y));
-        check_status(lua_pcall(g_L, 3, 0, 0));
+        docall(g_L, 3);
     }
 }
 
@@ -2084,7 +2128,7 @@ void ltLuaPointerMove(int input_id, LTfloat x, LTfloat y) {
         lua_pushinteger(g_L, input_id);
         lua_pushnumber(g_L, ltGetViewPortX(x));
         lua_pushnumber(g_L, ltGetViewPortY(y));
-        check_status(lua_pcall(g_L, 3, 0, 0));
+        docall(g_L, 3);
     }
 }
 
