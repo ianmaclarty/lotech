@@ -432,7 +432,7 @@ LTImagePacker::~LTImagePacker() {
 static bool pack_image(LTImagePacker *packer, LTImageBuffer *img) {
     int pkr_w = packer->width;
     int pkr_h = packer->height;
-    int img_w = img->bb_width() + 1; // add 1 pixel buffer.
+    int img_w = img->bb_width(); // add 1 pixel buffer.
     int img_h = img->bb_height() + 1;
     if (packer->occupant == NULL) {
         bool fits_rotated = img_h <= pkr_w && img_w <= pkr_h;
@@ -712,6 +712,18 @@ bool LTImage::has_field(const char *field_name) {
     if (strcmp(field_name, "top") == 0) {
         return true;
     }
+    if (strcmp(field_name, "tex_left") == 0) {
+        return true;
+    }
+    if (strcmp(field_name, "tex_bottom") == 0) {
+        return true;
+    }
+    if (strcmp(field_name, "tex_right") == 0) {
+        return true;
+    }
+    if (strcmp(field_name, "tex_top") == 0) {
+        return true;
+    }
     return false;
 }
 
@@ -733,6 +745,18 @@ LTfloat LTImage::get_field(const char *field_name) {
     }
     if (strcmp(field_name, "top") == 0) {
         return world_vertices[1];
+    }
+    if (strcmp(field_name, "tex_left") == 0) {
+        return tex_coords[0];
+    }
+    if (strcmp(field_name, "tex_bottom") == 0) {
+        return tex_coords[5];
+    }
+    if (strcmp(field_name, "tex_right") == 0) {
+        return tex_coords[2];
+    }
+    if (strcmp(field_name, "tex_top") == 0) {
+        return tex_coords[1];
     }
     return 0.0f;
 }

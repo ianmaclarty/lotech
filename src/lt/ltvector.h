@@ -29,10 +29,9 @@ struct LTDrawVector : LTSceneNode {
     int color_offset;
     int texture_offset;
     LTDrawMode mode;
-    LTAtlas *texture;
+    LTImage *image;
 
-    LTDrawVector(LTDrawMode mode, LTVector *vector, int dims, int vertex_os, int color_os, int tex_os, LTAtlas *tex);
-    virtual ~LTDrawVector();
+    LTDrawVector(LTDrawMode mode, LTVector *vector, int dims, int vertex_os, int color_os, int tex_os, LTImage *image);
     virtual void draw();
 };
 
@@ -41,9 +40,9 @@ struct LTDrawTexturedQuads : LTSceneNode {
     int offset;
     unsigned short *elements;
     unsigned short num_elems;
-    LTAtlas *texture;
+    LTImage *image;
 
-    LTDrawTexturedQuads(LTVector *vector, int offset, LTAtlas *tex);
+    LTDrawTexturedQuads(LTVector *vector, int offset, LTImage *image);
     virtual ~LTDrawTexturedQuads();
     virtual void draw();
 };

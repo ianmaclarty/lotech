@@ -750,11 +750,10 @@ static int lt_DrawQuads(lua_State *L) {
     if (vector->stride - col < 4) {
         return luaL_error(L, "Not enough columns (need 4)");
     }
-    LTDrawTexturedQuads *draw_quads = new LTDrawTexturedQuads(vector, col, img->atlas);
+    LTDrawTexturedQuads *draw_quads = new LTDrawTexturedQuads(vector, col, img);
     push_wrap(L, draw_quads);
     add_ref(L, -1, 1); // Add reference from node to vector.
-    // We don't need a reference from the node to the image, because we
-    // use reference counting for the texture (see LTAtlas).
+    add_ref(L, -1, 2); // Add reference from node to image.
     return 1;
 }
 
@@ -762,16 +761,29 @@ static int lt_DrawVector(lua_State *L) {
     int num_args = check_nargs(L, 3);
     LTVector *vector = (LTVector *)get_object(L, 1, LT_TYPE_VECTOR);
     const char *mode_str = lua_tostring(L, 2);
-    int dims = lua_tonumber(L, 3);
+    int dims = lua_tointeger(L, 3);
     if (dims != 2 && dims != 3) {
         return luaL_error(L, "Dimensions must be 2 or 3");
     }
     int color_os = -1;
     if (num_args > 3) {
-        color_os = lua_tonumber(L, 4) - 1;
+        color_os = lua_tointeger(L, 4) - 1;
         if (color_os != -1 && color_os > (vector->stride - 4)) {
             return luaL_error(L, "Invalid color offset");
         }
+    }
+    int tex_os = -1;
+    LTImage *img = NULL;
+    if (num_args > 4) {
+        tex_os = lua_tointeger(L, 5) - 1;
+        if (tex_os != -1 && tex_os > (vector->stride - 2)) {
+            return luaL_error(L, "Invalid texture offset");
+        }
+        // If there is a texture offset, an image should also be provided.
+        if (tex_os != -1 && num_args < 6) {
+            return luaL_error(L, "An image must be provided if a texture offset is given.");
+        }
+        img = (LTImage *)get_object(L, 6, LT_TYPE_IMAGE);
     }
     LTDrawMode mode;
     if (strcmp(mode_str, "triangle_strip") == 0) {
@@ -784,9 +796,12 @@ static int lt_DrawVector(lua_State *L) {
         return luaL_error(L, "Invalid draw mode");
     }
 
-    LTDrawVector *draw_vec = new LTDrawVector(mode, vector, dims, 0, color_os, -1, NULL);
+    LTDrawVector *draw_vec = new LTDrawVector(mode, vector, dims, 0, color_os, tex_os, img);
     push_wrap(L, draw_vec);
     add_ref(L, -1, 1); // Add reference from node to vector.
+    if (img != NULL) {
+        add_ref(L, -1, 5); // Add reference from node to image.
+    }
 
     return 1;
 }

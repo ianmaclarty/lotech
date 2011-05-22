@@ -14,7 +14,7 @@ LTVector::~LTVector() {
 }
 
 LTDrawVector::LTDrawVector(LTDrawMode mode, LTVector *vector,
-    int dims, int vertex_os, int color_os, int tex_os, LTAtlas *tex) : LTSceneNode(LT_TYPE_DRAWVECTOR)
+    int dims, int vertex_os, int color_os, int tex_os, LTImage *img) : LTSceneNode(LT_TYPE_DRAWVECTOR)
 {
     LTDrawVector::mode = mode;
     LTDrawVector::vector = vector;
@@ -22,27 +22,15 @@ LTDrawVector::LTDrawVector(LTDrawMode mode, LTVector *vector,
     LTDrawVector::vertex_offset = vertex_os;
     LTDrawVector::color_offset = color_os;
     LTDrawVector::texture_offset = tex_os;
-    LTDrawVector::texture = tex;
-    if (tex != NULL) {
-        texture->ref_count++;
-    }
-}
-
-LTDrawVector::~LTDrawVector() {
-    if (texture != NULL) {
-        texture->ref_count--;
-        if (texture->ref_count <= 0) {
-            delete texture;
-        }
-    }
+    LTDrawVector::image = img;
 }
 
 void LTDrawVector::draw() {
     int stride = vector->stride * sizeof(LTfloat);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glVertexPointer(dimensions, GL_FLOAT, stride, vector->data + vertex_offset);
-    if (texture_offset >= 0 && texture != NULL) {
-        ltEnableAtlas(texture);
+    if (texture_offset >= 0 && image != NULL) {
+        ltEnableAtlas(image->atlas);
         glTexCoordPointer(2, GL_FLOAT, stride, vector->data + texture_offset);
     } else {
         ltDisableTextures();
@@ -58,12 +46,11 @@ void LTDrawVector::draw() {
 }
 
 LTDrawTexturedQuads::LTDrawTexturedQuads(LTVector *vector,
-    int offset, LTAtlas *tex) : LTSceneNode(LT_TYPE_DRAWQUADS)
+    int offset, LTImage *img) : LTSceneNode(LT_TYPE_DRAWQUADS)
 {
     LTDrawTexturedQuads::vector = vector;
     LTDrawTexturedQuads::offset = offset;
-    LTDrawTexturedQuads::texture = tex;
-    texture->ref_count++;
+    LTDrawTexturedQuads::image = img;
 
     if (vector->size <= 0) {
         num_elems = 0;
@@ -91,10 +78,6 @@ LTDrawTexturedQuads::LTDrawTexturedQuads(LTVector *vector,
 }
 
 LTDrawTexturedQuads::~LTDrawTexturedQuads() {
-    texture->ref_count--;
-    if (texture->ref_count <= 0) {
-        delete texture;
-    }
     if (elements != NULL) {
         delete[] elements;
     }
@@ -107,7 +90,7 @@ void LTDrawTexturedQuads::draw() {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     int stride = vector->stride * sizeof(LTfloat);
     glVertexPointer(2, GL_FLOAT, stride, vector->data + offset);
-    ltEnableAtlas(texture);
+    ltEnableAtlas(image->atlas);
     glTexCoordPointer(2, GL_FLOAT, stride, vector->data + offset + 2);
     glDrawElements(GL_TRIANGLE_STRIP, num_elems, GL_UNSIGNED_SHORT, elements);
 }
