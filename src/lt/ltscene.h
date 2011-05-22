@@ -36,14 +36,16 @@ struct LTSceneNode : LTObject {
 
 // Layers group nodes together.
 struct LTLayer : LTSceneNode {
-    std::multimap<LTfloat, LTSceneNode*> layer;
-    std::multimap<LTSceneNode*, std::multimap<LTfloat, LTSceneNode*>::iterator> node_index;
+    std::list<LTSceneNode*> node_list; // Nodes in draw order.
+    std::multimap<LTSceneNode*, std::list<LTSceneNode*>::iterator> node_index;
 
     LTLayer();
 
-    void insert(LTSceneNode *node, LTfloat depth);
+    void insert_front(LTSceneNode *node); // node drawn last
+    void insert_back(LTSceneNode *node);  // node drawn first
     void remove(LTSceneNode *node);
     void clear();
+    int size();
 
     virtual void draw();
     virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);

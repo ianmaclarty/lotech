@@ -70,50 +70,60 @@ LTfloat* LTWrapNode::field_ptr(const char *field_name) {
 LTLayer::LTLayer() : LTSceneNode(LT_TYPE_LAYER) {
 }
 
-#define NODEINDEX std::multimap<LTfloat, LTSceneNode*>::iterator
+#define NODEINDEX std::list<LTSceneNode*>::iterator
 
-void LTLayer::insert(LTSceneNode *node, LTfloat depth) {
-    std::pair<LTfloat, LTSceneNode*> val(depth, node);
-    node_index.insert(std::pair<LTSceneNode*, NODEINDEX>(node, layer.insert(val)));
+void LTLayer::insert_front(LTSceneNode *node) {
+    node_list.push_back(node);
+    node_index.insert(std::pair<LTSceneNode*, std::list<LTSceneNode*>::iterator>(node, --node_list.end()));
+}
+
+void LTLayer::insert_back(LTSceneNode *node) {
+    node_list.push_front(node);
+    node_index.insert(std::pair<LTSceneNode*, std::list<LTSceneNode*>::iterator>(node, node_list.begin()));
+}
+
+int LTLayer::size() {
+    return node_list.size();
 }
 
 void LTLayer::remove(LTSceneNode *node) {
-    std::pair<std::multimap<LTSceneNode*, NODEINDEX>::iterator, std::multimap<LTSceneNode*, NODEINDEX>::iterator> range;
-    std::multimap<LTSceneNode*, NODEINDEX>::iterator it;
+    std::pair<std::multimap<LTSceneNode*, std::list<LTSceneNode*>::iterator>::iterator,
+              std::multimap<LTSceneNode*, std::list<LTSceneNode*>::iterator>::iterator> range;
+    std::multimap<LTSceneNode*, std::list<LTSceneNode*>::iterator>::iterator it;
     range = node_index.equal_range(node);
     for (it = range.first; it != range.second; it++) {
-        layer.erase((*it).second);
+        node_list.erase(it->second);
     }
     node_index.erase(range.first, range.second);
 }
 
 void LTLayer::clear() {
-    layer.clear();
+    node_list.clear();
     node_index.clear();
 }
 
 void LTLayer::draw() {
-    int n = layer.size();
+    int n = node_list.size();
     if (n == 0) {
         return;
     }
     if (n == 1) {
-        layer.begin()->second->draw();
+        (*node_list.begin())->draw();
         return;
     }
-    std::multimap<LTfloat, LTSceneNode*>::iterator it;
-    for (it = layer.begin(); it != layer.end(); it++) {
+    std::list<LTSceneNode*>::iterator it;
+    for (it = node_list.begin(); it != node_list.end(); it++) {
         ltPushMatrix();
-        it->second->draw();
+        (*it)->draw();
         ltPopMatrix();
     }
 }
 
 bool LTLayer::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
     if (!consumePointerEvent(x, y, event)) {
-        std::multimap<LTfloat, LTSceneNode*>::reverse_iterator it;
-        for (it = layer.rbegin(); it != layer.rend(); it++) {
-            if (((*it).second)->propogatePointerEvent(x, y, event)) {
+        std::list<LTSceneNode*>::reverse_iterator it;
+        for (it = node_list.rbegin(); it != node_list.rend(); it++) {
+            if ((*it)->propogatePointerEvent(x, y, event)) {
                 return true;
             }
         }

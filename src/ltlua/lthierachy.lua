@@ -34,8 +34,10 @@ lt.classes = {
     Layer = {
         super = "SceneNode",
         methods = {
-            Insert          = lt.InsertIntoLayer,
+            Insert          = lt.InsertLayerFront,
+            InsertBack      = lt.InsertLayerBack,
             Remove          = lt.RemoveFromLayer,
+            Size            = lt.LayerSize,
         }
     },
     Translate = {

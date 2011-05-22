@@ -432,7 +432,7 @@ LTImagePacker::~LTImagePacker() {
 static bool pack_image(LTImagePacker *packer, LTImageBuffer *img) {
     int pkr_w = packer->width;
     int pkr_h = packer->height;
-    int img_w = img->bb_width(); // add 1 pixel buffer.
+    int img_w = img->bb_width() + 1; // add 1 pixel buffer.
     int img_h = img->bb_height() + 1;
     if (packer->occupant == NULL) {
         bool fits_rotated = img_h <= pkr_w && img_w <= pkr_h;

@@ -397,17 +397,35 @@ static int lt_DrawSceneNode(lua_State *L) {
     return 0;
 }
 
-static int lt_InsertIntoLayer(lua_State *L) {
+static int lt_InsertLayerFront(lua_State *L) {
     int num_args = check_nargs(L, 2);
     LTLayer *layer = (LTLayer*)get_object(L, 1, LT_TYPE_LAYER);
     LTSceneNode *node = (LTSceneNode*)get_object(L, 2, LT_TYPE_SCENENODE);
-    LTfloat depth = 0.0f;
     if (num_args > 2) {
-        depth = luaL_checknumber(L, 3);
+        luaL_error(L, "Only two arguments expected");
     }
-    layer->insert(node, depth);
+    layer->insert_front(node);
     add_ref(L, 1, 2);
     return 0;
+}
+
+static int lt_InsertLayerBack(lua_State *L) {
+    int num_args = check_nargs(L, 2);
+    LTLayer *layer = (LTLayer*)get_object(L, 1, LT_TYPE_LAYER);
+    LTSceneNode *node = (LTSceneNode*)get_object(L, 2, LT_TYPE_SCENENODE);
+    if (num_args > 2) {
+        luaL_error(L, "Only two arguments expected");
+    }
+    layer->insert_back(node);
+    add_ref(L, 1, 2);
+    return 0;
+}
+
+static int lt_LayerSize(lua_State *L) {
+    check_nargs(L, 1);
+    LTLayer *layer = (LTLayer*)get_object(L, 1, LT_TYPE_LAYER);
+    lua_pushinteger(L, layer->size());
+    return 1;
 }
 
 static int lt_RemoveFromLayer(lua_State *L) {
@@ -420,8 +438,17 @@ static int lt_RemoveFromLayer(lua_State *L) {
 }
 
 static int lt_Layer(lua_State *L) {
+    int num_args = check_nargs(L, 0);
     LTLayer *layer = new LTLayer();
     push_wrap(L, layer);
+    // Add arguments as child nodes.
+    // First arguments are drawn in front of last arguments.
+    LTSceneNode *child;
+    for (int arg = 1; arg <= num_args; arg++) {
+        LTSceneNode *child = (LTSceneNode*)get_object(L, arg, LT_TYPE_SCENENODE);
+        layer->insert_back(child);
+        add_ref(L, -1, arg); // Add reference from layer node to child node.
+    }
     return 1;
 }
 
@@ -1845,89 +1872,91 @@ static int log(lua_State *L) {
 /************************************************************/
 
 static const luaL_Reg ltlib[] = {
-    {"GetObjectField",          lt_GetObjectField},
-    {"SetObjectField",          lt_SetObjectField},
+    {"GetObjectField",                  lt_GetObjectField},
+    {"SetObjectField",                  lt_SetObjectField},
 
-    {"SetViewPort",             lt_SetViewPort},
-    {"SetDesignScreenSize",     lt_SetDesignScreenSize},
-    {"SetOrientation",          lt_SetOrientation},
-    {"PushTint",                lt_PushTint},
-    {"PopTint",                 lt_PopTint},
-    {"PushMatrix",              lt_PushMatrix},
-    {"PopMatrix",               lt_PopMatrix},
-    {"DrawUnitSquare",          lt_DrawUnitSquare},
-    {"DrawUnitCircle",          lt_DrawUnitCircle},
-    {"DrawRect",                lt_DrawRect},
-    {"DrawEllipse",             lt_DrawEllipse},
+    {"SetViewPort",                     lt_SetViewPort},
+    {"SetDesignScreenSize",             lt_SetDesignScreenSize},
+    {"SetOrientation",                  lt_SetOrientation},
+    {"PushTint",                        lt_PushTint},
+    {"PopTint",                         lt_PopTint},
+    {"PushMatrix",                      lt_PushMatrix},
+    {"PopMatrix",                       lt_PopMatrix},
+    {"DrawUnitSquare",                  lt_DrawUnitSquare},
+    {"DrawUnitCircle",                  lt_DrawUnitCircle},
+    {"DrawRect",                        lt_DrawRect},
+    {"DrawEllipse",                     lt_DrawEllipse},
 
-    {"Layer",                   lt_Layer},
-    {"Line",                    lt_Line},
-    {"Triangle",                lt_Triangle},
-    {"Rect",                    lt_Rect},
-    {"Cuboid",                  lt_Cuboid},
-    {"Tint",                    lt_Tint},
-    {"BlendMode",               lt_BlendMode},
-    {"Scale",                   lt_Scale},
-    {"Perspective",             lt_Perspective},
-    {"Pitch",                   lt_Pitch},
-    {"Translate",               lt_Translate},
-    {"Rotate",                  lt_Rotate},
-    {"HitFilter",               lt_HitFilter},
-    {"Wrap",                    lt_Wrap},
+    {"Layer",                           lt_Layer},
+    {"Line",                            lt_Line},
+    {"Triangle",                        lt_Triangle},
+    {"Rect",                            lt_Rect},
+    {"Cuboid",                          lt_Cuboid},
+    {"Tint",                            lt_Tint},
+    {"BlendMode",                       lt_BlendMode},
+    {"Scale",                           lt_Scale},
+    {"Perspective",                     lt_Perspective},
+    {"Pitch",                           lt_Pitch},
+    {"Translate",                       lt_Translate},
+    {"Rotate",                          lt_Rotate},
+    {"HitFilter",                       lt_HitFilter},
+    {"Wrap",                            lt_Wrap},
 
-    {"DrawSceneNode",           lt_DrawSceneNode},
-    {"AddOnPointerUpHandler",   lt_AddOnPointerUpHandler},
-    {"AddOnPointerDownHandler", lt_AddOnPointerDownHandler},
-    {"AddOnPointerMoveHandler", lt_AddOnPointerMoveHandler},
-    {"AddOnPointerOverHandler", lt_AddOnPointerOverHandler},
-    {"PropogatePointerUpEvent", lt_PropogatePointerUpEvent},
-    {"PropogatePointerDownEvent",lt_PropogatePointerDownEvent},
-    {"PropogatePointerMoveEvent",lt_PropogatePointerMoveEvent},
-    {"InsertIntoLayer",         lt_InsertIntoLayer},
-    {"RemoveFromLayer",         lt_RemoveFromLayer},
-    {"ReplaceWrappedChild",     lt_ReplaceWrappedChild},
+    {"DrawSceneNode",                   lt_DrawSceneNode},
+    {"AddOnPointerUpHandler",           lt_AddOnPointerUpHandler},
+    {"AddOnPointerDownHandler",         lt_AddOnPointerDownHandler},
+    {"AddOnPointerMoveHandler",         lt_AddOnPointerMoveHandler},
+    {"AddOnPointerOverHandler",         lt_AddOnPointerOverHandler},
+    {"PropogatePointerUpEvent",         lt_PropogatePointerUpEvent},
+    {"PropogatePointerDownEvent",       lt_PropogatePointerDownEvent},
+    {"PropogatePointerMoveEvent",       lt_PropogatePointerMoveEvent},
+    {"InsertLayerFront",                lt_InsertLayerFront},
+    {"InsertLayerBack",                 lt_InsertLayerBack},
+    {"RemoveFromLayer",                 lt_RemoveFromLayer},
+    {"LayerSize",                       lt_LayerSize},
+    {"ReplaceWrappedChild",             lt_ReplaceWrappedChild},
 
-    {"LoadImages",              lt_LoadImages},
+    {"LoadImages",                      lt_LoadImages},
 
-    {"Vector",                  lt_Vector},
-    {"GenerateVectorColumn",    lt_GenerateVectorColumn},
+    {"Vector",                          lt_Vector},
+    {"GenerateVectorColumn",            lt_GenerateVectorColumn},
     {"FillVectorColumnsWithImageQuads", lt_FillVectorColumnsWithImageQuads},
-    {"DrawQuads",               lt_DrawQuads},
-    {"DrawVector",              lt_DrawVector},
+    {"DrawQuads",                       lt_DrawQuads},
+    {"DrawVector",                      lt_DrawVector},
 
-    {"MakeNativeTween",         lt_MakeNativeTween},
-    {"AdvanceNativeTween",      lt_AdvanceNativeTween},
+    {"MakeNativeTween",                 lt_MakeNativeTween},
+    {"AdvanceNativeTween",              lt_AdvanceNativeTween},
 
-    {"LoadSamples",             lt_LoadSamples},
-    {"Track",                   lt_Track},
-    {"PlaySampleOnce",          lt_PlaySampleOnce},
-    {"PlayTrack",               lt_PlayTrack},
-    {"QueueSampleInTrack",      lt_QueueSampleInTrack},
-    {"SetTrackLoop",            lt_SetTrackLoop},
+    {"LoadSamples",                     lt_LoadSamples},
+    {"Track",                           lt_Track},
+    {"PlaySampleOnce",                  lt_PlaySampleOnce},
+    {"PlayTrack",                       lt_PlayTrack},
+    {"QueueSampleInTrack",              lt_QueueSampleInTrack},
+    {"SetTrackLoop",                    lt_SetTrackLoop},
     
-    {"World",                   lt_World},
-    {"FixtureContainsPoint",    lt_FixtureContainsPoint},
-    {"DestroyFixture",          lt_DestroyFixture},
-    {"FixtureIsDestroyed",      lt_FixtureIsDestroyed},
-    {"DoWorldStep",             lt_DoWorldStep},
-    {"SetWorldGravity",         lt_SetWorldGravity},
-    {"WorldQueryBox",           lt_WorldQueryBox},
-    {"DestroyBody",             lt_DestroyBody},
-    {"BodyIsDestroyed",         lt_BodyIsDestroyed},
-    {"ApplyForceToBody",        lt_ApplyForceToBody},
-    {"ApplyTorqueToBody",       lt_ApplyTorqueToBody},
-    {"GetBodyAngle",            lt_GetBodyAngle},
-    {"SetBodyAngle",            lt_SetBodyAngle},
-    {"GetBodyPosition" ,        lt_GetBodyPosition},
-    {"SetBodyPosition" ,        lt_SetBodyPosition},
-    {"SetBodyAngularVelocity",  lt_SetBodyAngularVelocity},
-    {"AddRectToBody",           lt_AddRectToBody},
-    {"AddTriangleToBody",       lt_AddTriangleToBody},
-    {"AddPolygonToBody",        lt_AddPolygonToBody},
-    {"GetFixtureBody",          lt_GetFixtureBody},
-    {"AddStaticBodyToWorld",    lt_AddStaticBodyToWorld},
-    {"AddDynamicBodyToWorld",   lt_AddDynamicBodyToWorld},
-    {"BodyTracker",             lt_BodyTracker},
+    {"World",                           lt_World},
+    {"FixtureContainsPoint",            lt_FixtureContainsPoint},
+    {"DestroyFixture",                  lt_DestroyFixture},
+    {"FixtureIsDestroyed",              lt_FixtureIsDestroyed},
+    {"DoWorldStep",                     lt_DoWorldStep},
+    {"SetWorldGravity",                 lt_SetWorldGravity},
+    {"WorldQueryBox",                   lt_WorldQueryBox},
+    {"DestroyBody",                     lt_DestroyBody},
+    {"BodyIsDestroyed",                 lt_BodyIsDestroyed},
+    {"ApplyForceToBody",                lt_ApplyForceToBody},
+    {"ApplyTorqueToBody",               lt_ApplyTorqueToBody},
+    {"GetBodyAngle",                    lt_GetBodyAngle},
+    {"SetBodyAngle",                    lt_SetBodyAngle},
+    {"GetBodyPosition" ,                lt_GetBodyPosition},
+    {"SetBodyPosition" ,                lt_SetBodyPosition},
+    {"SetBodyAngularVelocity",          lt_SetBodyAngularVelocity},
+    {"AddRectToBody",                   lt_AddRectToBody},
+    {"AddTriangleToBody",               lt_AddTriangleToBody},
+    {"AddPolygonToBody",                lt_AddPolygonToBody},
+    {"GetFixtureBody",                  lt_GetFixtureBody},
+    {"AddStaticBodyToWorld",            lt_AddStaticBodyToWorld},
+    {"AddDynamicBodyToWorld",           lt_AddDynamicBodyToWorld},
+    {"BodyTracker",                     lt_BodyTracker},
 
     {NULL, NULL}
 };
