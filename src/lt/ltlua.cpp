@@ -657,7 +657,7 @@ static int lt_Vector(lua_State *L) {
             lua_rawgeti(L, 1, i);
             for (int j = 1; j <= stride; j++) {
                 lua_rawgeti(L, -1, j);
-                vec->data[(i - 1) * stride + (j - 1)] = lua_tonumber(L, -1);
+                vec->data[(i - 1) * stride + (j - 1)] = luaL_checknumber(L, -1);
                 lua_pop(L, 1);
             }
             lua_pop(L, 1);
@@ -1511,8 +1511,8 @@ static int lt_GetBodyPosition(lua_State *L) {
 static int lt_SetBodyPosition(lua_State *L) {
     check_nargs(L, 3);
     LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
-    LTfloat x = lua_tonumber(L, 2);
-    LTfloat y = lua_tonumber(L, 3);
+    LTfloat x = luaL_checknumber(L, 2);
+    LTfloat y = luaL_checknumber(L, 3);
     if (body->body != NULL) {
         body->body->SetTransform(b2Vec2(x, y), body->body->GetAngle());
     }
@@ -1620,7 +1620,7 @@ static int lt_AddPolygonToBody(lua_State *L) {
                 lua_pop(L, 1);
                 break;
             }
-            vertices[num_vertices].x = lua_tonumber(L, -1);
+            vertices[num_vertices].x = luaL_checknumber(L, -1);
             lua_pop(L, 1);
             i++;
             lua_rawgeti(L, 2, i);
@@ -1628,7 +1628,7 @@ static int lt_AddPolygonToBody(lua_State *L) {
                 lua_pop(L, 1);
                 break;
             }
-            vertices[num_vertices].y = lua_tonumber(L, -1);
+            vertices[num_vertices].y = luaL_checknumber(L, -1);
             lua_pop(L, 1);
             i++;
             num_vertices++;
@@ -1651,17 +1651,17 @@ static int lt_AddPolygonToBody(lua_State *L) {
         b2FixtureDef fixture_def;
         lua_getfield(L, 3, "friction");
         if (!lua_isnil(L, -1)) {
-            fixture_def.friction = lua_tonumber(L, -1);
+            fixture_def.friction = luaL_checknumber(L, -1);
         }
         lua_pop(L, 1);
         lua_getfield(L, 3, "restitution");
         if (!lua_isnil(L, -1)) {
-            fixture_def.restitution = lua_tonumber(L, -1);
+            fixture_def.restitution = luaL_checknumber(L, -1);
         }
         lua_pop(L, 1);
         lua_getfield(L, 3, "density");
         if (!lua_isnil(L, -1)) {
-            fixture_def.density = lua_tonumber(L, -1);
+            fixture_def.density = luaL_checknumber(L, -1);
         }
         lua_pop(L, 1);
         lua_getfield(L, 3, "category");
