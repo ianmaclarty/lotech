@@ -2,6 +2,7 @@ lt.classes = {
     Object = {
         methods = {
             Tween                       = lt.Tween,
+            CancelTween                 = lt.CancelTween,
         }
     },
 
@@ -211,33 +212,23 @@ local function get(obj, field, is_child)
 end
 local function set(obj, field, value)
     local owner = obj
-    local raw_field = false
-    local lt_field = false
     while true do
         if rawget(owner, field) then
-            raw_field = true
-            break
+            rawset(owner, field, value)
+            return
         end
         if lt_get(owner, field) then
-            lt_field = true
-            break
+            lt_set(owner, field, value)
+            return
         end
         local child = rawget(owner, "child")
         if child then
             owner = child
         else
-            break
+            rawset(obj, field, value)
+            return
         end
     end
-    if raw_field then
-        rawset(owner, field, value)
-        return
-    end
-    if lt_field then
-        lt_set(owner, field, value)
-        return
-    end
-    rawset(obj, field, value)
 end
 for class, info in pairs(lt.classes) do
     local metatable = {

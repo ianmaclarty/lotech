@@ -348,6 +348,28 @@ function lt.Tween(node, tween_info)
     return node
 end
 
+function lt.CancelTween(obj, field)
+    owner = find_field_owner(obj, field)
+    local obj_tweens = rawget(obj, "_tweens")
+    if obj_tweens then
+        obj_tweens[field] = nil
+        if next(obj_tweens) == nil then
+            local tweenset = rawget(obj, "_tweenset")
+            local tween_index = rawget(obj, "_tween_index")
+            tweenset[tween_index] = nil
+            rawset(obj, "_tweens", nil)
+            rawset(obj, "_tween_actions", nil)
+            rawset(obj, "_tween_index", nil)
+            rawset(obj, "_tweenset", nil)
+        else
+            local obj_actions = rawget(obj, "_tween_actions")
+            if obj_actions then
+                obj_actions[field] = nil
+            end
+        end
+    end
+end
+
 function lt.AdvanceGlobalTweens()
     lt.AdvanceTweens(global_tweens, lt.secs_per_frame)
 end

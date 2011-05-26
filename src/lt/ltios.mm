@@ -26,8 +26,8 @@ void ltIOSResize(int width, int height) {
 }
 
 void ltIOSRender() {
-    ltLuaRender();
     ltLuaAdvance();
+    ltLuaRender();
 
     #ifdef LTDEVMODE
     ltClientStep();
