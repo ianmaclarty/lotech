@@ -8,8 +8,11 @@ Possible performance improvements
       to mirror references to other objects (so Lua GC knows about them)
     - Use placement new C++ operator to initialize objects.
     - Call C++ object descructor using __gc metatable method.
-    - Rename lua_wrap to lua_ud and have it be a weak reference to the
-      Lua userdata value.  Would there be a more efficient way to do this?
+    - Delete the lua_wrap field of LTObject.  Instead use a lightuserdata
+      constructed from the object pointer as a key in a weak valued table.
+      The values of this table are the full userdatas.
+    - Use something more efficient than lt.wrefs to get the weak references
+      table.  Maybe a special index in the registry.
 
 * All tweens should be native
     - Make tweening completely native.  Tweens on an object can be
