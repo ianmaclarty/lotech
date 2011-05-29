@@ -22,7 +22,7 @@ function lt.Text(str, font, halign, valign)
             y = y - vmove
             x = 0
         else
-            local img = font[chr]
+            local img = font[chr] or font[string.upper(chr)] or font[string.lower(chr)]
             if not img then
                 dx = space
                 gap = space
