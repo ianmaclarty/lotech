@@ -7,12 +7,19 @@ Possible performance improvements
     - Use the environment table of the userdata for custom fields and
       to mirror references to other objects (so Lua GC knows about them)
     - Use placement new C++ operator to initialize objects.
+      Alternatively require LTObjects to implement an init method.
     - Call C++ object descructor using __gc metatable method.
+      Alternatively require LTObjects to implement a destruct method.
     - Delete the lua_wrap field of LTObject.  Instead use a lightuserdata
       constructed from the object pointer as a key in a weak valued table.
       The values of this table are the full userdatas.
     - Use something more efficient than lt.wrefs to get the weak references
       table.  Maybe a special index in the registry.
+    - Instead of using a weak references table consider using the LTObject
+      pointer to push a new userdata lua value.  I think this should be okay,
+      because I think the pointers to the metatable and env table are not part
+      of the lua value struct, but reside inside the block allocated for the
+      userdata.
 
 * All tweens should be native
     - Make tweening completely native.  Tweens on an object can be
@@ -22,3 +29,5 @@ Possible performance improvements
     - Create a perfect hash function for all possible fields of native objects.
       Use this to map strings to an enumeration of the possible fields.
       Switch on this enumeration in get_field/set_field/field_ptr functions.
+
+
