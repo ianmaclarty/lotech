@@ -30,4 +30,26 @@ Possible performance improvements
       Use this to map strings to an enumeration of the possible fields.
       Switch on this enumeration in get_field/set_field/field_ptr functions.
 
+Commercialization roadmap
+=========================
 
+* Ability to run lua commands from lotech console.
+* Ability to refresh assets without restarting app.
+* Reload only changed assets on restart (for faster restart when many assets).
+* Particle effects (using point sprites).
+* BG music playback (ogg or using native APIs).
+* Manual + tutorial.
+* Ability to record session and replay.  Automated testing?
+* Allow multiple devices to connect to multiple PCs over the same LAN.
+* Detect infinite loops in scene graph if in dev mode.
+
+Commercialization plan
+======================
+
+* Launch at least 2 titles on app store.
+* Make video showing features.
+* Send to companies and ask about presenting and/or offer to develop POC:
+    - Millipede
+    - Nextstudio?
+    - WSP Digital (Damien, Evan)
+    - Jon's company (Beech)

@@ -1,18 +1,19 @@
 -- node:Button(bbox, onDown, onUp) or
 -- node:Button(onDown, onUp) (node itself is the bbox)
-function lt.Button(node, arg1, arg2, arg3)
+-- node:Button(onUp) (node itself is the bbox)
+function lt.Button(node, ...)
     local bbox, onDown, onUp
-    local arg1type = type(arg1)
-    if arg1type == "table" then
-        bbox = arg1
-        onDown = arg2
-        onUp = arg3
-    elseif arg1type == "function" then
+    local nargs = select("#", ...)
+    if nargs == 3 then
+        bbox, onDown, onUp = ...
+    elseif nargs == 2 then
         bbox = node
-        onDown = arg1
-        onUp = arg2
+        onDown, onUp = ...
+    elseif nargs == 1 then
+        bbox = node
+        onUp = ...
     else
-        error("argument 1 should be a table or a function")
+        error("wrong number of argument")
     end
     local left = bbox.left
     local bottom = bbox.bottom

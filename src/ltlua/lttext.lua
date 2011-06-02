@@ -2,7 +2,7 @@ function lt.Text(str, font, halign, valign)
     halign = halign or "left"
     valign = valign or "center"
 
-    local em = font.m or font.M or {width = 0.1, height = 0.1}
+    local em = font.m or font.M or font[0] or {width = 0.1, height = 0.1}
     local space = em.width * (font.space or 0.3)
     local hmove = em.width * (font.hmove or 0.05)
     local vmove = em.height * (font.vmove or 1.2)
