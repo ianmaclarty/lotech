@@ -92,6 +92,27 @@ void LTTrack::setLoop(bool loop) {
     alSourcei(source_id, AL_LOOPING, loop ? AL_TRUE : AL_FALSE);
 }
 
+
+int LTTrack::numSamples() {
+    ALint queued;
+    alGetSourcei(source_id, AL_BUFFERS_QUEUED, &queued);
+    return queued;
+}
+
+int LTTrack::numProcessedSamples() {
+    ALint processed;
+    alGetSourcei(source_id, AL_BUFFERS_PROCESSED, &processed);
+    return processed;
+}
+
+int LTTrack::numPendingSamples() {
+    return numSamples() - numProcessedSamples();
+}
+
+void LTTrack::dequeueProcessedSamples(int n) {
+    alSourceUnqueueBuffers(source_id, n, NULL);
+}
+
 bool LTTrack::has_field(const char *field_name) {
     return strcmp(field_name, "gain") == 0 || strcmp(field_name, "pitch") == 0;
 }

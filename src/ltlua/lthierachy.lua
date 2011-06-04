@@ -131,6 +131,10 @@ lt.classes = {
             Play            = lt.PlayTrack,
             Queue           = lt.QueueSampleInTrack,
             SetLoop         = lt.SetTrackLoop,
+            NumQueued       = lt.TrackQueueSize,
+            NumPending      = lt.TrackNumPending,
+            NumPlayed       = lt.TrackNumPlayed,
+            Dequeue         = lt.TrackDequeuePlayed,
         }
     },
 

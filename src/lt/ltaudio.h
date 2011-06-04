@@ -33,6 +33,10 @@ struct LTTrack : LTObject {
     void queueSample(LTAudioSample *sample);
     void setLoop(bool loop);
     void play();
+    int  numSamples();
+    int  numProcessedSamples();
+    int  numPendingSamples(); // numSamples() - numProcessedSamples()
+    void dequeueProcessedSamples(int n);
 
     virtual bool has_field(const char *field_name);
     virtual LTfloat get_field(const char *field_name);

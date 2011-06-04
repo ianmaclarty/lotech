@@ -1306,6 +1306,35 @@ static int lt_SetTrackLoop(lua_State *L) {
     return 0;
 }
 
+static int lt_TrackQueueSize(lua_State *L) {
+    int num_args = check_nargs(L, 1);
+    LTTrack *track = (LTTrack*)get_object(L, 1, LT_TYPE_TRACK);
+    lua_pushinteger(L, track->numSamples());
+    return 1;
+}
+
+static int lt_TrackNumPlayed(lua_State *L) {
+    int num_args = check_nargs(L, 1);
+    LTTrack *track = (LTTrack*)get_object(L, 1, LT_TYPE_TRACK);
+    lua_pushinteger(L, track->numProcessedSamples());
+    return 1;
+}
+
+static int lt_TrackNumPending(lua_State *L) {
+    int num_args = check_nargs(L, 1);
+    LTTrack *track = (LTTrack*)get_object(L, 1, LT_TYPE_TRACK);
+    lua_pushinteger(L, track->numPendingSamples());
+    return 1;
+}
+
+static int lt_TrackDequeuePlayed(lua_State *L) {
+    int num_args = check_nargs(L, 2);
+    LTTrack *track = (LTTrack*)get_object(L, 1, LT_TYPE_TRACK);
+    int n = (int)luaL_checkinteger(L, 2);
+    track->dequeueProcessedSamples(n);
+    return 0;
+}
+
 /************************* Box2D **************************/
 
 static int lt_FixtureContainsPoint(lua_State *L) {
@@ -1933,6 +1962,10 @@ static const luaL_Reg ltlib[] = {
     {"PlayTrack",                       lt_PlayTrack},
     {"QueueSampleInTrack",              lt_QueueSampleInTrack},
     {"SetTrackLoop",                    lt_SetTrackLoop},
+    {"TrackQueueSize",                  lt_TrackQueueSize},
+    {"TrackNumPlayed",                  lt_TrackNumPlayed},
+    {"TrackNumPending",                 lt_TrackNumPending},
+    {"TrackDequeuePlayed",              lt_TrackDequeuePlayed},
     
     {"World",                           lt_World},
     {"FixtureContainsPoint",            lt_FixtureContainsPoint},
