@@ -1287,7 +1287,15 @@ static int lt_QueueSampleInTrack(lua_State *L) {
     int num_args = check_nargs(L, 2);
     LTTrack *track = (LTTrack*)get_object(L, 1, LT_TYPE_TRACK);
     LTAudioSample *sample = (LTAudioSample*)get_object(L, 2, LT_TYPE_AUDIOSAMPLE);
-    track->queueSample(sample);
+    int n = 1;
+    if (num_args > 2) {
+        n = luaL_checkinteger(L, 3);
+    }
+    for (int i = 0; i < n; i++) {
+        track->queueSample(sample);
+    }
+    // XXX We should probably add a separate reference to each added
+    //     sample, so we can remove each reference in lt_TrackDequeuePlayed.
     add_ref(L, 1, 2); // Add ref from track to sample.
     return 0;
 }
@@ -1299,7 +1307,7 @@ static int lt_Track(lua_State *L) {
 }
 
 static int lt_SetTrackLoop(lua_State *L) {
-    int num_args = check_nargs(L, 2);
+    check_nargs(L, 2);
     LTTrack *track = (LTTrack*)get_object(L, 1, LT_TYPE_TRACK);
     bool loop = lua_toboolean(L, 2);
     track->setLoop(loop);
@@ -1307,32 +1315,54 @@ static int lt_SetTrackLoop(lua_State *L) {
 }
 
 static int lt_TrackQueueSize(lua_State *L) {
-    int num_args = check_nargs(L, 1);
+    check_nargs(L, 1);
     LTTrack *track = (LTTrack*)get_object(L, 1, LT_TYPE_TRACK);
     lua_pushinteger(L, track->numSamples());
     return 1;
 }
 
 static int lt_TrackNumPlayed(lua_State *L) {
-    int num_args = check_nargs(L, 1);
+    check_nargs(L, 1);
     LTTrack *track = (LTTrack*)get_object(L, 1, LT_TYPE_TRACK);
     lua_pushinteger(L, track->numProcessedSamples());
     return 1;
 }
 
 static int lt_TrackNumPending(lua_State *L) {
-    int num_args = check_nargs(L, 1);
+    check_nargs(L, 1);
     LTTrack *track = (LTTrack*)get_object(L, 1, LT_TYPE_TRACK);
     lua_pushinteger(L, track->numPendingSamples());
     return 1;
 }
 
 static int lt_TrackDequeuePlayed(lua_State *L) {
-    int num_args = check_nargs(L, 2);
+    check_nargs(L, 2);
     LTTrack *track = (LTTrack*)get_object(L, 1, LT_TYPE_TRACK);
     int n = (int)luaL_checkinteger(L, 2);
     track->dequeueProcessedSamples(n);
+    // XXX We have to remove the reference to the sample.
     return 0;
+}
+
+static int lt_SampleNumDataPoints(lua_State *L) {
+    check_nargs(L, 1);
+    LTAudioSample *sample = (LTAudioSample*)get_object(L, 1, LT_TYPE_AUDIOSAMPLE);
+    lua_pushinteger(L, sample->numDataPoints());
+    return 1;
+}
+
+static int lt_SampleFrequency(lua_State *L) {
+    check_nargs(L, 1);
+    LTAudioSample *sample = (LTAudioSample*)get_object(L, 1, LT_TYPE_AUDIOSAMPLE);
+    lua_pushinteger(L, sample->dataPointsPerSec());
+    return 1;
+}
+
+static int lt_SampleLength(lua_State *L) {
+    check_nargs(L, 1);
+    LTAudioSample *sample = (LTAudioSample*)get_object(L, 1, LT_TYPE_AUDIOSAMPLE);
+    lua_pushnumber(L, sample->length());
+    return 1;
 }
 
 /************************* Box2D **************************/
@@ -1966,6 +1996,9 @@ static const luaL_Reg ltlib[] = {
     {"TrackNumPlayed",                  lt_TrackNumPlayed},
     {"TrackNumPending",                 lt_TrackNumPending},
     {"TrackDequeuePlayed",              lt_TrackDequeuePlayed},
+    {"SampleNumDataPoints",             lt_SampleNumDataPoints},
+    {"SampleFrequency",                 lt_SampleFrequency},
+    {"SampleLength",                    lt_SampleLength},
     
     {"World",                           lt_World},
     {"FixtureContainsPoint",            lt_FixtureContainsPoint},

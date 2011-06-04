@@ -29,6 +29,7 @@
 #define LT_DEGREES_PER_RADIAN (180.0f / LT_PI)
 
 typedef float           LTfloat;
+typedef double          LTdouble;
 typedef unsigned int    LTuint;
 typedef float           LTsecs;
 typedef float           LTdegrees;

@@ -123,6 +123,7 @@ lt.classes = {
         super = "Object",
         methods = {
             Play            = lt.PlaySampleOnce,
+            Length          = lt.SampleLength,
         }
     },
     Track = {

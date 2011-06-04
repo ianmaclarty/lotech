@@ -69,6 +69,38 @@ void LTAudioSample::play(LTfloat pitch, LTfloat gain) {
     }
 }
 
+int LTAudioSample::bytes() {
+    ALint n;
+    alGetBufferi(buffer_id, AL_SIZE, &n);
+    return n;
+}
+
+int LTAudioSample::bitsPerDataPoint() {
+    ALint n;
+    alGetBufferi(buffer_id, AL_BITS, &n);
+    return n;
+}
+
+int LTAudioSample::channels() {
+    ALint n;
+    alGetBufferi(buffer_id, AL_CHANNELS, &n);
+    return n;
+}
+
+int LTAudioSample::numDataPoints() {
+    return bytes() / ((bitsPerDataPoint() >> 3) * channels());
+}
+
+int LTAudioSample::dataPointsPerSec() {
+    ALint n;
+    alGetBufferi(buffer_id, AL_FREQUENCY, &n);
+    return n;
+}
+
+LTdouble LTAudioSample::length() {
+    return (LTdouble)numDataPoints() / (LTdouble)dataPointsPerSec();
+}
+
 LTTrack::LTTrack() : LTObject(LT_TYPE_TRACK) {
     alGenSources(1, &source_id);
     alSourcef(source_id, AL_PITCH, 1.0f);

@@ -19,6 +19,13 @@ struct LTAudioSample : LTObject {
     LTAudioSample(ALuint buffer_id, const char *name);
     virtual ~LTAudioSample();
 
+    int bytes();
+    int bitsPerDataPoint();
+    int channels();
+    int numDataPoints();
+    int dataPointsPerSec();
+    LTdouble length(); // In secs.
+
     // Create a new source, play it, and delete the source.
     // Requires ltAudioGC() to be called after audio has finished playing.
     void play(LTfloat pitch = 1.0f, LTfloat gain = 1.0f);
