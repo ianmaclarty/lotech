@@ -42,6 +42,8 @@ Commercialization roadmap
 * Ability to record session and replay.  Automated testing?
 * Allow multiple devices to connect to multiple PCs over the same LAN.
 * Detect infinite loops in scene graph if in dev mode.
+* Better progress feedback in console when transferring large files.
+* Keep md5 checksums of files and only transfer when changed.
 
 Commercialization plan
 ======================
