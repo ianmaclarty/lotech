@@ -613,6 +613,19 @@ static int lt_HitFilter(lua_State *L) {
     return 1;
 }
 
+static int lt_DownFilter(lua_State *L) {
+    int num_args = check_nargs(L, 5);
+    LTSceneNode *child = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
+    LTfloat left = (LTfloat)luaL_checknumber(L, 2);
+    LTfloat bottom = (LTfloat)luaL_checknumber(L, 3);
+    LTfloat right = (LTfloat)luaL_checknumber(L, 4);
+    LTfloat top = (LTfloat)luaL_checknumber(L, 5);
+    LTDownFilter *filter = new LTDownFilter(left, bottom, right, top, child);
+    push_wrap(L, filter);
+    set_ref_field(L, -1, "child", 1); // Add reference from new node to child.
+    return 1;
+}
+
 static int lt_Wrap(lua_State *L) {
     int num_args = check_nargs(L, 1);
     LTSceneNode *child = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
@@ -1959,6 +1972,7 @@ static const luaL_Reg ltlib[] = {
     {"Translate",                       lt_Translate},
     {"Rotate",                          lt_Rotate},
     {"HitFilter",                       lt_HitFilter},
+    {"DownFilter",                      lt_DownFilter},
     {"Wrap",                            lt_Wrap},
 
     {"DrawSceneNode",                   lt_DrawSceneNode},

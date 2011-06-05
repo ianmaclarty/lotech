@@ -442,3 +442,43 @@ LTfloat* LTHitFilter::field_ptr(const char *field_name) {
     }
     return NULL;
 }
+
+LTDownFilter::LTDownFilter(LTfloat left, LTfloat bottom, LTfloat right, LTfloat top, LTSceneNode *child)
+        : LTWrapNode(child, LT_TYPE_DOWNFILTER) {
+    LTDownFilter::left = left;
+    LTDownFilter::bottom = bottom;
+    LTDownFilter::right = right;
+    LTDownFilter::top = top;
+}
+
+void LTDownFilter::draw() {
+    child->draw();
+}
+
+bool LTDownFilter::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
+    if (event->type != LT_EVENT_POINTER_DOWN || x >= left && x <= right && y >= bottom && y <= top) {
+        if (!consumePointerEvent(x, y, event)) {
+            return child->propogatePointerEvent(x, y, event);
+        } else {
+            return true;
+        }
+    } else {
+        return false;
+    }
+}
+
+LTfloat* LTDownFilter::field_ptr(const char *field_name) {
+    if (strcmp(field_name, "left") == 0) {
+        return &left;
+    }
+    if (strcmp(field_name, "bottom") == 0) {
+        return &bottom;
+    }
+    if (strcmp(field_name, "right") == 0) {
+        return &right;
+    }
+    if (strcmp(field_name, "top") == 0) {
+        return &top;
+    }
+    return NULL;
+}

@@ -26,6 +26,7 @@ lt.classes = {
             Perspective                 = lt.Perspective,
             Pitch                       = lt.Pitch,
             HitFilter                   = lt.HitFilter,
+            DownFilter                  = lt.DownFilter,
             HitBarrier                  = lt.HitBarrier,
             Wrap                        = lt.Wrap,
             TrackBody                   = lt.BodyTracker,
@@ -91,6 +92,10 @@ lt.classes = {
         methods = {}
     },
     HitFilter = {
+        super = "Wrap",
+        methods = {}
+    },
+    DownFilter = {
         super = "Wrap",
         methods = {}
     },

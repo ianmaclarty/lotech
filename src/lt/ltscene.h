@@ -153,10 +153,22 @@ struct LTRectNode : LTSceneNode {
     virtual LTfloat* field_ptr(const char *field_name);
 };
 
+// Filters all pointer events.  XXX Think about renaming.
 struct LTHitFilter : LTWrapNode {
     LTfloat left, bottom, right, top;
 
     LTHitFilter(LTfloat left, LTfloat bottom, LTfloat right, LTfloat top, LTSceneNode *child);
+    
+    virtual void draw();
+    virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
+    virtual LTfloat* field_ptr(const char *field_name);
+};
+
+// Filters only down events.
+struct LTDownFilter : LTWrapNode {
+    LTfloat left, bottom, right, top;
+
+    LTDownFilter(LTfloat left, LTfloat bottom, LTfloat right, LTfloat top, LTSceneNode *child);
     
     virtual void draw();
     virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
