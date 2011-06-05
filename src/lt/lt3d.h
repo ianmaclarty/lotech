@@ -29,6 +29,7 @@ struct LTPerspective : LTWrapNode {
     LTPerspective(LTfloat near, LTfloat origin, LTfloat far, bool depth_buf_on, LTSceneNode *child);
     
     virtual void draw();
+    bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
     virtual LTfloat* field_ptr(const char *field_name);
 };
 
@@ -38,6 +39,7 @@ struct LTPitch : LTWrapNode {
     LTPitch(LTfloat pitch, LTSceneNode *child);
 
     virtual void draw();
+    bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
     virtual LTfloat* field_ptr(const char *field_name);
 };
 

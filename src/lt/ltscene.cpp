@@ -150,8 +150,12 @@ bool LTTranslateNode::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent
     LTfloat x1, y1;
     x1 = x - LTTranslateNode::x;
     y1 = y - LTTranslateNode::y;
-    if (z != 0.0f || !consumePointerEvent(x1, y1, event)) {
-        return child->propogatePointerEvent(x1, y1, event);
+    if (!consumePointerEvent(x1, y1, event)) {
+        if (z == 0.0f) {
+            return child->propogatePointerEvent(x1, y1, event);
+        } else {
+            return false;
+        }
     } else {
         return true;
     }
@@ -256,7 +260,11 @@ void LTTintNode::draw() {
 
 bool LTTintNode::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
     if (!consumePointerEvent(x, y, event)) {
-        return child->propogatePointerEvent(x, y, event);
+        if (a != 0.0f) {
+            return child->propogatePointerEvent(x, y, event);
+        } else {
+            return false;
+        }
     } else {
         return true;
     }

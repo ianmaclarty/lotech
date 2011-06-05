@@ -27,6 +27,10 @@ void LTPerspective::draw() {
     ltPopPerspective();
 }
 
+bool LTPerspective::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
+    return false;
+}
+
 LTfloat* LTPerspective::field_ptr(const char *field_name) {
     if (strcmp(field_name, "near") == 0) {
         return &near;
@@ -45,6 +49,10 @@ LTPitch::LTPitch(LTfloat pitch, LTSceneNode *child) : LTWrapNode(child, LT_TYPE_
 void LTPitch::draw() {
     glRotatef(pitch, 1, 0, 0);
     child->draw();
+}
+
+bool LTPitch::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
+    return false;
 }
 
 LTfloat* LTPitch::field_ptr(const char *field_name) {
