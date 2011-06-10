@@ -37,5 +37,7 @@ LTfloat ltDeccelEase(LTfloat t);
 // Hyperbola
 LTfloat ltZoomInEase(LTfloat t);
 LTfloat ltZoomOutEase(LTfloat t);
+// Sine
+LTfloat ltRevolveEase(LTfloat t);
 
 #endif

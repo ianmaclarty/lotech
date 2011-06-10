@@ -894,6 +894,8 @@ static int lt_MakeNativeTween(lua_State *L) {
             ease_func = ltZoomInEase;
         } else if (strcmp(ease_func_str, "zoomout") == 0) {
             ease_func = ltZoomOutEase;
+        } else if (strcmp(ease_func_str, "revolve") == 0) {
+            ease_func = ltRevolveEase;
         } else if (strcmp(ease_func_str, "linear") == 0) {
             ease_func = ltLinearEase;
         } else {

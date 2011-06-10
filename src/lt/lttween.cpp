@@ -116,3 +116,7 @@ LTfloat ltZoomOutEase(LTfloat t) {
     static const LTfloat s = 0.05f;
     return 1.0f + s - s / (s + t);
 }
+
+LTfloat ltRevolveEase(LTfloat t) {
+    return (sinf(LT_PI * (t - 0.5f)) + 1.0f) * 0.5f;
+}
