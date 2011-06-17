@@ -43,6 +43,12 @@ struct LTLayer : LTSceneNode {
 
     void insert_front(LTSceneNode *node); // node drawn last
     void insert_back(LTSceneNode *node);  // node drawn first
+
+    // Returns whether the existing node was found.
+    // If the existing not was not found the new one is not inserted.
+    bool insert_above(LTSceneNode *existing_node, LTSceneNode *new_node);
+    bool insert_below(LTSceneNode *existing_node, LTSceneNode *new_node);
+
     void remove(LTSceneNode *node);
     void clear();
     int size();

@@ -38,6 +38,8 @@ lt.classes = {
         methods = {
             Insert          = lt.InsertLayerFront,
             InsertBack      = lt.InsertLayerBack,
+            InsertAbove     = lt.InsertLayerAbove,
+            InsertBelow     = lt.InsertLayerBelow,
             Remove          = lt.RemoveFromLayer,
             Size            = lt.LayerSize,
         }

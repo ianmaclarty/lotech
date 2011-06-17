@@ -82,6 +82,36 @@ void LTLayer::insert_back(LTSceneNode *node) {
     node_index.insert(std::pair<LTSceneNode*, std::list<LTSceneNode*>::iterator>(node, node_list.begin()));
 }
 
+bool LTLayer::insert_above(LTSceneNode *existing_node, LTSceneNode *new_node) {
+    std::pair<std::multimap<LTSceneNode*, std::list<LTSceneNode*>::iterator>::iterator,
+              std::multimap<LTSceneNode*, std::list<LTSceneNode*>::iterator>::iterator> range;
+    std::multimap<LTSceneNode*, std::list<LTSceneNode*>::iterator>::iterator it;
+    range = node_index.equal_range(existing_node);
+    if (range.first != range.second) {
+        std::list<LTSceneNode*>::iterator existing_it = (range.first)->second;
+        std::list<LTSceneNode*>::iterator new_it = node_list.insert(++existing_it, new_node);
+        node_index.insert(std::pair<LTSceneNode*, std::list<LTSceneNode*>::iterator>(new_node, new_it));
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool LTLayer::insert_below(LTSceneNode *existing_node, LTSceneNode *new_node) {
+    std::pair<std::multimap<LTSceneNode*, std::list<LTSceneNode*>::iterator>::iterator,
+              std::multimap<LTSceneNode*, std::list<LTSceneNode*>::iterator>::iterator> range;
+    std::multimap<LTSceneNode*, std::list<LTSceneNode*>::iterator>::iterator it;
+    range = node_index.equal_range(existing_node);
+    if (range.first != range.second) {
+        std::list<LTSceneNode*>::iterator existing_it = (range.first)->second;
+        std::list<LTSceneNode*>::iterator new_it = node_list.insert(existing_it, new_node);
+        node_index.insert(std::pair<LTSceneNode*, std::list<LTSceneNode*>::iterator>(new_node, new_it));
+        return true;
+    } else {
+        return false;
+    }
+}
+
 int LTLayer::size() {
     return node_list.size();
 }

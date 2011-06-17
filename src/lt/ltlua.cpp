@@ -421,6 +421,34 @@ static int lt_InsertLayerBack(lua_State *L) {
     return 0;
 }
 
+static int lt_InsertLayerAbove(lua_State *L) {
+    int num_args = check_nargs(L, 3);
+    LTLayer *layer = (LTLayer*)get_object(L, 1, LT_TYPE_LAYER);
+    LTSceneNode *existing_node = (LTSceneNode*)get_object(L, 2, LT_TYPE_SCENENODE);
+    LTSceneNode *new_node = (LTSceneNode*)get_object(L, 3, LT_TYPE_SCENENODE);
+    if (num_args > 3) {
+        luaL_error(L, "Only three arguments expected");
+    }
+    if (layer->insert_above(existing_node, new_node)) {
+        add_ref(L, 1, 3);
+    }
+    return 0;
+}
+
+static int lt_InsertLayerBelow(lua_State *L) {
+    int num_args = check_nargs(L, 3);
+    LTLayer *layer = (LTLayer*)get_object(L, 1, LT_TYPE_LAYER);
+    LTSceneNode *existing_node = (LTSceneNode*)get_object(L, 2, LT_TYPE_SCENENODE);
+    LTSceneNode *new_node = (LTSceneNode*)get_object(L, 3, LT_TYPE_SCENENODE);
+    if (num_args > 3) {
+        luaL_error(L, "Only three arguments expected");
+    }
+    if (layer->insert_below(existing_node, new_node)) {
+        add_ref(L, 1, 3);
+    }
+    return 0;
+}
+
 static int lt_LayerSize(lua_State *L) {
     check_nargs(L, 1);
     LTLayer *layer = (LTLayer*)get_object(L, 1, LT_TYPE_LAYER);
@@ -1987,6 +2015,8 @@ static const luaL_Reg ltlib[] = {
     {"PropogatePointerMoveEvent",       lt_PropogatePointerMoveEvent},
     {"InsertLayerFront",                lt_InsertLayerFront},
     {"InsertLayerBack",                 lt_InsertLayerBack},
+    {"InsertLayerAbove",                lt_InsertLayerAbove},
+    {"InsertLayerBelow",                lt_InsertLayerBelow},
     {"RemoveFromLayer",                 lt_RemoveFromLayer},
     {"LayerSize",                       lt_LayerSize},
     {"ReplaceWrappedChild",             lt_ReplaceWrappedChild},
