@@ -44,6 +44,10 @@ Commercialization roadmap
 * Detect infinite loops in scene graph if in dev mode.
 * Better progress feedback in console when transferring large files.
 * Keep md5 checksums of files and only transfer when changed.
+* Improve ui button controls. i.e. gracefully cancel buttons if they
+  become invisible. 
+* Maybe add other widget such as sliders and coverflow-style albums.
+* Add scrollable areas.
 
 Commercialization plan
 ======================
@@ -54,4 +58,4 @@ Commercialization plan
     - Millipede
     - Nextstudio?
     - WSP Digital (Damien, Evan)
-    - Jon's company (Beech)
+    - Jon's company (Michael Beach)

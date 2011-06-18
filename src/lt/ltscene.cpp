@@ -289,14 +289,18 @@ void LTTintNode::draw() {
 }
 
 bool LTTintNode::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
-    if (!consumePointerEvent(x, y, event)) {
-        if (a != 0.0f) {
-            return child->propogatePointerEvent(x, y, event);
+    if (a != 0.0f) {
+        if (!consumePointerEvent(x, y, event)) {
+            if (a != 0.0f) {
+                return child->propogatePointerEvent(x, y, event);
+            } else {
+                return false;
+            }
         } else {
-            return false;
+            return true;
         }
     } else {
-        return true;
+        return false;
     }
 }
 

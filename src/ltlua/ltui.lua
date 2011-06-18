@@ -49,3 +49,9 @@ end
 function lt.HitBarrier(child)
     return lt.HitFilter(child, 1, 1, -1, -1)
 end
+
+function lt.CancelButton(input_id)
+    if current_button_input == input_id then
+        current_button_input = nil
+    end
+end
