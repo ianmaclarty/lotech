@@ -18,6 +18,7 @@ extern "C" {
 #include "ltiosutil.h"
 #include "ltlua.h"
 #include "ltphysics.h"
+#include "ltstore.h"
 #include "lttext.h"
 #include "lttween.h"
 #include "ltutil.h"
@@ -1408,6 +1409,75 @@ static int lt_SampleLength(lua_State *L) {
     return 1;
 }
 
+/********************* Store *****************************/
+
+static int lt_Store(lua_State *L) {
+    check_nargs(L, 2); 
+    int key_type = lua_type(L, 1);
+    int value_type = lua_type(L, 2);
+    if (key_type == LUA_TSTRING) {
+        const char *key = lua_tostring(L, 1);
+        switch(value_type) {
+            case LUA_TSTRING: {
+                const char *svalue = lua_tostring(L, 2);
+                ltStoreString(key, svalue);
+                break;
+            }
+            case LUA_TNUMBER: {
+                LTdouble nvalue = lua_tonumber(L, 2);
+                ltStoreDouble(key, nvalue);
+                break;
+            }
+            case LUA_TBOOLEAN: {
+                bool bvalue = lua_toboolean(L, 2) == 1;
+                ltStoreBool(key, bvalue);
+                break;
+            }
+            case LUA_TNIL: {
+                ltUnstore(key);
+                break;
+            }
+            default: {
+                return luaL_error(L, "The second argument must be a string, number, boolean or nil.");
+            }
+        }
+    } else {
+        return luaL_error(L, "The first argument must be a string.");
+    }
+    return 0;
+}
+
+static int lt_Retrieve(lua_State *L) {
+    check_nargs(L, 1); 
+    int key_type = lua_type(L, 1);
+    if (key_type == LUA_TSTRING) {
+        const char *key = lua_tostring(L, 1);
+        LTStoredValueType val_type = ltGetStoredValueType(key);
+        switch (val_type) {
+            case LT_STORED_VALUE_TYPE_STRING: {
+                char *str = ltRetrieveString(key);
+                lua_pushstring(L, str);
+                delete[] str;
+                break;
+            }
+            case LT_STORED_VALUE_TYPE_DOUBLE: {
+                lua_pushnumber(L, ltRetrieveDouble(key));
+                break;
+            }
+            case LT_STORED_VALUE_TYPE_BOOL: {
+                lua_pushboolean(L, ltRetrieveBool(key));
+                break;
+            }
+            default: {
+                lua_pushnil(L);
+            }
+        }
+        return 1;
+    } else {
+        return luaL_error(L, "The first argument must be a string.");
+    }
+}
+
 /************************* Box2D **************************/
 
 static int lt_FixtureContainsPoint(lua_State *L) {
@@ -2046,6 +2116,9 @@ static const luaL_Reg ltlib[] = {
     {"SampleFrequency",                 lt_SampleFrequency},
     {"SampleLength",                    lt_SampleLength},
     
+    {"Store",                           lt_Store},
+    {"Retrieve",                        lt_Retrieve},
+
     {"World",                           lt_World},
     {"FixtureContainsPoint",            lt_FixtureContainsPoint},
     {"DestroyFixture",                  lt_DestroyFixture},

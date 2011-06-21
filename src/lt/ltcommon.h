@@ -31,9 +31,11 @@
 typedef float           LTfloat;
 typedef double          LTdouble;
 typedef unsigned int    LTuint;
+// We check this is 32 bits in ltcommon.cpp.
+typedef unsigned int    LTuint32;
+
 typedef float           LTsecs;
 typedef float           LTdegrees;
-typedef unsigned int    LTuint32;
 
 typedef LTuint32        LTpixel;
 typedef GLuint          LTvertbuf;

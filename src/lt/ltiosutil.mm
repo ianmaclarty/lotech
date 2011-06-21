@@ -1,5 +1,6 @@
 #ifdef LTIOS
 #import <UIKit/UIKit.h>
+#import <objc/runtime.h>
 
 #include "ltiosutil.h"
 #include "ltutil.h"
@@ -65,4 +66,118 @@ const char *ltIOSBundlePath(const char *file, const char *suffix) {
     #endif
     return path;
 }
+
+//------------- prefs store ----------------
+
+static NSUserDefaults *prefs = nil;
+
+static void ensure_prefs_initialized() {
+    if (prefs == nil) {
+        prefs = [NSUserDefaults standardUserDefaults];
+    }
+}
+
+void ltIOSStoreString(const char *key, const char *value) {
+    ensure_prefs_initialized();
+    NSString *skey = [NSString stringWithUTF8String:key];
+    NSString *svalue = [NSString stringWithUTF8String:value];
+    [prefs setObject:svalue forKey:skey];
+}
+
+char *ltIOSRetrieveString(const char *key) {
+    ensure_prefs_initialized();
+    NSString *svalue = [prefs stringForKey:[NSString stringWithUTF8String:key]];
+    const char *cstr;
+    if (svalue != nil) {
+        cstr = [svalue UTF8String];
+    } else {
+        cstr = "";
+    }
+    char *rv = new char[strlen(cstr) + 1];
+    strcpy(rv, cstr);
+    return rv;
+}
+
+void ltIOSStoreDouble(const char *key, LTdouble value) {
+    ensure_prefs_initialized();
+    NSString *skey = [NSString stringWithUTF8String:key];
+    [prefs setDouble:value forKey:skey];
+}
+
+LTdouble ltIOSRetrieveDouble(const char *key) {
+    ensure_prefs_initialized();
+    return [prefs doubleForKey:[NSString stringWithUTF8String:key]];
+}
+
+void ltIOSStoreFloat(const char *key, LTfloat value) {
+    ensure_prefs_initialized();
+    NSString *skey = [NSString stringWithUTF8String:key];
+    [prefs setFloat:value forKey:skey];
+}
+
+LTfloat ltIOSRetrieveFloat(const char *key) {
+    ensure_prefs_initialized();
+    return [prefs floatForKey:[NSString stringWithUTF8String:key]];
+}
+
+void ltIOSStoreInt(const char *key, int value) {
+    ensure_prefs_initialized();
+    NSString *skey = [NSString stringWithUTF8String:key];
+    [prefs setInteger:value forKey:skey];
+}
+
+int ltIOSRetrieveInt(const char *key) {
+    ensure_prefs_initialized();
+    return [prefs integerForKey:[NSString stringWithUTF8String:key]];
+}
+
+void ltIOSStoreBool(const char *key, bool value) {
+    ensure_prefs_initialized();
+    NSString *skey = [NSString stringWithUTF8String:key];
+    [prefs setBool:(value ? YES : NO) forKey:skey];
+}
+
+bool ltIOSRetrieveBool(const char *key) {
+    ensure_prefs_initialized();
+    BOOL b = [prefs integerForKey:[NSString stringWithUTF8String:key]];
+    return (b == NO ? false : true);
+}
+
+LTStoredValueType ltIOSGetStoredValueType(const char *key) {
+    ensure_prefs_initialized();
+    id obj = [prefs objectForKey:[NSString stringWithUTF8String:key]];
+    if (obj == nil) {
+        return LT_STORED_VALUE_TYPE_UNKNOWN;
+    }
+    const char *cname = object_getClassName(obj);
+    if (cname != NULL) {
+        if (strcmp(cname, "NSCFNumber") == 0) {
+            NSNumber *num = (NSNumber*)obj;
+            const char *type = [num objCType];
+            switch (*type) {
+                case 'd': return LT_STORED_VALUE_TYPE_DOUBLE;
+                case 'f': return LT_STORED_VALUE_TYPE_FLOAT;
+                case 'i': return LT_STORED_VALUE_TYPE_INT;
+                default: return LT_STORED_VALUE_TYPE_UNKNOWN;
+            }
+        } else if (strcmp(cname, "NSCFString") == 0) {
+            return LT_STORED_VALUE_TYPE_STRING;
+        } else if (strcmp(cname, "NSCFBoolean") == 0) {
+            return LT_STORED_VALUE_TYPE_BOOL;
+        }
+    }
+    return LT_STORED_VALUE_TYPE_UNKNOWN;
+}
+
+void ltIOSUnstore(const char *key) {
+    ensure_prefs_initialized();
+    [prefs removeObjectForKey:[NSString stringWithUTF8String:key]];
+}
+
+void ltIOSSyncStore() {
+    if (prefs != nil) {
+        [prefs synchronize];
+    }
+}
+
 #endif //LTIOS
