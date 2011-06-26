@@ -70,6 +70,7 @@ LTImageBuffer::LTImageBuffer(const char *name) {
     strcpy(LTImageBuffer::name, name);
     is_glyph = false;
     glyph_char = '\0';
+    scaling = 1.0f;
 }
 
 LTImageBuffer::~LTImageBuffer() {
@@ -233,6 +234,9 @@ LTImageBuffer *ltReadImage(const char *path, const char *name) {
     rows = png_get_rows(png_ptr, info_ptr);
 
     LTImageBuffer *imgbuf = new LTImageBuffer(name);
+    if (strcmp(path + strlen(path) - 2, "2x") == 0) {
+        imgbuf->scaling = 2.0f;
+    }
 
     // Check for bounding box chunk.
     png_get_text(png_ptr, info_ptr, &text_ptr, &num_txt_chunks);
@@ -607,13 +611,14 @@ LTImageBuffer *ltCreateAtlasImage(const char *name, LTImagePacker *packer) {
 //-----------------------------------------------------------------
 
 LTImage::LTImage(LTAtlas *atls, int atlas_w, int atlas_h, LTImagePacker *packer) : LTSceneNode(LT_TYPE_IMAGE) {
-    LTfloat pix_w = ltGetPixelWidth();
-    LTfloat pix_h = ltGetPixelHeight();
-
     if (packer->occupant == NULL) {
         ltLog("Packer occupant is NULL");
         ltAbort();
     }
+
+    LTfloat scaling = packer->occupant->scaling;
+    LTfloat pix_w = ltGetPixelWidth() / scaling;
+    LTfloat pix_h = ltGetPixelHeight() / scaling;
 
     atlas = atls;
     atlas->ref_count++;

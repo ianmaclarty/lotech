@@ -40,6 +40,7 @@ struct LTImageBuffer {
     char *name; // Name used in lua code (usually basename of png file without extension).
     bool is_glyph;
     char glyph_char;
+    LTfloat scaling;
 
     // LTImageBuffer will make a copy of the filename string.
     LTImageBuffer(const char *file);

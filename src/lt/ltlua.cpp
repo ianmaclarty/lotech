@@ -2182,7 +2182,7 @@ static void run_lua_file(const char *file) {
     }
 }
 
-static void set_edge_globals() {
+static void set_globals() {
     if (g_L != NULL) {
         lua_getglobal(g_L, "lt");
         lua_pushnumber(g_L, ltGetViewPortLeftEdge());
@@ -2197,6 +2197,8 @@ static void set_edge_globals() {
         lua_setfield(g_L, -2, "width");
         lua_pushnumber(g_L, ltGetViewPortTopEdge() - ltGetViewPortBottomEdge());
         lua_setfield(g_L, -2, "height");
+        lua_pushboolean(g_L, ltIsIPad());
+        lua_setfield(g_L, -2, "ipad");
         lua_pop(g_L, 1); // pop lt
     }
 }
@@ -2246,7 +2248,7 @@ void ltLuaRender() {
     if (g_L != NULL && !g_suspended) {
         if (!g_initialized) {
             ltAdjustViewportAspectRatio();
-            set_edge_globals();
+            set_globals();
             run_lua_file("main");
             g_initialized = true;
         }
