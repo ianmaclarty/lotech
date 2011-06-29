@@ -16,6 +16,7 @@ extern "C" {
 #include "ltharness.h"
 #include "ltimage.h"
 #include "ltiosutil.h"
+#include "ltgamecenter.h"
 #include "ltlua.h"
 #include "ltphysics.h"
 #include "ltstore.h"
@@ -1932,6 +1933,21 @@ static int lt_BodyTracker(lua_State *L) {
     return 1;
 }
 
+/********************* Game Center *****************************/
+
+static int lt_ShowLeaderboard(lua_State *L) {
+    check_nargs(L, 1);
+    const char *leaderboard = lua_tostring(L, 1);
+    if (leaderboard != NULL) {
+        #ifdef LTGAMECENTER
+        ltIOSShowGameCenterLeaderBoard(leaderboard);
+        #endif
+    } else {
+        return luaL_error(L, "Expecting a string argument");
+    }
+    return 0;
+}
+
 /********************* Loading *****************************/
 
 /*
@@ -2142,6 +2158,8 @@ static const luaL_Reg ltlib[] = {
     {"AddStaticBodyToWorld",            lt_AddStaticBodyToWorld},
     {"AddDynamicBodyToWorld",           lt_AddDynamicBodyToWorld},
     {"BodyTracker",                     lt_BodyTracker},
+
+    {"ShowLeaderboard",                 lt_ShowLeaderboard},
 
     {NULL, NULL}
 };

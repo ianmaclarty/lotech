@@ -11,6 +11,7 @@
 #include "ltinput.h"
 #include "ltios.h"
 #include "ltiosutil.h"
+#include "ltgamecenter.h"
 #include "ltlua.h"
 #include "ltnet.h"
 #include "ltphysics.h"

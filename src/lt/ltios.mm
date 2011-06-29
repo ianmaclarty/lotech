@@ -2,9 +2,12 @@
 #include "ltios.h"
 #include "ltcommon.h"
 #include "ltgraphics.h"
+#include "ltgamecenter.h"
 #include "ltiosutil.h"
 #include "ltlua.h"
 #include "ltprotocol.h"
+
+static UIViewController *view_controller = nil;
 
 // The following is required for converting UITouch objects to input_ids.
 ct_assert(sizeof(UITouch*) == sizeof(int));
@@ -15,10 +18,24 @@ void ltIOSInit() {
     #endif
 
     ltLuaSetup();
+    #ifdef LTGAMECENTER
+    ltIOSInitGameCenter();
+    #endif
+}
+
+void ltIOSSetViewController(UIViewController *view_c) {
+    view_controller = view_c;
+    [view_controller retain];
 }
 
 void ltIOSTeardown() {
+    #ifdef LTGAMECENTER
+    ltIOSTeardownGameCenter();
+    #endif
     ltLuaTeardown();
+    if (view_controller != nil) {
+        [view_controller release];
+    }
 }
 
 void ltIOSResize(int width, int height) {
@@ -68,4 +85,9 @@ void ltIOSTouchesEnded(NSSet *touches) {
 void ltIOSTouchesCancelled(NSSet *touches) {
     ltIOSTouchesEnded(touches);
 }
+
+UIViewController *ltIOSGetViewController() {
+    return view_controller;
+}
+
 #endif // LTIOS
