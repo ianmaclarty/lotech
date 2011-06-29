@@ -80,10 +80,10 @@ void ltIOSInitGameCenter() {
 
 void ltIOSTeardownGameCenter() {
     #ifdef LTGAMECENTER
-    fprintf(stderr, "gamecenter_delegate ref_count = %d\n", [gamecenter_delegate retain_count]);
+    //fprintf(stderr, "gamecenter_delegate ref_count = %d\n", [gamecenter_delegate retain_count]);
     [gamecenter_delegate release];
     if (leaderboard_view_controller != nil) {
-        fprintf(stderr, "leaderboard_view_controller ref_count = %d\n", [leaderboard_view_controller retain_count]);
+        //fprintf(stderr, "leaderboard_view_controller ref_count = %d\n", [leaderboard_view_controller retain_count]);
         [leaderboard_view_controller release];
     }
     #endif
@@ -103,19 +103,15 @@ void ltIOSSubmitGameCenterScore(int score, const char *leaderboard) {
 void ltIOSShowGameCenterLeaderBoard(const char *leaderboard) {
     #ifdef LTGAMECENTER
     if (game_center_available) {
-        fprintf(stderr, "Game center  available\n");
         NSString *category = [NSString stringWithUTF8String:leaderboard];
         if (leaderboard_view_controller == nil) {
             leaderboard_view_controller = [[GameCenterLeaderboardViewController alloc] init];
             [leaderboard_view_controller retain];
         }
         UIViewController *vc = ltIOSGetViewController();
-        fprintf(stderr, "vc = %p\n", vc);
         leaderboard_view_controller.leaderboardDelegate = gamecenter_delegate;
         leaderboard_view_controller.category = category;
         [vc presentModalViewController: leaderboard_view_controller animated: YES];
-    } else {
-        fprintf(stderr, "Game center not available\n");
     }
     #endif
 }
