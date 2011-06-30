@@ -1970,6 +1970,21 @@ static int lt_ShowLeaderboard(lua_State *L) {
     return 0;
 }
 
+/********************* URL launcher *****************************/
+
+static int lt_OpenURL(lua_State *L) {
+    check_nargs(L, 1);
+    const char *url = lua_tostring(L, 1);
+    if (url != NULL) {
+        #ifdef LTGAMECENTER
+        ltIOSLaunchURL(url);
+        #endif
+    } else {
+        return luaL_error(L, "Expecting a string argument");
+    }
+    return 0;
+}
+
 /********************* Loading *****************************/
 
 /*
@@ -2184,6 +2199,8 @@ static const luaL_Reg ltlib[] = {
     {"GameCenterAvailable",             lt_GameCenterAvailable},
     {"SubmitScore",                     lt_SubmitScore},
     {"ShowLeaderboard",                 lt_ShowLeaderboard},
+
+    {"OpenURL",                         lt_OpenURL},
 
     {NULL, NULL}
 };

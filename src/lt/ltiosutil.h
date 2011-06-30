@@ -37,5 +37,7 @@ void ltIOSUnstore(const char *key);
 
 void ltIOSSyncStore();
 
+void ltIOSLaunchURL(const char *url);
+
 #endif
 #endif

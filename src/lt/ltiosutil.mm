@@ -180,4 +180,9 @@ void ltIOSSyncStore() {
     }
 }
 
+void ltIOSLaunchURL(const char *url) {
+    NSString *ns_url = [NSString stringWithUTF8String:url];
+    [[UIApplication sharedApplication] openURL:[NSURL URLWithString:ns_url]];
+}
+
 #endif //LTIOS
