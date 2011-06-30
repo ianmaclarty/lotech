@@ -1936,6 +1936,27 @@ static int lt_BodyTracker(lua_State *L) {
 
 /********************* Game Center *****************************/
 
+static int lt_GameCenterAvailable(lua_State *L) {
+    #ifdef LTGAMECENTER
+    lua_pushboolean(L, ltIOSGameCenterIsAvailable());
+    #else
+    lua_pushboolean(L, 0);
+    #endif
+    return 1;
+}
+
+static int lt_SubmitScore(lua_State *L) {
+    check_nargs(L, 2);
+    const char *leaderboard = lua_tostring(L, 1);
+    int score = lua_tointeger(L, 2);
+    if (leaderboard != NULL) {
+        #ifdef LTGAMECENTER
+        ltIOSSubmitGameCenterScore(score, leaderboard);
+        #endif
+    }
+    return 0;
+}
+
 static int lt_ShowLeaderboard(lua_State *L) {
     check_nargs(L, 1);
     const char *leaderboard = lua_tostring(L, 1);
@@ -1947,15 +1968,6 @@ static int lt_ShowLeaderboard(lua_State *L) {
         return luaL_error(L, "Expecting a string argument");
     }
     return 0;
-}
-
-static int lt_GameCenterAvailable(lua_State *L) {
-    #ifdef LTGAMECENTER
-    lua_pushboolean(L, ltIOSGameCenterIsAvailable());
-    #else
-    lua_pushboolean(L, 0);
-    #endif
-    return 1;
 }
 
 /********************* Loading *****************************/
@@ -2169,8 +2181,9 @@ static const luaL_Reg ltlib[] = {
     {"AddDynamicBodyToWorld",           lt_AddDynamicBodyToWorld},
     {"BodyTracker",                     lt_BodyTracker},
 
-    {"ShowLeaderboard",                 lt_ShowLeaderboard},
     {"GameCenterAvailable",             lt_GameCenterAvailable},
+    {"SubmitScore",                     lt_SubmitScore},
+    {"ShowLeaderboard",                 lt_ShowLeaderboard},
 
     {NULL, NULL}
 };
