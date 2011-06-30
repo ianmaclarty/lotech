@@ -31,6 +31,7 @@ extern "C" {
 static lua_State *g_L = NULL;
 static bool g_suspended = false;
 static bool g_initialized = false;
+static bool g_gamecenter_initialized = false;
 
 /************************* Functions for calling lua **************************/
 
@@ -1948,6 +1949,15 @@ static int lt_ShowLeaderboard(lua_State *L) {
     return 0;
 }
 
+static int lt_GameCenterAvailable(lua_State *L) {
+    #ifdef LTGAMECENTER
+    lua_pushboolean(L, ltIOSGameCenterIsAvailable());
+    #else
+    lua_pushboolean(L, 0);
+    #endif
+    return 1;
+}
+
 /********************* Loading *****************************/
 
 /*
@@ -2160,6 +2170,7 @@ static const luaL_Reg ltlib[] = {
     {"BodyTracker",                     lt_BodyTracker},
 
     {"ShowLeaderboard",                 lt_ShowLeaderboard},
+    {"GameCenterAvailable",             lt_GameCenterAvailable},
 
     {NULL, NULL}
 };
@@ -2252,6 +2263,7 @@ void ltLuaReset() {
     ltLuaTeardown();
     g_suspended = false;
     g_initialized = false;
+    g_gamecenter_initialized = false;
     ltLuaSetup();
 }
 
@@ -2268,6 +2280,11 @@ void ltLuaRender() {
             ltAdjustViewportAspectRatio();
             set_globals();
             run_lua_file("main");
+            #ifdef LTGAMECENTER
+            if (ltIOSGameCenterIsAvailable()) {
+                ltLuaGameCenterBecameAvailable();
+            }
+            #endif
             g_initialized = true;
         }
         if (!g_suspended) {
@@ -2383,6 +2400,18 @@ void ltLuaPointerMove(int input_id, LTfloat x, LTfloat y) {
 
 void ltLuaResizeWindow(LTfloat w, LTfloat h) {
     ltResizeScreen((int)w, (int)h);
+}
+
+/************************************************************/
+
+void ltLuaGameCenterBecameAvailable() {
+    if (!g_gamecenter_initialized &&
+        g_L != NULL && !g_suspended &&
+        push_lt_func("GameCenterBecameAvailable"))
+    {
+        docall(g_L, 0);
+        g_gamecenter_initialized = true;
+    }
 }
 
 /************************************************************/

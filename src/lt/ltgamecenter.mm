@@ -1,6 +1,7 @@
 #ifdef LTIOS
 #import <GameKit/GameKit.h>
 #include "ltios.h"
+#include "ltlua.h"
 
 static bool game_center_available = false;
 static bool game_center_supported = false;
@@ -66,11 +67,12 @@ void ltIOSInitGameCenter() {
     game_center_supported = true;
 
     [[GKLocalPlayer localPlayer] authenticateWithCompletionHandler:^(NSError *error) {
-         if (error == nil) {
+        if (error == nil) {
             game_center_available = true;
-         } else {
+            ltLuaGameCenterBecameAvailable();
+        } else {
             game_center_available = false;
-         }
+        }
     }];
 
     gamecenter_delegate = [[GameCenterDelegate alloc] init];
@@ -115,4 +117,10 @@ void ltIOSShowGameCenterLeaderBoard(const char *leaderboard) {
     }
     #endif
 }
+
+bool ltIOSGameCenterIsAvailable() {
+    return game_center_available;
+}
+
+
 #endif
