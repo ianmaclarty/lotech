@@ -40,7 +40,7 @@ static GameCenterDelegate *gamecenter_delegate = nil;
     [scoreReporter reportScoreWithCompletionHandler:^(NSError *error)
        {
            if (error) {
-                NSLog(@"Game Center Score Error: ", [error localizedDescription]);
+                NSLog(@"Game Center Score Error: %@", [error localizedDescription]);
            }
        }
     ];
