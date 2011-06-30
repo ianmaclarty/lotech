@@ -23,6 +23,7 @@ static bool transparent_column(LTImageBuffer *buf, int col) {
 
 static LTImageBuffer *create_glyph(LTImageBuffer *buf, int start_col, int end_col, char chr) {
     LTImageBuffer *glyph = new LTImageBuffer(buf->name);
+    glyph->scaling = buf->scaling;
     int w = end_col - start_col + 1;
     int h = buf->bb_height();
     int buf_w = buf->bb_width();
