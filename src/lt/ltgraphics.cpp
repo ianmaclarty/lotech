@@ -107,29 +107,23 @@ void ltSetViewPort(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2) {
 }
 
 void ltAdjustViewportAspectRatio() {
-    LTfloat actual_w_over_h;
-    if (display_orientation == LT_DISPLAY_ORIENTATION_LANDSCAPE
-        && screen_width < screen_height
-        || display_orientation == LT_DISPLAY_ORIENTATION_PORTRAIT
-        && screen_width > screen_height)
-    {
-        actual_w_over_h = (LTfloat)screen_height / (LTfloat)screen_width;
+    LTfloat w0 = design_width;
+    LTfloat h0 = design_height;
+    LTfloat w1 = (LTfloat)screen_width;
+    LTfloat h1 = (LTfloat)screen_height;
+    LTfloat sy = h1 / h0;
+    LTfloat dx = (w1 - w0 * sy) / (2.0f * w0 * sy);
+    if (dx > 0.01f) {
+        viewport_left -= viewport_width * dx;
+        viewport_right += viewport_width * dx;
+        viewport_width = viewport_right - viewport_left;
     } else {
-        actual_w_over_h = (LTfloat)screen_width / (LTfloat)screen_height;
-    }
-    LTfloat design_w_over_h = design_width / design_height;
-    LTfloat distortion = fabsf(design_w_over_h - actual_w_over_h);
-    if (distortion > 0.01f) {
-        if (actual_w_over_h < design_w_over_h) {
-            // too fat
-            viewport_bottom -= viewport_height * distortion * 0.5f;
-            viewport_top += viewport_height * distortion * 0.5f;
+        LTfloat sx = w1 / w0;
+        LTfloat dy = (h1 - h0 * sx) / (2.0f * h0 * sx);
+        if (dy > 0.01) {
+            viewport_bottom -= viewport_height * dy;
+            viewport_top += viewport_height * dy;
             viewport_height = viewport_top - viewport_bottom;
-        } else {
-            // too thin
-            viewport_left -= viewport_width * distortion * 0.5f;
-            viewport_right += viewport_width * distortion * 0.5f;
-            viewport_width = viewport_right - viewport_left;
         }
     }
 }
