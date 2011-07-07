@@ -107,6 +107,31 @@ void ltSetViewPort(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2) {
     pixel_height = viewport_height / design_height;
 }
 
+static LTfloat get_ad_height_ratio() {
+    #ifdef LTIOS
+    LTfloat h;
+    LTfloat d;
+    if (ltIsIPad()) {
+        if (display_orientation == LT_DISPLAY_ORIENTATION_PORTRAIT) {
+            h = 1024.0f;
+        } else {
+            h = 768.0f;
+        }
+        d = 90.0f;
+    } else {
+        if (display_orientation == LT_DISPLAY_ORIENTATION_PORTRAIT) {
+            h = 480.0f;
+        } else {
+            h = 320.0f;
+        }
+        d = 50.0f;
+    }
+    return d / h;
+    #else
+    return 0.0f;
+    #endif
+}
+
 void ltAdjustViewportAspectRatio() {
     LTfloat w0 = design_width;
     LTfloat h0 = design_height;
@@ -130,16 +155,52 @@ void ltAdjustViewportAspectRatio() {
 
     // Make space for ads.
     #ifdef LTADS
+    LTfloat r = get_ad_height_ratio();
     if (LTADS == LT_AD_TOP) {
-        viewport_top += viewport_height * 0.08;
+        viewport_top += viewport_height * r;
     } else {
-        viewport_bottom -= viewport_height * 0.08;
+        viewport_bottom -= viewport_height * r;
     }
     viewport_height = viewport_top - viewport_bottom;
+    #endif
+}
+
+void ltDrawAdBackground() {
+    #ifdef LTADS
+    LTfloat h = get_ad_height_ratio() * viewport_height;
+    LTfloat l = viewport_left;
+    LTfloat r = viewport_right;
+    LTfloat t, b;
+    if (LTADS == LT_AD_TOP) {
+        t = viewport_top;
+        b = viewport_top - h;
+    } else {
+        t = viewport_bottom + h;
+        b = viewport_bottom;
+    }
+    ltPushTint(0, 0, 0, 1);
+    ltDrawRect(l, b, r, t);
+    ltPopTint();
     /*
-    viewport_left -= viewport_width * 0.05;
-    viewport_right += viewport_width * 0.05;
-    viewport_width = viewport_right - viewport_left;
+    LTfloat ct = 0.8f;
+    LTfloat cb = 0.1f;
+    //LTfloat u = b - (t - b) / 20.0f;
+    LTfloat v[] = {
+        l, t, ct, ct, ct, 1.0f,
+        r, t, ct, ct, ct, 1.0f,
+        l, b, cb, cb, cb, 1.0f,
+        r, b, cb, cb, cb, 1.0f,
+        //l, u, cb, cb, cb, 0.0f,
+        //r, u, cb, cb, cb, 0.0f,
+    };
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    LTfloat stride = 6 * sizeof(LTfloat);
+    glVertexPointer(2, GL_FLOAT, stride, v);
+    ltDisableTextures();
+    glEnableClientState(GL_COLOR_ARRAY);
+    glColorPointer(4, GL_FLOAT, stride, v + 2);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glDisableClientState(GL_COLOR_ARRAY);
     */
     #endif
 }

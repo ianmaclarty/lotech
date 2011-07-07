@@ -78,19 +78,27 @@ static void init_iAd() {
             LTDisplayOrientation orientation = ltGetDisplayOrientation();
             CGRect rect;
             if (placement == LT_AD_TOP) {
-                rect = CGRectZero;
+                if (ltIsIPad()) {
+                    rect = CGRectMake(0, 12, 0, 0);
+                } else {
+                    if (orientation == LT_DISPLAY_ORIENTATION_PORTRAIT) {
+                        rect = CGRectMake(0, 0, 0, 0);
+                    } else {
+                        rect = CGRectMake(0, 9, 0, 0);
+                    }
+                }
             } else {
                 if (ltIsIPad()) {
                     if (orientation == LT_DISPLAY_ORIENTATION_PORTRAIT) {
-                        rect = CGRectMake(0, 1024-66, 0, 0);
+                        rect = CGRectMake(0, 1024-78, 0, 0);
                     } else {
-                        rect = CGRectMake(0, 768-66, 0, 0);
+                        rect = CGRectMake(0, 768-78, 0, 0);
                     }
                 } else {
                     if (orientation == LT_DISPLAY_ORIENTATION_PORTRAIT) {
                         rect = CGRectMake(0, 480-50, 0, 0);
                     } else {
-                        rect = CGRectMake(0, 320-32, 0, 0);
+                        rect = CGRectMake(0, 320-41, 0, 0);
                     }
                 }
             }

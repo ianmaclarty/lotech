@@ -68,4 +68,5 @@ void ltDrawRect(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2);
 void ltDrawEllipse(LTfloat x, LTfloat y, LTfloat rx, LTfloat ry);
 void ltDrawPoly(LTfloat *vertices, int num_vertices); /* Must be convex */
 
+void ltDrawAdBackground();
 #endif

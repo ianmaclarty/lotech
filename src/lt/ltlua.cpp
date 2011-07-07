@@ -2320,6 +2320,7 @@ void ltLuaRender() {
         if (!g_suspended) {
             ltInitGraphics();
             call_lt_func("Render");
+            ltDrawAdBackground();
         }
     }
 }
