@@ -1,7 +1,7 @@
 /* Copyright (C) 2010 Ian MacLarty */
 #ifdef LTIOS
-#ifndef LTIOSGAMECENTER_H
-#define LTIOSGAMECENTER_H
+#ifndef LTGAMECENTER_H
+#define LTGAMECENTER_H
 
 void ltIOSInitGameCenter(); 
 void ltIOSTeardownGameCenter();

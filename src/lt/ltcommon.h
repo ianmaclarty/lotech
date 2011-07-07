@@ -28,6 +28,9 @@
 #define LT_RADIANS_PER_DEGREE (LT_PI / 180.0f)
 #define LT_DEGREES_PER_RADIAN (180.0f / LT_PI)
 
+#define STR_EXPAND(tok) #tok
+#define STR(tok) STR_EXPAND(tok)
+
 typedef float           LTfloat;
 typedef double          LTdouble;
 typedef unsigned int    LTuint;

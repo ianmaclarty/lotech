@@ -1,4 +1,5 @@
 #ifdef LTIOS
+#include "ltads.h"
 #include "ltios.h"
 #include "ltcommon.h"
 #include "ltgraphics.h"
@@ -18,14 +19,19 @@ void ltIOSInit() {
     #endif
 
     ltLuaSetup();
-    #ifdef LTGAMECENTER
-    ltIOSInitGameCenter();
-    #endif
 }
 
 void ltIOSSetViewController(UIViewController *view_c) {
     view_controller = view_c;
     [view_controller retain];
+
+    #ifdef LTGAMECENTER
+    ltIOSInitGameCenter();
+    #endif
+
+    #ifdef LTADS 
+    ltShowAds(LTADS);
+    #endif
 }
 
 void ltIOSTeardown() {

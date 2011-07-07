@@ -2,6 +2,7 @@
 #include "ltgraphics.h"
 #include "ltimage.h"
 #ifdef LTIOS
+#   include "ltads.h"
 #   include "ltiosutil.h"
 #endif
 
@@ -126,6 +127,21 @@ void ltAdjustViewportAspectRatio() {
             viewport_height = viewport_top - viewport_bottom;
         }
     }
+
+    // Make space for ads.
+    #ifdef LTADS
+    if (LTADS == LT_AD_TOP) {
+        viewport_top += viewport_height * 0.08;
+    } else {
+        viewport_bottom -= viewport_height * 0.08;
+    }
+    viewport_height = viewport_top - viewport_bottom;
+    /*
+    viewport_left -= viewport_width * 0.05;
+    viewport_right += viewport_width * 0.05;
+    viewport_width = viewport_right - viewport_left;
+    */
+    #endif
 }
 
 void ltSetScreenSize(int width, int height) {
