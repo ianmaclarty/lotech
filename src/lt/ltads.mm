@@ -51,12 +51,12 @@ void ltShowAds(LTAdPlacement p) {
 
 @implementation IADDelegate
 - (void)bannerView:(ADBannerView *)banner didFailToReceiveAdWithError:(NSError *)error {
-    fprintf(stderr, "iAd error\n");
+    //fprintf(stderr, "iAd error\n");
     hide_iAd();
     show_admob();
 }
 - (void)bannerViewDidLoadAd:(ADBannerView *)banner {
-    fprintf(stderr, "iAd loaded\n");
+    //fprintf(stderr, "iAd loaded\n");
     hide_admob();
     show_iAd();
 }
