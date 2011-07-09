@@ -204,11 +204,11 @@ LTImageBuffer *ltReadImage(const char *path, const char *name) {
     // Read the data.
     #ifdef LTIOS
         png_transforms = PNG_TRANSFORM_STRIP_16 | PNG_TRANSFORM_PACKING |
-            PNG_TRANSFORM_GRAY_TO_RGB;
+            PNG_TRANSFORM_GRAY_TO_RGB | PNG_TRANSFORM_EXPAND;
         png_set_filler(png_ptr, 0xFF, PNG_FILLER_AFTER);
     #else
         png_transforms = PNG_TRANSFORM_STRIP_16 | PNG_TRANSFORM_PACKING |
-            PNG_TRANSFORM_GRAY_TO_RGB | PNG_TRANSFORM_SWAP_ALPHA | PNG_TRANSFORM_BGR;
+            PNG_TRANSFORM_GRAY_TO_RGB | PNG_TRANSFORM_SWAP_ALPHA | PNG_TRANSFORM_BGR | PNG_TRANSFORM_EXPAND;
         png_set_filler(png_ptr, 0xFF, PNG_FILLER_BEFORE);
     #endif
     png_read_png(png_ptr, info_ptr, png_transforms, NULL);
@@ -217,17 +217,13 @@ LTImageBuffer *ltReadImage(const char *path, const char *name) {
         NULL, NULL, NULL);
     width = (int)uwidth;
     height = (int)uheight;
-    if (color_type == PNG_COLOR_TYPE_RGB_ALPHA) {
+    if (color_type & PNG_COLOR_MASK_ALPHA) {
         has_alpha = true;
-    } else if (color_type == PNG_COLOR_TYPE_RGB) {
-        has_alpha = false;
     } else {
-        ltLog("Error: %s is not RGBA or RGB.\n", path);
-        png_destroy_read_struct(&png_ptr, &info_ptr, &end_ptr);
-        return NULL;
+        has_alpha = false;
     }
     if (bit_depth != 8) {
-        ltLog("Error: %s does not have bit depth 8.\n", path);
+        ltLog("Error: %s does not have bit depth 8 (in fact %d).\n", path, bit_depth);
         png_destroy_read_struct(&png_ptr, &info_ptr, &end_ptr);
         return NULL;
     }

@@ -15,7 +15,7 @@ LD_OPTS=$(DEBUG_OPTS) -lglut -lGL -lm
 DEFINES=-DLTLINUX -DLUA_USE_LINUX -DLTGLUT $(COMMONDEFS)
 else
 DEBUG_OPTS=-gdwarf-2
-LD_OPTS=$(DEBUG_OPTS) -framework GLUT -framework OpenGL -framework Cocoa -lm
+LD_OPTS=$(DEBUG_OPTS) -framework GLUT -framework OpenGL -framework OpenAL -framework Cocoa -lm
 DEFINES=-DLUA_USE_MACOSX -DLTGLUT $(COMMONDEFS)
 endif
 
