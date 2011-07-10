@@ -8,6 +8,8 @@
 #include "ltiosutil.h"
 #include "ltgraphics.h"
 
+#define ADMOB_REFRESH_RATE 30.0
+
 static bool user_is_interacting_with_ad = false;
 static ADBannerView *iAd_view = nil;
 static bool iAd_is_visible = true;
@@ -21,6 +23,8 @@ static void show_iAd();
 static void hide_iAd();
 
 static void init_admob(const char *pubid);
+static void load_admob_request();
+static void init_admob_timer();
 static void show_admob();
 static void hide_admob();
 
@@ -38,7 +42,10 @@ void ltShowAds(LTAdPlacement p) {
         #endif
     }
     if (iAd_view == nil) {
-        show_admob();
+        // Start a timer to auto-refresh admob if iAd not available
+        // (if iAd available, we use iAd load failures to trigger admob loads).
+        load_admob_request();
+        init_admob_timer();
     }
 }
 
@@ -51,12 +58,10 @@ void ltShowAds(LTAdPlacement p) {
 
 @implementation IADDelegate
 - (void)bannerView:(ADBannerView *)banner didFailToReceiveAdWithError:(NSError *)error {
-    //fprintf(stderr, "iAd error\n");
     hide_iAd();
-    show_admob();
+    load_admob_request();
 }
 - (void)bannerViewDidLoadAd:(ADBannerView *)banner {
-    //fprintf(stderr, "iAd loaded\n");
     hide_admob();
     show_iAd();
 }
@@ -111,6 +116,8 @@ static void init_iAd() {
             }
             [vc.view addSubview:iAd_view];
         }
+    } else {
+        iAd_is_visible = false;
     }
 }
 
@@ -156,6 +163,16 @@ static bool iAd_available() {
 
 //----------------------------------------------------------------
 
+@interface AdmobLoader : NSObject
+-(void)loadRequest:(NSTimer*)timer;
+@end
+
+@implementation AdmobLoader
+-(void)loadRequest:(NSTimer*)timer {
+    load_admob_request();
+}
+@end
+
 @interface AdmobDelegate : NSObject <GADBannerViewDelegate>
 - (void)adViewDidReceiveAd:(GADBannerView *)bannerView;
 - (void)adViewWillPresentScreen:(GADBannerView *)bannerView;
@@ -165,6 +182,7 @@ static bool iAd_available() {
 
 @implementation AdmobDelegate
 - (void)adViewDidReceiveAd:(GADBannerView *)bannerView {
+    show_admob();
 }
 - (void)adViewWillPresentScreen:(GADBannerView *)bannerView {
     user_is_interacting_with_ad = true;
@@ -176,6 +194,15 @@ static bool iAd_available() {
     user_is_interacting_with_ad = false;
 }
 @end
+
+static void init_admob_timer() {
+    AdmobLoader *admob_loader = [[AdmobLoader alloc] init];
+    [NSTimer scheduledTimerWithTimeInterval:ADMOB_REFRESH_RATE
+        target:admob_loader
+        selector:@selector(loadRequest:)
+        userInfo:nil
+        repeats:YES];
+}
 
 static void init_admob(const char *pubid) {
     if (admob_view == nil) {
@@ -212,7 +239,7 @@ static void init_admob(const char *pubid) {
             }
         }
         admob_view = [[GADBannerView alloc] initWithFrame:rect];
-        admob_view.delegate = admob_view;
+        admob_view.delegate = [[AdmobDelegate alloc] init];
         admob_view.adUnitID = [NSString stringWithUTF8String:pubid];
         admob_view.rootViewController = vc;
         [vc.view addSubview:admob_view];
@@ -222,25 +249,26 @@ static void init_admob(const char *pubid) {
 }
 
 static void load_admob_request() {
-    GADRequest *request = [GADRequest request];
-    request.testDevices = [NSArray arrayWithObjects:
-        GAD_SIMULATOR_ID,                               // Simulator
-        @"e75cf18a1530dc79d2a1b2c8772df100b00b94b3",    // Ian iPhone 3GS
-        @"cd77d54f2e974c814605f3df420ed29a4afb1eb3",    // Ian iPad2
-        @"f482fa2f0b86d289a49dc31fce1a376acbbc2b42",    // Bethany iPod
-        @"7ace612cfe8d58fbeaf6de1aa3da4597dee5cafd",    // Jon iPhone 4
-        nil];
-    [admob_view loadRequest:request];
+    if (admob_view != nil) {
+        GADRequest *request = [GADRequest request];
+        request.testDevices = [NSArray arrayWithObjects:
+            GAD_SIMULATOR_ID,                               // Simulator
+            @"e75cf18a1530dc79d2a1b2c8772df100b00b94b3",    // Ian iPhone 3GS
+            @"cd77d54f2e974c814605f3df420ed29a4afb1eb3",    // Ian iPad2
+            @"f482fa2f0b86d289a49dc31fce1a376acbbc2b42",    // Bethany iPod
+            @"7ace612cfe8d58fbeaf6de1aa3da4597dee5cafd",    // Jon iPhone 4
+            nil];
+        [admob_view loadRequest:request];
+    }
 }
 
 static void show_admob() {
-    if (admob_view != nil && !admob_is_visible) {
+    if (admob_view != nil && !admob_is_visible && !iAd_is_visible) {
         if (placement == LT_AD_TOP) {
             admob_view.frame = CGRectOffset(admob_view.frame, 0, 200);
         } else {
             admob_view.frame = CGRectOffset(admob_view.frame, 0, -200);
         }
-        load_admob_request();
         admob_is_visible = true;
     }
 }
