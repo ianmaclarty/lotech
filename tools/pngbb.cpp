@@ -12,7 +12,11 @@ int main(int argc, const char *argv[]) {
         exit(1);
     }
     LTImageBuffer *buf = ltReadImage(argv[1], "pngbb");
-    ltWriteImage(argv[2], buf);
-    delete buf;
-    return 0;
+    if (buf != NULL) {
+        ltWriteImage(argv[2], buf);
+        delete buf;
+        return 0;
+    } else {
+        return 1;
+    }
 }

@@ -475,7 +475,6 @@ static int lt_Layer(lua_State *L) {
     push_wrap(L, layer);
     // Add arguments as child nodes.
     // First arguments are drawn in front of last arguments.
-    LTSceneNode *child;
     for (int arg = 1; arg <= num_args; arg++) {
         LTSceneNode *child = (LTSceneNode*)get_object(L, arg, LT_TYPE_SCENENODE);
         layer->insert_back(child);
@@ -570,7 +569,7 @@ static int lt_Tint(lua_State *L) {
 }
 
 static int lt_BlendMode(lua_State *L) {
-    int num_args = check_nargs(L, 2);
+    check_nargs(L, 2);
     LTSceneNode *child = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
     const char *modestr = lua_tostring(L, 2);
     LTBlendMode mode;
@@ -633,7 +632,7 @@ static int lt_Cuboid(lua_State *L) {
 }
 
 static int lt_HitFilter(lua_State *L) {
-    int num_args = check_nargs(L, 5);
+    check_nargs(L, 5);
     LTSceneNode *child = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
     LTfloat left = (LTfloat)luaL_checknumber(L, 2);
     LTfloat bottom = (LTfloat)luaL_checknumber(L, 3);
@@ -646,7 +645,7 @@ static int lt_HitFilter(lua_State *L) {
 }
 
 static int lt_DownFilter(lua_State *L) {
-    int num_args = check_nargs(L, 5);
+    check_nargs(L, 5);
     LTSceneNode *child = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
     LTfloat left = (LTfloat)luaL_checknumber(L, 2);
     LTfloat bottom = (LTfloat)luaL_checknumber(L, 3);
@@ -659,7 +658,7 @@ static int lt_DownFilter(lua_State *L) {
 }
 
 static int lt_Wrap(lua_State *L) {
-    int num_args = check_nargs(L, 1);
+    check_nargs(L, 1);
     LTSceneNode *child = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
     LTWrapNode *wrap = new LTWrapNode(child);
     push_wrap(L, wrap);
@@ -668,7 +667,7 @@ static int lt_Wrap(lua_State *L) {
 }
 
 static int lt_ReplaceWrappedChild(lua_State *L) {
-    int num_args = check_nargs(L, 2);
+    check_nargs(L, 2);
     LTWrapNode *wrap = (LTWrapNode *)get_object(L, 1, LT_TYPE_WRAP);
     LTSceneNode *new_child = (LTSceneNode *)get_object(L, 2, LT_TYPE_SCENENODE);
     wrap->child = new_child;
@@ -760,7 +759,7 @@ static int lt_GenerateVectorColumn(lua_State *L) {
 }
 
 static int lt_FillVectorColumnsWithImageQuads(lua_State *L) {
-    int num_args = check_nargs(L, 5);
+    check_nargs(L, 5);
     LTVector *vector = (LTVector *)get_object(L, 1, LT_TYPE_VECTOR);
     int col = luaL_checkinteger(L, 2) - 1;
     LTImage *img = (LTImage *)get_object(L, 3, LT_TYPE_IMAGE);
@@ -1277,7 +1276,7 @@ static int lt_LoadImages(lua_State *L) {
 static int lt_LoadSamples(lua_State *L) {
     // Load sounds in 1st argument (an array) and return a table
     // indexed by sound name.
-    int num_args = check_nargs(L, 1);
+    check_nargs(L, 1);
     lua_newtable(L); // The table to be returned.
     int i = 1;
     while (true) {
@@ -1324,7 +1323,7 @@ static int lt_PlaySampleOnce(lua_State *L) {
 }
 
 static int lt_PlayTrack(lua_State *L) {
-    int num_args = check_nargs(L, 1);
+    check_nargs(L, 1);
     LTTrack *track = (LTTrack*)get_object(L, 1, LT_TYPE_TRACK);
     track->play();
     return 0;
@@ -1781,7 +1780,7 @@ static int lt_AddTriangleToBody(lua_State *L) {
 }
 
 static int lt_AddPolygonToBody(lua_State *L) {
-    int num_args = check_nargs(L, 3);
+    check_nargs(L, 3);
     LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
     if (body->body != NULL) {
         // Second argument is array of polygon vertices.
@@ -1949,9 +1948,9 @@ static int lt_GameCenterAvailable(lua_State *L) {
 static int lt_SubmitScore(lua_State *L) {
     check_nargs(L, 2);
     const char *leaderboard = lua_tostring(L, 1);
-    int score = lua_tointeger(L, 2);
     if (leaderboard != NULL) {
         #ifdef LTGAMECENTER
+        int score = lua_tointeger(L, 2);
         ltIOSSubmitGameCenterScore(score, leaderboard);
         #endif
     }
@@ -2261,8 +2260,10 @@ static void set_globals() {
         lua_setfield(g_L, -2, "width");
         lua_pushnumber(g_L, ltGetViewPortTopEdge() - ltGetViewPortBottomEdge());
         lua_setfield(g_L, -2, "height");
+        #ifdef LTIOS
         lua_pushboolean(g_L, ltIsIPad());
         lua_setfield(g_L, -2, "ipad");
+        #endif
         lua_pop(g_L, 1); // pop lt
     }
 }
