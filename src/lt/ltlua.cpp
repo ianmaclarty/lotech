@@ -19,6 +19,7 @@ extern "C" {
 #include "ltgamecenter.h"
 #include "ltlua.h"
 #include "ltphysics.h"
+#include "ltstate.h"
 #include "ltstore.h"
 #include "lttext.h"
 #include "lttween.h"
@@ -2083,6 +2084,8 @@ static int import(lua_State *L) {
     return 0;
 }
 
+/************************ Logging *****************************/
+
 static int log(lua_State *L) {
     check_nargs(L, 1);
     const char *msg = lua_tostring(L, 1);
@@ -2169,8 +2172,10 @@ static const luaL_Reg ltlib[] = {
     {"SampleFrequency",                 lt_SampleFrequency},
     {"SampleLength",                    lt_SampleLength},
     
+    /*
     {"Store",                           lt_Store},
     {"Retrieve",                        lt_Retrieve},
+    */
 
     {"World",                           lt_World},
     {"FixtureContainsPoint",            lt_FixtureContainsPoint},
@@ -2279,6 +2284,7 @@ void ltLuaSetup() {
     lua_gc(g_L, LUA_GCRESTART, 0);
     run_lua_file("lt");
     run_lua_file("config");
+    ltRestoreState();
 }
 
 void ltLuaTeardown() {
@@ -2455,5 +2461,135 @@ void ltLuaGarbageCollect() {
     if (g_L != NULL) {
         lua_gc(g_L, LUA_GCCOLLECT, 0);
         lua_gc(g_L, LUA_GCCOLLECT, 0);
+    }
+}
+
+/************************************************************/
+
+#define LT_LUA_TNIL     0
+#define LT_LUA_TNUMBER  1
+#define LT_LUA_TBOOLEAN 2
+#define LT_LUA_TSTRING  3
+#define LT_LUA_TTABLE   4
+
+// Pickle the value at the top of the stack.
+// Does not alter the stack.
+static void pickle_value(lua_State *L, LTPickler *pickler) {
+    int ltype = lua_type(L, -1);
+    switch (ltype) {
+        case LUA_TNIL: {
+            pickler->writeByte(LT_LUA_TNIL);
+            break;
+        }
+        case LUA_TNUMBER: {
+            LTdouble d = lua_tonumber(L, -1);
+            pickler->writeByte(LT_LUA_TNUMBER);
+            pickler->writeDouble(d);
+            break;
+        }
+        case LUA_TBOOLEAN: {
+            bool b = lua_toboolean(L, -1) == 1 ? true : false;
+            pickler->writeByte(LT_LUA_TBOOLEAN);
+            pickler->writeBool(b);
+            break;
+        }
+        case LUA_TSTRING: {
+            const char *s = lua_tostring(L, -1);
+            pickler->writeByte(LT_LUA_TSTRING);
+            pickler->writeString(s);
+            break;
+        }
+        case LUA_TTABLE: {
+            pickler->writeByte(LT_LUA_TTABLE);
+            lua_pushnil(L);
+            while (lua_next(L, -2) != 0) {
+                lua_pushvalue(L, -2); // Push key.
+                pickle_value(L, pickler); // Pickle key.
+                lua_pop(L, 1); // Pop key.
+                pickle_value(L, pickler); // Pickle value.
+                lua_pop(L, 1); // Pop value.
+            }
+            // Write nil as end-of-table-data marker.
+            pickler->writeByte(LT_LUA_TNIL);
+            break;
+        }
+        default: {
+            ltLog("Error: Unsupported pickle type: %d", ltype);
+            pickler->writeByte(LT_LUA_TNIL);
+        }
+    }
+}
+
+static void dump_fields(lua_State *L) {
+    lua_pushnil(L);
+    while (lua_next(L, -2) != 0) {
+        lua_pop(L, 1); // Pop value.
+        fprintf(stderr, "FIELD = %s\n", lua_tostring(L, -1));
+    }
+}
+
+LTPickler *ltLuaPickleState() {
+    if (g_L != NULL) {
+        lua_getglobal(g_L, "lt");
+        lua_getfield(g_L, -1, "state");
+        LTPickler *pickler = new LTPickler();
+        pickle_value(g_L, pickler);
+        lua_pop(g_L, 2);
+        return pickler;
+    } else {
+        return NULL;
+    }
+}
+
+// Unpickles a value from the unpickler and pushes it onto
+// the stack.
+static void unpickle_value(lua_State *L, LTUnpickler *unpickler) {
+    unsigned char type = unpickler->readByte();
+    switch (type) {
+        case LT_LUA_TNIL: {
+            lua_pushnil(L);
+            break;
+        }
+        case LT_LUA_TNUMBER: {
+            lua_pushnumber(L, unpickler->readDouble());
+            break;
+        }
+        case LT_LUA_TBOOLEAN: {
+            lua_pushboolean(L, unpickler->readBool() ? 1 : 0);
+            break;
+        }
+        case LT_LUA_TSTRING: {
+            const char *str = unpickler->readString();
+            lua_pushstring(L, str);
+            delete[] str;
+            break;
+        }
+        case LT_LUA_TTABLE: {
+            lua_newtable(L);
+            while (true) {
+                unpickle_value(L, unpickler); // Unpickle key
+                if (lua_isnil(L, -1)) {
+                    // A nil key marks the end of the table data.
+                    lua_pop(L, 1);
+                    break;
+                }
+                unpickle_value(L, unpickler); // Unpickle value
+                lua_settable(L, -3);
+            }
+            break;
+        }
+        default: {
+            ltLog("Error: Unexpected type while unpickling: %d", type);
+            lua_pushnil(L);
+        }
+    }
+}
+
+void ltLuaUnpickleState(LTUnpickler *unpickler) {
+    if (g_L != NULL && unpickler != NULL) {
+        lua_getglobal(g_L, "lt");
+        unpickle_value(g_L, unpickler);
+        lua_setfield(g_L, -2, "state");
+        lua_pop(g_L, 1);
     }
 }

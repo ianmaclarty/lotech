@@ -4,6 +4,12 @@
 #include "ltiosutil.h"
 #endif
 
+void ltStorePickledData(const char *key, LTPickler *pickler) {
+    #ifdef LTIOS
+        ltIOSStorePickledData(key, pickler);
+    #endif
+}
+
 void ltStoreString(const char *key, const char *value) {
     #ifdef LTIOS
         ltIOSStoreString(key, value);
@@ -39,6 +45,14 @@ LTStoredValueType ltGetStoredValueType(const char *key) {
         return ltIOSGetStoredValueType(key);
     #else
         return LT_STORED_VALUE_TYPE_UNKNOWN;
+    #endif
+}
+
+LTUnpickler* ltRetrievePickledData(const char *key) {
+    #ifdef LTIOS
+        return ltIOSRetrievePickledData(key);
+    #else
+        return NULL;
     #endif
 }
 

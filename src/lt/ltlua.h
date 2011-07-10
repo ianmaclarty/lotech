@@ -3,6 +3,7 @@
 #define LTLUA_H
 
 #include "ltinput.h"
+#include "ltpickle.h"
 
 void ltLuaSetup();
 void ltLuaTeardown();
@@ -26,4 +27,7 @@ void ltLuaGarbageCollect();
 
 int ltLuaInitRef();
 
+// The caller should free the pickler with delete.
+LTPickler *ltLuaPickleState();
+void ltLuaUnpickleState(LTUnpickler *unpickler);
 #endif /* LTLUA_H */

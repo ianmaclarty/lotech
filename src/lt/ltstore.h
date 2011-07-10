@@ -2,6 +2,7 @@
 #ifndef LTSTORE_H
 #define LTSTORE_H
 #include "ltcommon.h"
+#include "ltpickle.h"
 
 enum LTStoredValueType {
     LT_STORED_VALUE_TYPE_STRING,
@@ -12,6 +13,7 @@ enum LTStoredValueType {
     LT_STORED_VALUE_TYPE_UNKNOWN,
 };
 
+void ltStorePickledData(const char *key, LTPickler *pickler);
 void ltStoreString(const char *key, const char *value);
 void ltStoreDouble(const char *key, LTdouble value);
 void ltStoreFloat(const char *key, LTfloat value);
@@ -20,6 +22,8 @@ void ltStoreBool(const char *key, bool value);
 
 LTStoredValueType ltGetStoredValueType(const char *key);
 
+// The caller must free the returned unpickler with delete.
+LTUnpickler* ltRetrievePickledData(const char *key);
 // The caller must free the returned value with delete[].
 char* ltRetrieveString(const char *key);
 LTdouble ltRetrieveDouble(const char *key);
