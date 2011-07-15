@@ -43,5 +43,6 @@ void ltIOSSyncStore();
 
 void ltIOSLaunchURL(const char *url);
 
+bool ltIOSSupportsES2();
 #endif
 #endif

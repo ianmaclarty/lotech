@@ -1,3 +1,4 @@
+#ifdef LTADS
 #import <iAd/iAD.h>
 #import "GADBannerView.h"
 #import "GADBannerViewDelegate.h"
@@ -283,3 +284,4 @@ static void hide_admob() {
         admob_is_visible = false;
     }
 }
+#endif //LTADS

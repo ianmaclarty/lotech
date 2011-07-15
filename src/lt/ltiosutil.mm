@@ -1,5 +1,6 @@
 #ifdef LTIOS
 #import <UIKit/UIKit.h>
+#import <OpenGLES/EAGL.h>
 #import <objc/runtime.h>
 
 #include "ltiosutil.h"
@@ -201,6 +202,13 @@ void ltIOSSyncStore() {
 void ltIOSLaunchURL(const char *url) {
     NSString *ns_url = [NSString stringWithUTF8String:url];
     [[UIApplication sharedApplication] openURL:[NSURL URLWithString:ns_url]];
+}
+
+bool ltIOSSupportsES2() {
+    EAGLContext *testContext = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
+    bool isSGX = testContext ? true : false;
+    [testContext release];
+    return isSGX;
 }
 
 #endif //LTIOS

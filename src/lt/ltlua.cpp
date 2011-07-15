@@ -2261,8 +2261,18 @@ static void set_globals() {
         lua_pushnumber(g_L, ltGetViewPortTopEdge() - ltGetViewPortBottomEdge());
         lua_setfield(g_L, -2, "height");
         #ifdef LTIOS
-        lua_pushboolean(g_L, ltIsIPad());
-        lua_setfield(g_L, -2, "ipad");
+            lua_pushboolean(g_L, ltIsIPad());
+            lua_setfield(g_L, -2, "ipad");
+            lua_pushboolean(g_L, ltIOSSupportsES2());
+            lua_setfield(g_L, -2, "es2_supported");
+            #ifdef LTADS
+                if (LTADS == LT_AD_TOP) {
+                    lua_pushstring(g_L, "top");
+                } else {
+                    lua_pushstring(g_L, "bottom");
+                }
+                lua_setfield(g_L, -2, "ads");
+            #endif
         #endif
         lua_pop(g_L, 1); // pop lt
     }
@@ -2297,6 +2307,7 @@ void ltLuaTeardown() {
 }
 
 void ltLuaReset() {
+    ltSaveState();
     ltLuaTeardown();
     g_suspended = false;
     g_initialized = false;
