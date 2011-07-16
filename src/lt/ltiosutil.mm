@@ -1,5 +1,6 @@
 #ifdef LTIOS
 #import <UIKit/UIKit.h>
+#import <OpenGLES/EAGL.h>
 #import <objc/runtime.h>
 
 #include "ltiosutil.h"
@@ -74,6 +75,24 @@ static NSUserDefaults *prefs = nil;
 static void ensure_prefs_initialized() {
     if (prefs == nil) {
         prefs = [NSUserDefaults standardUserDefaults];
+    }
+}
+
+void ltIOSStorePickledData(const char *key, LTPickler *pickler) {
+    ensure_prefs_initialized();
+    NSData *nsdata = [NSData dataWithBytesNoCopy:pickler->data length:pickler->size freeWhenDone:NO];
+    NSString *skey = [NSString stringWithUTF8String:key];
+    [prefs setObject:nsdata forKey:skey];
+}
+
+LTUnpickler *ltIOSRetrievePickledData(const char *key) {
+    ensure_prefs_initialized();
+    NSData *nsdata = [prefs dataForKey:[NSString stringWithUTF8String:key]];
+    if (nsdata != nil) {
+        LTUnpickler *unpickler = new LTUnpickler(nsdata.bytes, nsdata.length);
+        return unpickler;
+    } else {
+        return NULL;
     }
 }
 
@@ -183,6 +202,13 @@ void ltIOSSyncStore() {
 void ltIOSLaunchURL(const char *url) {
     NSString *ns_url = [NSString stringWithUTF8String:url];
     [[UIApplication sharedApplication] openURL:[NSURL URLWithString:ns_url]];
+}
+
+bool ltIOSSupportsES2() {
+    EAGLContext *testContext = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
+    bool isSGX = testContext ? true : false;
+    [testContext release];
+    return isSGX;
 }
 
 #endif //LTIOS

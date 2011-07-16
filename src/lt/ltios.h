@@ -15,6 +15,8 @@ void ltIOSRender();
 
 void ltIOSGarbageCollect();
 
+void ltIOSSaveState();
+
 void ltIOSTouchesBegan(NSSet *touches);
 void ltIOSTouchesMoved(NSSet *touches);
 void ltIOSTouchesEnded(NSSet *touches);

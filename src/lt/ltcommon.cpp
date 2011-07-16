@@ -2,6 +2,7 @@
 #include "ltcommon.h"
 #include "ltlua.h"
 
+ct_assert(sizeof(int) == 4);
 ct_assert(sizeof(LTuint32) == 4);
 ct_assert(sizeof(LTfloat) == 4);
 ct_assert(sizeof(GLfloat) == 4);

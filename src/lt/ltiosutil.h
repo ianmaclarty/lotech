@@ -3,6 +3,7 @@
 #define LTIOSUTIL_H
 
 #include "ltcommon.h"
+#include "ltpickle.h"
 #include "ltstore.h"
 
 bool ltIsIPad();
@@ -14,6 +15,9 @@ bool ltIsRetinaIPhone();
 const char *ltIOSBundlePath(const char *file, const char *suffix);
 
 LTfloat ltIOSScaling();
+
+void ltIOSStorePickledData(const char *key, LTPickler *pickler);
+LTUnpickler *ltIOSRetrievePickledData(const char *key);
 
 void ltIOSStoreString(const char *key, const char *value);
 // The caller is responsible for freeing the returned value with delete[].
@@ -39,5 +43,6 @@ void ltIOSSyncStore();
 
 void ltIOSLaunchURL(const char *url);
 
+bool ltIOSSupportsES2();
 #endif
 #endif

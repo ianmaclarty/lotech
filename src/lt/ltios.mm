@@ -7,6 +7,7 @@
 #include "ltiosutil.h"
 #include "ltlua.h"
 #include "ltprotocol.h"
+#include "ltstate.h"
 
 static UIViewController *view_controller = nil;
 
@@ -94,6 +95,11 @@ void ltIOSTouchesCancelled(NSSet *touches) {
 
 UIViewController *ltIOSGetViewController() {
     return view_controller;
+}
+
+void ltIOSSaveState() {
+    ltSaveState();
+    ltIOSSyncStore();
 }
 
 #endif // LTIOS
