@@ -1,3 +1,4 @@
+-- Copyright 2011 Ian MacLarty
 local sprites_mt = {__mode = "v"}
 
 -------------------------------------------------------------

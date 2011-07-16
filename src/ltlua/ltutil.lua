@@ -1,3 +1,4 @@
+-- Copyright 2011 Ian MacLarty
 function clone(table)
     local copy = {}
     for k, v in pairs(table) do

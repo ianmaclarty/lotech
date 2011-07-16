@@ -1,3 +1,4 @@
+-- Copyright 2011 Ian MacLarty
 lt.classes = {
     Object = {
         methods = {

@@ -1,3 +1,4 @@
+-- Copyright 2011 Ian MacLarty
 local current_button_input
 -- node:Button(bbox, onDown, onUp) or
 -- node:Button(onDown, onUp) (node itself is the bbox)

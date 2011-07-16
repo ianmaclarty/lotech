@@ -1,3 +1,4 @@
+-- Copyright 2011 Ian MacLarty
 local function wrt(ind, file, x)
     local t = type(x)
     local spaces = string.rep("  ", ind + 1)

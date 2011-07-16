@@ -1,3 +1,4 @@
+-- Copyright 2011 Ian MacLarty
 import "ltutil"
 import "ltrefs"
 import "lttween"

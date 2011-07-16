@@ -1,3 +1,4 @@
+-- Copyright 2011 Ian MacLarty
 function lt.Text(str, font, halign, valign)
     halign = halign or "left"
     valign = valign or "center"

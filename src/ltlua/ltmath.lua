@@ -1,3 +1,4 @@
+-- Copyright 2011 Ian MacLarty
 lt.frames_per_sec = 60
 lt.secs_per_frame = 1 / lt.frames_per_sec
 lt.radians_per_degree = math.pi / 180
