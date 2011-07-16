@@ -23,7 +23,7 @@ bool ltIsIPad() {
 }
 
 bool ltIsRetinaIPhone() {
-    return !ltIsIPad() && ltIOSScaling() == 2.0f;
+    return !ltIsIPad() && ltIOSScaling() >= 2.0f;
 }
 
 const char *ltIOSDocPath(const char *file, const char *suffix) {
