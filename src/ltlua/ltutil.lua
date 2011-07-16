@@ -63,3 +63,24 @@ function lt.Retrieve(key)
         return nil
     end
 end
+
+function lt.LogGlobals()
+    log("Globals:")
+    for key, _ in pairs(_G) do
+        log(key)
+    end
+end
+
+-- Prevents creation of any new globals.
+function lt.FixGlobals()
+    local mt = {
+        __newindex = function(table, key, value)
+            if rawget(table, key) ~= nil then
+                rawset(table, key, value)
+            else
+                error("Attempt to create new global: " .. key, 2)
+            end
+        end
+    }
+    setmetatable(_G, mt)
+end

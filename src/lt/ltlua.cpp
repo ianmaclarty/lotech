@@ -1976,7 +1976,7 @@ static int lt_OpenURL(lua_State *L) {
     check_nargs(L, 1);
     const char *url = lua_tostring(L, 1);
     if (url != NULL) {
-        #ifdef LTGAMECENTER
+        #ifdef LTIOS
         ltIOSLaunchURL(url);
         #endif
     } else {

@@ -350,20 +350,20 @@ function lt.Tween(node, tween_info)
 end
 
 function lt.CancelTween(obj, field)
-    owner = find_field_owner(obj, field)
-    local obj_tweens = rawget(obj, "_tweens")
+    local owner = find_field_owner(obj, field)
+    local obj_tweens = rawget(owner, "_tweens")
     if obj_tweens then
         obj_tweens[field] = nil
         if next(obj_tweens) == nil then
-            local tweenset = rawget(obj, "_tweenset")
-            local tween_index = rawget(obj, "_tween_index")
+            local tweenset = rawget(owner, "_tweenset")
+            local tween_index = rawget(owner, "_tween_index")
             tweenset[tween_index] = nil
-            rawset(obj, "_tweens", nil)
-            rawset(obj, "_tween_actions", nil)
-            rawset(obj, "_tween_index", nil)
-            rawset(obj, "_tweenset", nil)
+            rawset(owner, "_tweens", nil)
+            rawset(owner, "_tween_actions", nil)
+            rawset(owner, "_tween_index", nil)
+            rawset(owner, "_tweenset", nil)
         else
-            local obj_actions = rawget(obj, "_tween_actions")
+            local obj_actions = rawget(owner, "_tween_actions")
             if obj_actions then
                 obj_actions[field] = nil
             end

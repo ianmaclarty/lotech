@@ -39,8 +39,9 @@ function lt.Text(str, font, halign, valign)
     line.width = x - gap
 
     -- Compute text bounding box.
-    bb_width = 0;
-    bb_height = #lines * vmove - (vmove - em.height)
+    local bb_width = 0;
+    local bb_height = #lines * vmove - (vmove - em.height)
+    local bb_top, bb_left, bb_bottom, bb_right
     for _, line in ipairs(lines) do
         if line.width > bb_width then
             bb_width = line.width
