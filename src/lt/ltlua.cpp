@@ -10,6 +10,7 @@ extern "C" {
 }
 
 #include "Box2D/Box2D.h"
+#include "ltads.h"
 #include "ltaudio.h"
 #include "lt3d.h"
 #include "ltgraphics.h"
