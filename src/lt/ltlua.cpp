@@ -2316,6 +2316,16 @@ void ltLuaReset() {
     ltLuaSetup();
 }
 
+void ltLuaSuspend() {
+    fprintf(stderr, "suspended\n");
+    g_suspended = true;
+}
+
+void ltLuaResume() {
+    fprintf(stderr, "resumed\n");
+    g_suspended = false;
+}
+
 void ltLuaAdvance() {
     if (g_L != NULL && !g_suspended) {
         call_lt_func("Advance");

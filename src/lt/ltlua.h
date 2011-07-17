@@ -8,6 +8,8 @@
 void ltLuaSetup();
 void ltLuaTeardown();
 void ltLuaReset();
+void ltLuaSuspend();
+void ltLuaResume();
 
 void ltLuaAdvance();
 void ltLuaRender();
