@@ -10,6 +10,8 @@
 
 void ltAudioInit();
 void ltAudioTeardown();
+void ltAudioSuspend();
+void ltAudioResume();
 
 struct LTAudioSample : LTObject {
     ALuint buffer_id;

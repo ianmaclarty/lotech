@@ -2,6 +2,7 @@
 #include <errno.h>
 #include <string.h>
 #include <list>
+#include <map>
 
 #include "ltaudio.h"
 
@@ -10,8 +11,16 @@
 static ALCcontext* audio_context = NULL;
 static ALCdevice* audio_device = NULL;
 
+// For one-off playing of a sample.
 static std::list<ALuint> temp_sources;
-static bool mute = false;
+
+// We keep a record of all LTTrack objects, so
+// we can pause them when ltAudioSuspend is called.
+// The map values record whether the track is suspended
+// (and hence whether it needs to be restarted when
+// ltAudioResume is called).
+static std::map<LTTrack *, bool> active_tracks;
+static bool audio_is_suspended = false;
 
 void ltAudioInit() {
     audio_device = alcOpenDevice(NULL);
@@ -57,16 +66,14 @@ LTAudioSample::~LTAudioSample() {
 }
 
 void LTAudioSample::play(LTfloat pitch, LTfloat gain) {
-    if (!mute) {
-        ALuint source_id;
-        alGenSources(1, &source_id);
-        alSourcei(source_id, AL_BUFFER, buffer_id);
-        alSourcef(source_id, AL_PITCH, pitch);
-        alSourcef(source_id, AL_GAIN, gain);
-        alSourcei(source_id, AL_LOOPING, AL_FALSE);
-        alSourcePlay(source_id);
-        temp_sources.push_back(source_id);
-    }
+    ALuint source_id;
+    alGenSources(1, &source_id);
+    alSourcei(source_id, AL_BUFFER, buffer_id);
+    alSourcef(source_id, AL_PITCH, pitch);
+    alSourcef(source_id, AL_GAIN, gain);
+    alSourcei(source_id, AL_LOOPING, AL_FALSE);
+    alSourcePlay(source_id);
+    temp_sources.push_back(source_id);
 }
 
 int LTAudioSample::bytes() {
@@ -106,10 +113,12 @@ LTTrack::LTTrack() : LTObject(LT_TYPE_TRACK) {
     alSourcef(source_id, AL_PITCH, 1.0f);
     alSourcef(source_id, AL_GAIN, 1.0f);
     alSourcei(source_id, AL_LOOPING, AL_FALSE);
+    active_tracks[this] = false;
 }
 
 LTTrack::~LTTrack() {
     alDeleteSources(1, &source_id);
+    active_tracks.erase(this);
 }
 
 void LTTrack::queueSample(LTAudioSample *sample) {
@@ -173,10 +182,54 @@ void LTTrack::set_field(const char *field_name, LTfloat value) {
     }
 }
 
+void ltAudioSuspend() {
+    if (!audio_is_suspended) {
+        {
+            std::map<LTTrack *, bool>::iterator it;
+            for (it = active_tracks.begin(); it != active_tracks.end(); it++) {
+                ALint state;
+                alGetSourcei(it->first->source_id, AL_SOURCE_STATE, &state);
+                if (state == AL_PLAYING) {
+                    alSourcePause(it->first->source_id);
+                    active_tracks[it->first] = true;
+                }
+            }
+        }
+        {
+            std::list<ALuint>::iterator it;
+            for (it = temp_sources.begin(); it != temp_sources.end(); it++) {
+                alSourcePause(*it);
+            }
+        }
+        audio_is_suspended = true;
+    }
+}
+
+void ltAudioResume() {
+    if (audio_is_suspended) {
+        {
+            std::map<LTTrack *, bool>::iterator it;
+            for (it = active_tracks.begin(); it != active_tracks.end(); it++) {
+                if (it->second) { // If it is suspended.
+                    alSourcePlay(it->first->source_id);
+                    active_tracks[it->first] = false;
+                }
+            }
+        }
+        {
+            std::list<ALuint>::iterator it;
+            for (it = temp_sources.begin(); it != temp_sources.end(); it++) {
+                alSourcePlay(*it);
+            }
+        }
+        audio_is_suspended = false;
+    }
+}
+
 static bool delete_source_if_finished(ALuint source_id) {
     ALint state;
     alGetSourcei(source_id, AL_SOURCE_STATE, &state);
-    if (!mute && state == AL_PLAYING) {
+    if (state == AL_PLAYING) {
         return false;
     } else {
         alDeleteSources(1, &source_id);
@@ -185,7 +238,12 @@ static bool delete_source_if_finished(ALuint source_id) {
 }
 
 void ltAudioGC() {
-    temp_sources.remove_if(delete_source_if_finished);
+    if (!audio_is_suspended) {
+        // Only collect non-playing temp tracks if audio not suspended,
+        // because they will all be paused (and hence non-playing) if
+        // audio is suspended, so they will all get collected.
+        temp_sources.remove_if(delete_source_if_finished);
+    }
 }
 
 static int read_4_byte_little_endian_int(FILE *file) {

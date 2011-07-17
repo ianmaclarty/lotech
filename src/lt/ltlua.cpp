@@ -2317,12 +2317,10 @@ void ltLuaReset() {
 }
 
 void ltLuaSuspend() {
-    fprintf(stderr, "suspended\n");
     g_suspended = true;
 }
 
 void ltLuaResume() {
-    fprintf(stderr, "resumed\n");
     g_suspended = false;
 }
 

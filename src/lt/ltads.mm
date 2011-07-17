@@ -8,6 +8,7 @@
 #include "ltios.h"
 #include "ltiosutil.h"
 #include "ltgraphics.h"
+#include "ltaudio.h"
 #include "ltlua.h"
 
 #define ADMOB_REFRESH_RATE 30.0
@@ -71,12 +72,14 @@ void ltShowAds(LTAdPlacement p) {
     if (!willLeave) {
         user_is_interacting_with_ad = true;
         ltLuaSuspend();
+        ltAudioSuspend();
     }
     return YES;
 }
 - (void)bannerViewActionDidFinish:(ADBannerView *)banner {
     user_is_interacting_with_ad = false;
     ltLuaResume();
+    ltAudioResume();
 }
 @end
 
@@ -191,14 +194,17 @@ static bool iAd_available() {
 - (void)adViewWillPresentScreen:(GADBannerView *)bannerView {
     user_is_interacting_with_ad = true;
     ltLuaSuspend();
+    ltAudioSuspend();
 }
 - (void)adViewWillDismissScreen:(GADBannerView *)bannerView {
     user_is_interacting_with_ad = false;
     ltLuaResume();
+    ltAudioResume();
 }
 - (void)adViewWillLeaveApplication:(GADBannerView *)bannerView {
     user_is_interacting_with_ad = false;
     ltLuaResume();
+    ltAudioResume();
 }
 @end
 
