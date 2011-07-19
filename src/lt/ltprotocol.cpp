@@ -15,6 +15,8 @@ enum LTCommandOpcode {
     LT_CMD_OP_LOG = 'L',
     LT_CMD_OP_UPDATEFILE = 'U',
     LT_CMD_OP_RESET = 'R',
+    LT_CMD_OP_SUSPEND = 'S',
+    LT_CMD_OP_RESUME = 'P',
 };
 
 struct LTCommand {
@@ -178,6 +180,24 @@ struct LTCommandReset : LTCommand {
     }
 };
 
+struct LTCommandSuspend : LTCommand {
+    LTCommandSuspend() : LTCommand(LT_CMD_OP_SUSPEND) { }
+    virtual ~LTCommandSuspend() { }
+
+    virtual void doCommand() {
+        ltLuaSuspend();
+    }
+};
+
+struct LTCommandResume : LTCommand {
+    LTCommandResume() : LTCommand(LT_CMD_OP_RESUME) { }
+    virtual ~LTCommandResume() { }
+
+    virtual void doCommand() {
+        ltLuaResume();
+    }
+};
+
 bool ltAmServer() {
     return server_connection != NULL;
 }
@@ -242,7 +262,7 @@ void ltServerShutdown() {
     }
 }
 
-void ltServerUpdateFile(const char *file) {
+void ltServerClientUpdateFile(const char *file) {
     struct stat info;
     int r = stat(file, &info);
     if (r != 0) {
@@ -277,8 +297,18 @@ void ltServerUpdateFile(const char *file) {
     }
 }
 
-void ltServerReset() {
+void ltServerClientReset() {
     LTCommandReset *cmd = new LTCommandReset();
+    server_command_queue.push_back(cmd);
+}
+
+void ltServerClientSuspend() {
+    LTCommandSuspend *cmd = new LTCommandSuspend();
+    server_command_queue.push_back(cmd);
+}
+
+void ltServerClientResume() {
+    LTCommandResume *cmd = new LTCommandResume();
     server_command_queue.push_back(cmd);
 }
 
@@ -318,6 +348,18 @@ static char* encode_command(LTCommand *cmd, int *size) {
             msg[0] = (char)op;
             return msg;
         }
+        case LT_CMD_OP_SUSPEND: {
+            *size = 1;
+            char *msg = new char[*size];
+            msg[0] = (char)op;
+            return msg;
+        }
+        case LT_CMD_OP_RESUME: {
+            *size = 1;
+            char *msg = new char[*size];
+            msg[0] = (char)op;
+            return msg;
+        }
     }
     return NULL;
 }
@@ -350,6 +392,12 @@ static LTCommand* decode_command(const char *buf, int size) {
         }
         case LT_CMD_OP_RESET: {
             return new LTCommandReset();
+        }
+        case LT_CMD_OP_SUSPEND: {
+            return new LTCommandSuspend();
+        }
+        case LT_CMD_OP_RESUME: {
+            return new LTCommandResume();
         }
     }
     return NULL;

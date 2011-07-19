@@ -11,8 +11,10 @@ bool ltAmServer();
 void ltServerInit();
 void ltServerStep();
 bool ltServerIsReady();
-void ltServerUpdateFile(const char *file);
-void ltServerReset();
+void ltServerClientUpdateFile(const char *file);
+void ltServerClientReset();
+void ltServerClientSuspend();
+void ltServerClientResume();
 void ltServerShutdown();
 const char* ltServerStateStr();
 

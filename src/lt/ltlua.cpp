@@ -2318,10 +2318,12 @@ void ltLuaReset() {
 
 void ltLuaSuspend() {
     g_suspended = true;
+    ltAudioSuspend();
 }
 
 void ltLuaResume() {
     g_suspended = false;
+    ltAudioResume();
 }
 
 void ltLuaAdvance() {
