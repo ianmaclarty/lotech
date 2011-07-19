@@ -178,7 +178,7 @@ void ltDrawAdBackground() {
         t = viewport_bottom + h;
         b = viewport_bottom;
     }
-    ltPushTint(0, 0, 0, 1);
+    ltPushTint(0.2f, 0.2f, 0.2f, 1.0f);
     ltDrawRect(l, b, r, t);
     ltPopTint();
     /*
