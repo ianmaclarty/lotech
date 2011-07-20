@@ -132,6 +132,8 @@ static void show_iAd() {
         } else {
             iAd_view.frame = CGRectOffset(iAd_view.frame, 0, -200);
         }
+        UIViewController *vc = ltIOSGetViewController();
+        [vc.view bringSubviewToFront:iAd_view];
         iAd_is_visible = true;
     }
 }
@@ -276,6 +278,8 @@ static void show_admob() {
         } else {
             admob_view.frame = CGRectOffset(admob_view.frame, 0, -200);
         }
+        UIViewController *vc = ltIOSGetViewController();
+        [vc.view bringSubviewToFront:admob_view];
         admob_is_visible = true;
     }
 }
