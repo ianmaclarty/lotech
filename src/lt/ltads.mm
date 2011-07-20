@@ -119,6 +119,7 @@ static void init_iAd() {
                 iAd_view.currentContentSizeIdentifier = ADBannerContentSizeIdentifierLandscape;
             }
             [vc.view addSubview:iAd_view];
+            hide_iAd();
         }
     } else {
         iAd_is_visible = false;
