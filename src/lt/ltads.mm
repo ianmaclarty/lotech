@@ -157,8 +157,11 @@ static void hide_iAd() {
 
 static bool iAd_available() {
     Class iAdClass = (NSClassFromString(@"ADBannerView"));
-    // The device must be running running iOS 4.0 or later.
-    NSString *reqSysVer = @"4.0";
+    // iAd is supposed to be available on iOS 4.0 or later,
+    // however it crashes in the similator on 4.0 and 4.1,
+    // and we have no other way to test on those OSs, so to
+    // be on the safe side we only allow iAds on 4.2 or later.
+    NSString *reqSysVer = @"4.2";
     NSString *currSysVer = [[UIDevice currentDevice] systemVersion];
     BOOL osVersionSupported = ([currSysVer compare:reqSysVer options:NSNumericSearch] != NSOrderedAscending);
     if (!(iAdClass && osVersionSupported)) {
