@@ -2,6 +2,8 @@
 #ifndef LTUTIL_H
 #define LTUTIL_H
 
+#include <stdlib.h>
+
 void ltAbort(); // Use only for internal errors.
 void ltLog(const char *fmt, ...);
 bool ltFileExists(const char *file);

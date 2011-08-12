@@ -3,7 +3,11 @@
 static const char *file;
 
 static void Setup() {
-    ltLuaSetup(file);
+    #ifdef LTDEVMODE
+    ltClientInit();
+    #endif
+
+    ltLuaSetup();
 }
 
 int main(int argc, const char **argv) {

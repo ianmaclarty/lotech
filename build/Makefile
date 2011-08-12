@@ -16,14 +16,17 @@ DEFINES=-DLTLINUX -DLUA_USE_LINUX -DLTGLUT $(COMMONDEFS)
 else
 DEBUG_OPTS=-gdwarf-2
 LD_OPTS=$(DEBUG_OPTS) -framework GLUT -framework OpenGL -framework OpenAL -framework Cocoa -lm
-DEFINES=-DLUA_USE_MACOSX -DLTGLUT $(COMMONDEFS)
+DEFINES=-DLUA_USE_MACOSX -DLTGLUT -DLTOSX -DLTDEVMODE $(COMMONDEFS)
 endif
 
 GCC_OPTS=$(DEFINES) $(DEBUG_OPTS) -I../src/lt -I../src/zlib -I../src/lpng -I../src -I../src/lua -Wall -O0
+GPP_OPTS=$(GCC_OPTS) -ObjC++
 
 LT_CPP_FILES:=$(shell find ../src/lt/ -name "*.cpp" -exec basename \{\} \;)
 LT_H_FILES:=$(shell find ../src/lt/ -name "*.h" -exec basename \{\} \;)
-LT_O_FILES:=$(patsubst %.cpp,%.o,$(LT_CPP_FILES))
+LT_CPP_O_FILES:=$(patsubst %.cpp,%.o,$(LT_CPP_FILES))
+LT_MM_FILES:=$(shell find ../src/lt/ -name "*.mm" -exec basename \{\} \;)
+LT_MM_O_FILES:=$(patsubst %.mm,%.o,$(LT_MM_FILES))
 
 BOX2D_CPP_FILES:=$(shell find ../src/Box2D -name "*.cpp" -exec basename \{\} \;)
 BOX2D_H_FILES:=$(shell find ../src/Box2D -name "*.h" -exec basename \{\} \;)
@@ -49,9 +52,10 @@ TOOL_CPP_FILES:=$(shell find ../tools/ -name "*.cpp" -exec basename \{\} \;)
 TOOL_O_FILES:=$(patsubst %.cpp,%.o,$(TOOL_CPP_FILES))
 TOOL_EXES:=$(patsubst %.cpp,%,$(TOOL_CPP_FILES))
 
-CPP_O_FILES:=$(LT_O_FILES) $(BOX2D_O_FILES) 
+CPP_O_FILES:=$(LT_CPP_O_FILES) $(BOX2D_O_FILES) 
 C_O_FILES:=$(LPNG_O_FILES) $(ZLIB_O_FILES) $(LUA_O_FILES)
-O_FILES:=$(CPP_O_FILES) $(C_O_FILES) 
+MM_O_FILES:=$(LT_MM_O_FILES)
+O_FILES:=$(CPP_O_FILES) $(C_O_FILES) $(MM_O_FILES)
 C_H_FILES:=$(ZLIB_H_FILES) $(LPNG_H_FILES) $(LUA_H_FILES)
 
 $(TEST_EXES): %: %.o $(O_FILES)
@@ -60,8 +64,11 @@ $(TEST_EXES): %: %.o $(O_FILES)
 $(TOOL_EXES): %: %.o $(O_FILES)
 	$(GPP) $^ $(LD_OPTS) -o $@
 
-$(LT_O_FILES) $(TEST_O_FILES) $(TOOL_O_FILES): %.o: %.cpp $(LT_H_FILES)
-	$(GPP) $(GCC_OPTS) -c $<
+$(LT_CPP_O_FILES) $(TEST_O_FILES) $(TOOL_O_FILES): %.o: %.cpp $(LT_H_FILES)
+	$(GPP) $(GPP_OPTS) -c $<
+
+$(LT_MM_O_FILES): %.o: %.mm $(LT_H_FILES)
+	$(GPP) $(GPP_OPTS) -c $<
 
 $(BOX2D_O_FILES): %.o: %.cpp $(BOX2D_H_FILES)
 	$(GPP) $(GCC_OPTS) -c $<

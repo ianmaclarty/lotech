@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 
 #include "ltiosutil.h"
+#include "ltosxutil.h"
 #include "ltnet.h"
 #include "ltlua.h"
 #include "ltutil.h"
@@ -152,6 +153,10 @@ struct LTCommandUpdateFile : LTCommand {
         FILE *f;
         #ifdef LTIOS
             const char *path = ltIOSBundlePath(file_name, NULL);
+            f = fopen(path, "w");
+            delete[] path;
+        #elif LTOSX
+            const char *path = ltOSXBundlePath(file_name, NULL);
             f = fopen(path, "w");
             delete[] path;
         #else

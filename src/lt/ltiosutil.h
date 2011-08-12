@@ -1,3 +1,4 @@
+/* Copyright (C) 2011 Ian MacLarty */
 #ifdef LTIOS
 #ifndef LTIOSUTIL_H
 #define LTIOSUTIL_H

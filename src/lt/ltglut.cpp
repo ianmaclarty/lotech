@@ -18,9 +18,11 @@ extern "C" {
 
 #include "ltgraphics.h"
 #include "ltharness.h"
+#include "ltprotocol.h"
 
 static bool g_fullscreen = false;
 static int  g_timer_interval = 17;
+static int  g_curr_button = 0;
 
 static ltVoidCallback           g_setup = NULL;
 static ltVoidCallback           g_teardown = NULL;
@@ -38,6 +40,9 @@ static void glut_advance(int unused) {
     if (g_advance != NULL) {
         g_advance();
     }
+    #ifdef LTDEVMODE
+    ltClientStep();
+    #endif
     glutPostRedisplay();
 }
 
@@ -67,7 +72,7 @@ static void glut_render() {
 
 static void glut_mouse_move(int x, int y) {
     if (g_mouse_move != NULL) {
-        g_mouse_move(0, (LTfloat)x, (LTfloat)y);
+        g_mouse_move(g_curr_button, (LTfloat)x, (LTfloat)y);
     }
 }
 
@@ -84,12 +89,14 @@ static void glut_mouse_button(int button, int state, int x, int y) {
             if (g_mouse_down != NULL) {
                 g_mouse_down(but, (LTfloat)x, (LTfloat)y);
             }
+            g_curr_button = but;
             break;
         }
         case GLUT_UP: {
             if (g_mouse_up != NULL) {
                 g_mouse_up(but, (LTfloat)x, (LTfloat)y);
             }
+            g_curr_button = 0;
             break;
         }
     }

@@ -1,14 +1,27 @@
 #include "ltstore.h"
 
-#ifdef LTIOS
 #include "ltiosutil.h"
-#endif
+#include "ltosxutil.h"
 
 void ltStorePickledData(const char *key, LTPickler *pickler) {
     #ifdef LTIOS
         ltIOSStorePickledData(key, pickler);
+    #elif LTOSX
+        ltOSXStorePickledData(key, pickler);
     #endif
 }
+
+LTUnpickler* ltRetrievePickledData(const char *key) {
+    #ifdef LTIOS
+        return ltIOSRetrievePickledData(key);
+    #elif LTOSX
+        return ltOSXRetrievePickledData(key);
+    #else
+        return NULL;
+    #endif
+}
+
+// The following functions are deprecated.
 
 void ltStoreString(const char *key, const char *value) {
     #ifdef LTIOS
@@ -45,14 +58,6 @@ LTStoredValueType ltGetStoredValueType(const char *key) {
         return ltIOSGetStoredValueType(key);
     #else
         return LT_STORED_VALUE_TYPE_UNKNOWN;
-    #endif
-}
-
-LTUnpickler* ltRetrievePickledData(const char *key) {
-    #ifdef LTIOS
-        return ltIOSRetrievePickledData(key);
-    #else
-        return NULL;
     #endif
 }
 

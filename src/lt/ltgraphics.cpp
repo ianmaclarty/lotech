@@ -29,6 +29,13 @@ static LTfloat viewport_top = 1.0f;
 static LTfloat viewport_width = 2.0f;
 static LTfloat viewport_height = 2.0f;
 
+static LTfloat design_viewport_left = -1.0f;
+static LTfloat design_viewport_bottom = -1.0f;
+static LTfloat design_viewport_right = 1.0f;
+static LTfloat design_viewport_top = 1.0f;
+static LTfloat design_viewport_width = 2.0f;
+static LTfloat design_viewport_height = 2.0f;
+
 // Dimensions of a (design) pixel in user space.
 // Used to decide how to scale images by default.
 static LTfloat pixel_width = viewport_width / design_width;
@@ -97,12 +104,18 @@ void ltInitGraphics() {
 }
 
 void ltSetViewPort(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2) {
-    viewport_left = x1;
-    viewport_right = x2;
-    viewport_bottom = y1;
-    viewport_top = y2;
-    viewport_width = viewport_right - viewport_left;
-    viewport_height = viewport_top - viewport_bottom;
+    design_viewport_left = x1;
+    design_viewport_right = x2;
+    design_viewport_bottom = y1;
+    design_viewport_top = y2;
+    design_viewport_width = design_viewport_right - design_viewport_left;
+    design_viewport_height = design_viewport_top - design_viewport_bottom;
+    viewport_left = design_viewport_left;
+    viewport_right = design_viewport_right;
+    viewport_top = design_viewport_top;
+    viewport_bottom = design_viewport_bottom;
+    viewport_width = design_viewport_width;
+    viewport_height = design_viewport_height;
     pixel_width = viewport_width / design_width;
     pixel_height = viewport_height / design_height;
 }
@@ -140,15 +153,15 @@ void ltAdjustViewportAspectRatio() {
     LTfloat sy = h1 / h0;
     LTfloat dx = (w1 - w0 * sy) / (2.0f * w0 * sy);
     if (dx > 0.01f) {
-        viewport_left -= viewport_width * dx;
-        viewport_right += viewport_width * dx;
+        viewport_left = design_viewport_left - design_viewport_width * dx;
+        viewport_right = design_viewport_right + design_viewport_width * dx;
         viewport_width = viewport_right - viewport_left;
     } else {
         LTfloat sx = w1 / w0;
         LTfloat dy = (h1 - h0 * sx) / (2.0f * h0 * sx);
         if (dy > 0.01) {
-            viewport_bottom -= viewport_height * dy;
-            viewport_top += viewport_height * dy;
+            viewport_bottom = design_viewport_bottom - design_viewport_height * dy;
+            viewport_top = design_viewport_top + design_viewport_height * dy;
             viewport_height = viewport_top - viewport_bottom;
         }
     }

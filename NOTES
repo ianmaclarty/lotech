@@ -25,6 +25,8 @@ Possible performance improvements
     - Make tweening completely native.  Tweens on an object can be
       removed in the destructor.
 
+* Don't tween nodes not in the scene graph.
+
 * gperf for field lookup
     - Create a perfect hash function for all possible fields of native objects.
       Use this to map strings to an enumeration of the possible fields.

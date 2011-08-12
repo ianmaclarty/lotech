@@ -17,6 +17,7 @@ extern "C" {
 #include "ltharness.h"
 #include "ltimage.h"
 #include "ltiosutil.h"
+#include "ltosxutil.h"
 #include "ltgamecenter.h"
 #include "ltlua.h"
 #include "ltphysics.h"
@@ -264,14 +265,17 @@ static int default_atlas_size() {
 /************************** Resolve paths ****************/
 
 static const char *resource_path(const char *resource, const char *suffix) {
+    const char *path;
     #ifdef LTIOS
-        return ltIOSBundlePath(resource, suffix);
+        path = ltIOSBundlePath(resource, suffix);
+    #elif LTOSX
+        path = ltOSXBundlePath(resource, suffix);
     #else
         int len = strlen(resource) + strlen(suffix) + 3;
-        char *path = new char[len];
-        snprintf(path, len, "./%s%s", resource, suffix);
-        return path;
+        path = new char[len];
+        snprintf((char*)path, len, "./%s%s", resource, suffix);
     #endif
+    return path;
 }
 
 static const char *image_path(const char *name) {
@@ -292,7 +296,13 @@ static const char *image_path(const char *name) {
             return ltIOSBundlePath(name, ".png");
         }
     #else
-        return resource_path(name, ".png");
+        const char *path = resource_path(name, ".png2x");
+        if (ltFileExists(path)) {
+            return path;
+        } else {
+            delete[] path;
+            return resource_path(name, ".png");
+        }
     #endif
 }
 
@@ -2241,6 +2251,8 @@ static void run_lua_file(const char *file) {
         if (ltFileExists(f)) {
             check_status(loadfile(g_L, f));
             docall(g_L, 0);
+        } else {
+            ltLog("File %s does not exist", f);
         }
         delete[] f;
     }
@@ -2326,9 +2338,10 @@ void ltLuaResume() {
     ltAudioResume();
 }
 
-void ltLuaAdvance() {
-    if (g_L != NULL && !g_suspended) {
-        call_lt_func("Advance");
+void ltLuaAdvance(LTfloat secs) {
+    if (g_L != NULL && !g_suspended && push_lt_func("Advance")) {
+        lua_pushnumber(g_L, secs);
+        docall(g_L, 1);
     }
     ltAudioGC();
 }
@@ -2460,6 +2473,9 @@ void ltLuaPointerMove(int input_id, LTfloat x, LTfloat y) {
 
 void ltLuaResizeWindow(LTfloat w, LTfloat h) {
     ltResizeScreen((int)w, (int)h);
+    if (g_initialized) {
+        ltAdjustViewportAspectRatio();
+    }
 }
 
 /************************************************************/

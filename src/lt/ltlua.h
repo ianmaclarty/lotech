@@ -2,6 +2,7 @@
 #ifndef LTLUA_H
 #define LTLUA_H
 
+#include "ltcommon.h"
 #include "ltinput.h"
 #include "ltpickle.h"
 
@@ -11,7 +12,7 @@ void ltLuaReset();
 void ltLuaSuspend();
 void ltLuaResume();
 
-void ltLuaAdvance();
+void ltLuaAdvance(LTfloat secs);
 void ltLuaRender();
 
 void ltLuaKeyDown(LTKey);
