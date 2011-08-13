@@ -672,6 +672,9 @@ LTImage::LTImage(LTAtlas *atls, int atlas_w, int atlas_h, LTImagePacker *packer)
 }
 
 LTImage::~LTImage() {
+    // Make sure vertbuf or texbuf are not bound before deleting them.
+    // This seems to fix an occasional crash on OSX.
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
     glDeleteBuffers(1, &vertbuf);
     glDeleteBuffers(1, &texbuf);
     atlas->ref_count--;

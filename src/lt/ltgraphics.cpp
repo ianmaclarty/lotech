@@ -16,6 +16,12 @@
 static int screen_width = 480;
 static int screen_height = 320;
 
+// Position of the glViewport (in pixels).
+static int screen_viewport_x = 0;
+static int screen_viewport_y = 0;
+static int screen_viewport_width = 480;
+static int screen_viewport_height = 320;
+
 // Screen dimensions used to compute size of pixels in loaded
 // images.  These don't have to match the actual screen dimensions.
 static LTfloat design_width = 960.0f;
@@ -93,7 +99,7 @@ void ltInitGraphics() {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glViewport(0, 0, screen_width, screen_height);
+    glViewport(screen_viewport_x, screen_viewport_y, screen_viewport_width, screen_viewport_height);
     #ifdef LTIOS
     glOrthof(viewport_left, viewport_right, viewport_bottom, viewport_top, -1.0f, 1.0f);
     #else
@@ -104,6 +110,7 @@ void ltInitGraphics() {
 }
 
 void ltSetViewPort(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2) {
+    fprintf(stderr, "ltSetViewPort %f %f %f %f\n", x1, y1, x2, y2);
     design_viewport_left = x1;
     design_viewport_right = x2;
     design_viewport_bottom = y1;
@@ -150,21 +157,54 @@ void ltAdjustViewportAspectRatio() {
     LTfloat h0 = design_height;
     LTfloat w1 = (LTfloat)screen_width;
     LTfloat h1 = (LTfloat)screen_height;
-    LTfloat sy = h1 / h0;
-    LTfloat dx = (w1 - w0 * sy) / (2.0f * w0 * sy);
-    if (dx > 0.01f) {
-        viewport_left = design_viewport_left - design_viewport_width * dx;
-        viewport_right = design_viewport_right + design_viewport_width * dx;
-        viewport_width = viewport_right - viewport_left;
-    } else {
+    #ifdef LTENVELOPE
+        LTfloat sy = h1 / h0;
+        LTfloat dx = (w1 - w0 * sy) / (2.0f * w1);
+        LTfloat sx = w1 / w0;
+        LTfloat dy = (h1 - h0 * sx) / (2.0f * h1);
+        fprintf(stderr, "dx = %f, w0 = %f, w1 = %f\n", dx, w0, w1);
+        if (dx > 0.01f) {
+            fprintf(stderr, "HERE\n");
+            screen_viewport_x = (int)(dx * (float)screen_width);
+            screen_viewport_y = 0;
+            screen_viewport_width = screen_width - (int)(dx * (float)screen_width * 2.0f);
+            screen_viewport_height = screen_height;
+        } else {
+            screen_viewport_x = 0;
+            screen_viewport_width = screen_width;
+            if (dy > 0.01) {
+                screen_viewport_y = (int)(dy * (float)screen_height);
+                screen_viewport_height = screen_height - (int)(dy * (float)screen_height)*2;
+            } else {
+                screen_viewport_y = 0;
+                screen_viewport_height = screen_height;
+            }
+        }
+        fprintf(stderr, "VP: %d %d %d %d\n", screen_viewport_x, screen_viewport_y, screen_viewport_width, screen_viewport_height);
+    #else
+        LTfloat sy = h1 / h0;
+        LTfloat dx = (w1 - w0 * sy) / (2.0f * w0 * sy);
         LTfloat sx = w1 / w0;
         LTfloat dy = (h1 - h0 * sx) / (2.0f * h0 * sx);
-        if (dy > 0.01) {
-            viewport_bottom = design_viewport_bottom - design_viewport_height * dy;
-            viewport_top = design_viewport_top + design_viewport_height * dy;
-            viewport_height = viewport_top - viewport_bottom;
+        if (dx > 0.01f) {
+            viewport_left = design_viewport_left - design_viewport_width * dx;
+            viewport_right = design_viewport_right + design_viewport_width * dx;
+            viewport_top = design_viewport_top;
+            viewport_bottom = design_viewport_bottom;
+        } else {
+            viewport_left = design_viewport_left;
+            viewport_right = design_viewport_right;
+            if (dy > 0.01) {
+                viewport_bottom = design_viewport_bottom - design_viewport_height * dy;
+                viewport_top = design_viewport_top + design_viewport_height * dy;
+            } else {
+                viewport_bottom = design_viewport_bottom;
+                viewport_top = design_viewport_top;
+            }
         }
-    }
+        viewport_width = viewport_right - viewport_left;
+        viewport_height = viewport_top - viewport_bottom;
+    #endif
 
     // Make space for ads.
     #ifdef LTADS
@@ -221,6 +261,10 @@ void ltDrawAdBackground() {
 void ltSetScreenSize(int width, int height) {
     screen_width = width;
     screen_height = height;
+    screen_viewport_x = 0;
+    screen_viewport_y = 0;
+    screen_viewport_width = width;
+    screen_viewport_height = height;
 }
 
 void ltSetDesignScreenSize(LTfloat width, LTfloat height) {
@@ -256,9 +300,9 @@ LTfloat ltGetViewPortX(LTfloat screen_x) {
     if (scaling == 0.0f) {
         scaling = ltIOSScaling();
     }
-    return viewport_left + ((screen_x * scaling) / (LTfloat)screen_width) * viewport_width;
+    return viewport_left + (((screen_x - screen_viewport_x) * scaling) / (LTfloat)screen_viewport_width) * viewport_width;
 #else
-    return viewport_left + (screen_x / (LTfloat)screen_width) * viewport_width;
+    return viewport_left + ((screen_x - screen_viewport_x) / (LTfloat)screen_viewport_width) * viewport_width;
 #endif
 }
 
@@ -268,9 +312,9 @@ LTfloat ltGetViewPortY(LTfloat screen_y) {
     if (scaling == 0.0f) {
         scaling = ltIOSScaling();
     }
-    return viewport_top - ((screen_y * scaling) / (LTfloat)screen_height) * viewport_height;
+    return viewport_top - (((screen_y - screen_viewport_y) * scaling) / (LTfloat)screen_viewport_height) * viewport_height;
 #else
-    return viewport_top - (screen_y / (LTfloat)screen_height) * viewport_height;
+    return viewport_top - ((screen_y - screen_viewport_y) / (LTfloat)screen_viewport_height) * viewport_height;
 #endif
 }
 

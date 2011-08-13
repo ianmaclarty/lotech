@@ -2293,6 +2293,8 @@ static void set_globals() {
             lua_pushboolean(g_L, 1);
             lua_setfield(g_L, -2, "osx");
             lua_pushboolean(g_L, 1);
+            lua_setfield(g_L, -2, "desktop");
+            lua_pushboolean(g_L, 1);
             lua_setfield(g_L, -2, "shaders");
         #endif
         lua_pop(g_L, 1); // pop lt
@@ -2480,8 +2482,10 @@ void ltLuaPointerMove(int input_id, LTfloat x, LTfloat y) {
 }
 
 void ltLuaResizeWindow(LTfloat w, LTfloat h) {
+    fprintf(stderr, "ltLuaResizeWindow %f %f\n", w, h);
     ltResizeScreen((int)w, (int)h);
     if (g_initialized) {
+        fprintf(stderr, "ltAdjustViewportAspectRatio\n");
         ltAdjustViewportAspectRatio();
     }
 }
