@@ -110,7 +110,6 @@ void ltInitGraphics() {
 }
 
 void ltSetViewPort(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2) {
-    fprintf(stderr, "ltSetViewPort %f %f %f %f\n", x1, y1, x2, y2);
     design_viewport_left = x1;
     design_viewport_right = x2;
     design_viewport_bottom = y1;
@@ -162,9 +161,7 @@ void ltAdjustViewportAspectRatio() {
         LTfloat dx = (w1 - w0 * sy) / (2.0f * w1);
         LTfloat sx = w1 / w0;
         LTfloat dy = (h1 - h0 * sx) / (2.0f * h1);
-        fprintf(stderr, "dx = %f, w0 = %f, w1 = %f\n", dx, w0, w1);
         if (dx > 0.01f) {
-            fprintf(stderr, "HERE\n");
             screen_viewport_x = (int)(dx * (float)screen_width);
             screen_viewport_y = 0;
             screen_viewport_width = screen_width - (int)(dx * (float)screen_width * 2.0f);
@@ -180,7 +177,6 @@ void ltAdjustViewportAspectRatio() {
                 screen_viewport_height = screen_height;
             }
         }
-        fprintf(stderr, "VP: %d %d %d %d\n", screen_viewport_x, screen_viewport_y, screen_viewport_width, screen_viewport_height);
     #else
         LTfloat sy = h1 / h0;
         LTfloat dx = (w1 - w0 * sy) / (2.0f * w0 * sy);

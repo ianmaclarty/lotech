@@ -2482,10 +2482,8 @@ void ltLuaPointerMove(int input_id, LTfloat x, LTfloat y) {
 }
 
 void ltLuaResizeWindow(LTfloat w, LTfloat h) {
-    fprintf(stderr, "ltLuaResizeWindow %f %f\n", w, h);
     ltResizeScreen((int)w, (int)h);
     if (g_initialized) {
-        fprintf(stderr, "ltAdjustViewportAspectRatio\n");
         ltAdjustViewportAspectRatio();
     }
 }
