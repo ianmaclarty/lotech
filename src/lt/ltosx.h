@@ -16,6 +16,8 @@ void ltOSXRender();
 void ltOSXMouseDown(NSEvent *event, NSView *view);
 void ltOSXMouseUp(NSEvent *event, NSView *view);
 void ltOSXMouseMoved(NSEvent *event, NSView *view);
+void ltOSXKeyUp(NSEvent *event);
+void ltOSXKeyDown(NSEvent *event);
 
 void ltOSXSaveState();
 

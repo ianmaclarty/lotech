@@ -1553,6 +1553,14 @@ static int lt_SetWorldGravity(lua_State *L) {
     return 0;
 }
 
+static int lt_SetWorldAutoClearForces(lua_State *L) {
+    check_nargs(L, 2);
+    LTWorld *world = (LTWorld*)get_object(L, 1, LT_TYPE_WORLD);
+    bool clear = lua_toboolean(L, 2);
+    world->world->SetAutoClearForces(clear);
+    return 0;
+}
+
 struct AABBQueryCallBack : b2QueryCallback {
     lua_State *L;
     int i;
@@ -1658,6 +1666,19 @@ static int lt_ApplyTorqueToBody(lua_State *L) {
     }
     return 0;
 }
+
+/*
+ * m_forces and m_torque are private members.
+static int lt_ClearBodyForces(lua_State *L) {
+    check_nargs(L, 1);
+    LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
+    if (body->body != NULL) {
+        body->body->m_force.SetZero();
+        body->body->m_torque = 0.0f;
+    }
+    return 0;
+}
+*/
 
 static int lt_GetBodyAngle(lua_State *L) {
     check_nargs(L, 1);
@@ -1795,6 +1816,9 @@ static int lt_AddPolygonToBody(lua_State *L) {
     LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
     if (body->body != NULL) {
         // Second argument is array of polygon vertices.
+        if (!lua_istable(L, 2)) {
+            return luaL_error(L, "Expecting an array in second argument");
+        }
         int i = 1;
         int num_vertices = 0;
         b2PolygonShape poly;
@@ -1918,6 +1942,120 @@ static int lt_AddDynamicBodyToWorld(lua_State *L) {
     def.position.Set(x, y);
     def.angle = angle;
     LTBody *body = new LTBody(world, &def);
+    push_wrap(L, body);
+    add_ref(L, 1, -1); // Add reference from world to body.
+    add_ref(L, -1, 1); // Add reference from body to world.
+    return 1;
+}
+
+static int lt_AddBodyToWorld(lua_State *L) {
+    int num_args = check_nargs(L, 2);
+    LTWorld *world = (LTWorld*)get_object(L, 1, LT_TYPE_WORLD);
+    // Second argument is a table of body properties.
+    b2BodyDef body_def;
+
+    lua_getfield(L, 2, "type");
+    if (!lua_isnil(L, -1)) {
+        const char *type = luaL_checkstring(L, -1);
+        b2BodyType btype;
+        if (strcmp(type, "dynamic") == 0) {
+            btype = b2_dynamicBody;
+        } else if (strcmp(type, "static") == 0) {
+            btype = b2_staticBody;
+        } else if (strcmp(type, "kinematic")) {
+            btype = b2_kinematicBody;
+        } else {
+            return luaL_error(L, "Unknown body type: %s", type);
+        }
+        body_def.type = btype;
+    }
+    lua_pop(L, 1);
+
+    lua_getfield(L, 2, "position");
+    if (!lua_isnil(L, -1)) {
+        if (lua_istable(L, -1)) {
+            lua_rawgeti(L, -1, 1);
+            body_def.position.x = luaL_checknumber(L, -1);
+            lua_pop(L, 1);
+            lua_rawgeti(L, -1, 2);
+            body_def.position.y = luaL_checknumber(L, -1);
+            lua_pop(L, 1);
+        } else {
+            return luaL_error(L, "Expecting position field to be a table");
+        }
+    }
+    lua_pop(L, 1);
+
+    lua_getfield(L, 2, "angle");
+    if (!lua_isnil(L, -1)) {
+        body_def.angle = LT_RADIANS_PER_DEGREE * luaL_checknumber(L, -1);
+    }
+    lua_pop(L, 1);
+
+    lua_getfield(L, 2, "velocity");
+    if (!lua_isnil(L, -1)) {
+        if (lua_istable(L, -1)) {
+            lua_rawgeti(L, -1, 1);
+            body_def.linearVelocity.x = luaL_checknumber(L, -1);
+            lua_pop(L, 1);
+            lua_rawgeti(L, -1, 2);
+            body_def.linearVelocity.y = luaL_checknumber(L, -1);
+            lua_pop(L, 1);
+        } else {
+            return luaL_error(L, "Expecting position field to be a table");
+        }
+    }
+    lua_pop(L, 1);
+
+    lua_getfield(L, 2, "angular_velocity");
+    if (!lua_isnil(L, -1)) {
+        body_def.angularVelocity = LT_RADIANS_PER_DEGREE * luaL_checknumber(L, -1);
+    }
+    lua_pop(L, 1);
+
+    lua_getfield(L, 2, "damping");
+    if (!lua_isnil(L, -1)) {
+        body_def.linearDamping = luaL_checknumber(L, -1);
+    }
+    lua_pop(L, 1);
+
+    lua_getfield(L, 2, "angular_damping");
+    if (!lua_isnil(L, -1)) {
+        body_def.angularDamping = LT_RADIANS_PER_DEGREE * luaL_checknumber(L, -1);
+    }
+    lua_pop(L, 1);
+
+    lua_getfield(L, 2, "can_sleep");
+    if (!lua_isnil(L, -1)) {
+        body_def.allowSleep = lua_toboolean(L, -1);
+    }
+    lua_pop(L, 1);
+
+    lua_getfield(L, 2, "awake");
+    if (!lua_isnil(L, -1)) {
+        body_def.awake = lua_toboolean(L, -1);
+    }
+    lua_pop(L, 1);
+
+    lua_getfield(L, 2, "fixed_rotation");
+    if (!lua_isnil(L, -1)) {
+        body_def.fixedRotation = lua_toboolean(L, -1);
+    }
+    lua_pop(L, 1);
+
+    lua_getfield(L, 2, "bullet");
+    if (!lua_isnil(L, -1)) {
+        body_def.bullet = lua_toboolean(L, -1);
+    }
+    lua_pop(L, 1);
+
+    lua_getfield(L, 2, "active");
+    if (!lua_isnil(L, -1)) {
+        body_def.active = lua_toboolean(L, -1);
+    }
+    lua_pop(L, 1);
+
+    LTBody *body = new LTBody(world, &body_def);
     push_wrap(L, body);
     add_ref(L, 1, -1); // Add reference from world to body.
     add_ref(L, -1, 1); // Add reference from body to world.
@@ -2193,11 +2331,13 @@ static const luaL_Reg ltlib[] = {
     {"FixtureIsDestroyed",              lt_FixtureIsDestroyed},
     {"DoWorldStep",                     lt_DoWorldStep},
     {"SetWorldGravity",                 lt_SetWorldGravity},
+    {"SetWorldAutoClearForces",         lt_SetWorldAutoClearForces},
     {"WorldQueryBox",                   lt_WorldQueryBox},
     {"DestroyBody",                     lt_DestroyBody},
     {"BodyIsDestroyed",                 lt_BodyIsDestroyed},
     {"ApplyForceToBody",                lt_ApplyForceToBody},
     {"ApplyTorqueToBody",               lt_ApplyTorqueToBody},
+    //{"ClearBodyForces",                 lt_ClearBodyForces},
     {"GetBodyAngle",                    lt_GetBodyAngle},
     {"SetBodyAngle",                    lt_SetBodyAngle},
     {"GetBodyPosition" ,                lt_GetBodyPosition},
@@ -2209,6 +2349,7 @@ static const luaL_Reg ltlib[] = {
     {"GetFixtureBody",                  lt_GetFixtureBody},
     {"AddStaticBodyToWorld",            lt_AddStaticBodyToWorld},
     {"AddDynamicBodyToWorld",           lt_AddDynamicBodyToWorld},
+    {"AddBodyToWorld",                  lt_AddBodyToWorld},
     {"BodyTracker",                     lt_BodyTracker},
 
     {"GameCenterAvailable",             lt_GameCenterAvailable},
@@ -2433,6 +2574,7 @@ static const char *lt_key_str(LTKey key) {
         case LT_KEY_MINUS: return "-"; 
         case LT_KEY_TICK: return "`"; 
         case LT_KEY_DEL: return "del"; 
+        case LT_KEY_ESC: return "esc"; 
         case LT_KEY_UNKNOWN: return "unknown";
     }
     return "";

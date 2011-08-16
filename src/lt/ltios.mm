@@ -50,7 +50,7 @@ void ltIOSResize(int width, int height) {
 }
 
 void ltIOSRender() {
-    ltLuaAdvance();
+    ltLuaAdvance(1.0f/60.0f);
     ltLuaRender();
 
     #ifdef LTDEVMODE

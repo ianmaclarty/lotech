@@ -153,9 +153,11 @@ lt.classes = {
         methods = {
             Step            = lt.DoWorldStep,
             SetGravity      = lt.SetWorldGravity,
+            SetAutoClearForces = lt.SetWorldAutoClearForces,
             QueryBox        = lt.WorldQueryBox,
             AddStaticBody   = lt.AddStaticBodyToWorld,
             AddDynamicBody  = lt.AddDynamicBodyToWorld,
+            AddBody         = lt.AddBodyToWorld,
         }
     },
     Body = {
