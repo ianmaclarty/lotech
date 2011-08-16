@@ -128,24 +128,24 @@ void LTBodyTracker::draw() {
 }
 
 bool LTBodyTracker::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
-    b2Body *b = body->body;
-    if (b != NULL) {
-        LTfloat angle = b->GetAngle();
-        b2Vec2 pos = b->GetPosition();
-        x = x - pos.x;
-        y = y - pos.y;
-        LTfloat x1, y1;
-        LTfloat s = sinf(angle);
-        LTfloat c = cosf(angle);
-        x1 = c * x - s * y;
-        y1 = s * x + c * y;
-        if (!consumePointerEvent(x1, y1, event)) {
+    if (!consumePointerEvent(x, y, event)) {
+        b2Body *b = body->body;
+        if (b != NULL) {
+            LTfloat angle = b->GetAngle();
+            b2Vec2 pos = b->GetPosition();
+            x = x - pos.x;
+            y = y - pos.y;
+            LTfloat x1, y1;
+            LTfloat s = sinf(angle);
+            LTfloat c = cosf(angle);
+            x1 = c * x - s * y;
+            y1 = s * x + c * y;
             return child->propogatePointerEvent(x1, y1, event);
         } else {
-            return true;
+            return false;
         }
     } else {
-        return false;
+        return true;
     }
 }
 

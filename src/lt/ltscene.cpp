@@ -177,10 +177,10 @@ void LTTranslateNode::draw() {
 }
 
 bool LTTranslateNode::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
-    LTfloat x1, y1;
-    x1 = x - LTTranslateNode::x;
-    y1 = y - LTTranslateNode::y;
-    if (!consumePointerEvent(x1, y1, event)) {
+    if (!consumePointerEvent(x, y, event)) {
+        LTfloat x1, y1;
+        x1 = x - LTTranslateNode::x;
+        y1 = y - LTTranslateNode::y;
         if (z == 0.0f) {
             return child->propogatePointerEvent(x1, y1, event);
         } else {
@@ -214,13 +214,13 @@ void LTRotateNode::draw() {
 }
 
 bool LTRotateNode::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
-    LTfloat x1, y1;
-    LTfloat a = -angle * LT_RADIANS_PER_DEGREE;
-    LTfloat s = sinf(a);
-    LTfloat c = cosf(a);
-    x1 = c * x - s * y;
-    y1 = s * x + c * y;
-    if (!consumePointerEvent(x1, y1, event)) {
+    if (!consumePointerEvent(x, y, event)) {
+        LTfloat x1, y1;
+        LTfloat a = -angle * LT_RADIANS_PER_DEGREE;
+        LTfloat s = sinf(a);
+        LTfloat c = cosf(a);
+        x1 = c * x - s * y;
+        y1 = s * x + c * y;
         return child->propogatePointerEvent(x1, y1, event);
     } else {
         return true;
@@ -246,17 +246,17 @@ void LTScaleNode::draw() {
 }
 
 bool LTScaleNode::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
-    LTfloat x1, y1;
-    if (sx != 0.0f && sy != 0.0f && s != 0.0f) {
-        x1 = x / (sx * s);
-        y1 = y / (sy * s);
-        if (!consumePointerEvent(x1, y1, event)) {
+    if (!consumePointerEvent(x, y, event)) {
+        LTfloat x1, y1;
+        if (sx != 0.0f && sy != 0.0f && s != 0.0f) {
+            x1 = x / (sx * s);
+            y1 = y / (sy * s);
             return child->propogatePointerEvent(x1, y1, event);
         } else {
-            return true;
+            return false;
         }
     } else {
-        return false;
+        return true;
     }
 }
 
@@ -291,11 +291,7 @@ void LTTintNode::draw() {
 bool LTTintNode::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
     if (a != 0.0f) {
         if (!consumePointerEvent(x, y, event)) {
-            if (a != 0.0f) {
-                return child->propogatePointerEvent(x, y, event);
-            } else {
-                return false;
-            }
+            return child->propogatePointerEvent(x, y, event);
         } else {
             return true;
         }
