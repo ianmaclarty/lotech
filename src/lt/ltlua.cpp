@@ -1667,6 +1667,34 @@ static int lt_ApplyTorqueToBody(lua_State *L) {
     return 0;
 }
 
+static int lt_ApplyImpulseToBody(lua_State *L) {
+    int num_args = check_nargs(L, 3);
+    LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
+    if (body->body != NULL) {
+        b2Vec2 force;
+        b2Vec2 pos;
+        force.x = luaL_checknumber(L, 2);
+        force.y = (LTfloat)luaL_checknumber(L, 3);
+        if (num_args >= 5) {
+            pos.x = (LTfloat)luaL_checknumber(L, 4);
+            pos.y = (LTfloat)luaL_checknumber(L, 5);
+        } else {
+            pos = body->body->GetWorldCenter();
+        }
+        body->body->ApplyLinearImpulse(force, pos);
+    }
+    return 0;
+}
+
+static int lt_ApplyAngularImpulseToBody(lua_State *L) {
+    check_nargs(L, 2);
+    LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
+    if (body->body != NULL) {
+        body->body->ApplyAngularImpulse(luaL_checknumber(L, 2));
+    }
+    return 0;
+}
+
 /*
  * m_forces and m_torque are private members.
 static int lt_ClearBodyForces(lua_State *L) {
@@ -1707,6 +1735,18 @@ static int lt_GetBodyPosition(lua_State *L) {
     LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
     if (body->body != NULL) {
         b2Vec2 pos = body->body->GetPosition();
+        lua_pushnumber(L, pos.x);
+        lua_pushnumber(L, pos.y);
+        return 2;
+    }
+    return 0;
+}
+
+static int lt_GetBodyVelocity(lua_State *L) {
+    check_nargs(L, 1);
+    LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
+    if (body->body != NULL) {
+        b2Vec2 pos = body->body->GetLinearVelocity();
         lua_pushnumber(L, pos.x);
         lua_pushnumber(L, pos.y);
         return 2;
@@ -2337,11 +2377,14 @@ static const luaL_Reg ltlib[] = {
     {"BodyIsDestroyed",                 lt_BodyIsDestroyed},
     {"ApplyForceToBody",                lt_ApplyForceToBody},
     {"ApplyTorqueToBody",               lt_ApplyTorqueToBody},
+    {"ApplyImpulseToBody",              lt_ApplyImpulseToBody},
+    {"ApplyAngularImpulseToBody",       lt_ApplyAngularImpulseToBody},
     //{"ClearBodyForces",                 lt_ClearBodyForces},
     {"GetBodyAngle",                    lt_GetBodyAngle},
     {"SetBodyAngle",                    lt_SetBodyAngle},
     {"GetBodyPosition" ,                lt_GetBodyPosition},
     {"SetBodyPosition" ,                lt_SetBodyPosition},
+    {"GetBodyVelocity" ,                lt_GetBodyVelocity},
     {"SetBodyAngularVelocity",          lt_SetBodyAngularVelocity},
     {"AddRectToBody",                   lt_AddRectToBody},
     {"AddTriangleToBody",               lt_AddTriangleToBody},

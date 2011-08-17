@@ -90,7 +90,18 @@ void LTFixture::draw() {
             }
             case b2Shape::e_polygon: {
                 b2PolygonShape *poly = (b2PolygonShape *)shape;
+                ltPushTint(1.0f, 1.0f, 1.0f, 0.5f);
                 ltDrawPoly((LTfloat *)poly->m_vertices, poly->m_vertexCount);
+                ltPopTint();
+                for (int i = 0; i < poly->m_vertexCount - 1; i++) {
+                    glVertexPointer(2, GL_FLOAT, 0, &poly->m_vertices[i]);
+                    glDrawArrays(GL_LINE_STRIP, 0, 2);
+                }
+                b2Vec2 final_line[2];
+                final_line[0] = poly->m_vertices[poly->m_vertexCount - 1];
+                final_line[1] = poly->m_vertices[0];
+                glVertexPointer(2, GL_FLOAT, 0, final_line);
+                glDrawArrays(GL_LINE_STRIP, 0, 2);
                 break;
             }
             case b2Shape::e_typeCount:
