@@ -5,29 +5,39 @@ end
 
 function lt.AddAnimator(animators, animator)
     local thread = coroutine.create(animator)
-    -- The value is the time remaining before the animator should be invoked again.
-    animators[thread] = 0 
+    local state = {
+        thread = thread,
+        -- The time remaining before the animator should be invoked again.
+        t = 0,
+    }
+    table.insert(animators, state)
 end
 
 function lt.Animate(animators, time_step)
     local success
     local wait
-    for animator, t in pairs(animators) do
+    local died = {}
+    for i, state in pairs(animators) do
         local is_dead = false
-        t = t - time_step
+        local t = state.t - time_step
         while t <= 0 and not is_dead do
-            success, wait = coroutine.resume(animator)
+            success, wait = coroutine.resume(state.thread)
             if success == false then
                 -- wait is the error message
                 error(retval)
             end
             t = t + wait
-            is_dead = coroutine.status(animator) == "dead"
+            is_dead = coroutine.status(state.thread) == "dead"
         end
         if is_dead then
-            animators[animator] = nil
+            animators[i] = nil
         else
-            animators[animator] = t
+            state.t = t
         end
     end
+end
+
+local yield = coroutine.yield
+function lt.Wait(t)
+    yield(t)
 end

@@ -1754,6 +1754,16 @@ static int lt_GetBodyVelocity(lua_State *L) {
     return 0;
 }
 
+static int lt_SetBodyVelocity(lua_State *L) {
+    check_nargs(L, 3);
+    LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
+    if (body->body != NULL) {
+        b2Vec2 v = b2Vec2(luaL_checknumber(L, 2), luaL_checknumber(L, 3));
+        body->body->SetLinearVelocity(v);
+    }
+    return 0;
+}
+
 static int lt_SetBodyPosition(lua_State *L) {
     check_nargs(L, 3);
     LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
@@ -1851,6 +1861,47 @@ static int lt_AddTriangleToBody(lua_State *L) {
     return 1;
 }
 
+static void read_fixture_attributes(lua_State *L, int table, b2FixtureDef *fixture_def) {
+    if (!lua_istable(L, table)) {
+        luaL_error(L, "Expecting a table in position %d", table);
+    }
+    lua_getfield(L, table, "friction");
+    if (!lua_isnil(L, -1)) {
+        fixture_def->friction = luaL_checknumber(L, -1);
+    }
+    lua_pop(L, 1);
+    lua_getfield(L, table, "restitution");
+    if (!lua_isnil(L, -1)) {
+        fixture_def->restitution = luaL_checknumber(L, -1);
+    }
+    lua_pop(L, 1);
+    lua_getfield(L, table, "density");
+    if (!lua_isnil(L, -1)) {
+        fixture_def->density = luaL_checknumber(L, -1);
+    }
+    lua_pop(L, 1);
+    lua_getfield(L, table, "category");
+    if (!lua_isnil(L, -1)) {
+        fixture_def->filter.categoryBits = lua_tointeger(L, -1);
+    }
+    lua_pop(L, 1);
+    lua_getfield(L, table, "mask");
+    if (!lua_isnil(L, -1)) {
+        fixture_def->filter.maskBits = lua_tointeger(L, -1);
+    }
+    lua_pop(L, 1);
+    lua_getfield(L, table, "group");
+    if (!lua_isnil(L, -1)) {
+        fixture_def->filter.groupIndex = lua_tointeger(L, -1);
+    }
+    lua_pop(L, 1);
+    lua_getfield(L, table, "sensor");
+    if (!lua_isnil(L, -1)) {
+        fixture_def->isSensor = lua_toboolean(L, -1);
+    }
+    lua_pop(L, 1);
+}
+
 static int lt_AddPolygonToBody(lua_State *L) {
     check_nargs(L, 3);
     LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
@@ -1898,42 +1949,7 @@ static int lt_AddPolygonToBody(lua_State *L) {
 
         // Third argument is a table of fixture properties.
         b2FixtureDef fixture_def;
-        lua_getfield(L, 3, "friction");
-        if (!lua_isnil(L, -1)) {
-            fixture_def.friction = luaL_checknumber(L, -1);
-        }
-        lua_pop(L, 1);
-        lua_getfield(L, 3, "restitution");
-        if (!lua_isnil(L, -1)) {
-            fixture_def.restitution = luaL_checknumber(L, -1);
-        }
-        lua_pop(L, 1);
-        lua_getfield(L, 3, "density");
-        if (!lua_isnil(L, -1)) {
-            fixture_def.density = luaL_checknumber(L, -1);
-        }
-        lua_pop(L, 1);
-        lua_getfield(L, 3, "category");
-        if (!lua_isnil(L, -1)) {
-            fixture_def.filter.categoryBits = lua_tointeger(L, -1);
-        }
-        lua_pop(L, 1);
-        lua_getfield(L, 3, "mask");
-        if (!lua_isnil(L, -1)) {
-            fixture_def.filter.maskBits = lua_tointeger(L, -1);
-        }
-        lua_pop(L, 1);
-        lua_getfield(L, 3, "group");
-        if (!lua_isnil(L, -1)) {
-            fixture_def.filter.groupIndex = lua_tointeger(L, -1);
-        }
-        lua_pop(L, 1);
-        lua_getfield(L, 3, "sensor");
-        if (!lua_isnil(L, -1)) {
-            fixture_def.isSensor = lua_toboolean(L, -1);
-        }
-        lua_pop(L, 1);
-
+        read_fixture_attributes(L, 3, &fixture_def);
         fixture_def.shape = &poly;
         LTFixture *fixture = new LTFixture(body, &fixture_def);
         push_wrap(L, fixture);
@@ -1944,6 +1960,25 @@ static int lt_AddPolygonToBody(lua_State *L) {
     }
     return 1;
 }
+
+/*
+static int lt_AddCircleToBody(lua_State *L) {
+    int nargs = check_nargs(L, 2);
+    LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
+    if (body->body != NULL) {
+        LTfloat radius = luaL_checknumber(L, 2);
+        LTfloat x = 0.0f;
+        LTfloat y = 0.0f;
+        if (nargs > 2) {
+            x = luaL_checknumber(L, 3);
+        }
+        if (nargs > 3) {
+            y = luaL_checknumber(L, 4);
+        }
+        b2CircleShape circle;
+        circle.m_radius = radius;
+        circle.m_p.Set(x, y);
+*/
 
 static int lt_GetFixtureBody(lua_State *L) {
     check_nargs(L, 1);
@@ -2099,6 +2134,35 @@ static int lt_AddBodyToWorld(lua_State *L) {
     push_wrap(L, body);
     add_ref(L, 1, -1); // Add reference from world to body.
     add_ref(L, -1, 1); // Add reference from body to world.
+    return 1;
+}
+
+static int lt_BodyTouching(lua_State *L) {
+    int nargs = check_nargs(L, 1);
+    LTBody *body1 = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
+    if (body1 == NULL) {
+        return 0;
+    }
+    b2Body *body = body1->body;
+    b2Body *other_body = NULL;
+    if (nargs > 1) {
+        LTBody *body2 = (LTBody*)get_object(L, 2, LT_TYPE_BODY);
+        if (body2 == NULL) {
+            return 0;
+        }
+        other_body = body2->body;
+    }
+    b2ContactEdge *edge = body->GetContactList();
+    while (edge != NULL) {
+        if (other_body == NULL || edge->other == other_body) {
+            if (edge->contact->IsTouching()) {
+                lua_pushboolean(L, 1);
+                return 1;
+            }
+        }
+        edge = edge->next;
+    }
+    lua_pushboolean(L, 0);
     return 1;
 }
 
@@ -2385,6 +2449,7 @@ static const luaL_Reg ltlib[] = {
     {"GetBodyPosition" ,                lt_GetBodyPosition},
     {"SetBodyPosition" ,                lt_SetBodyPosition},
     {"GetBodyVelocity" ,                lt_GetBodyVelocity},
+    {"SetBodyVelocity" ,                lt_SetBodyVelocity},
     {"SetBodyAngularVelocity",          lt_SetBodyAngularVelocity},
     {"AddRectToBody",                   lt_AddRectToBody},
     {"AddTriangleToBody",               lt_AddTriangleToBody},
@@ -2393,6 +2458,7 @@ static const luaL_Reg ltlib[] = {
     {"AddStaticBodyToWorld",            lt_AddStaticBodyToWorld},
     {"AddDynamicBodyToWorld",           lt_AddDynamicBodyToWorld},
     {"AddBodyToWorld",                  lt_AddBodyToWorld},
+    {"BodyTouching",                    lt_BodyTouching},
     {"BodyTracker",                     lt_BodyTracker},
 
     {"GameCenterAvailable",             lt_GameCenterAvailable},

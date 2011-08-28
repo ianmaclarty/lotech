@@ -174,10 +174,12 @@ lt.classes = {
             GetPosition         = lt.GetBodyPosition,
             SetPosition         = lt.SetBodyPosition,
             GetVelocity         = lt.GetBodyVelocity,
+            SetVelocity         = lt.SetBodyVelocity,
             SetAngularVelocity  = lt.SetBodyAngularVelocity,
             AddRect             = lt.AddRectToBody,
             AddTriangle         = lt.AddTriangleToBody,
             AddPoly             = lt.AddPolygonToBody,
+            Touching            = lt.BodyTouching,
         }
     },
     Fixture = {
