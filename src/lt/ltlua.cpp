@@ -1540,8 +1540,8 @@ static int lt_DoWorldStep(lua_State *L) {
     int num_args = check_nargs(L, 2); 
     LTWorld *world = (LTWorld*)get_object(L, 1, LT_TYPE_WORLD);
     LTfloat time_step = luaL_checknumber(L, 2);
-    int velocity_iterations = 10;
-    int position_iterations = 8;
+    int velocity_iterations = 8;
+    int position_iterations = 3;
     if (num_args > 2) {
         velocity_iterations = luaL_checkinteger(L, 3);
     }
