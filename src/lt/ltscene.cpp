@@ -204,12 +204,16 @@ LTfloat* LTTranslateNode::field_ptr(const char *field_name) {
     return NULL;
 }
 
-LTRotateNode::LTRotateNode(LTdegrees angle, LTSceneNode *child) : LTWrapNode(child, LT_TYPE_ROTATE) {
+LTRotateNode::LTRotateNode(LTdegrees angle, LTfloat cx, LTfloat cy, LTSceneNode *child) : LTWrapNode(child, LT_TYPE_ROTATE) {
     LTRotateNode::angle = angle;
+    LTRotateNode::cx = cx;
+    LTRotateNode::cy = cy;
 }
 
 void LTRotateNode::draw() {
+    ltTranslate(cx, cy, 0.0f);
     ltRotate(angle, 0.0f, 0.0f, 1.0f);
+    ltTranslate(-cx, -cy, 0.0f);
     child->draw();
 }
 

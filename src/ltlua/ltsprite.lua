@@ -59,6 +59,6 @@ function lt.AdvanceSprites(spriteset, step)
     end
 end
 
-function lt.AdvanceGlobalSprites()
-    lt.AdvanceSprites(global_sprites, lt.secs_per_frame)
+function lt.AdvanceGlobalSprites(dt)
+    lt.AdvanceSprites(global_sprites, dt or lt.secs_per_frame)
 end

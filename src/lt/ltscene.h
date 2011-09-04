@@ -83,8 +83,11 @@ struct LTTranslateNode : LTWrapNode {
 
 struct LTRotateNode : LTWrapNode {
     LTdegrees angle;
+    // Center coords (about which to rotate).
+    LTfloat cx;
+    LTfloat cy;
 
-    LTRotateNode(LTdegrees angle, LTSceneNode *child);
+    LTRotateNode(LTdegrees angle, LTfloat cx, LTfloat cy, LTSceneNode *child);
 
     virtual void draw();
     virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);

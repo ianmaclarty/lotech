@@ -510,10 +510,18 @@ static int lt_Translate(lua_State *L) {
 }
 
 static int lt_Rotate(lua_State *L) {
-    check_nargs(L, 2);
+    int nargs = check_nargs(L, 2);
     LTSceneNode *child = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
     LTdegrees angle = (LTfloat)luaL_checknumber(L, 2);
-    LTRotateNode *node = new LTRotateNode(angle, child);
+    LTfloat cx = 0.0f;
+    LTfloat cy = 0.0f;
+    if (nargs > 2) {
+        cx = luaL_checknumber(L, 3);
+    }
+    if (nargs > 3) {
+        cy = luaL_checknumber(L, 4);
+    }
+    LTRotateNode *node = new LTRotateNode(angle, cx, cy, child);
     push_wrap(L, node);
     set_ref_field(L, -1, "child", 1); // Add reference from new node to child.
     return 1;
@@ -2037,7 +2045,7 @@ static int lt_AddBodyToWorld(lua_State *L) {
             btype = b2_dynamicBody;
         } else if (strcmp(type, "static") == 0) {
             btype = b2_staticBody;
-        } else if (strcmp(type, "kinematic")) {
+        } else if (strcmp(type, "kinematic") == 0) {
             btype = b2_kinematicBody;
         } else {
             return luaL_error(L, "Unknown body type: %s", type);

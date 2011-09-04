@@ -371,6 +371,6 @@ function lt.CancelTween(obj, field)
     end
 end
 
-function lt.AdvanceGlobalTweens()
-    lt.AdvanceTweens(global_tweens, lt.secs_per_frame)
+function lt.AdvanceGlobalTweens(dt)
+    lt.AdvanceTweens(global_tweens, dt or lt.secs_per_frame)
 end

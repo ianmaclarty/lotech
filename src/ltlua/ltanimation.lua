@@ -24,7 +24,7 @@ function lt.Animate(animators, time_step)
             success, wait = coroutine.resume(state.thread)
             if success == false then
                 -- wait is the error message
-                error(retval)
+                error(wait)
             end
             t = t + wait
             is_dead = coroutine.status(state.thread) == "dead"
