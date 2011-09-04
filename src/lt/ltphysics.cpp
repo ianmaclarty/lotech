@@ -81,7 +81,9 @@ void LTFixture::draw() {
     if (fixture != NULL) {
         b2Shape *shape = fixture->GetShape();
         switch (shape->m_type) {
-            case b2Shape::e_unknown:
+            case b2Shape::e_edge:
+                break;
+            case b2Shape::e_chain:
                 break;
             case b2Shape::e_circle: {
                 b2CircleShape *circle = (b2CircleShape *)shape;
@@ -133,12 +135,12 @@ void LTBodyTracker::draw() {
     b2Body *b = body->body;
     if (b != NULL) {
         const b2Transform b2t = b->GetTransform();
-        glmat[0] = b2t.R.col1.x;
-        glmat[1] = b2t.R.col1.y;
-        glmat[4] = b2t.R.col2.x;
-        glmat[5] = b2t.R.col2.y;
-        glmat[12] = b2t.position.x * scaling;
-        glmat[13] = b2t.position.y * scaling;
+        glmat[0] = b2t.q.c;
+        glmat[1] = b2t.q.s;
+        glmat[4] = -b2t.q.s;
+        glmat[5] = b2t.q.c;
+        glmat[12] = b2t.p.x * scaling;
+        glmat[13] = b2t.p.y * scaling;
         ltMultMatrix(glmat);
         child->draw();
     }
