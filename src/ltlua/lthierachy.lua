@@ -179,6 +179,7 @@ lt.classes = {
             AddRect             = lt.AddRectToBody,
             AddTriangle         = lt.AddTriangleToBody,
             AddPoly             = lt.AddPolygonToBody,
+            AddCircle           = lt.AddCircleToBody,
             Touching            = lt.BodyTouching,
         }
     },

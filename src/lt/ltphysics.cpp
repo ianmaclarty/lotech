@@ -84,8 +84,14 @@ void LTFixture::draw() {
             case b2Shape::e_unknown:
                 break;
             case b2Shape::e_circle: {
-                ltScale(shape->m_radius, shape->m_radius, 1.0f);
+                b2CircleShape *circle = (b2CircleShape *)shape;
+                ltPushMatrix();
+                ltPushTint(1.0f, 1.0f, 1.0f, 0.5f);
+                ltTranslate(circle->m_p.x, circle->m_p.y, 0.0f);
+                ltScale(circle->m_radius, circle->m_radius, 1.0f);
                 ltDrawUnitCircle();
+                ltPopTint();
+                ltPopMatrix();
                 break;
             }
             case b2Shape::e_polygon: {

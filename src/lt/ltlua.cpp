@@ -1969,24 +1969,29 @@ static int lt_AddPolygonToBody(lua_State *L) {
     return 1;
 }
 
-/*
 static int lt_AddCircleToBody(lua_State *L) {
-    int nargs = check_nargs(L, 2);
+    int nargs = check_nargs(L, 5);
     LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
     if (body->body != NULL) {
         LTfloat radius = luaL_checknumber(L, 2);
-        LTfloat x = 0.0f;
-        LTfloat y = 0.0f;
-        if (nargs > 2) {
-            x = luaL_checknumber(L, 3);
-        }
-        if (nargs > 3) {
-            y = luaL_checknumber(L, 4);
-        }
+        LTfloat x = luaL_checknumber(L, 3);
+        LTfloat y = luaL_checknumber(L, 4);
         b2CircleShape circle;
         circle.m_radius = radius;
         circle.m_p.Set(x, y);
-*/
+
+        b2FixtureDef fixture_def;
+        read_fixture_attributes(L, 5, &fixture_def);
+        fixture_def.shape = &circle;
+        LTFixture *fixture = new LTFixture(body, &fixture_def);
+        push_wrap(L, fixture);
+        add_ref(L, 1, -1); // Add reference from body to new fixture.
+        set_ref_field(L, -1, "body", 1); // Add reference from fixture to body.
+    } else {
+        lua_pushnil(L);
+    }
+    return 1;
+}
 
 static int lt_GetFixtureBody(lua_State *L) {
     check_nargs(L, 1);
@@ -2462,6 +2467,7 @@ static const luaL_Reg ltlib[] = {
     {"AddRectToBody",                   lt_AddRectToBody},
     {"AddTriangleToBody",               lt_AddTriangleToBody},
     {"AddPolygonToBody",                lt_AddPolygonToBody},
+    {"AddCircleToBody",                 lt_AddCircleToBody},
     {"GetFixtureBody",                  lt_GetFixtureBody},
     {"AddStaticBodyToWorld",            lt_AddStaticBodyToWorld},
     {"AddDynamicBodyToWorld",           lt_AddDynamicBodyToWorld},
