@@ -2150,27 +2150,54 @@ static int lt_AddBodyToWorld(lua_State *L) {
     return 1;
 }
 
-static int lt_BodyTouching(lua_State *L) {
-    int nargs = check_nargs(L, 1);
-    LTBody *body1 = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
-    if (body1 == NULL) {
-        return 0;
-    }
-    b2Body *body = body1->body;
-    b2Body *other_body = NULL;
-    if (nargs > 1) {
-        LTBody *body2 = (LTBody*)get_object(L, 2, LT_TYPE_BODY);
-        if (body2 == NULL) {
-            return 0;
+static void get_body_and_fixture(lua_State *L, int arg, b2Body **body, b2Fixture **fixture) {
+    LTObject *obj = get_object(L, arg, LT_TYPE_OBJECT);
+    *body = NULL;
+    *fixture = NULL;
+    if (obj->type == LT_TYPE_BODY) {
+        *body = ((LTBody*)obj)->body;
+    } else if (obj->type == LT_TYPE_FIXTURE) {
+        *fixture = ((LTFixture*)obj)->fixture;
+        if (*fixture != NULL) {
+            *body = (*fixture)->GetBody();
         }
-        other_body = body2->body;
     }
-    b2ContactEdge *edge = body->GetContactList();
+}
+
+static int lt_BodyOrFixtureTouching(lua_State *L) {
+    int nargs = check_nargs(L, 1);
+    b2Body *b1 = NULL;
+    b2Body *b2 = NULL;
+    b2Fixture *f1 = NULL;
+    b2Fixture *f2 = NULL;
+    get_body_and_fixture(L, 1, &b1, &f1);
+    if (nargs > 1) {
+        get_body_and_fixture(L, 2, &b2, &f2);
+    }
+    if (b1 == NULL) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+    b2ContactEdge *edge = b1->GetContactList();
     while (edge != NULL) {
-        if (other_body == NULL || edge->other == other_body) {
-            if (edge->contact->IsTouching()) {
-                lua_pushboolean(L, 1);
-                return 1;
+        if (b2 == NULL || edge->other == b2) {
+            b2Contact *contact = edge->contact;
+            if (contact->IsTouching()) {
+                if (f1 == NULL && f2 == NULL) {
+                    lua_pushboolean(L, 1);
+                    return 1;
+                } else {
+                    b2Fixture *a = contact->GetFixtureA();
+                    b2Fixture *b = contact->GetFixtureB();
+                    if (
+                           (f1 != NULL && f2 == NULL && (a == f1 || b == f1))
+                        || (f1 == NULL && f2 != NULL && (a == f2 || b == f2)) 
+                        || (f1 != NULL && f2 != NULL && (a == f1 && b == f2 || a == f2 && b == f1))
+                    ) {
+                        lua_pushboolean(L, 1);
+                        return 1;
+                    }
+                }
             }
         }
         edge = edge->next;
@@ -2472,7 +2499,7 @@ static const luaL_Reg ltlib[] = {
     {"AddStaticBodyToWorld",            lt_AddStaticBodyToWorld},
     {"AddDynamicBodyToWorld",           lt_AddDynamicBodyToWorld},
     {"AddBodyToWorld",                  lt_AddBodyToWorld},
-    {"BodyTouching",                    lt_BodyTouching},
+    {"BodyOrFixtureTouching",           lt_BodyOrFixtureTouching},
     {"BodyTracker",                     lt_BodyTracker},
 
     {"GameCenterAvailable",             lt_GameCenterAvailable},

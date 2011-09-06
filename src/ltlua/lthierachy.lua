@@ -180,7 +180,7 @@ lt.classes = {
             AddTriangle         = lt.AddTriangleToBody,
             AddPoly             = lt.AddPolygonToBody,
             AddCircle           = lt.AddCircleToBody,
-            Touching            = lt.BodyTouching,
+            Touching            = lt.BodyOrFixtureTouching,
         }
     },
     Fixture = {
@@ -190,6 +190,7 @@ lt.classes = {
             Destroy         = lt.DestroyFixture,
             IsDestroyed     = lt.FixtureIsDestroyed,
             GetBody         = lt.GetFixtureBody,
+            Touching        = lt.BodyOrFixtureTouching,
         }
     },
     BodyTracker = {
