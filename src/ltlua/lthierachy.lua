@@ -158,6 +158,7 @@ lt.classes = {
             AddStaticBody   = lt.AddStaticBodyToWorld,
             AddDynamicBody  = lt.AddDynamicBodyToWorld,
             AddBody         = lt.AddBodyToWorld,
+            RayCast         = lt.WorldRayCast,
         }
     },
     Body = {

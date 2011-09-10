@@ -2,6 +2,7 @@
 
 #include <string.h>
 #include <errno.h>
+#include <map>
 
 extern "C" {
 #include "lua.h"
@@ -2206,6 +2207,61 @@ static int lt_BodyOrFixtureTouching(lua_State *L) {
     return 1;
 }
 
+struct RayCastData {
+    b2Fixture *fixture;
+    b2Vec2 point;
+    b2Vec2 normal;
+};
+
+struct RayCastCallback : public b2RayCastCallback {
+    std::map<LTfloat, RayCastData> hits;
+
+    RayCastCallback() { }
+
+    virtual float32 ReportFixture(b2Fixture* fixture,
+        const b2Vec2& point, const b2Vec2& normal, float32 fraction)
+    {
+        RayCastData data;
+        data.fixture = fixture;
+        data.point = point;
+        data.normal = normal;
+        hits[fraction] = data;
+        return 1.0f;
+    }
+};
+
+static int lt_WorldRayCast(lua_State *L) {
+    int num_args = check_nargs(L, 5);
+    LTWorld *world = (LTWorld*)get_object(L, 1, LT_TYPE_WORLD);
+    LTfloat x1 = luaL_checknumber(L, 2);
+    LTfloat y1 = luaL_checknumber(L, 3);
+    LTfloat x2 = luaL_checknumber(L, 4);
+    LTfloat y2 = luaL_checknumber(L, 5);
+    
+    RayCastCallback cb;
+    world->world->RayCast(&cb, b2Vec2(x1, y1), b2Vec2(x2, y2));
+
+    lua_newtable(L);
+    int i = 1;
+    std::map<LTfloat, RayCastData>::iterator it;
+    for (it = cb.hits.begin(); it != cb.hits.end(); it++) {
+        lua_newtable(L);
+        push_wrap(L, (LTFixture*)it->second.fixture->GetUserData());
+        lua_setfield(L, -2, "fixture");
+        lua_pushnumber(L, it->second.point.x);
+        lua_setfield(L, -2, "x");
+        lua_pushnumber(L, it->second.point.y);
+        lua_setfield(L, -2, "y");
+        lua_pushnumber(L, it->second.normal.x);
+        lua_setfield(L, -2, "normal_x");
+        lua_pushnumber(L, it->second.normal.y);
+        lua_setfield(L, -2, "normal_y");
+        lua_rawseti(L, -2, i);
+        i++;
+    }
+    return 1;
+}
+
 static int lt_World(lua_State *L) {
     LTWorld *world = new LTWorld(b2Vec2(0.0f, -10.0f), true);
     push_wrap(L, world);
@@ -2501,6 +2557,7 @@ static const luaL_Reg ltlib[] = {
     {"AddBodyToWorld",                  lt_AddBodyToWorld},
     {"BodyOrFixtureTouching",           lt_BodyOrFixtureTouching},
     {"BodyTracker",                     lt_BodyTracker},
+    {"WorldRayCast",                    lt_WorldRayCast},
 
     {"GameCenterAvailable",             lt_GameCenterAvailable},
     {"SubmitScore",                     lt_SubmitScore},
