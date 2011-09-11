@@ -2256,6 +2256,8 @@ static int lt_WorldRayCast(lua_State *L) {
         lua_setfield(L, -2, "normal_x");
         lua_pushnumber(L, it->second.normal.y);
         lua_setfield(L, -2, "normal_y");
+        lua_pushnumber(L, it->first);
+        lua_setfield(L, -2, "fraction");
         lua_rawseti(L, -2, i);
         i++;
     }
