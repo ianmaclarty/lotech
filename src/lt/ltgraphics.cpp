@@ -49,27 +49,6 @@ static LTfloat pixel_height = viewport_height / design_height;
 
 static LTDisplayOrientation display_orientation = LT_DISPLAY_ORIENTATION_LANDSCAPE;
 
-struct LTColor {
-    LTfloat r;
-    LTfloat g;
-    LTfloat b;
-    LTfloat a;
-
-    LTColor(LTfloat r, LTfloat g, LTfloat b, LTfloat a) {
-        LTColor::r = r;
-        LTColor::g = g;
-        LTColor::b = b;
-        LTColor::a = a;
-    }
-
-    LTColor() {
-        r = 1.0f;
-        g = 1.0f;
-        b = 1.0f;
-        a = 1.0f;
-    }
-};
-
 static std::list<LTColor> tint_stack;
 static std::list<LTBlendMode> blend_mode_stack;
 

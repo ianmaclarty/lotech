@@ -81,19 +81,6 @@ lt.classes = {
         super = "SceneNode",
         methods = {}
     },
-    -- 3D
-    Cuboid = {
-        super = "SceneNode",
-        methods = {}
-    },
-    Perspective = {
-        super = "Wrap",
-        methods = {}
-    },
-    Pitch = {
-        super = "Wrap",
-        methods = {}
-    },
     HitFilter = {
         super = "Wrap",
         methods = {}
@@ -107,6 +94,20 @@ lt.classes = {
         methods = {
             Replace         = lt.ReplaceWrappedChild,
         }
+    },
+
+    -- 3D
+    Cuboid = {
+        super = "SceneNode",
+        methods = {}
+    },
+    Perspective = {
+        super = "Wrap",
+        methods = {}
+    },
+    Pitch = {
+        super = "Wrap",
+        methods = {}
     },
 
     -- Vectors
@@ -124,6 +125,14 @@ lt.classes = {
     DrawVector = {
         super = "SceneNode",
         methods = {},
+    },
+
+    -- Particle System
+    ParticleSystem = {
+        super = "SceneNode",
+        methods = {
+            Advance = lt.ParticleSystemAdvance,
+        }
     },
 
     -- Audio

@@ -21,6 +21,7 @@
 struct LTAtlas;
 
 void ltEnableAtlas(LTAtlas *atlas);
+void ltEnableTexture(GLuint texture_id);
 void ltDisableTextures();
 
 struct LTImageBuffer {

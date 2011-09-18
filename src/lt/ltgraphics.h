@@ -4,11 +4,81 @@
 
 #include <list>
 #include <map>
+#include <math.h>
 
 #include <string.h>
 
 #include "ltcommon.h"
 #include "ltevent.h"
+
+struct LTPoint {
+    LTfloat x;
+    LTfloat y;
+
+    LTPoint(LTfloat x, LTfloat y) {
+        LTPoint::x = x;
+        LTPoint::y = y;
+    }
+
+    LTPoint() {
+        x = 0.0f;
+        y = 0.0f;
+    }
+
+    void normalize() {
+        if (x != 0.0f || y != 0.0f) {
+            LTfloat l = len();
+            x /= l;
+            y /= l;
+        }
+    }
+
+    LTfloat len() {
+        return sqrtf(x * x + y * y);
+    }
+};
+
+struct LTCompactColor {
+    GLubyte r;
+    GLubyte g;
+    GLubyte b;
+    GLubyte a;
+
+    LTCompactColor() {
+        r = 255;
+        g = 255;
+        b = 255;
+        a = 255;
+    }
+
+    LTCompactColor(GLubyte r, GLubyte g, GLubyte b, GLubyte a) {
+        LTCompactColor::r = r;
+        LTCompactColor::g = g;
+        LTCompactColor::b = b;
+        LTCompactColor::a = a;
+    }
+};
+
+struct LTColor {
+    LTfloat r;
+    LTfloat g;
+    LTfloat b;
+    LTfloat a;
+
+    LTColor(LTfloat r, LTfloat g, LTfloat b, LTfloat a) {
+        LTColor::r = r;
+        LTColor::g = g;
+        LTColor::b = b;
+        LTColor::a = a;
+    }
+
+    LTColor() {
+        r = 1.0f;
+        g = 1.0f;
+        b = 1.0f;
+        a = 1.0f;
+    }
+};
 
 enum LTDisplayOrientation {
     LT_DISPLAY_ORIENTATION_PORTRAIT,

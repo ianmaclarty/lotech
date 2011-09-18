@@ -16,10 +16,25 @@ struct LTVector : LTObject {
     virtual ~LTVector();
 };
 
+struct LTEmitterColumnSpec {
+    LTfloat value;
+    LTfloat variance;
+};
+
+struct LTEmitter : LTObject {
+    LTVector *vector;
+    LTfloat rate;
+    int time_to_live_col;
+    LTEmitterColumnSpec *col_vals;
+
+    void advance(LTfloat dt);
+};
+
 enum LTDrawMode {
     LT_DRAWMODE_TRIANGLES      = GL_TRIANGLES,
     LT_DRAWMODE_TRIANGLE_STRIP = GL_TRIANGLE_STRIP,
     LT_DRAWMODE_TRIANGLE_FAN   = GL_TRIANGLE_FAN,
+    LT_DRAWMODE_POINTS         = GL_POINTS,
 };
 
 struct LTDrawVector : LTSceneNode {

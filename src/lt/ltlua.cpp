@@ -21,6 +21,7 @@ extern "C" {
 #include "ltosxutil.h"
 #include "ltgamecenter.h"
 #include "ltlua.h"
+#include "ltparticles.h"
 #include "ltphysics.h"
 #include "ltstate.h"
 #include "ltstore.h"
@@ -236,6 +237,23 @@ static void set_ref_field(lua_State *L, int wrap_index, const char *field, int r
         lua_rawset(L, wrap_index);
     } else {
         lua_rawset(L, wrap_index - 2);
+    }
+}
+
+static void set_object_fields_from_table(lua_State *L, LTObject *obj, int table) {
+    lua_pushnil(L);
+    if (table < 0) {
+        table--;
+    }
+    while (lua_next(L, table) != 0) {
+        int key_type = lua_type(L, -2);
+        int val_type = lua_type(L, -1);
+        if (key_type == LUA_TSTRING && val_type == LUA_TNUMBER) {
+            const char *key = lua_tostring(L, -2);
+            LTfloat val = lua_tonumber(L, -1);
+            obj->set_field(key, val);
+        }
+        lua_pop(L, 1);
     }
 }
 
@@ -695,6 +713,30 @@ static int lt_ReplaceWrappedChild(lua_State *L) {
     return 1;
 }
 
+/************************* Particle System ******************/
+
+static int lt_ParticleSystem(lua_State *L) {
+    check_nargs(L, 3);
+    LTImage *img = (LTImage *)get_object(L, 1, LT_TYPE_IMAGE);
+    int n = luaL_checkinteger(L, 2);
+    LTParticleSystem *particles = new LTParticleSystem(img, n);
+    if (!lua_istable(L, 3)) {
+        return luaL_error(L, "Expecting a table in argument 3");
+    }
+    set_object_fields_from_table(L, particles, 3);
+    push_wrap(L, particles);
+    add_ref(L, -1, 1); // Add reference from particles to image.
+    return 1;
+}
+
+static int lt_ParticleSystemAdvance(lua_State *L) {
+    check_nargs(L, 2);
+    LTParticleSystem *particles = (LTParticleSystem *)get_object(L, 1, LT_TYPE_PARTICLESYSTEM);
+    LTfloat dt = luaL_checknumber(L, 2);
+    particles->advance(dt);
+    return 0;
+}
+
 /************************* Vectors **************************/
 
 static int lt_Vector(lua_State *L) {
@@ -707,6 +749,9 @@ static int lt_Vector(lua_State *L) {
         if (capacity > 0) {
             // Get first row to compute stride.
             lua_rawgeti(L, 1, 1);
+            if (!lua_istable(L, -1)) {
+                return luaL_error(L, "Expecting an array of arrays");
+            }
             if (!lua_isnil(L, -1)) {
                 stride = lua_objlen(L, -1);
             } else {
@@ -883,6 +928,8 @@ static int lt_DrawVector(lua_State *L) {
         mode = LT_DRAWMODE_TRIANGLE_FAN;
     } else if (strcmp(mode_str, "triangles") == 0) {
         mode = LT_DRAWMODE_TRIANGLES;
+    } else if (strcmp(mode_str, "points") == 0) {
+        mode = LT_DRAWMODE_POINTS;
     } else {
         return luaL_error(L, "Invalid draw mode");
     }
@@ -1971,7 +2018,7 @@ static int lt_AddPolygonToBody(lua_State *L) {
 }
 
 static int lt_AddCircleToBody(lua_State *L) {
-    int nargs = check_nargs(L, 5);
+    check_nargs(L, 5);
     LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
     if (body->body != NULL) {
         LTfloat radius = luaL_checknumber(L, 2);
@@ -2038,7 +2085,7 @@ static int lt_AddDynamicBodyToWorld(lua_State *L) {
 }
 
 static int lt_AddBodyToWorld(lua_State *L) {
-    int num_args = check_nargs(L, 2);
+    check_nargs(L, 2);
     LTWorld *world = (LTWorld*)get_object(L, 1, LT_TYPE_WORLD);
     // Second argument is a table of body properties.
     b2BodyDef body_def;
@@ -2231,7 +2278,7 @@ struct RayCastCallback : public b2RayCastCallback {
 };
 
 static int lt_WorldRayCast(lua_State *L) {
-    int num_args = check_nargs(L, 5);
+    check_nargs(L, 5);
     LTWorld *world = (LTWorld*)get_object(L, 1, LT_TYPE_WORLD);
     LTfloat x1 = luaL_checknumber(L, 2);
     LTfloat y1 = luaL_checknumber(L, 3);
@@ -2504,6 +2551,9 @@ static const luaL_Reg ltlib[] = {
     {"FillVectorColumnsWithImageQuads", lt_FillVectorColumnsWithImageQuads},
     {"DrawQuads",                       lt_DrawQuads},
     {"DrawVector",                      lt_DrawVector},
+
+    {"ParticleSystem",                  lt_ParticleSystem},
+    {"ParticleSystemAdvance",           lt_ParticleSystemAdvance},
 
     {"MakeNativeTween",                 lt_MakeNativeTween},
     {"AdvanceNativeTween",              lt_AdvanceNativeTween},

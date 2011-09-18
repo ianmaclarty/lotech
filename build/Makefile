@@ -76,6 +76,10 @@ $(BOX2D_O_FILES): %.o: %.cpp $(BOX2D_H_FILES)
 $(C_O_FILES): %.o: %.c $(C_H_FILES)
 	$(GCC) $(GCC_OPTS) -c $<
 
+.PHONY: fields
+fields:
+	../tools/fieldgen.sh ../src/lt/ltparticles.h LTParticleSystem
+
 %.dSYM: %
 	dsymutil $^
 

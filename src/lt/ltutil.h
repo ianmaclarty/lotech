@@ -13,8 +13,16 @@ bool ltFileExists(const char *file);
 // delete[]. The last entry in patterns should be NULL.
 char* ltGlob(const char **patterns);
 
-inline float ltRandBetween(float lo, float hi) {
-    return (random() / (float)RAND_MAX) * (hi - lo) + lo;
+static inline float ltRandBetween(float lo, float hi) {
+    return ((float)random() / (float)RAND_MAX) * (hi - lo) + lo;
+}
+
+static inline float ltRandMinus1_1() {
+    return ((float)random() / (float)(RAND_MAX / 2)) - 1.0f;
+}
+
+static inline float ltRand0_1() {
+    return (float)random() / (float)(RAND_MAX);
 }
 
 #endif

@@ -30,6 +30,17 @@ void ltEnableAtlas(LTAtlas *atlas) {
     }
 }
 
+void ltEnableTexture(GLuint texture_id) {
+    if (!g_textures_enabled) {
+        glEnable(GL_TEXTURE_2D);
+        g_textures_enabled = true;
+    }
+    if (g_current_bound_texture != texture_id) {
+        glBindTexture(GL_TEXTURE_2D, texture_id);
+        g_current_bound_texture = texture_id;
+    }
+}
+
 void ltDisableTextures() {
     if (g_textures_enabled) {
         glDisable(GL_TEXTURE_2D);
@@ -632,8 +643,6 @@ LTImage::LTImage(LTAtlas *atls, int atlas_w, int atlas_h, LTImagePacker *packer)
     LTfloat bb_bottom = (LTfloat)packer->occupant->bb_bottom * pix_h;
     bb_width = (LTfloat)packer->occupant->bb_width() * pix_w;
     bb_height = (LTfloat)packer->occupant->bb_height() * pix_h;
-    LTfloat bb_right = bb_left + bb_width;
-    LTfloat bb_top = bb_bottom + bb_height;
     orig_width = (LTfloat)packer->occupant->width * pix_w;
     orig_height = (LTfloat)packer->occupant->height * pix_h;
     pixel_width = packer->occupant->width;

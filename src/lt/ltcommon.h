@@ -44,6 +44,12 @@ typedef LTuint32        LTpixel;
 typedef GLuint          LTvertbuf;
 typedef GLuint          LTtexbuf;
 
+// Used in gperf generated tables.
+struct LTFieldInfo {
+    const char *name;
+    size_t offset;
+};
+
 // Used for reflection.  Any subclasses of LTObject that can be used
 // in Lua code should have an entry in this enumeration.
 enum LTType {
@@ -56,7 +62,6 @@ enum LTType {
     LT_TYPE_BLENDMODE,
     LT_TYPE_LAYER,
     LT_TYPE_IMAGE,
-    LT_TYPE_ATLAS,
     LT_TYPE_WORLD,
     LT_TYPE_BODY,
     LT_TYPE_FIXTURE,
@@ -75,6 +80,7 @@ enum LTType {
     LT_TYPE_DRAWVECTOR,
     LT_TYPE_DRAWQUADS,
     LT_TYPE_BODYTRACKER,
+    LT_TYPE_PARTICLESYSTEM,
     LT_NUM_TYPES
 };
 
