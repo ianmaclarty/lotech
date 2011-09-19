@@ -241,7 +241,12 @@ void LTParticleSystem::advance(LTfloat dt) {
             p->rotation += p->delta_rotation * dt;
             
             LTParticleQuad *quad = &quads[i];
-            LTCompactColor color(p->color.r*255, p->color.g*255, p->color.b*255, p->color.a*255);
+            LTCompactColor color(
+                p->color.r * 255,
+                p->color.g * 255,
+                p->color.b * 255,
+                p->color.a * 255
+            );
             quad->bottom_left.color = color;
             quad->bottom_right.color = color;
             quad->top_left.color = color;

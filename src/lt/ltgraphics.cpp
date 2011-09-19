@@ -358,6 +358,17 @@ void ltPopTint() {
     }
 }
 
+void ltPeekTint(LTColor *color) {
+    if (!tint_stack.empty()) {
+        *color = tint_stack.front();
+    } else {
+        color->r = 1.0f;
+        color->g = 1.0f;
+        color->b = 1.0f;
+        color->a = 1.0f;
+    }
+}
+
 static void apply_blend_mode(LTBlendMode mode) {
     switch (mode) {
         case LT_BLEND_MODE_NORMAL:
