@@ -5,8 +5,9 @@
 #include "ltphysics.h"
 #include "ltgraphics.h"
 
-LTWorld::LTWorld(b2Vec2 gravity, bool doSleep) : LTObject(LT_TYPE_WORLD) {
+LTWorld::LTWorld(b2Vec2 gravity, bool doSleep, LTfloat scaling) : LTObject(LT_TYPE_WORLD) {
     world = new b2World(gravity, doSleep);
+    LTWorld::scaling = scaling;
 }
 
 LTWorld::~LTWorld() {
@@ -118,10 +119,15 @@ void LTFixture::draw() {
     }
 }
 
-LTBodyTracker::LTBodyTracker(LTBody *body, LTfloat scaling, LTSceneNode *child)
+LTBodyTracker::LTBodyTracker(LTBody *body, LTSceneNode *child)
     : LTWrapNode(child, LT_TYPE_BODYTRACKER)
 {
-    LTBodyTracker::scaling = scaling;
+    LTWorld *w = body->world;
+    if (w != NULL) {
+        LTBodyTracker::scaling = w->scaling;
+    } else {
+        LTBodyTracker::scaling = 1.0f;
+    }
     LTBodyTracker::body = body;
 }
 

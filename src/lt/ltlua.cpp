@@ -737,6 +737,20 @@ static int lt_ParticleSystemAdvance(lua_State *L) {
     return 0;
 }
 
+static int lt_ParticleSystemFixtureFilter(lua_State *L) {
+    check_nargs(L, 2);
+    LTParticleSystem *particles = (LTParticleSystem *)get_object(L, 1, LT_TYPE_PARTICLESYSTEM);
+    LTFixture *fixture = (LTFixture *)get_object(L, 2, LT_TYPE_FIXTURE);
+    if (particles->fixture != NULL) {
+        push_wrap(L, particles->fixture);
+        del_ref(L, 1, -1); // Delete existing reference.
+        lua_pop(L, 1);
+    }
+    particles->fixture = fixture;
+    add_ref(L, 1, 2); // Add reference from particle system to fixture.
+    return 0;
+}
+
 /************************* Vectors **************************/
 
 static int lt_Vector(lua_State *L) {
@@ -2312,20 +2326,24 @@ static int lt_WorldRayCast(lua_State *L) {
 }
 
 static int lt_World(lua_State *L) {
-    LTWorld *world = new LTWorld(b2Vec2(0.0f, -10.0f), true);
+    int nargs = check_nargs(L, 0);
+    LTfloat scaling = 1.0f;
+    if (nargs > 0) {
+        scaling = luaL_checknumber(L, 1);
+    }
+    LTWorld *world = new LTWorld(b2Vec2(0.0f, -10.0f), true, scaling);
     push_wrap(L, world);
     return 1;
 }
 
 static int lt_BodyTracker(lua_State *L) {
-    int num_args = check_nargs(L, 2);
+    int nargs = check_nargs(L, 2);
     LTSceneNode *child = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
     LTBody *body = (LTBody *)get_object(L, 2, LT_TYPE_BODY);
-    LTfloat scaling = 1.0f;
-    if (num_args > 2) {
-        scaling = (LTfloat)luaL_checknumber(L, 3);
+    LTBodyTracker *node = new LTBodyTracker(body, child);
+    if (nargs > 2) {
+        node->scaling *= luaL_checknumber(L, 3);
     }
-    LTBodyTracker *node = new LTBodyTracker(body, scaling, child);
     push_wrap(L, node);
     set_ref_field(L, -1, "child", 1); // Add reference from new node to child.
     set_ref_field(L, -1, "body", 2);  // Add reference from new node to body.
@@ -2554,6 +2572,7 @@ static const luaL_Reg ltlib[] = {
 
     {"ParticleSystem",                  lt_ParticleSystem},
     {"ParticleSystemAdvance",           lt_ParticleSystemAdvance},
+    {"ParticleSystemFixtureFilter",     lt_ParticleSystemFixtureFilter},
 
     {"MakeNativeTween",                 lt_MakeNativeTween},
     {"AdvanceNativeTween",              lt_AdvanceNativeTween},

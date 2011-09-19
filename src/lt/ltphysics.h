@@ -9,8 +9,9 @@
 
 struct LTWorld : LTObject {
     b2World *world;
+    LTfloat scaling; // For scaling world coords to screen coords.
 
-    LTWorld(b2Vec2 gravity, bool doSleep);
+    LTWorld(b2Vec2 gravity, bool doSleep, LTfloat scale);
     virtual ~LTWorld();
 };
 
@@ -45,7 +46,7 @@ struct LTBodyTracker : LTWrapNode {
     LTBody *body;
     LTfloat scaling;
 
-    LTBodyTracker(LTBody *body, LTfloat scaling, LTSceneNode *child);
+    LTBodyTracker(LTBody *body, LTSceneNode *child);
 
     virtual void draw();
     virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);

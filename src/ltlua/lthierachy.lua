@@ -132,6 +132,7 @@ lt.classes = {
         super = "SceneNode",
         methods = {
             Advance = lt.ParticleSystemAdvance,
+            FixtureFilter = lt.ParticleSystemFixtureFilter,
         }
     },
 

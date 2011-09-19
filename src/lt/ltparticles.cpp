@@ -70,6 +70,8 @@ LTParticleSystem::LTParticleSystem(LTImage *img, int n)
         indices[i6+4] = (GLushort) i4+2;
         indices[i6+3] = (GLushort) i4+3;
     }
+
+    fixture = NULL;
 }
 
 LTParticleSystem::~LTParticleSystem() {
@@ -109,8 +111,40 @@ void LTParticleSystem::add_particle() {
             p->time_to_live = 0.001f; // Avoid division by zero.
         }
 
-        p->pos.x = source_position.x + source_position_variance.x * ltRandMinus1_1();
-        p->pos.y = source_position.y + source_position_variance.y * ltRandMinus1_1();
+        if (fixture != NULL) {
+            b2Fixture *f = fixture->fixture;
+            if (f == NULL) {
+                // Fixture has been deleted, so don't create any new particles.
+                active = false;
+                return;
+            }
+            LTBody *b = fixture->body;
+            if (b == NULL) {
+                // Fixture not attached to any bodies.
+                active = false;
+                return;
+            }
+            LTWorld *w = b->world;
+            if (w == NULL) {
+                // Shouldn't happen, but just in case.
+                active = false;
+                return;
+            }
+            LTfloat s = w->scaling;
+            b2AABB aabb = f->GetAABB(0);
+            int num_tries = 20;
+            b2Vec2 test_point;
+            do {
+                test_point.x = ltRandBetween(aabb.lowerBound.x, aabb.upperBound.x);
+                test_point.y = ltRandBetween(aabb.lowerBound.y, aabb.upperBound.y);
+                num_tries--;
+            } while (!f->TestPoint(test_point) && num_tries > 0);
+            p->pos.x = test_point.x * s;
+            p->pos.y = test_point.y * s;
+        } else {
+            p->pos.x = source_position.x + source_position_variance.x * ltRandMinus1_1();
+            p->pos.y = source_position.y + source_position_variance.y * ltRandMinus1_1();
+        }
 
         LTColor start;
         start.r = clamp(start_color.r + start_color_variance.r * ltRandMinus1_1());
@@ -164,13 +198,13 @@ void LTParticleSystem::advance(LTfloat dt) {
     if (active && emission_rate > 0.0f) {
         LTfloat rate = 1.0f / emission_rate;
         emit_counter += dt;
-        while (num_particles < max_particles && emit_counter > rate) {
+        while (num_particles < max_particles && emit_counter > rate && active) {
             add_particle();
             emit_counter -= rate;
         }
 
         elapsed += dt;
-        if (duration != -1.0f && duration < elapsed) {
+        if (duration != -1.0f && duration < elapsed || !active) {
             stop();
         }
     }

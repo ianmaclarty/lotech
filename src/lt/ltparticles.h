@@ -5,6 +5,7 @@
 #include "ltcommon.h"
 #include "ltgraphics.h"
 #include "ltimage.h"
+#include "ltphysics.h"
 #include "ltscene.h"
 
 // This is based on the Cocos2D particle system.
@@ -74,6 +75,8 @@ struct LTParticleSystem : LTSceneNode {
     LTParticle *particles;
     LTParticleQuad *quads;
     GLushort *indices;
+
+    LTFixture *fixture; // A fixture to restrict start positions.
 
     LTParticleSystem(LTImage *img, int max_particles);
     virtual ~LTParticleSystem();
