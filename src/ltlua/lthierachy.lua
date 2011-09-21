@@ -192,6 +192,7 @@ lt.classes = {
             AddPoly             = lt.AddPolygonToBody,
             AddCircle           = lt.AddCircleToBody,
             Touching            = lt.BodyOrFixtureTouching,
+            Fixtures            = lt.GetBodyFixtures,
         }
     },
     Fixture = {
@@ -202,6 +203,7 @@ lt.classes = {
             IsDestroyed     = lt.FixtureIsDestroyed,
             GetBody         = lt.GetFixtureBody,
             Touching        = lt.BodyOrFixtureTouching,
+            BoundingBox     = lt.FixtureBoundingBox,
         }
     },
     BodyTracker = {

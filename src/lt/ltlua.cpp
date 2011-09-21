@@ -2066,6 +2066,40 @@ static int lt_GetFixtureBody(lua_State *L) {
     return 1;
 }
 
+static int lt_GetBodyFixtures(lua_State *L) {
+    check_nargs(L, 1);
+    LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
+    lua_newtable(L);
+    b2Body *b = body->body;
+    if (b) {
+        b2Fixture* f = b->GetFixtureList();
+        int i = 1;
+        while (f != NULL) {
+            push_wrap(L, (LTFixture*)f->GetUserData());
+            lua_rawseti(L, -2, i);
+            f = f->GetNext();
+            i++;
+        }
+    }
+    return 1;
+}
+
+static int lt_FixtureBoundingBox(lua_State *L) {
+    check_nargs(L, 1);
+    LTFixture *fixture = (LTFixture*)get_object(L, 1, LT_TYPE_FIXTURE);
+    b2Fixture *f = fixture->fixture;
+    if (f) {
+        b2AABB aabb = f->GetAABB(0);
+        lua_pushnumber(L, aabb.lowerBound.x);
+        lua_pushnumber(L, aabb.lowerBound.y);
+        lua_pushnumber(L, aabb.upperBound.x);
+        lua_pushnumber(L, aabb.upperBound.y);
+        return 4;
+    } else {
+        return 0;
+    }
+}
+
 static int lt_AddStaticBodyToWorld(lua_State *L) {
     check_nargs(L, 1);
     LTWorld *world = (LTWorld*)get_object(L, 1, LT_TYPE_WORLD);
@@ -2623,6 +2657,8 @@ static const luaL_Reg ltlib[] = {
     {"AddPolygonToBody",                lt_AddPolygonToBody},
     {"AddCircleToBody",                 lt_AddCircleToBody},
     {"GetFixtureBody",                  lt_GetFixtureBody},
+    {"GetBodyFixtures",                 lt_GetBodyFixtures},
+    {"FixtureBoundingBox",              lt_FixtureBoundingBox},
     {"AddStaticBodyToWorld",            lt_AddStaticBodyToWorld},
     {"AddDynamicBodyToWorld",           lt_AddDynamicBodyToWorld},
     {"AddBodyToWorld",                  lt_AddBodyToWorld},
