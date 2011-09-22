@@ -54,8 +54,13 @@ struct LTJoint : LTObject {
 struct LTBodyTracker : LTWrapNode {
     LTBody *body;
     LTfloat scaling;
+    // Use viewport mode when the child is a layer containing
+    // the body being tracked.  The layer will then follow
+    // the body.
+    bool viewport_mode;
+    bool track_rotation;
 
-    LTBodyTracker(LTBody *body, LTSceneNode *child);
+    LTBodyTracker(LTBody *body, LTSceneNode *child, bool viewport_mode, bool track_rotation);
 
     virtual void draw();
     virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);

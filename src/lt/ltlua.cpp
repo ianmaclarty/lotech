@@ -2479,10 +2479,15 @@ static int lt_BodyTracker(lua_State *L) {
     int nargs = check_nargs(L, 2);
     LTSceneNode *child = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
     LTBody *body = (LTBody *)get_object(L, 2, LT_TYPE_BODY);
-    LTBodyTracker *node = new LTBodyTracker(body, child);
+    bool viewport_mode = false;
+    bool track_rotation = true;
     if (nargs > 2) {
-        node->scaling *= luaL_checknumber(L, 3);
+        viewport_mode = lua_toboolean(L, 3);
     }
+    if (nargs > 3) {
+        track_rotation = lua_toboolean(L, 4);
+    }
+    LTBodyTracker *node = new LTBodyTracker(body, child, viewport_mode, track_rotation);
     push_wrap(L, node);
     set_ref_field(L, -1, "child", 1); // Add reference from new node to child.
     set_ref_field(L, -1, "body", 2);  // Add reference from new node to body.

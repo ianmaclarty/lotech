@@ -139,9 +139,11 @@ void LTJoint::destroy() {
     }
 }
 
-LTBodyTracker::LTBodyTracker(LTBody *body, LTSceneNode *child)
+LTBodyTracker::LTBodyTracker(LTBody *body, LTSceneNode *child, bool viewport_mode, bool track_rotation)
     : LTWrapNode(child, LT_TYPE_BODYTRACKER)
 {
+    LTBodyTracker::viewport_mode = viewport_mode;
+    LTBodyTracker::track_rotation = track_rotation;
     LTWorld *w = body->world;
     if (w != NULL) {
         LTBodyTracker::scaling = w->scaling;
@@ -152,7 +154,7 @@ LTBodyTracker::LTBodyTracker(LTBody *body, LTSceneNode *child)
 }
 
 void LTBodyTracker::draw() {
-    static GLfloat glmat[16] = {
+    static GLfloat rmat[16] = {
         1.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 1.0f, 0.0f,
@@ -161,13 +163,25 @@ void LTBodyTracker::draw() {
     b2Body *b = body->body;
     if (b != NULL) {
         const b2Transform b2t = b->GetTransform();
-        glmat[0] = b2t.q.c;
-        glmat[1] = b2t.q.s;
-        glmat[4] = -b2t.q.s;
-        glmat[5] = b2t.q.c;
-        glmat[12] = b2t.p.x * scaling;
-        glmat[13] = b2t.p.y * scaling;
-        ltMultMatrix(glmat);
+        if (viewport_mode) {
+            if (track_rotation) {
+                rmat[0] = b2t.q.c;
+                rmat[1] = -b2t.q.s;
+                rmat[4] = b2t.q.s;
+                rmat[5] = b2t.q.c;
+                ltMultMatrix(rmat);
+            }
+            ltTranslate(-b2t.p.x * scaling, -b2t.p.y * scaling, 0.0f);
+        } else {
+            ltTranslate(b2t.p.x * scaling, b2t.p.y * scaling, 0.0f);
+            if (track_rotation) {
+                rmat[0] = b2t.q.c;
+                rmat[1] = b2t.q.s;
+                rmat[4] = -b2t.q.s;
+                rmat[5] = b2t.q.c;
+                ltMultMatrix(rmat);
+            }
+        }
         child->draw();
     }
 }
@@ -176,6 +190,7 @@ bool LTBodyTracker::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *
     if (!consumePointerEvent(x, y, event)) {
         b2Body *b = body->body;
         if (b != NULL) {
+            // XXX This doesn't work with scaling or in viewport mode.
             LTfloat angle = b->GetAngle();
             b2Vec2 pos = b->GetPosition();
             x = x - pos.x;
