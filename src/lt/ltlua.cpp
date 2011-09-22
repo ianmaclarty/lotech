@@ -127,9 +127,11 @@ static LTObject* get_object(lua_State *L, int index, LTType type) {
         luaL_error(L, "Expecting a table in argument %d.", index);
     }
     lua_pushstring(L, LT_USERDATA_KEY);
+    if (index < 0) index--;
     lua_rawget(L, index);
     LTObject **ud = (LTObject**)luaL_checkudata(L, -1, LT_USERDATA_MT);
     lua_pop(L, 1);
+    if (index < 0) index++;
     if (ud == NULL) {
         luaL_error(L, "ud == NULL.");
     }
@@ -2246,6 +2248,109 @@ static int lt_AddBodyToWorld(lua_State *L) {
     return 1;
 }
 
+static void read_revolute_joint_def_from_table(lua_State *L, int table, b2RevoluteJointDef *def) {
+    def->type = e_revoluteJoint;
+    def->userData = NULL;
+
+    lua_getfield(L, table, "body1");
+    if (lua_isnil(L, -1)) {
+        luaL_error(L, "Missing body1 field in revolution joint definition");
+    }
+    LTBody *body1 = (LTBody*)get_object(L, -1, LT_TYPE_BODY);
+    lua_pop(L, 1);
+    if (body1->body == NULL) {
+        luaL_error(L, "body1 is destroyed");
+    }
+    def->bodyA = body1->body;
+
+    lua_getfield(L, table, "body2");
+    if (lua_isnil(L, -1)) {
+        luaL_error(L, "Missing body2 field in revolution joint definition");
+    }
+    LTBody *body2 = (LTBody*)get_object(L, -1, LT_TYPE_BODY);
+    lua_pop(L, 1);
+    if (body2->body == NULL) {
+        luaL_error(L, "body2 is destroyed");
+    }
+    def->bodyB = body2->body;
+
+    lua_getfield(L, table, "collide");
+    if (!lua_isnil(L, -1)) {
+        def->collideConnected = lua_toboolean(L, -1);
+    }
+    lua_pop(L, 1);
+
+    lua_getfield(L, table, "anchor1");
+    if (lua_isnil(L, -1)) {
+        luaL_error(L, "Missing anchor1 field in revolution definition");
+    }
+    if (lua_istable(L, -1)) {
+        lua_rawgeti(L, -1, 1);
+        def->localAnchorA.x = luaL_checknumber(L, -1);
+        lua_pop(L, 1);
+        lua_rawgeti(L, -1, 2);
+        def->localAnchorA.y = luaL_checknumber(L, -1);
+        lua_pop(L, 1);
+    } else {
+        return luaL_error(L, "Expecting anchor1 field to be a table");
+    }
+    lua_pop(L, 1);
+
+    lua_getfield(L, table, "anchor2");
+    if (lua_isnil(L, -1)) {
+        // Use the current world positions of the bodies to
+        // compute anchor2 from anchor1.
+        b2Vec2 anchor1_w = body1->body->GetWorldPoint(def->localAnchorA);
+        def->localAnchorB = body2->body->GetLocalPoint(anchor1_w);
+    } else {
+        if (lua_istable(L, -1)) {
+            lua_rawgeti(L, -1, 1);
+            def->localAnchorB.x = luaL_checknumber(L, -1);
+            lua_pop(L, 1);
+            lua_rawgeti(L, -1, 2);
+            def->localAnchorB.y = luaL_checknumber(L, -1);
+            lua_pop(L, 1);
+        } else {
+            return luaL_error(L, "Expecting anchor2 field to be a table");
+        }
+    }
+    lua_pop(L, 1);
+
+    lua_getfield(L, table, "angle");
+    if (lua_isnil(L, -1)) {
+        // Compute the reference angle from the bodies' current angles.
+        def->referenceAngle = body2->body->GetAngle() - body1->body->GetAngle();
+    } else {
+        def->referenceAngle = luaL_checknumber(L, -1) * LT_RADIANS_PER_DEGREE;
+    }
+    lua_pop(L, 1);
+}
+
+static int lt_AddJointToWorld(lua_State *L) {
+    // First argument is world, second is joint definition (a table).
+    check_nargs(L, 2);
+    LTWorld *world = (LTWorld*)get_object(L, 1, LT_TYPE_WORLD);
+    lua_getfield(L, 2, "type");
+    const char *joint_type_str = lua_tostring(L, -1);
+    lua_pop(L, 1);
+    if (joint_type_str == NULL) {
+        return luaL_error(L, "Joint type not specified");
+    }
+    b2JointDef *def = NULL;
+    if (strcmp(joint_type_str, "revolute") == 0) {
+        b2RevoluteJointDef rdef;
+        read_revolute_joint_def_from_table(L, 2, &rdef);
+        def = &rdef;
+    } else {
+        return luaL_error(L, "Unsupported joint type: %s", joint_type_str);
+    }
+    LTJoint *joint = new LTJoint(world, def);
+    push_wrap(L, joint);
+    add_ref(L, 1, -1); // Add reference from world to joint.
+    add_ref(L, -1, 1); // Add reference from joint to world.
+    return 1;
+}
+
 static void get_body_and_fixture(lua_State *L, int arg, b2Body **body, b2Fixture **fixture) {
     LTObject *obj = get_object(L, arg, LT_TYPE_OBJECT);
     *body = NULL;
@@ -2662,6 +2767,7 @@ static const luaL_Reg ltlib[] = {
     {"AddStaticBodyToWorld",            lt_AddStaticBodyToWorld},
     {"AddDynamicBodyToWorld",           lt_AddDynamicBodyToWorld},
     {"AddBodyToWorld",                  lt_AddBodyToWorld},
+    {"AddJointToWorld",                 lt_AddJointToWorld},
     {"BodyOrFixtureTouching",           lt_BodyOrFixtureTouching},
     {"BodyTracker",                     lt_BodyTracker},
     {"WorldRayCast",                    lt_WorldRayCast},

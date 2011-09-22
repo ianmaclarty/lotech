@@ -169,6 +169,7 @@ lt.classes = {
             AddDynamicBody  = lt.AddDynamicBodyToWorld,
             AddBody         = lt.AddBodyToWorld,
             RayCast         = lt.WorldRayCast,
+            AddJoint        = lt.AddJointToWorld,
         }
     },
     Body = {
@@ -204,6 +205,11 @@ lt.classes = {
             GetBody         = lt.GetFixtureBody,
             Touching        = lt.BodyOrFixtureTouching,
             BoundingBox     = lt.FixtureBoundingBox,
+        }
+    },
+    Joint = {
+        super = "Object",
+        methods = {
         }
     },
     BodyTracker = {

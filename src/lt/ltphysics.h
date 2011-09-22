@@ -42,6 +42,15 @@ struct LTFixture : LTSceneNode {
     virtual void draw();
 };
 
+struct LTJoint : LTObject {
+    b2Joint *joint; // May be null if the joint is destroyed.
+    LTWorld *world;
+
+    LTJoint(LTWorld *world, const b2JointDef *def);
+
+    void destroy();
+};
+
 struct LTBodyTracker : LTWrapNode {
     LTBody *body;
     LTfloat scaling;

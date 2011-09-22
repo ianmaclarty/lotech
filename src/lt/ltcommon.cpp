@@ -30,6 +30,7 @@ const LTTypeInfo types[] = {
     {"World",           LT_TYPE_OBJECT},
     {"Body",            LT_TYPE_SCENENODE},
     {"Fixture",         LT_TYPE_SCENENODE},
+    {"Joint",           LT_TYPE_JOINT},
     {"Line",            LT_TYPE_SCENENODE},
     {"Triangle",        LT_TYPE_SCENENODE},
     {"Rect",            LT_TYPE_SCENENODE},

@@ -29,6 +29,13 @@ void LTBody::destroy() {
             ud->fixture = NULL;
             f = f->GetNext();
         }
+        // Invalidate joints.
+        b2JointEdge *j = body->GetJointList();
+        while (j != NULL) {
+            LTJoint *ud = (LTJoint*)j->joint->GetUserData();
+            ud->joint = NULL;
+            j = j->next;
+        }
 
         world->world->DestroyBody(body);
         body = NULL;
@@ -116,6 +123,19 @@ void LTFixture::draw() {
             case b2Shape::e_typeCount:
                 break;
         }
+    }
+}
+
+LTJoint::LTJoint(LTWorld *world, const b2JointDef *def) : LTObject(LT_TYPE_JOINT) {
+    LTJoint::world = world;
+    LTJoint::joint = world->world->CreateJoint(def);
+    LTJoint::joint->SetUserData(this);
+}
+
+void LTJoint::destroy() {
+    if (joint != NULL) {
+        world->world->DestroyJoint(joint);
+        joint = NULL;
     }
 }
 
