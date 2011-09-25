@@ -2295,7 +2295,7 @@ static void read_revolute_joint_def_from_table(lua_State *L, int table, b2Revolu
 
     lua_getfield(L, table, "anchor1");
     if (lua_isnil(L, -1)) {
-        luaL_error(L, "Missing anchor1 field in revolution definition");
+        luaL_error(L, "Missing anchor1 field in revolute joint definition");
     }
     if (lua_istable(L, -1)) {
         lua_rawgeti(L, -1, 1);
@@ -2353,6 +2353,68 @@ static void read_revolute_joint_def_from_table(lua_State *L, int table, b2Revolu
     lua_pop(L, 1);
 }
 
+static void read_distance_joint_def_from_table(lua_State *L, int table, b2DistanceJointDef *def) {
+    def->type = e_distanceJoint;
+    read_common_joint_def_from_table(L, table, def);
+
+    lua_getfield(L, table, "anchor1");
+    if (lua_isnil(L, -1)) {
+        luaL_error(L, "Missing anchor1 field in distance joint definition");
+    }
+    if (lua_istable(L, -1)) {
+        lua_rawgeti(L, -1, 1);
+        def->localAnchorA.x = luaL_checknumber(L, -1);
+        lua_pop(L, 1);
+        lua_rawgeti(L, -1, 2);
+        def->localAnchorA.y = luaL_checknumber(L, -1);
+        lua_pop(L, 1);
+    } else {
+        luaL_error(L, "Expecting anchor1 field to be a table");
+    }
+    lua_pop(L, 1);
+
+    lua_getfield(L, table, "anchor2");
+    if (lua_isnil(L, -1)) {
+        luaL_error(L, "Missing anchor2 field in distance joint definition");
+    } else {
+        if (lua_istable(L, -1)) {
+            lua_rawgeti(L, -1, 1);
+            def->localAnchorB.x = luaL_checknumber(L, -1);
+            lua_pop(L, 1);
+            lua_rawgeti(L, -1, 2);
+            def->localAnchorB.y = luaL_checknumber(L, -1);
+            lua_pop(L, 1);
+        } else {
+            luaL_error(L, "Expecting anchor2 field to be a table");
+        }
+    }
+    lua_pop(L, 1);
+
+    lua_getfield(L, table, "length");
+    if (lua_isnil(L, -1)) {
+        // Compute the length from the two anchor points.
+        b2Vec2 world_anchor1 = def->bodyA->GetWorldPoint(def->localAnchorA);
+        b2Vec2 world_anchor2 = def->bodyB->GetWorldPoint(def->localAnchorB);
+        b2Vec2 diff = world_anchor2 - world_anchor1;
+        def->length = diff.Length();
+    } else {
+        def->length = luaL_checknumber(L, -1);
+    }
+    lua_pop(L, 1);
+
+    lua_getfield(L, table, "frequency");
+    if (!lua_isnil(L, -1)) {
+        def->frequencyHz = luaL_checknumber(L, -1);
+    }
+    lua_pop(L, 1);
+
+    lua_getfield(L, table, "damping");
+    if (!lua_isnil(L, -1)) {
+        def->dampingRatio = luaL_checknumber(L, -1);
+    }
+    lua_pop(L, 1);
+}
+
 static int lt_AddJointToWorld(lua_State *L) {
     // First argument is world, second is joint definition (a table).
     check_nargs(L, 2);
@@ -2364,10 +2426,14 @@ static int lt_AddJointToWorld(lua_State *L) {
         return luaL_error(L, "Joint type not specified");
     }
     b2JointDef *def = NULL;
+    b2RevoluteJointDef rdef;
+    b2DistanceJointDef ddef;
     if (strcmp(joint_type_str, "revolute") == 0) {
-        b2RevoluteJointDef rdef;
         read_revolute_joint_def_from_table(L, 2, &rdef);
         def = &rdef;
+    } else if (strcmp(joint_type_str, "distance") == 0) {
+        read_distance_joint_def_from_table(L, 2, &ddef);
+        def = &ddef;
     } else {
         return luaL_error(L, "Unsupported joint type: %s", joint_type_str);
     }
