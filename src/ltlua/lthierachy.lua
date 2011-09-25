@@ -188,6 +188,7 @@ lt.classes = {
             GetVelocity         = lt.GetBodyVelocity,
             SetVelocity         = lt.SetBodyVelocity,
             SetAngularVelocity  = lt.SetBodyAngularVelocity,
+            SetGravityScale     = lt.SetBodyGravityScale,
             AddRect             = lt.AddRectToBody,
             AddTriangle         = lt.AddTriangleToBody,
             AddPoly             = lt.AddPolygonToBody,

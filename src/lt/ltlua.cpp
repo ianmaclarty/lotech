@@ -1856,6 +1856,15 @@ static int lt_SetBodyAngularVelocity(lua_State *L) {
     return 0;
 }
 
+static int lt_SetBodyGravityScale(lua_State *L) {
+    check_nargs(L, 2);
+    LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
+    if (body->body != NULL) {
+        body->body->SetGravityScale(luaL_checknumber(L, 2));
+    }
+    return 0;
+}
+
 static int lt_AddRectToBody(lua_State *L) {
     int num_args = check_nargs(L, 5);
     LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
@@ -2248,37 +2257,41 @@ static int lt_AddBodyToWorld(lua_State *L) {
     return 1;
 }
 
-static void read_revolute_joint_def_from_table(lua_State *L, int table, b2RevoluteJointDef *def) {
-    def->type = e_revoluteJoint;
+static void read_common_joint_def_from_table(lua_State *L, int table, b2JointDef *def) {
     def->userData = NULL;
 
     lua_getfield(L, table, "body1");
     if (lua_isnil(L, -1)) {
         luaL_error(L, "Missing body1 field in revolution joint definition");
     }
-    LTBody *body1 = (LTBody*)get_object(L, -1, LT_TYPE_BODY);
+    b2Body *body1 = ((LTBody*)get_object(L, -1, LT_TYPE_BODY))->body;
     lua_pop(L, 1);
-    if (body1->body == NULL) {
+    if (body1 == NULL) {
         luaL_error(L, "body1 is destroyed");
     }
-    def->bodyA = body1->body;
+    def->bodyA = body1;
 
     lua_getfield(L, table, "body2");
     if (lua_isnil(L, -1)) {
         luaL_error(L, "Missing body2 field in revolution joint definition");
     }
-    LTBody *body2 = (LTBody*)get_object(L, -1, LT_TYPE_BODY);
+    b2Body *body2 = ((LTBody*)get_object(L, -1, LT_TYPE_BODY))->body;
     lua_pop(L, 1);
-    if (body2->body == NULL) {
+    if (body2 == NULL) {
         luaL_error(L, "body2 is destroyed");
     }
-    def->bodyB = body2->body;
+    def->bodyB = body2;
 
     lua_getfield(L, table, "collide");
     if (!lua_isnil(L, -1)) {
         def->collideConnected = lua_toboolean(L, -1);
     }
     lua_pop(L, 1);
+}
+
+static void read_revolute_joint_def_from_table(lua_State *L, int table, b2RevoluteJointDef *def) {
+    def->type = e_revoluteJoint;
+    read_common_joint_def_from_table(L, table, def);
 
     lua_getfield(L, table, "anchor1");
     if (lua_isnil(L, -1)) {
@@ -2292,7 +2305,7 @@ static void read_revolute_joint_def_from_table(lua_State *L, int table, b2Revolu
         def->localAnchorA.y = luaL_checknumber(L, -1);
         lua_pop(L, 1);
     } else {
-        return luaL_error(L, "Expecting anchor1 field to be a table");
+        luaL_error(L, "Expecting anchor1 field to be a table");
     }
     lua_pop(L, 1);
 
@@ -2300,8 +2313,8 @@ static void read_revolute_joint_def_from_table(lua_State *L, int table, b2Revolu
     if (lua_isnil(L, -1)) {
         // Use the current world positions of the bodies to
         // compute anchor2 from anchor1.
-        b2Vec2 anchor1_w = body1->body->GetWorldPoint(def->localAnchorA);
-        def->localAnchorB = body2->body->GetLocalPoint(anchor1_w);
+        b2Vec2 anchor1_w = def->bodyA->GetWorldPoint(def->localAnchorA);
+        def->localAnchorB = def->bodyB->GetLocalPoint(anchor1_w);
     } else {
         if (lua_istable(L, -1)) {
             lua_rawgeti(L, -1, 1);
@@ -2311,7 +2324,7 @@ static void read_revolute_joint_def_from_table(lua_State *L, int table, b2Revolu
             def->localAnchorB.y = luaL_checknumber(L, -1);
             lua_pop(L, 1);
         } else {
-            return luaL_error(L, "Expecting anchor2 field to be a table");
+            luaL_error(L, "Expecting anchor2 field to be a table");
         }
     }
     lua_pop(L, 1);
@@ -2319,7 +2332,7 @@ static void read_revolute_joint_def_from_table(lua_State *L, int table, b2Revolu
     lua_getfield(L, table, "angle");
     if (lua_isnil(L, -1)) {
         // Compute the reference angle from the bodies' current angles.
-        def->referenceAngle = body2->body->GetAngle() - body1->body->GetAngle();
+        def->referenceAngle = def->bodyB->GetAngle() - def->bodyA->GetAngle();
     } else {
         def->referenceAngle = luaL_checknumber(L, -1) * LT_RADIANS_PER_DEGREE;
     }
@@ -2762,6 +2775,7 @@ static const luaL_Reg ltlib[] = {
     {"GetBodyVelocity" ,                lt_GetBodyVelocity},
     {"SetBodyVelocity" ,                lt_SetBodyVelocity},
     {"SetBodyAngularVelocity",          lt_SetBodyAngularVelocity},
+    {"SetBodyGravityScale",             lt_SetBodyGravityScale},
     {"AddRectToBody",                   lt_AddRectToBody},
     {"AddTriangleToBody",               lt_AddTriangleToBody},
     {"AddPolygonToBody",                lt_AddPolygonToBody},
