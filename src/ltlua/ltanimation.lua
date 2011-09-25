@@ -26,8 +26,10 @@ function lt.Animate(animators, time_step)
                 -- wait is the error message
                 error(wait)
             end
-            t = t + wait
             is_dead = coroutine.status(state.thread) == "dead"
+            if not is_dead and wait then
+                t = t + wait
+            end
         end
         if is_dead then
             animators[i] = nil
