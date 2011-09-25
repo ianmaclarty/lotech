@@ -2337,6 +2337,20 @@ static void read_revolute_joint_def_from_table(lua_State *L, int table, b2Revolu
         def->referenceAngle = luaL_checknumber(L, -1) * LT_RADIANS_PER_DEGREE;
     }
     lua_pop(L, 1);
+
+    lua_getfield(L, table, "lower_limit");
+    if (!lua_isnil(L, -1)) {
+        def->lowerAngle = luaL_checknumber(L, -1) * LT_RADIANS_PER_DEGREE;
+        def->enableLimit = true;
+    }
+    lua_pop(L, 1);
+
+    lua_getfield(L, table, "upper_limit");
+    if (!lua_isnil(L, -1)) {
+        def->upperAngle = luaL_checknumber(L, -1) * LT_RADIANS_PER_DEGREE;
+        def->enableLimit = true;
+    }
+    lua_pop(L, 1);
 }
 
 static int lt_AddJointToWorld(lua_State *L) {
