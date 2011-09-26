@@ -726,6 +726,9 @@ static int lt_ParticleSystem(lua_State *L) {
         return luaL_error(L, "Expecting a table in argument 3");
     }
     set_object_fields_from_table(L, particles, 3);
+    if (particles->emission_rate < 0.0f) {
+        particles->emission_rate = (LTfloat)particles->max_particles / particles->life;
+    }
     push_wrap(L, particles);
     add_ref(L, -1, 1); // Add reference from particles to image.
     return 1;

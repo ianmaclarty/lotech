@@ -39,8 +39,11 @@ LTParticleSystem::LTParticleSystem(LTImage *img, int n)
     start_spin_variance = 0.0f;
     end_spin = 0.0f;
     end_spin_variance = 0.0f;
+    
+    aspect_ratio = img->bb_width / img->bb_height;
+
     max_particles = n;
-    emission_rate = (LTfloat)max_particles / life;
+    emission_rate = -1.0f;
 
     num_particles = 0;
     emit_counter = 0.0f;
@@ -49,15 +52,16 @@ LTParticleSystem::LTParticleSystem(LTImage *img, int n)
     // We maintain a reference to the LTImage object in the Lua wrapper.
     texture_id = img->atlas->texture_id;
     quads = new LTParticleQuad[n];
+
     for (int i = 0; i < n; i++) {
-        quads[i].bottom_left.tex_coord.x  = img->tex_coords[0];
-        quads[i].bottom_left.tex_coord.y  = img->tex_coords[5];
+        quads[i].bottom_left.tex_coord.x  = img->tex_coords[6];
+        quads[i].bottom_left.tex_coord.y  = img->tex_coords[7];
         quads[i].bottom_right.tex_coord.x = img->tex_coords[4];
         quads[i].bottom_right.tex_coord.y = img->tex_coords[5];
         quads[i].top_left.tex_coord.x     = img->tex_coords[0];
         quads[i].top_left.tex_coord.y     = img->tex_coords[1];
-        quads[i].top_right.tex_coord.x    = img->tex_coords[4];
-        quads[i].top_right.tex_coord.y    = img->tex_coords[1];
+        quads[i].top_right.tex_coord.x    = img->tex_coords[2];
+        quads[i].top_right.tex_coord.y    = img->tex_coords[3];
     }
     indices = new GLushort[n * 6];
     for (int i = 0; i < n; i++) {
@@ -252,13 +256,14 @@ void LTParticleSystem::advance(LTfloat dt) {
             quad->top_left.color = color;
             quad->top_right.color = color;
 
-            GLfloat size_2 = p->size / 2.0f;
+            GLfloat size_2_x = (p->size / 2.0f) * aspect_ratio;
+            GLfloat size_2_y = (p->size / 2.0f);
             if( p->rotation ) {
-                GLfloat x1 = -size_2;
-                GLfloat y1 = -size_2;
+                GLfloat x1 = -size_2_x;
+                GLfloat y1 = -size_2_y;
 
-                GLfloat x2 = size_2;
-                GLfloat y2 = size_2;
+                GLfloat x2 = size_2_x;
+                GLfloat y2 = size_2_y;
                 GLfloat x = p->pos.x;
                 GLfloat y = p->pos.y;
 
@@ -286,17 +291,17 @@ void LTParticleSystem::advance(LTfloat dt) {
                 quad->top_right.vertex.x = cx;
                 quad->top_right.vertex.y = cy;
             } else {
-                quad->bottom_left.vertex.x = p->pos.x - size_2;
-                quad->bottom_left.vertex.y = p->pos.y - size_2;
+                quad->bottom_left.vertex.x = p->pos.x - size_2_x;
+                quad->bottom_left.vertex.y = p->pos.y - size_2_y;
 
-                quad->bottom_right.vertex.x = p->pos.x + size_2;
-                quad->bottom_right.vertex.y = p->pos.y - size_2;
+                quad->bottom_right.vertex.x = p->pos.x + size_2_x;
+                quad->bottom_right.vertex.y = p->pos.y - size_2_y;
 
-                quad->top_left.vertex.x = p->pos.x - size_2;
-                quad->top_left.vertex.y = p->pos.y + size_2;
+                quad->top_left.vertex.x = p->pos.x - size_2_x;
+                quad->top_left.vertex.y = p->pos.y + size_2_y;
 
-                quad->top_right.vertex.x = p->pos.x + size_2;
-                quad->top_right.vertex.y = p->pos.y + size_2;
+                quad->top_right.vertex.x = p->pos.x + size_2_x;
+                quad->top_right.vertex.y = p->pos.y + size_2_y;
             }
             i++;
         } else {
