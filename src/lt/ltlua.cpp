@@ -2,6 +2,8 @@
 
 #include <string.h>
 #include <errno.h>
+
+#include <cfloat>
 #include <map>
 
 extern "C" {
@@ -2577,13 +2579,30 @@ static int lt_BodyTracker(lua_State *L) {
     LTBody *body = (LTBody *)get_object(L, 2, LT_TYPE_BODY);
     bool viewport_mode = false;
     bool track_rotation = true;
+    LTfloat min_x = -FLT_MAX;
+    LTfloat max_x = FLT_MAX;
+    LTfloat min_y = -FLT_MAX;
+    LTfloat max_y = FLT_MAX;
     if (nargs > 2) {
         viewport_mode = lua_toboolean(L, 3);
     }
     if (nargs > 3) {
         track_rotation = lua_toboolean(L, 4);
     }
-    LTBodyTracker *node = new LTBodyTracker(body, child, viewport_mode, track_rotation);
+    if (nargs > 4) {
+        min_x = luaL_checknumber(L, 5);
+    }
+    if (nargs > 5) {
+        max_x = luaL_checknumber(L, 6);
+    }
+    if (nargs > 6) {
+        min_y = luaL_checknumber(L, 7);
+    }
+    if (nargs > 7) {
+        max_y = luaL_checknumber(L, 8);
+    }
+    LTBodyTracker *node = new LTBodyTracker(body, child, viewport_mode, track_rotation,
+        min_x, max_x, min_y, max_y);
     push_wrap(L, node);
     set_ref_field(L, -1, "child", 1); // Add reference from new node to child.
     set_ref_field(L, -1, "body", 2);  // Add reference from new node to body.

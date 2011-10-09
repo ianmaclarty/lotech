@@ -139,11 +139,17 @@ void LTJoint::destroy() {
     }
 }
 
-LTBodyTracker::LTBodyTracker(LTBody *body, LTSceneNode *child, bool viewport_mode, bool track_rotation)
+LTBodyTracker::LTBodyTracker(LTBody *body, LTSceneNode *child,
+    bool viewport_mode, bool track_rotation,
+    LTfloat min_x, LTfloat max_x, LTfloat min_y, LTfloat max_y)
     : LTWrapNode(child, LT_TYPE_BODYTRACKER)
 {
     LTBodyTracker::viewport_mode = viewport_mode;
     LTBodyTracker::track_rotation = track_rotation;
+    LTBodyTracker::min_x = min_x;
+    LTBodyTracker::max_x = max_x;
+    LTBodyTracker::min_y = min_y;
+    LTBodyTracker::max_y = max_y;
     LTWorld *w = body->world;
     if (w != NULL) {
         LTBodyTracker::scaling = w->scaling;
@@ -163,6 +169,18 @@ void LTBodyTracker::draw() {
     b2Body *b = body->body;
     if (b != NULL) {
         const b2Transform b2t = b->GetTransform();
+        LTfloat x = b2t.p.x * scaling;
+        LTfloat y = b2t.p.y * scaling;
+        if (x < min_x) {
+            x = min_x;
+        } else if (x > max_x) {
+            x = max_x;
+        }
+        if (y < min_y) {
+            y = min_y;
+        } else if (y > max_y) {
+            y = max_y;
+        }
         if (viewport_mode) {
             if (track_rotation) {
                 rmat[0] = b2t.q.c;
@@ -171,9 +189,9 @@ void LTBodyTracker::draw() {
                 rmat[5] = b2t.q.c;
                 ltMultMatrix(rmat);
             }
-            ltTranslate(-b2t.p.x * scaling, -b2t.p.y * scaling, 0.0f);
+            ltTranslate(-x, -y, 0.0f);
         } else {
-            ltTranslate(b2t.p.x * scaling, b2t.p.y * scaling, 0.0f);
+            ltTranslate(x, y, 0.0f);
             if (track_rotation) {
                 rmat[0] = b2t.q.c;
                 rmat[1] = b2t.q.s;

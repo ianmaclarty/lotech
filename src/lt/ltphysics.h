@@ -59,8 +59,10 @@ struct LTBodyTracker : LTWrapNode {
     // the body.
     bool viewport_mode;
     bool track_rotation;
+    LTfloat min_x, max_x, min_y, max_y;
 
-    LTBodyTracker(LTBody *body, LTSceneNode *child, bool viewport_mode, bool track_rotation);
+    LTBodyTracker(LTBody *body, LTSceneNode *child, bool viewport_mode, bool track_rotation,
+        LTfloat min_x, LTfloat max_x, LTfloat min_y, LTfloat max_y);
 
     virtual void draw();
     virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
