@@ -3,6 +3,12 @@ function lt.AnimatorSet()
     return {}
 end
 
+function lt.ClearAnimatorSet(animators)
+    for i = 1, #animators do
+        animators[i] = nil
+    end
+end
+
 function lt.AddAnimator(animators, animator)
     local thread = coroutine.create(animator)
     local state = {

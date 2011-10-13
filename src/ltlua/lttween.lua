@@ -9,6 +9,25 @@ function lt.TweenSet()
     return tweens
 end
 
+function lt.UseTweens(tweens)
+    local env = getfenv(2)
+    local mt = {
+        __index     = function(t, k) return env[k] end,
+        __newindex  = function(t, k, v) env[k] = v end,
+    }
+    local new_env = {
+        _tweens_in_scope = tweens
+    }
+    setmetatable(new_env, mt)
+    setfenv(2, new_env)
+end
+
+function lt.ClearTweenSet(tweens)
+    for i = 1, #tweens do
+        tweens[i] = nil
+    end
+end
+
 local lt_advance_native_tween = lt.AdvanceNativeTween
 
 function lt.AdvanceTweens(tweens, dt)
@@ -315,7 +334,10 @@ local global_tweens = lt.TweenSet()
 
 -- node:Tween{x = 5, y = 6, time = 2.5, easing = "linear", tweens = my_tween_set, action = function() log("done!") end}
 function lt.Tween(node, tween_info)
-    local tweens = global_tweens
+    local tweens = rawget(getfenv(2), "_tweens_in_scope")
+    if not tweens then
+        tweens = global_tweens
+    end
     local fields = {}
     local time = 0
     local delay = 0
