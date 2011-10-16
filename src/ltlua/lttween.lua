@@ -3,6 +3,14 @@ local tweens_mt = {__mode = "v"}
 
 -------------------------------------------------------------
 
+local
+function cleanup_obj_tween_fields(obj)
+    rawset(obj, "_tweens", nil)
+    rawset(obj, "_tween_actions", nil)
+    rawset(obj, "_tween_index", nil)
+    rawset(obj, "_tweenset", nil)
+end
+
 function lt.TweenSet()
     local tweens = {}
     setmetatable(tweens, tweens_mt) -- make tweens' keys weak references
@@ -23,8 +31,9 @@ function lt.UseTweens(tweens)
 end
 
 function lt.ClearTweenSet(tweens)
-    for i = 1, #tweens do
-        tweens[i] = nil
+    for index, obj in pairs(tweens) do
+        cleanup_obj_tween_fields(obj)
+        tweens[index] = nil
     end
 end
 
@@ -74,10 +83,7 @@ function lt.AdvanceTweens(tweens, dt)
         end
         if next(obj_tweens) == nil then
             -- No more tweens on object, so remove from tween set and clean up.
-            rawset(obj, "_tweens", nil)
-            rawset(obj, "_tween_actions", nil)
-            rawset(obj, "_tween_index", nil)
-            rawset(obj, "_tweenset", nil)
+            cleanup_obj_tween_fields(obj)
             tweens[obj_index] = nil
         end
     end
