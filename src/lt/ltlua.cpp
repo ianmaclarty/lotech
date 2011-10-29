@@ -32,6 +32,8 @@ extern "C" {
 #include "ltutil.h"
 #include "ltvector.h"
 
+#include "lteasefunchash.h"
+
 #define LT_USERDATA_MT "ltud"
 #define LT_USERDATA_KEY "_ud"
 
@@ -209,9 +211,22 @@ static void push_wrap(lua_State *L, LTObject *obj) {
 
 // Inserts the object at the given index into the wrapper
 // table at the given index so that the GC can trace it.
+// If the object is already in the table, its reference count is
+// incremented.
 static void add_ref(lua_State *L, int wrap_index, int ref_index) {
     lua_pushvalue(L, ref_index);
-    lua_pushboolean(L, 1);
+    if (wrap_index > 0) {
+        lua_rawget(L, wrap_index);
+    } else {
+        lua_rawget(L, wrap_index - 1);
+    }
+    int val = 1;
+    if (!lua_isnil(L, -1)) {
+        val = lua_tointeger(L, -1) + 1;
+    }
+    lua_pop(L, 1);
+    lua_pushvalue(L, ref_index);
+    lua_pushinteger(L, val);
     if (wrap_index > 0) {
         lua_rawset(L, wrap_index);
     } else {
@@ -220,10 +235,27 @@ static void add_ref(lua_State *L, int wrap_index, int ref_index) {
 }
 
 // Removes the object at the given index from the wrapper
-// table.
+// table if its reference count is 1, otherwise decrements
+// the reference count.
 static void del_ref(lua_State *L, int wrap_index, int ref_index) {
     lua_pushvalue(L, ref_index);
-    lua_pushnil(L);
+    if (wrap_index > 0) {
+        lua_rawget(L, wrap_index);
+    } else {
+        lua_rawget(L, wrap_index - 1);
+    }
+    if (lua_isnil(L, -1)) {
+        lua_pop(L, 1);
+        return;
+    }
+    int val = lua_tointeger(L, -1) - 1;
+    lua_pop(L, 1);
+    lua_pushvalue(L, ref_index);
+    if (val <= 0) {
+        lua_pushnil(L);
+    } else {
+        lua_pushinteger(L, val);
+    }
     if (wrap_index > 0) {
         lua_rawset(L, wrap_index);
     } else {
@@ -967,71 +999,98 @@ static int lt_DrawVector(lua_State *L) {
 
 /************************* Tweens **************************/
 
-static int lt_MakeNativeTween(lua_State *L) {
-    LTObject *obj = get_object(L, 1, LT_TYPE_OBJECT);
-    const char *field = lua_tostring(L, 2);
-    if (field == NULL) {
-        lua_pushnil(L);
-        return 1;
-    }
-    LTfloat *field_ptr = obj->field_ptr(field);
-    if (field_ptr == NULL) {
-        lua_pushnil(L);
-        return 1;
-    }
-    LTfloat delay = luaL_checknumber(L, 3);
-    LTfloat value = luaL_checknumber(L, 4);
-    LTfloat period = luaL_checknumber(L, 5);
-    LTEaseFunc ease_func = NULL;
-    if (lua_isnil(L, 6)) {
-        ease_func = ltLinearEase;
-    } else {
-        const char *ease_func_str = lua_tostring(L, 6);
-        if (ease_func_str == NULL) {
-            lua_pushnil(L);
-            return 1;
-        }
-        if (strcmp(ease_func_str, "in") == 0) {
-            ease_func = ltEaseIn;
-        } else if (strcmp(ease_func_str, "out") == 0) {
-            ease_func = ltEaseOut;
-        } else if (strcmp(ease_func_str, "accel") == 0) {
-            ease_func = ltAccelEase;
-        } else if (strcmp(ease_func_str, "decel") == 0) {
-            ease_func = ltDeccelEase;
-        } else if (strcmp(ease_func_str, "inout") == 0) {
-            ease_func = ltEaseInOut;
-        } else if (strcmp(ease_func_str, "backin") == 0) {
-            ease_func = ltBackInEase;
-        } else if (strcmp(ease_func_str, "backout") == 0) {
-            ease_func = ltBackOutEase;
-        } else if (strcmp(ease_func_str, "elastic") == 0) {
-            ease_func = ltElasticEase;
-        } else if (strcmp(ease_func_str, "bounce") == 0) {
-            ease_func = ltBounceEase;
-        } else if (strcmp(ease_func_str, "zoomin") == 0) {
-            ease_func = ltZoomInEase;
-        } else if (strcmp(ease_func_str, "zoomout") == 0) {
-            ease_func = ltZoomOutEase;
-        } else if (strcmp(ease_func_str, "revolve") == 0) {
-            ease_func = ltRevolveEase;
-        } else if (strcmp(ease_func_str, "linear") == 0) {
-            ease_func = ltLinearEase;
-        } else {
-            lua_pushnil(L);
-            return 1;
-        }
-    }
-    LTTween *tween = (LTTween*)lua_newuserdata(L, sizeof(LTTween));
-    ltInitTween(tween, field_ptr, delay, value, period, ease_func);
+static int lt_TweenSet(lua_State *L) {
+    push_wrap(L, new LTTweenSet());
     return 1;
 }
 
-static int lt_AdvanceNativeTween(lua_State *L) {
-    LTTween *tween = (LTTween*)lua_touserdata(L, 1);
+static int lt_AdvanceTweens(lua_State *L) {
+    check_nargs(L, 2);
+    LTTweenSet *tweens = (LTTweenSet*)get_object(L, 1, LT_TYPE_TWEENSET);
     LTfloat dt = luaL_checknumber(L, 2);
-    lua_pushboolean(L, ltAdvanceTween(tween, dt) ? 1 : 0);
+
+    int i = 0;
+    while (i < tweens->occupants) {
+        LTTween *tween = &tweens->tweens[i];
+        if (ltAdvanceTween(tween, dt)) {
+            // Tween finished, so remove it.
+            lua_pushlightuserdata(L, tween->field_ptr);
+            lua_pushnil(L);
+            lua_rawset(L, 1);
+            push_wrap(L, tween->owner);
+            del_ref(L, 1, -1);
+            lua_pop(L, 1);
+            if (i != tweens->occupants - 1) {
+                tweens->tweens[i] = tweens->tweens[tweens->occupants - 1];
+            }
+            tweens->occupants--;
+        } else {
+            i++;
+        }
+    }
+
+    return 0;
+}
+
+static int lt_AddTween(lua_State *L) {
+    check_nargs(L, 6);
+    LTTweenSet *tweens = (LTTweenSet*)get_object(L, 1, LT_TYPE_TWEENSET);
+    LTObject *obj = get_object(L, 2, LT_TYPE_OBJECT);
+    const char *field = lua_tostring(L, 3);
+    if (field == NULL) {
+        return luaL_error(L, "Expecting a string in argument 3");
+    }
+    LTfloat *field_ptr = obj->field_ptr(field);
+    if (field_ptr == NULL) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+    LTfloat target_val = luaL_checknumber(L, 4);
+    LTfloat time = luaL_checknumber(L, 5);
+    size_t len;
+    const char *ease_func_str = lua_tolstring(L, 6, &len);
+    if (ease_func_str == NULL) {
+        return luaL_error(L, "Expecting a string in argument 6");
+    }
+    LTEaseFuncInfo *ease_func_info = LTEaseFunc_lookup(ease_func_str, len);
+    if (ease_func_info == NULL) {
+        return luaL_error(L, "Invalid easing function: ", ease_func_str);
+    }
+    LTEaseFunc ease_func = ease_func_info->func;
+    int slot = -1;
+    lua_pushlightuserdata(L, field_ptr);
+    lua_rawget(L, 1);
+    if (!lua_isnil(L, -1)) {
+        slot = lua_tonumber(L, -1);
+    }
+    lua_pop(L, 1);
+    if (slot < 0) {
+        slot = tweens->add(obj, field_ptr, target_val, time, ease_func, slot);
+        lua_pushlightuserdata(L, field_ptr);
+        lua_pushinteger(L, slot);
+        lua_rawset(L, 1); // Record the slot number of the field_ptr in the wrapper table.
+    } else {
+        tweens->add(obj, field_ptr, target_val, time, ease_func, slot);
+    }
+    add_ref(L, 1, 2); // Add a reference to the field owner.
+    lua_pushboolean(L, 1);
     return 1;
+}
+
+static int lt_ClearTweens(lua_State *L) {
+    check_nargs(L, 1);
+    LTTweenSet *tweens = (LTTweenSet*)get_object(L, 1, LT_TYPE_TWEENSET);
+    for (int i = 0; i < tweens->occupants; i++) {
+        LTTween *tween = &tweens->tweens[i];
+        push_wrap(L, tween->owner);
+        del_ref(L, 1, -1);
+        lua_pop(L, 1);
+        lua_pushlightuserdata(L, tween->field_ptr);
+        lua_pushnil(L);
+        lua_rawset(L, 1);
+    }
+    tweens->occupants = 0;
+    return 0;
 }
 
 /************************* Events **************************/
@@ -2834,8 +2893,10 @@ static const luaL_Reg ltlib[] = {
     {"ParticleSystemAdvance",           lt_ParticleSystemAdvance},
     {"ParticleSystemFixtureFilter",     lt_ParticleSystemFixtureFilter},
 
-    {"MakeNativeTween",                 lt_MakeNativeTween},
-    {"AdvanceNativeTween",              lt_AdvanceNativeTween},
+    {"TweenSet",                        lt_TweenSet},
+    {"AddTween",                        lt_AddTween},
+    {"AdvanceTweens",                   lt_AdvanceTweens},
+    {"ClearTweens",                     lt_ClearTweens},
 
     {"LoadSamples",                     lt_LoadSamples},
     {"Track",                           lt_Track},

@@ -1,11 +1,10 @@
 -- Copyright 2011 Ian MacLarty
 import "ltutil"
 import "ltrefs"
-import "lttween"
 import "ltui"
+import "ltanimator"
 import "lthierachy"
 import "ltmath"
-import "ltanimation"
 import "ltgraphics"
 import "ltimage"
 import "ltio"

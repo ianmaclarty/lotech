@@ -2,8 +2,6 @@
 lt.classes = {
     Object = {
         methods = {
-            Tween                       = lt.Tween,
-            CancelTween                 = lt.CancelTween,
         }
     },
 
@@ -133,6 +131,16 @@ lt.classes = {
         methods = {
             Advance = lt.ParticleSystemAdvance,
             FixtureFilter = lt.ParticleSystemFixtureFilter,
+        }
+    },
+
+    -- Tweening
+    TweenSet = {
+        super = "Object",
+        methods = {
+            Advance = lt.AdvanceTweens,
+            Add = lt.AddTweens,
+            Clear = lt.ClearTweens,
         }
     },
 

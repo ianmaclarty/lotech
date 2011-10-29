@@ -1,30 +1,54 @@
 /* Copyright (C) 2010 Ian MacLarty */
 #include "lttween.h"
 #include <math.h>
+#include <string.h>
 
-void ltInitTween(LTTween *tween, LTfloat *field_ptr, LTfloat delay,
-    LTfloat v, LTfloat period, LTEaseFunc ease)
+LTTweenSet::LTTweenSet() : LTObject(LT_TYPE_TWEENSET) {
+    LTTweenSet::capacity = 4;
+    LTTweenSet::occupants = 0;
+    LTTweenSet::tweens = new LTTween[capacity];
+}
+
+LTTweenSet::~LTTweenSet() {
+    delete[] tweens;
+}
+
+int LTTweenSet::add(LTObject *owner, LTfloat *field_ptr, LTfloat target_val, LTfloat time, LTEaseFunc ease, int slot) {
+    if (slot < 0) {
+        if (occupants == capacity) {
+            int new_capacity = capacity * 2;
+            LTTween *new_tweens = new LTTween[new_capacity];
+            memcpy(new_tweens, tweens, sizeof(LTTween) * capacity);
+            delete[] tweens;
+            tweens = new_tweens;
+            capacity = new_capacity;
+        }
+        slot = occupants;
+        occupants++;
+    }
+    LTTween *tween = &tweens[slot];
+    ltInitTween(tween, owner, field_ptr, target_val, time, ease);
+    return slot;
+}
+
+void ltInitTween(LTTween *tween, LTObject *owner, LTfloat *field_ptr,
+    LTfloat v, LTfloat time, LTEaseFunc ease)
 {
+    tween->owner = owner;
     tween->field_ptr = field_ptr;
-    tween->delay = delay;
     tween->t = 0.0f;
     tween->v0 = *field_ptr;
     tween->v = v;
-    tween->period = period;
+    tween->time = time;
     tween->ease = ease;
 }
 
 bool ltAdvanceTween(LTTween *tween, LTfloat dt) {
-    LTfloat delay = tween->delay;
-    if (delay > 0.0f) {
-        tween->delay = delay - dt;
-        return false;
-    }
     LTfloat t = tween->t;
     if (t < 1.0f) {
         LTfloat v0 = tween->v0;
         LTfloat v = v0 + (tween->v - v0) * tween->ease(t);
-        tween->t = t + dt / tween->period;
+        tween->t = t + dt / tween->time;
         *(tween->field_ptr) = v;
         return false;
     } else {
@@ -33,20 +57,20 @@ bool ltAdvanceTween(LTTween *tween, LTfloat dt) {
     }
 }
 
-LTfloat ltLinearEase(LTfloat t) {
+LTfloat ltEase_linear(LTfloat t) {
     return t;
 }
 
-LTfloat ltEaseIn(LTfloat t) {
+LTfloat ltEase_in(LTfloat t) {
     return t * t * t;
 }
 
-LTfloat ltEaseOut(LTfloat t) {
+LTfloat ltEase_out(LTfloat t) {
     LTfloat t1 = t - 1.0f;
     return t1 * t1 * t1 + 1.0f;
 }
 
-LTfloat ltEaseInOut(LTfloat t) {
+LTfloat ltEase_inout(LTfloat t) {
     t = t * 2.0f;
     if (t < 1.0f) {
         return t * t * t * 0.5f;
@@ -55,18 +79,18 @@ LTfloat ltEaseInOut(LTfloat t) {
     return t * t * t * 0.5f + 1.0f;
 }
 
-LTfloat ltBackInEase(LTfloat t) {
+LTfloat ltEase_backin(LTfloat t) {
     static const LTfloat s = 1.70158f;
     return t * t * ((s + 1.0f) * t - s);
 }
 
-LTfloat ltBackOutEase(LTfloat t) {
+LTfloat ltEase_backout(LTfloat t) {
     t = t - 1;
     LTfloat s = 1.70158f;
     return t * t * ((s + 1.0f) * t + s) + 1.0f;
 }
 
-LTfloat ltElasticEase(LTfloat t) {
+LTfloat ltEase_elastic(LTfloat t) {
     if (t == 0.0f or t == 1.0f) {
         return t;
     }
@@ -75,7 +99,7 @@ LTfloat ltElasticEase(LTfloat t) {
     return powf(2.0f, -10.0f * t) * sinf((t - s) * (2.0f * LT_PI) / p) + 1.0f;
 }
 
-LTfloat ltBounceEase(LTfloat t) {
+LTfloat ltEase_bounce(LTfloat t) {
     static const LTfloat s = 7.5625f;
     static const LTfloat p = 2.75f;
     LTfloat l;
@@ -98,25 +122,25 @@ LTfloat ltBounceEase(LTfloat t) {
     return l;
 }
 
-LTfloat ltAccelEase(LTfloat t) {
+LTfloat ltEase_accel(LTfloat t) {
     return t * t;
 }
 
-LTfloat ltDeccelEase(LTfloat t) {
+LTfloat ltEase_decel(LTfloat t) {
     LTfloat t1 = 1.0f - t;
     return 1.0f - (t1 * t1);
 }
 
-LTfloat ltZoomInEase(LTfloat t) {
+LTfloat ltEase_zoomin(LTfloat t) {
     static const LTfloat s = 0.05f;
     return (1.0f / (1.0f + s - t) - 1.0f) * s;
 }
 
-LTfloat ltZoomOutEase(LTfloat t) {
+LTfloat ltEase_zoomout(LTfloat t) {
     static const LTfloat s = 0.05f;
     return 1.0f + s - s / (s + t);
 }
 
-LTfloat ltRevolveEase(LTfloat t) {
+LTfloat ltEase_revolve(LTfloat t) {
     return (sinf(LT_PI * (t - 0.5f)) + 1.0f) * 0.5f;
 }

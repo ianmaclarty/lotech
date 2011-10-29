@@ -80,6 +80,9 @@ $(C_O_FILES): %.o: %.c $(C_H_FILES)
 fields:
 	../tools/fieldgen.sh ../src/lt/ltparticles.h LTParticleSystem
 
+../src/lt/lteasefunchash.h: ../src/lt/lttween.h ../tools/easegen.sh
+	../tools/easegen.sh $<
+
 %.dSYM: %
 	dsymutil $^
 
