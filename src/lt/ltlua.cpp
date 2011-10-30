@@ -1022,6 +1022,10 @@ static int lt_AdvanceTweens(lua_State *L) {
             lua_pop(L, 1);
             if (i != tweens->occupants - 1) {
                 tweens->tweens[i] = tweens->tweens[tweens->occupants - 1];
+                // Update slot of tween that has taken the place of the deleted tween.
+                lua_pushlightuserdata(L, tweens->tweens[i].field_ptr);
+                lua_pushinteger(L, i);
+                lua_rawset(L, 1);
             }
             tweens->occupants--;
         } else {
@@ -1065,11 +1069,13 @@ static int lt_AddTween(lua_State *L) {
     }
     lua_pop(L, 1);
     if (slot < 0) {
+        ltLog("creating new slot");
         slot = tweens->add(obj, field_ptr, target_val, time, ease_func, slot);
         lua_pushlightuserdata(L, field_ptr);
         lua_pushinteger(L, slot);
         lua_rawset(L, 1); // Record the slot number of the field_ptr in the wrapper table.
     } else {
+        ltLog("reusing slot %d", slot);
         tweens->add(obj, field_ptr, target_val, time, ease_func, slot);
     }
     add_ref(L, 1, 2); // Add a reference to the field owner.
