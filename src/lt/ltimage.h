@@ -18,6 +18,11 @@
     #define LT_PIXEL_VISIBLE(pxl)     (pxl & 0xFF)
 #endif
 
+enum LTTextureFilter {
+    LT_TEXTURE_FILTER_LINEAR,
+    LT_TEXTURE_FILTER_NEAREST,
+};
+
 struct LTAtlas;
 
 void ltEnableAtlas(LTAtlas *atlas);
@@ -75,12 +80,13 @@ struct LTImagePacker {
     int bottom;
     int width;
     int height;
+    int max_size;
     LTImageBuffer *occupant;
     bool rotated; // 90 degrees clockwise, so that the lower-left corner becomes the top-left corner.
     LTImagePacker *hi_child;
     LTImagePacker *lo_child;
 
-    LTImagePacker(int l, int b, int w, int h);
+    LTImagePacker(int l, int b, int w, int h, int max_size);
     virtual ~LTImagePacker();
 
     void deleteOccupants();
@@ -92,7 +98,7 @@ struct LTImagePacker {
     void getImages(LTImageBuffer **imgs);
 };
 
-/* Returns false if there's no room in the bin. */
+/* Returns false if there's no room in the packer. */
 bool ltPackImage(LTImagePacker *packer, LTImageBuffer *img);
 
 /* The caller is responsible for freeing the buffer (with delete). */
@@ -102,7 +108,7 @@ struct LTAtlas {
     GLuint texture_id;
     int ref_count;
 
-    LTAtlas(LTImagePacker *packer, const char *dump_file = NULL);
+    LTAtlas(LTImagePacker *packer, LTTextureFilter minfilter, LTTextureFilter magfilter);
     virtual ~LTAtlas();
 };
 

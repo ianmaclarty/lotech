@@ -304,8 +304,7 @@ static int check_nargs(lua_State *L, int exp_args) {
     }
 }
 
-static int default_atlas_size() {
-    // XXX Too big.
+static int max_atlas_size() {
     #ifdef LTIOS
         if (ltIsIPad() || ltIsRetinaIPhone()) {
             return 2048;
@@ -1329,12 +1328,17 @@ static void add_packer_images_to_lua_table(lua_State *L, int w, int h, LTImagePa
     }
 }
 
-static void pack_image(lua_State *L, LTImagePacker *packer, LTImageBuffer *buf) {
+#define MIN_TEX_SIZE 64
+
+static void pack_image(lua_State *L, LTImagePacker *packer, LTImageBuffer *buf,
+        LTTextureFilter minfilter, LTTextureFilter magfilter) {
     if (!ltPackImage(packer, buf)) {
         // Packer full, so generate an atlas.
-        LTAtlas *atlas = new LTAtlas(packer);
+        LTAtlas *atlas = new LTAtlas(packer, minfilter, magfilter);
         add_packer_images_to_lua_table(L, packer->width, packer->height, packer, atlas);
         packer->deleteOccupants();
+        packer->width = MIN_TEX_SIZE;
+        packer->height = MIN_TEX_SIZE;
 
         if (!ltPackImage(packer, buf)) {
             luaL_error(L, "Image %s is too large.", buf->name);
@@ -1342,19 +1346,38 @@ static void pack_image(lua_State *L, LTImagePacker *packer, LTImageBuffer *buf) 
     }
 }
 
+LTTextureFilter decode_texture_filter_arg(lua_State *L, int arg) {
+    const char *str = lua_tostring(L, arg);
+    if (str == NULL) {
+        luaL_error(L, "Expecting a string in argument %d", arg);
+    }
+    if (strcmp(str, "nearest") == 0) {
+        return LT_TEXTURE_FILTER_NEAREST;
+    }
+    if (strcmp(str, "linear") == 0) {
+        return LT_TEXTURE_FILTER_LINEAR;
+    }
+    luaL_error(L, "Unrecognised texture filter: %s", str);
+    return LT_TEXTURE_FILTER_LINEAR; // unreachable
+}
+
 static int lt_LoadImages(lua_State *L) {
     // Load images in 1st argument (an array) and return a table
     // indexed by image name.
-    // The second argument is the size of the atlasses to generate
-    // (default_atlas_size() if unset).
+    // The second and third arguments are the minimize and magnify
+    // texture filters to use.
     // If an entry in the array is a table, then process it as a font.
     int num_args = check_nargs(L, 1);
-    int size = default_atlas_size();
+    LTTextureFilter minfilter = LT_TEXTURE_FILTER_LINEAR;
+    LTTextureFilter magfilter = LT_TEXTURE_FILTER_LINEAR;
     if (num_args > 1) {
-        size = (int)luaL_checkinteger(L, 2);
+        minfilter = decode_texture_filter_arg(L, 2);
+    }
+    if (num_args > 2) {
+        magfilter = decode_texture_filter_arg(L, 3);
     }
     lua_newtable(L); // The table to be returned.
-    LTImagePacker *packer = new LTImagePacker(0, 0, size, size);
+    LTImagePacker *packer = new LTImagePacker(0, 0, MIN_TEX_SIZE, MIN_TEX_SIZE, max_atlas_size());
     int i = 1;
     while (true) {
         lua_pushinteger(L, i);
@@ -1375,7 +1398,7 @@ static int lt_LoadImages(lua_State *L) {
             delete[] path;
             if (buf != NULL) {
                 // If buf is NULL ltReadImage would have already logged an error.
-                pack_image(L, packer, buf);
+                pack_image(L, packer, buf, minfilter, magfilter);
             }
         } else {
             // A table entry means we should load the image as a font.
@@ -1401,7 +1424,7 @@ static int lt_LoadImages(lua_State *L) {
                 delete buf;
                 std::list<LTImageBuffer *>::iterator it;
                 for (it = glyph_list->begin(); it != glyph_list->end(); it++) {
-                    pack_image(L, packer, *it);
+                    pack_image(L, packer, *it, minfilter, magfilter);
                 }
                 delete glyph_list;
             }
@@ -1412,7 +1435,7 @@ static int lt_LoadImages(lua_State *L) {
 
     // Pack any images left in packer into a new texture.
     if (packer->size() > 0) {
-        LTAtlas *atlas = new LTAtlas(packer);
+        LTAtlas *atlas = new LTAtlas(packer, minfilter, magfilter);
         add_packer_images_to_lua_table(L, packer->width, packer->height, packer, atlas);
         packer->deleteOccupants();
     }

@@ -49,21 +49,37 @@ void ltDisableTextures() {
     }
 }
 
-LTAtlas::LTAtlas(LTImagePacker *packer, const char *dump_file) {
+static GLint lt2glFilter(LTTextureFilter f) {
+    switch (f) {
+        case LT_TEXTURE_FILTER_LINEAR:
+            ltLog("linear");
+            return GL_LINEAR;
+        case LT_TEXTURE_FILTER_NEAREST:
+            ltLog("nearest");
+            return GL_NEAREST;
+        default: return GL_LINEAR;
+    }
+}
+
+LTAtlas::LTAtlas(LTImagePacker *packer, LTTextureFilter minfilter, LTTextureFilter magfilter) {
     static int atlas_num = 1;
     char atlas_name[64];
     snprintf(atlas_name, 64, "atlas%d", atlas_num++);
     ref_count = 0;
     LTImageBuffer *buf = ltCreateAtlasImage(atlas_name, packer);
-    if (dump_file != NULL) {
-        ltLog("Dumping %s (%d x %d)", dump_file, buf->bb_width(), buf->bb_height());
+#ifdef LT_DUMP_ATLASES
+    {
+        static int dump_id = 1;
+        char dump_file[128];
+        snprintf(dump_file, 128, "/tmp/atlas_%d.png", dump_id++);
+        ltLog("Dumping atlas to file %s (%d x %d)", dump_file, buf->bb_width(), buf->bb_height());
         ltWriteImage(dump_file, buf);
     }
+#endif
     glGenTextures(1, &texture_id);
     glBindTexture(GL_TEXTURE_2D, texture_id);
-    // XXX Should make texture filtering configurable.
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, lt2glFilter(minfilter)); 
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, lt2glFilter(magfilter));
     glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
     #ifdef LTIOS
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, buf->width, buf->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, buf->bb_pixels);
@@ -423,11 +439,12 @@ void ltPasteImage(LTImageBuffer *src, LTImageBuffer *dest, int x, int y, bool ro
 
 //-----------------------------------------------------------------
 
-LTImagePacker::LTImagePacker(int l, int b, int w, int h) {
+LTImagePacker::LTImagePacker(int l, int b, int w, int h, int max) {
     left = l;
     bottom = b;
     width = w;
     height = h;
+    max_size = max;
     occupant = NULL;
     rotated = false;
     hi_child = NULL;
@@ -456,7 +473,18 @@ static bool pack_image(LTImagePacker *packer, LTImageBuffer *img) {
 
         bool should_rotate = false;
         if (!fits_non_rotated) {
-            should_rotate = true;
+            // XXX There are some unresolved issues with rotating images:
+            // - You need to know both the x and y coords of each corner
+            //   of the texture quad.  Knowing left, bottom, right and top 
+            //   is not enough.  This makes using the tex_left, etc fields
+            //   in Lua dangerous.
+            // - If the atlas width is different from the atlas height, then
+            //   the texture coords are miscalculated when the images is
+            //   rotated.
+            // Resolving these issues is possibly more trouble than it's worth.
+            //
+            // should_rotate = true;
+            return false;
         }
 
         int hi_l;
@@ -490,8 +518,8 @@ static bool pack_image(LTImagePacker *packer, LTImageBuffer *img) {
 
         packer->occupant = img;
         packer->rotated = should_rotate;
-        packer->hi_child = new LTImagePacker(hi_l, hi_b, hi_w, hi_h);
-        packer->lo_child = new LTImagePacker(lo_l, lo_b, lo_w, lo_h);
+        packer->hi_child = new LTImagePacker(hi_l, hi_b, hi_w, hi_h, packer->max_size);
+        packer->lo_child = new LTImagePacker(lo_l, lo_b, lo_w, lo_h, packer->max_size);
 
         return true;
     }
@@ -521,7 +549,7 @@ bool ltPackImage(LTImagePacker *packer, LTImageBuffer *img) {
         int n = packer->size() + 1;
         bool fitted = true;
         LTImagePacker *test_packer = new LTImagePacker(packer->left, packer->bottom,
-            packer->width, packer->height);
+            packer->width, packer->height, packer->max_size);
         LTImageBuffer **imgs = new LTImageBuffer *[n];
         packer->getImages(imgs);
         imgs[n - 1] = img;
@@ -538,8 +566,38 @@ bool ltPackImage(LTImagePacker *packer, LTImageBuffer *img) {
                 pack_image(packer, imgs[i]);
             }
         }
-        delete test_packer;
+        test_packer->clear();
+        while (!fitted) {
+            // Sorting didn't help.  Try doubling the area.
+            if (test_packer->width > test_packer->height) {
+                test_packer->height = test_packer->width;
+            } else {
+                test_packer->width *= 2;
+            }
+            if (test_packer->width <= test_packer->max_size) {
+                fitted = true;
+                for (int i = n - 1; i >= 0; i--) {
+                    if (!pack_image(test_packer, imgs[i])) {
+                        fitted = false;
+                        break;
+                    }
+                }
+                test_packer->clear();
+                if (fitted) {
+                    packer->clear();
+                    packer->width = test_packer->width;
+                    packer->height = test_packer->height;
+                    for (int i = n - 1; i >= 0; i--) {
+                        pack_image(packer, imgs[i]);
+                    }
+                }
+            } else {
+                break;
+            }
+            ltLog("w = %d h = %d", packer->width, packer->height);
+        }
         delete[] imgs;
+        delete test_packer;
         return fitted;
     }
 }
