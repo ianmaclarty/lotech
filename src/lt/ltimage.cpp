@@ -52,10 +52,8 @@ void ltDisableTextures() {
 static GLint lt2glFilter(LTTextureFilter f) {
     switch (f) {
         case LT_TEXTURE_FILTER_LINEAR:
-            ltLog("linear");
             return GL_LINEAR;
         case LT_TEXTURE_FILTER_NEAREST:
-            ltLog("nearest");
             return GL_NEAREST;
         default: return GL_LINEAR;
     }
@@ -594,7 +592,6 @@ bool ltPackImage(LTImagePacker *packer, LTImageBuffer *img) {
             } else {
                 break;
             }
-            ltLog("w = %d h = %d", packer->width, packer->height);
         }
         delete[] imgs;
         delete test_packer;
