@@ -1,6 +1,6 @@
 default: harness
 
-VPATH=../src/lt:../src/lua:../src/zlib:../src/lpng:../src/Box2D:../src/Box2D/Common:../src/Box2D/Collision:../src/Box2D/Collision/Shapes:../src/Box2D/Dynamics:../src/Box2D/Dynamics/Contacts:../src/Box2D/Dynamics/Joints:../tests:../tools
+VPATH=../src/lt:../src/lua:../src/zlib:../src/lpng:../src/Box2D:../src/Box2D/Common:../src/Box2D/Collision:../src/Box2D/Collision/Shapes:../src/Box2D/Dynamics:../src/Box2D/Dynamics/Contacts:../src/Box2D/Dynamics/Joints:../src/Box2D/Rope:../tests:../tools
 
 GPP=g++
 GCC=gcc

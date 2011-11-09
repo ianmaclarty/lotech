@@ -104,6 +104,9 @@ bool ltPackImage(LTImagePacker *packer, LTImageBuffer *img);
 /* The caller is responsible for freeing the buffer (with delete). */
 LTImageBuffer *ltCreateAtlasImage(const char *name, LTImagePacker *packer);
 
+/* The caller is responsible for freeing the buffer (with delete). */
+LTImageBuffer *ltCreateEmptyImageBuffer(const char *name, int w, int h);
+
 struct LTAtlas {
     GLuint texture_id;
     int ref_count;

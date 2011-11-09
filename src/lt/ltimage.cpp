@@ -671,6 +671,20 @@ LTImageBuffer *ltCreateAtlasImage(const char *name, LTImagePacker *packer) {
     return atlas;
 }
 
+LTImageBuffer *ltCreateEmptyImageBuffer(const char *name, int w, int h) {
+    int num_pixels = w * h;
+    LTImageBuffer *buf = new LTImageBuffer(name);
+    buf->width = w;
+    buf->height = h;
+    buf->bb_left = 0;
+    buf->bb_right = w - 1;
+    buf->bb_top = h - 1;
+    buf->bb_bottom = 0;
+    buf->bb_pixels = new LTpixel[num_pixels];
+    memset(buf->bb_pixels, 0x00, num_pixels * 4);
+    return buf;
+}
+
 //-----------------------------------------------------------------
 
 LTImage::LTImage(LTAtlas *atls, int atlas_w, int atlas_h, LTImagePacker *packer) : LTSceneNode(LT_TYPE_IMAGE) {
