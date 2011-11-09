@@ -2827,7 +2827,7 @@ static int loadfile (lua_State *L, const char *filename) {
 
 static int import(lua_State *L) {
     int top = lua_gettop(L);
-    check_nargs(L, 1);
+    int nargs = check_nargs(L, 1);
     const char *module = lua_tostring(L, 1);
     if (module == NULL) {
         return luaL_error(L, "The import function requires a string argument.");
@@ -2841,7 +2841,10 @@ static int import(lua_State *L) {
         lua_pop(L, 1);
         return luaL_error(L, "%s", msg);
     }
-    lua_call(g_L, 0, LUA_MULTRET);
+    for (int i = 2; i <= nargs; i++) {
+        lua_pushvalue(L, i);
+    }
+    lua_call(g_L, nargs - 1, LUA_MULTRET);
     return lua_gettop(L) - top;
 }
 
