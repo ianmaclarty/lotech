@@ -43,6 +43,9 @@ typedef float           LTdegrees;
 typedef LTuint32        LTpixel;
 typedef GLuint          LTvertbuf;
 typedef GLuint          LTtexbuf;
+typedef GLuint          LTtexid;
+typedef GLushort        LTvertindex;
+typedef GLshort         LTtexcoord;
 
 // Used in gperf generated tables.
 struct LTFieldInfo {

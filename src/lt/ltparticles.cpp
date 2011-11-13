@@ -54,14 +54,14 @@ LTParticleSystem::LTParticleSystem(LTImage *img, int n)
     quads = new LTParticleQuad[n];
 
     for (int i = 0; i < n; i++) {
-        quads[i].bottom_left.tex_coord.x  = img->tex_coords[6];
-        quads[i].bottom_left.tex_coord.y  = img->tex_coords[7];
-        quads[i].bottom_right.tex_coord.x = img->tex_coords[4];
-        quads[i].bottom_right.tex_coord.y = img->tex_coords[5];
-        quads[i].top_left.tex_coord.x     = img->tex_coords[0];
-        quads[i].top_left.tex_coord.y     = img->tex_coords[1];
-        quads[i].top_right.tex_coord.x    = img->tex_coords[2];
-        quads[i].top_right.tex_coord.y    = img->tex_coords[3];
+        quads[i].bottom_left.tex_coord_x  = img->tex_coords[6];
+        quads[i].bottom_left.tex_coord_y  = img->tex_coords[7];
+        quads[i].bottom_right.tex_coord_x = img->tex_coords[4];
+        quads[i].bottom_right.tex_coord_y = img->tex_coords[5];
+        quads[i].top_left.tex_coord_x     = img->tex_coords[0];
+        quads[i].top_left.tex_coord_y     = img->tex_coords[1];
+        quads[i].top_right.tex_coord_x    = img->tex_coords[2];
+        quads[i].top_right.tex_coord_y    = img->tex_coords[3];
     }
     indices = new GLushort[n * 6];
     for (int i = 0; i < n; i++) {
@@ -323,10 +323,10 @@ void LTParticleSystem::draw() {
         GLsizei stride = sizeof(LTParticleVertexData);
         unsigned char *start = (unsigned char*)quads;
         unsigned char *color_start = (unsigned char*)&quads[0].bottom_left.color;
-        unsigned char *tex_start = (unsigned char*)&quads[0].bottom_left.tex_coord;
+        unsigned char *tex_start = (unsigned char*)&quads[0].bottom_left.tex_coord_x;
         glVertexPointer(2, GL_FLOAT, stride, start);
         glColorPointer(4, GL_UNSIGNED_BYTE, stride, color_start);
-        glTexCoordPointer(2, GL_FLOAT, stride, tex_start);
+        glTexCoordPointer(2, GL_SHORT, stride, tex_start);
         
         glDrawElements(GL_TRIANGLES, num_particles * 6, GL_UNSIGNED_SHORT, indices);
 

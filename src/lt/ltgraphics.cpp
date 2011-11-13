@@ -84,6 +84,9 @@ void ltInitGraphics() {
     #else
     glOrtho(viewport_left, viewport_right, viewport_bottom, viewport_top, -1.0f, 1.0f);
     #endif
+    glMatrixMode(GL_TEXTURE);
+    glLoadIdentity();
+    glScalef(1.0f / (GLfloat)LT_MAX_TEX_COORD, 1.0f / (GLfloat)LT_MAX_TEX_COORD, 1.0f);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 }

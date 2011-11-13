@@ -26,7 +26,7 @@ enum LTTextureFilter {
 struct LTAtlas;
 
 void ltEnableAtlas(LTAtlas *atlas);
-void ltEnableTexture(GLuint texture_id);
+void ltEnableTexture(LTtexid texture_id);
 void ltDisableTextures();
 
 struct LTImageBuffer {
@@ -108,7 +108,7 @@ LTImageBuffer *ltCreateAtlasImage(const char *name, LTImagePacker *packer);
 LTImageBuffer *ltCreateEmptyImageBuffer(const char *name, int w, int h);
 
 struct LTAtlas {
-    GLuint texture_id;
+    LTtexid texture_id;
     int ref_count;
 
     LTAtlas(LTImagePacker *packer, LTTextureFilter minfilter, LTTextureFilter magfilter);
@@ -121,7 +121,7 @@ struct LTImage : LTSceneNode {
     LTtexbuf  texbuf;
 
     // Texture coords of image bounding box in atlas.
-    LTfloat   tex_coords[8];
+    LTtexcoord   tex_coords[8];
 
     // Bounding box dimensions in world coordinates.
     LTfloat   world_vertices[8];

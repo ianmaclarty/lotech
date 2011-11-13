@@ -27,7 +27,8 @@ struct LTParticle {
 struct LTParticleVertexData {
     LTPoint vertex;
     LTCompactColor color;
-    LTPoint tex_coord;
+    LTtexcoord tex_coord_x;
+    LTtexcoord tex_coord_y;
 };
 
 struct LTParticleQuad {

@@ -701,13 +701,12 @@ LTImage::LTImage(LTAtlas *atls, int atlas_w, int atlas_h, LTImagePacker *packer)
     atlas->ref_count++;
     rotated = packer->rotated;
 
-    LTfloat fatlas_w = (LTfloat)atlas_w;
-    LTfloat fatlas_h = (LTfloat)atlas_h;
-
-    LTfloat tex_left = (LTfloat)packer->left / fatlas_w;
-    LTfloat tex_bottom = (LTfloat)packer->bottom / fatlas_h;
-    LTfloat tex_width = (LTfloat)packer->occupant->bb_width() / fatlas_w;
-    LTfloat tex_height = (LTfloat)packer->occupant->bb_height() / fatlas_h;
+    int texel_w = LT_MAX_TEX_COORD / atlas_w;
+    int texel_h = LT_MAX_TEX_COORD / atlas_h;
+    LTtexcoord tex_left = packer->left * texel_w;
+    LTtexcoord tex_bottom = packer->bottom * texel_h;
+    LTtexcoord tex_width = packer->occupant->bb_width() * texel_w;
+    LTtexcoord tex_height = packer->occupant->bb_height() * texel_h;
 
     LTfloat bb_left = (LTfloat)packer->occupant->bb_left * pix_w;
     LTfloat bb_bottom = (LTfloat)packer->occupant->bb_bottom * pix_h;
@@ -747,7 +746,7 @@ LTImage::LTImage(LTAtlas *atls, int atlas_w, int atlas_h, LTImagePacker *packer)
     }
     glGenBuffers(1, &texbuf);
     glBindBuffer(GL_ARRAY_BUFFER, texbuf);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 8, tex_coords, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(LTtexcoord) * 8, tex_coords, GL_STATIC_DRAW);
 }
 
 LTImage::~LTImage() {
@@ -767,7 +766,7 @@ void LTImage::draw() {
     glBindBuffer(GL_ARRAY_BUFFER, vertbuf);
     glVertexPointer(2, GL_FLOAT, 0, 0);
     glBindBuffer(GL_ARRAY_BUFFER, texbuf);
-    glTexCoordPointer(2, GL_FLOAT, 0, 0);
+    glTexCoordPointer(2, GL_SHORT, 0, 0);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
 

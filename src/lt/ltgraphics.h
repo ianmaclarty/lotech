@@ -11,6 +11,8 @@
 #include "ltcommon.h"
 #include "ltevent.h"
 
+#define LT_MAX_TEX_COORD 8192
+
 struct LTPoint {
     LTfloat x;
     LTfloat y;
