@@ -2669,26 +2669,30 @@ static int lt_BodyTracker(lua_State *L) {
     LTfloat max_x = FLT_MAX;
     LTfloat min_y = -FLT_MAX;
     LTfloat max_y = FLT_MAX;
+    LTfloat snap_to = 0.0f;
     if (nargs > 2) {
-        viewport_mode = lua_toboolean(L, 3);
+        snap_to = luaL_checknumber(L, 3);
     }
     if (nargs > 3) {
-        track_rotation = lua_toboolean(L, 4);
+        viewport_mode = lua_toboolean(L, 4);
     }
     if (nargs > 4) {
-        min_x = luaL_checknumber(L, 5);
+        track_rotation = lua_toboolean(L, 5);
     }
     if (nargs > 5) {
-        max_x = luaL_checknumber(L, 6);
+        min_x = luaL_checknumber(L, 6);
     }
     if (nargs > 6) {
-        min_y = luaL_checknumber(L, 7);
+        max_x = luaL_checknumber(L, 7);
     }
     if (nargs > 7) {
-        max_y = luaL_checknumber(L, 8);
+        min_y = luaL_checknumber(L, 8);
+    }
+    if (nargs > 8) {
+        max_y = luaL_checknumber(L, 9);
     }
     LTBodyTracker *node = new LTBodyTracker(body, child, viewport_mode, track_rotation,
-        min_x, max_x, min_y, max_y);
+        min_x, max_x, min_y, max_y, snap_to);
     push_wrap(L, node);
     set_ref_field(L, -1, "child", 1); // Add reference from new node to child.
     set_ref_field(L, -1, "body", 2);  // Add reference from new node to body.

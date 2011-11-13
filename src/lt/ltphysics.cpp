@@ -141,7 +141,7 @@ void LTJoint::destroy() {
 
 LTBodyTracker::LTBodyTracker(LTBody *body, LTSceneNode *child,
     bool viewport_mode, bool track_rotation,
-    LTfloat min_x, LTfloat max_x, LTfloat min_y, LTfloat max_y)
+    LTfloat min_x, LTfloat max_x, LTfloat min_y, LTfloat max_y, LTfloat snap_to)
     : LTWrapNode(child, LT_TYPE_BODYTRACKER)
 {
     LTBodyTracker::viewport_mode = viewport_mode;
@@ -150,6 +150,7 @@ LTBodyTracker::LTBodyTracker(LTBody *body, LTSceneNode *child,
     LTBodyTracker::max_x = max_x;
     LTBodyTracker::min_y = min_y;
     LTBodyTracker::max_y = max_y;
+    LTBodyTracker::snap_to = snap_to;
     LTWorld *w = body->world;
     if (w != NULL) {
         LTBodyTracker::scaling = w->scaling;
@@ -171,6 +172,10 @@ void LTBodyTracker::draw() {
         const b2Transform b2t = b->GetTransform();
         LTfloat x = b2t.p.x * scaling;
         LTfloat y = b2t.p.y * scaling;
+        if (snap_to > 0.0f) {
+            x = roundf(x / snap_to) * snap_to;
+            y = roundf(y / snap_to) * snap_to;
+        }
         if (x < min_x) {
             x = min_x;
         } else if (x > max_x) {
