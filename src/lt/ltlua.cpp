@@ -3036,7 +3036,7 @@ static void run_lua_file(const char *file) {
     }
 }
 
-static void set_globals() {
+static void set_viewport_globals() {
     if (g_L != NULL) {
         lua_getglobal(g_L, "lt");
         lua_pushnumber(g_L, ltGetViewPortLeftEdge());
@@ -3051,10 +3051,16 @@ static void set_globals() {
         lua_setfield(g_L, -2, "width");
         lua_pushnumber(g_L, ltGetViewPortTopEdge() - ltGetViewPortBottomEdge());
         lua_setfield(g_L, -2, "height");
+        lua_pop(g_L, 1); // pop lt
+    }
+}
+static void set_globals() {
+    if (g_L != NULL) {
+        lua_getglobal(g_L, "lt");
         #ifdef LTIOS
             lua_pushboolean(g_L, 1);
             lua_setfield(g_L, -2, "ios");
-            lua_pushboolean(g_L, ltIsIPad());
+            lua_pushboolean(g_L, ltIsIPad() ? 1 : 0);
             lua_setfield(g_L, -2, "ipad");
             lua_pushboolean(g_L, ltIOSSupportsES2());
             lua_setfield(g_L, -2, "shaders");
@@ -3095,6 +3101,7 @@ void ltLuaSetup() {
     luaL_register(g_L, "lt", ltlib);
     lua_gc(g_L, LUA_GCRESTART, 0);
     run_lua_file("lt");
+    set_globals();
     run_lua_file("config");
     ltRestoreState();
 }
@@ -3138,7 +3145,7 @@ void ltLuaRender() {
     if (g_L != NULL && !g_suspended) {
         if (!g_initialized) {
             ltAdjustViewportAspectRatio();
-            set_globals();
+            set_viewport_globals();
             run_lua_file("main");
             #ifdef LTGAMECENTER
             if (ltIOSGameCenterIsAvailable()) {
