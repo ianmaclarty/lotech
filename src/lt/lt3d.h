@@ -5,21 +5,6 @@
 #include "ltcommon.h"
 #include "ltscene.h"
 
-struct LTCuboidNode : LTSceneNode {
-    LTvertbuf vertbuf;
-    LTvertbuf frontbuf;
-    LTvertbuf backbuf;
-    LTvertbuf topbuf;
-    LTvertbuf bottombuf;
-    LTvertbuf leftbuf;
-    LTvertbuf rightbuf;
-
-    LTCuboidNode(LTfloat width, LTfloat height, LTfloat depth);
-    virtual ~LTCuboidNode();
-
-    virtual void draw();
-};
-
 struct LTPerspective : LTWrapNode {
     LTfloat near;
     LTfloat origin;

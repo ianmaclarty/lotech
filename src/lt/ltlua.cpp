@@ -712,16 +712,6 @@ static int lt_Rect(lua_State *L) {
     return 1;
 }
 
-static int lt_Cuboid(lua_State *L) {
-    check_nargs(L, 3);
-    LTfloat w = (LTfloat)luaL_checknumber(L, 1);
-    LTfloat h = (LTfloat)luaL_checknumber(L, 2);
-    LTfloat d = (LTfloat)luaL_checknumber(L, 3);
-    LTCuboidNode *node = new LTCuboidNode(w, h, d);
-    push_wrap(L, node);
-    return 1;
-}
-
 static int lt_HitFilter(lua_State *L) {
     check_nargs(L, 5);
     LTSceneNode *child = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
@@ -2905,7 +2895,6 @@ static const luaL_Reg ltlib[] = {
     {"Line",                            lt_Line},
     {"Triangle",                        lt_Triangle},
     {"Rect",                            lt_Rect},
-    {"Cuboid",                          lt_Cuboid},
     {"Tint",                            lt_Tint},
     {"BlendMode",                       lt_BlendMode},
     {"Scale",                           lt_Scale},
