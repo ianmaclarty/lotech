@@ -52,6 +52,8 @@ static LTDisplayOrientation display_orientation = LT_DISPLAY_ORIENTATION_LANDSCA
 static std::list<LTColor> tint_stack;
 static std::list<LTBlendMode> blend_mode_stack;
 
+static void apply_blend_mode(LTBlendMode mode);
+
 void ltInitGraphics() {
     glDisable(GL_DITHER);
     glDisable(GL_ALPHA_TEST);
@@ -76,7 +78,7 @@ void ltInitGraphics() {
     #endif
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    apply_blend_mode(LT_BLEND_MODE_NORMAL);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glViewport(screen_viewport_x, screen_viewport_y, screen_viewport_width, screen_viewport_height);
@@ -380,6 +382,9 @@ static void apply_blend_mode(LTBlendMode mode) {
             break;
         case LT_BLEND_MODE_ADD:
             glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+            break;
+        case LT_BLEND_MODE_COLOR:
+            glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
             break;
     }
 }

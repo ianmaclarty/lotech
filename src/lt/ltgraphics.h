@@ -90,6 +90,7 @@ enum LTDisplayOrientation {
 enum LTBlendMode {
     LT_BLEND_MODE_NORMAL,
     LT_BLEND_MODE_ADD,
+    LT_BLEND_MODE_COLOR,
 };
 
 // Should be called before rendering each frame.

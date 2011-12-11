@@ -669,6 +669,8 @@ static int lt_BlendMode(lua_State *L) {
     LTBlendMode mode;
     if (strcmp(modestr, "add") == 0) {
         mode = LT_BLEND_MODE_ADD;
+    } else if (strcmp(modestr, "color") == 0) {
+        mode = LT_BLEND_MODE_COLOR;
     } else if (strcmp(modestr, "normal") == 0) {
         mode = LT_BLEND_MODE_NORMAL;
     } else {
