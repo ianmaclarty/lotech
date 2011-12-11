@@ -9,13 +9,18 @@ struct LTPerspective : LTWrapNode {
     LTfloat near;
     LTfloat origin;
     LTfloat far;
-    bool depth_buffer_on;
 
-    LTPerspective(LTfloat near, LTfloat origin, LTfloat far, bool depth_buf_on, LTSceneNode *child);
+    LTPerspective(LTfloat near, LTfloat origin, LTfloat far, LTSceneNode *child);
     
     virtual void draw();
     bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
     virtual LTfloat* field_ptr(const char *field_name);
+};
+
+struct LTDepthTest : LTWrapNode {
+    LTDepthTest(LTSceneNode *child);
+    virtual void draw();
+    bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
 };
 
 struct LTPitch : LTWrapNode {

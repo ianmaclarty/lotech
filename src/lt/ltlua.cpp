@@ -607,11 +607,7 @@ static int lt_Perspective(lua_State *L) {
     LTfloat near = luaL_checknumber(L, 2);
     LTfloat origin = luaL_checknumber(L, 3);
     LTfloat far = luaL_checknumber(L, 4);
-    bool depth_buf_on = true;
-    if (num_args > 4) {
-        depth_buf_on = lua_toboolean(L, 5);
-    }
-    LTPerspective *node = new LTPerspective(near, origin, far, depth_buf_on, child);
+    LTPerspective *node = new LTPerspective(near, origin, far, child);
     push_wrap(L, node);
     set_ref_field(L, -1, "child", 1); // Add reference from new node to child.
     return 1;
@@ -628,17 +624,24 @@ static int lt_Pitch(lua_State *L) {
 }
 
 static int lt_Fog(lua_State *L) {
-    check_nargs(L, 7);
+    check_nargs(L, 6);
     LTSceneNode *child = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
     LTfloat start = (LTfloat)luaL_checknumber(L, 2);
     LTfloat end = (LTfloat)luaL_checknumber(L, 3);
     LTfloat red = (LTfloat)luaL_checknumber(L, 4);
     LTfloat green = (LTfloat)luaL_checknumber(L, 5);
     LTfloat blue = (LTfloat)luaL_checknumber(L, 6);
-    LTfloat alpha = (LTfloat)luaL_checknumber(L, 7);
-    LTColor color(red, green, blue, alpha);
+    LTColor color(red, green, blue, 1.0f); // Alpha ignored for fog.
     LTFog *fog = new LTFog(start, end, color, child);
     push_wrap(L, fog);
+    set_ref_field(L, -1, "child", 1); // Add ref from new node to child.
+    return 1;
+}
+
+static int lt_DepthTest(lua_State *L) {
+    check_nargs(L, 1);
+    LTSceneNode *child = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
+    push_wrap(L, new LTDepthTest(child));
     set_ref_field(L, -1, "child", 1); // Add ref from new node to child.
     return 1;
 }
@@ -2900,6 +2903,8 @@ static const luaL_Reg ltlib[] = {
     {"Scale",                           lt_Scale},
     {"Perspective",                     lt_Perspective},
     {"Pitch",                           lt_Pitch},
+    {"Fog",                             lt_Fog},
+    {"DepthTest",                       lt_DepthTest},
     {"Translate",                       lt_Translate},
     {"Rotate",                          lt_Rotate},
     {"HitFilter",                       lt_HitFilter},

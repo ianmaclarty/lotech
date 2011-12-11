@@ -2,28 +2,17 @@
 #include "ltgraphics.h"
 #include "ltimage.h"
 
-LTPerspective::LTPerspective(LTfloat near, LTfloat origin, LTfloat far, bool depth_buf_on,
+LTPerspective::LTPerspective(LTfloat near, LTfloat origin, LTfloat far,
         LTSceneNode *child) : LTWrapNode(child, LT_TYPE_PERSPECTIVE)
 {
     LTPerspective::near = near;
     LTPerspective::origin = origin;
     LTPerspective::far = far;
-    LTPerspective::depth_buffer_on = depth_buf_on;
 }
 
 void LTPerspective::draw() {
     ltPushPerspective(near, origin, far);
-    #ifdef LTDEPTHBUF
-    if (depth_buffer_on) {
-        glEnable(GL_DEPTH_TEST);
-    }
-    #endif
     child->draw();
-    #ifdef LTDEPTHBUF
-    if (depth_buffer_on) {
-        glDisable(GL_DEPTH_TEST);
-    }
-    #endif
     ltPopPerspective();
 }
 
@@ -40,6 +29,24 @@ LTfloat* LTPerspective::field_ptr(const char *field_name) {
         return &far;
     }
     return NULL;
+}
+
+LTDepthTest::LTDepthTest(LTSceneNode *child) : LTWrapNode(child, LT_TYPE_DEPTHTEST)
+{
+}
+
+void LTDepthTest::draw() {
+    #ifdef LTDEPTHBUF
+    glEnable(GL_DEPTH_TEST);
+    #endif
+    child->draw();
+    #ifdef LTDEPTHBUF
+    glDisable(GL_DEPTH_TEST);
+    #endif
+}
+
+bool LTDepthTest::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
+    return child->propogatePointerEvent(x, y, event);
 }
 
 LTPitch::LTPitch(LTfloat pitch, LTSceneNode *child) : LTWrapNode(child, LT_TYPE_PITCH) {
@@ -80,7 +87,7 @@ void LTFog::draw() {
 }
 
 bool LTFog::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
-    return false;
+    return child->propogatePointerEvent(x, y, event);
 }
 
 LTfloat* LTFog::field_ptr(const char *field_name) {
@@ -94,8 +101,6 @@ LTfloat* LTFog::field_ptr(const char *field_name) {
         return &color.g;
     } else if (strcmp(field_name, "blue") == 0) {
         return &color.b;
-    } else if (strcmp(field_name, "alpha") == 0) {
-        return &color.a;
     }
     return NULL;
 }

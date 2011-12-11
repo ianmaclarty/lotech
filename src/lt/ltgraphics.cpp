@@ -57,6 +57,7 @@ void ltInitGraphics() {
     glDisable(GL_ALPHA_TEST);
     glDisable(GL_STENCIL_TEST);
     glDisable(GL_FOG);
+    glFogf(GL_FOG_MODE, GL_LINEAR);
     ltDisableTextures();
     glDisable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);

@@ -30,6 +30,8 @@ lt.classes = {
             Wrap                        = lt.Wrap,
             TrackBody                   = lt.BodyTracker,
             Button                      = lt.Button,
+            Fog                         = lt.Fog,
+            DepthTest                   = lt.DepthTest,
         }
     },
     Layer = {
@@ -95,15 +97,19 @@ lt.classes = {
     },
 
     -- 3D
-    Cuboid = {
-        super = "SceneNode",
-        methods = {}
-    },
     Perspective = {
         super = "Wrap",
         methods = {}
     },
     Pitch = {
+        super = "Wrap",
+        methods = {}
+    },
+    Fog = {
+        super = "Wrap",
+        methods = {}
+    },
+    DepthTest = {
         super = "Wrap",
         methods = {}
     },

@@ -38,6 +38,7 @@ const LTTypeInfo types[] = {
     {"Perspective",     LT_TYPE_WRAP},
     {"Pitch",           LT_TYPE_WRAP},
     {"Fog",             LT_TYPE_WRAP},
+    {"DepthTest",       LT_TYPE_WRAP},
     {"HitFilter",       LT_TYPE_WRAP},
     {"DownFilter",      LT_TYPE_WRAP},
     {"Wrap",            LT_TYPE_SCENENODE},
