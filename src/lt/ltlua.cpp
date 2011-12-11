@@ -586,14 +586,16 @@ static int lt_Scale(lua_State *L) {
     LTSceneNode *child = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
     LTfloat sx = 1.0f;
     LTfloat sy = 1.0f;
+    LTfloat sz = 1.0f;
     LTfloat s = 1.0f;
     if (num_args == 2) {
         s = luaL_checknumber(L, 2);
     } else {
         sx = luaL_checknumber(L, 2);
         sy = luaL_checknumber(L, 3);
+        sz = luaL_checknumber(L, 4);
     }
-    LTScaleNode *node = new LTScaleNode(sx, sy, s, child);
+    LTScaleNode *node = new LTScaleNode(sx, sy, sz, s, child);
     push_wrap(L, node);
     set_ref_field(L, -1, "child", 1); // Add reference from new node to child.
     return 1;
@@ -622,6 +624,22 @@ static int lt_Pitch(lua_State *L) {
     LTPitch *node = new LTPitch(pitch, child);
     push_wrap(L, node);
     set_ref_field(L, -1, "child", 1); // Add reference from new node to child.
+    return 1;
+}
+
+static int lt_Fog(lua_State *L) {
+    check_nargs(L, 7);
+    LTSceneNode *child = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
+    LTfloat start = (LTfloat)luaL_checknumber(L, 2);
+    LTfloat end = (LTfloat)luaL_checknumber(L, 3);
+    LTfloat red = (LTfloat)luaL_checknumber(L, 4);
+    LTfloat green = (LTfloat)luaL_checknumber(L, 5);
+    LTfloat blue = (LTfloat)luaL_checknumber(L, 6);
+    LTfloat alpha = (LTfloat)luaL_checknumber(L, 7);
+    LTColor color(red, green, blue, alpha);
+    LTFog *fog = new LTFog(start, end, color, child);
+    push_wrap(L, fog);
+    set_ref_field(L, -1, "child", 1); // Add ref from new node to child.
     return 1;
 }
 

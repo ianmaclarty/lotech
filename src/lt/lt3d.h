@@ -43,4 +43,16 @@ struct LTPitch : LTWrapNode {
     virtual LTfloat* field_ptr(const char *field_name);
 };
 
+struct LTFog : LTWrapNode {
+    LTfloat start;
+    LTfloat end;
+    LTColor color;
+
+    LTFog(LTfloat start, LTfloat end, LTColor color, LTSceneNode *child);
+
+    virtual void draw();
+    bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
+    virtual LTfloat* field_ptr(const char *field_name);
+};
+
 #endif

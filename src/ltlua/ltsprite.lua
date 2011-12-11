@@ -11,6 +11,13 @@ end
 
 local global_sprites = lt.SpriteSet()
 
+local
+function sprite_reset(sprite)
+    sprite:Replace(sprite.frames[1])
+    sprite.t_accum = 0
+    sprite.curr_frame = 1
+end
+
 -- frames is an array of images.
 function lt.Sprite(frames, fps, spriteset)
     if not spriteset then
@@ -24,6 +31,7 @@ function lt.Sprite(frames, fps, spriteset)
     sprite.curr_frame = 1
     sprite.paused = false
     sprite.loop = true
+    sprite.Reset = sprite_reset
     spriteset[n + 1] = sprite
     return sprite
 end
@@ -34,6 +42,7 @@ function lt.AdvanceSprites(spriteset, step)
     local num_frames
     local frames
     local curr_frame
+    local prev_frame
     for _, sprite in pairs(spriteset) do
         if not sprite.paused then
             spf = sprite.spf
@@ -41,6 +50,7 @@ function lt.AdvanceSprites(spriteset, step)
             frames = sprite.frames
             num_frames = #frames
             curr_frame = sprite.curr_frame
+            prev_frame = curr_frame
             while t_accum >= spf do
                 t_accum = t_accum - spf
                 curr_frame = curr_frame + 1
@@ -53,8 +63,10 @@ function lt.AdvanceSprites(spriteset, step)
                 end
             end
             sprite.t_accum = t_accum
-            sprite.curr_frame = curr_frame
-            sprite:Replace(frames[curr_frame])
+            if prev_frame ~= curr_frame then
+                sprite.curr_frame = curr_frame
+                sprite:Replace(frames[curr_frame])
+            end
         end
     end
 end

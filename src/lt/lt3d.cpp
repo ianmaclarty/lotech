@@ -155,3 +155,41 @@ void LTCuboidNode::draw() {
     glDrawElements(GL_TRIANGLE_FAN, 4, GL_UNSIGNED_BYTE, 0);
     ltPopTint();
 }
+
+LTFog::LTFog(LTfloat start, LTfloat end, LTColor color, LTSceneNode *child)
+    : LTWrapNode(child, LT_TYPE_FOG)
+{
+    LTFog::start = start;
+    LTFog::end = end;
+    LTFog::color = color;
+}
+
+void LTFog::draw() {
+    glEnable(GL_FOG);
+    glFogfv(GL_FOG_COLOR, (const GLfloat*)&color);
+    glFogf(GL_FOG_START, start);
+    glFogf(GL_FOG_END, end);
+    child->draw();
+    glDisable(GL_FOG);
+}
+
+bool LTFog::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
+    return false;
+}
+
+LTfloat* LTFog::field_ptr(const char *field_name) {
+    if (strcmp(field_name, "start") == 0) {
+        return &start;
+    } else if (strcmp(field_name, "end") == 0) {
+        return &end;
+    } else if (strcmp(field_name, "red") == 0) {
+        return &color.r;
+    } else if (strcmp(field_name, "green") == 0) {
+        return &color.g;
+    } else if (strcmp(field_name, "blue") == 0) {
+        return &color.b;
+    } else if (strcmp(field_name, "alpha") == 0) {
+        return &color.a;
+    }
+    return NULL;
+}
