@@ -20,7 +20,6 @@ end
 
 local
 function animator_advance(animator, dt)
-    dt = dt * animator.speed
     for i = 1, #(animator.threads) do
         local thread = animator.threads[i]
         local accum = animator.accums[i]
@@ -96,7 +95,6 @@ function lt.Animator(...)
     end
     local animator = {
         tweens = tweens,
-        speed = 1,
         threads = threads,
         accums = accums, -- amount of time to wait before resuming each thread
         Advance = animator_advance,
