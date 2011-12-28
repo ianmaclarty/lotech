@@ -831,7 +831,10 @@ static int lt_Vector(lua_State *L) {
             lua_rawgeti(L, 1, i);
             for (int j = 1; j <= stride; j++) {
                 lua_rawgeti(L, -1, j);
-                vec->data[(i - 1) * stride + (j - 1)] = luaL_checknumber(L, -1);
+                if (!lua_isnumber(L, -1)) {
+                    return luaL_error(L, "Expecting a number in row %d, column %d", i, j);
+                }
+                vec->data[(i - 1) * stride + (j - 1)] = lua_tonumber(L, -1);
                 lua_pop(L, 1);
             }
             lua_pop(L, 1);
