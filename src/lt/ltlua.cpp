@@ -1014,6 +1014,49 @@ static int lt_DrawVector(lua_State *L) {
 
 /************************* Tweens **************************/
 
+static int lt_MakeNativeTween(lua_State *L) {
+    LTObject *obj = get_object(L, 1, LT_TYPE_OBJECT);
+    const char *field = lua_tostring(L, 2);
+    if (field == NULL) {
+        lua_pushnil(L);
+        return 1;
+    }
+    LTfloat *field_ptr = obj->field_ptr(field);
+    if (field_ptr == NULL) {
+        lua_pushnil(L);
+        return 1;
+    }
+    LTfloat delay = luaL_checknumber(L, 3);
+    LTfloat value = luaL_checknumber(L, 4);
+    LTfloat time = luaL_checknumber(L, 5);
+    LTEaseFunc ease_func = NULL;
+    if (lua_isnil(L, 6)) {
+        ease_func = ltEase_linear;
+    } else {
+        size_t len;
+        const char *ease_func_str = lua_tolstring(L, 6, &len);
+        if (ease_func_str == NULL) {
+            lua_pushnil(L);
+            return 1;
+        }
+        LTEaseFuncInfo *ease_func_info = LTEaseFunc_lookup(ease_func_str, len);
+        if (ease_func_info == NULL) {
+            return luaL_error(L, "Invalid easing function: ", ease_func_str);
+        }
+        ease_func = ease_func_info->func;
+    }
+    LTTween *tween = (LTTween*)lua_newuserdata(L, sizeof(LTTween));
+    ltInitTween(tween, obj, field_ptr, value, time, ease_func);
+    return 1;
+}
+
+static int lt_AdvanceNativeTween(lua_State *L) {
+    LTTween *tween = (LTTween*)lua_touserdata(L, 1);
+    LTfloat dt = luaL_checknumber(L, 2);
+    lua_pushboolean(L, ltAdvanceTween(tween, dt) ? 1 : 0);
+    return 1;
+}
+
 static int lt_TweenSet(lua_State *L) {
     push_wrap(L, new LTTweenSet());
     return 1;
@@ -2944,10 +2987,12 @@ static const luaL_Reg ltlib[] = {
     {"ParticleSystemAdvance",           lt_ParticleSystemAdvance},
     {"ParticleSystemFixtureFilter",     lt_ParticleSystemFixtureFilter},
 
-    {"TweenSet",                        lt_TweenSet},
-    {"AddTween",                        lt_AddTween},
-    {"AdvanceTweens",                   lt_AdvanceTweens},
-    {"ClearTweens",                     lt_ClearTweens},
+    {"MakeNativeTween",                 lt_MakeNativeTween},
+    {"AdvanceNativeTween",              lt_AdvanceNativeTween},
+    //{"TweenSet",                        lt_TweenSet},
+    //{"AddTween",                        lt_AddTween},
+    //{"AdvanceTweens",                   lt_AdvanceTweens},
+    //{"ClearTweens",                     lt_ClearTweens},
 
     {"LoadSamples",                     lt_LoadSamples},
     {"Track",                           lt_Track},
