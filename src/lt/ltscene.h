@@ -123,14 +123,20 @@ struct LTTintNode : LTWrapNode {
     virtual LTfloat* field_ptr(const char *field_name);
 };
 
+struct LTTextureModeNode : LTWrapNode {
+    LTTextureMode mode;
+
+    LTTextureModeNode(LTTextureMode mode, LTSceneNode *child);
+
+    virtual void draw();
+};
+
 struct LTBlendModeNode : LTWrapNode {
     LTBlendMode blend_mode;
 
     LTBlendModeNode(LTBlendMode mode, LTSceneNode *child);
 
     virtual void draw();
-
-    virtual LTfloat* field_ptr(const char *field_name);
 };
 
 struct LTLineNode : LTSceneNode {

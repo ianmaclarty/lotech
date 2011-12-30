@@ -93,6 +93,14 @@ enum LTBlendMode {
     LT_BLEND_MODE_COLOR,
 };
 
+enum LTTextureMode {
+    LT_TEXTURE_MODE_MODULATE,
+    LT_TEXTURE_MODE_ADD,
+    LT_TEXTURE_MODE_DECAL,
+    LT_TEXTURE_MODE_BLEND,
+    LT_TEXTURE_MODE_REPLACE,
+};
+
 // Should be called before rendering each frame.
 void ltInitGraphics();
 
@@ -129,6 +137,8 @@ void ltPopTint();
 void ltPeekTint(LTColor *color);
 void ltPushBlendMode(LTBlendMode mode);
 void ltPopBlendMode();
+void ltPushTextureMode(LTTextureMode mode);
+void ltPopTextureMode();
 void ltTranslate(LTfloat x, LTfloat y, LTfloat z);
 void ltRotate(LTdegrees degrees, LTfloat x, LTfloat y, LTfloat z);
 void ltScale(LTfloat x, LTfloat y, LTfloat z);

@@ -20,6 +20,7 @@ lt.classes = {
             PropogatePointerMoveEvent   = lt.PropogatePointerMoveEvent,
             Tint                        = lt.Tint,
             BlendMode                   = lt.BlendMode,
+            TextureMode                 = lt.TextureMode, 
             Translate                   = lt.Translate,
             Rotate                      = lt.Rotate,
             Scale                       = lt.Scale,
@@ -63,6 +64,10 @@ lt.classes = {
         methods = {}
     },
     BlendMode = {
+        super = "Wrap",
+        methods = {}
+    },
+    TextureMode = {
         super = "Wrap",
         methods = {}
     },

@@ -25,6 +25,7 @@ const LTTypeInfo types[] = {
     {"Scale",           LT_TYPE_WRAP},  
     {"Tint",            LT_TYPE_WRAP},  
     {"BlendMode",       LT_TYPE_WRAP},  
+    {"TextureMode",     LT_TYPE_WRAP},  
     {"Layer",           LT_TYPE_SCENENODE},  
     {"Image",           LT_TYPE_SCENENODE},  
     {"World",           LT_TYPE_OBJECT},

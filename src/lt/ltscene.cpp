@@ -325,6 +325,17 @@ LTfloat* LTTintNode::field_ptr(const char *field_name) {
     return NULL;
 }
 
+LTTextureModeNode::LTTextureModeNode(LTTextureMode mode, LTSceneNode *child)
+        : LTWrapNode(child, LT_TYPE_TEXTUREMODE) {
+    LTTextureModeNode::mode = mode;
+}
+
+void LTTextureModeNode::draw() {
+    ltPushTextureMode(mode);
+    child->draw();
+    ltPopTextureMode();
+}
+
 LTBlendModeNode::LTBlendModeNode(LTBlendMode mode, LTSceneNode *child) : LTWrapNode(child, LT_TYPE_TINT) {
     LTBlendModeNode::blend_mode = mode;
 }
@@ -333,10 +344,6 @@ void LTBlendModeNode::draw() {
     ltPushBlendMode(blend_mode);
     child->draw();
     ltPopBlendMode();
-}
-
-LTfloat* LTBlendModeNode::field_ptr(const char *field_name) {
-    return NULL;
 }
 
 LTLineNode::LTLineNode(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2) : LTSceneNode(LT_TYPE_LINE) {

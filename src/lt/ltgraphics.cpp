@@ -51,8 +51,10 @@ static LTDisplayOrientation display_orientation = LT_DISPLAY_ORIENTATION_LANDSCA
 
 static std::list<LTColor> tint_stack;
 static std::list<LTBlendMode> blend_mode_stack;
+static std::list<LTTextureMode> texture_mode_stack;
 
 static void apply_blend_mode(LTBlendMode mode);
+static void apply_texture_mode(LTTextureMode mode);
 
 void ltInitGraphics() {
     glDisable(GL_DITHER);
@@ -72,6 +74,7 @@ void ltInitGraphics() {
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
     tint_stack.clear();
     blend_mode_stack.clear();
+    texture_mode_stack.clear();
     glEnableClientState(GL_VERTEX_ARRAY);
     #ifndef LTIOS
     glEnableClientState(GL_INDEX_ARRAY);
@@ -79,6 +82,7 @@ void ltInitGraphics() {
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     glEnable(GL_BLEND);
     apply_blend_mode(LT_BLEND_MODE_NORMAL);
+    apply_texture_mode(LT_TEXTURE_MODE_MODULATE);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glViewport(screen_viewport_x, screen_viewport_y, screen_viewport_width, screen_viewport_height);
@@ -402,6 +406,42 @@ void ltPopBlendMode() {
         } else {
             apply_blend_mode(LT_BLEND_MODE_NORMAL);
         }
+    }
+}
+
+void ltPushTextureMode(LTTextureMode mode) {
+    texture_mode_stack.push_front(mode);
+    apply_texture_mode(mode);
+}
+
+void ltPopTextureMode() {
+    if (!texture_mode_stack.empty()) {
+        texture_mode_stack.pop_front();
+        if (!texture_mode_stack.empty()) {
+            apply_texture_mode(texture_mode_stack.front());
+        } else {
+            apply_texture_mode(LT_TEXTURE_MODE_MODULATE);
+        }
+    }
+}
+
+static void apply_texture_mode(LTTextureMode mode) {
+    switch (mode) {
+        case LT_TEXTURE_MODE_MODULATE:
+            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+            break;
+        case LT_TEXTURE_MODE_ADD:
+            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);
+            break;
+        case LT_TEXTURE_MODE_DECAL:
+            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+            break;
+        case LT_TEXTURE_MODE_BLEND:
+            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_BLEND);
+            break;
+        case LT_TEXTURE_MODE_REPLACE:
+            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+            break;
     }
 }
 

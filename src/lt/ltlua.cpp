@@ -666,6 +666,9 @@ static int lt_BlendMode(lua_State *L) {
     check_nargs(L, 2);
     LTSceneNode *child = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
     const char *modestr = lua_tostring(L, 2);
+    if (modestr == NULL) {
+        return luaL_error(L, "Expecting a string in argument 2");
+    }
     LTBlendMode mode;
     if (strcmp(modestr, "add") == 0) {
         mode = LT_BLEND_MODE_ADD;
@@ -678,6 +681,33 @@ static int lt_BlendMode(lua_State *L) {
     }
     LTBlendModeNode *blend = new LTBlendModeNode(mode, child);
     push_wrap(L, blend);
+    set_ref_field(L, -1, "child", 1); // Add reference from new node to child.
+    return 1;
+}
+
+static int lt_TextureMode(lua_State *L) {
+    check_nargs(L, 2);
+    LTSceneNode *child = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
+    const char *modestr = lua_tostring(L, 2);
+    if (modestr == NULL) {
+        return luaL_error(L, "Expecting a string in argument 2");
+    }
+    LTTextureMode mode;
+    if (strcmp(modestr, "add") == 0) {
+        mode = LT_TEXTURE_MODE_ADD;
+    } else if (strcmp(modestr, "decal") == 0) {
+        mode = LT_TEXTURE_MODE_DECAL;
+    } else if (strcmp(modestr, "blend") == 0) {
+        mode = LT_TEXTURE_MODE_BLEND;
+    } else if (strcmp(modestr, "replace") == 0) {
+        mode = LT_TEXTURE_MODE_REPLACE;
+    } else if (strcmp(modestr, "modulate") == 0) {
+        mode = LT_TEXTURE_MODE_MODULATE;
+    } else {
+        luaL_error(L, "Invalid texture mode: %s", modestr);
+    }
+    LTTextureModeNode *node = new LTTextureModeNode(mode, child);
+    push_wrap(L, node);
     set_ref_field(L, -1, "child", 1); // Add reference from new node to child.
     return 1;
 }
@@ -2948,6 +2978,7 @@ static const luaL_Reg ltlib[] = {
     {"Rect",                            lt_Rect},
     {"Tint",                            lt_Tint},
     {"BlendMode",                       lt_BlendMode},
+    {"TextureMode",                     lt_TextureMode},
     {"Scale",                           lt_Scale},
     {"Perspective",                     lt_Perspective},
     {"Pitch",                           lt_Pitch},
