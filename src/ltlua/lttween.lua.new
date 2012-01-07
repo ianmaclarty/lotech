@@ -1,10 +1,244 @@
 -- Copyright 2011 Ian MacLarty
+
+local advance
+local add
+local remove
+local recompute_deltas
+local swap_remove
+local add_tween
+local find_field_owner
+local ease_func_table
+local lt_get = lt.GetObjectField
+
+local make_native_tween = lt.MakeNativeTween
+local tinsert = table.insert
+local tremove = table.remove
+
+local tweens_mt = {
+    __index = {
+        Advance = advance,
+        Add = add,
+        Remove = remove,
+    }
+}
+
+function lt.Tweens()
+    local tweens = {
+        n = 0,  -- num fields being tweened
+        prev_dt = 1,
+        start = {},
+        finish = {},
+        r = {},
+        delta = {},
+        time = {},
+        delay = {},
+        easing = {},
+        obj = {},
+        field = {},
+        action = {},
+        index = {},
+    }
+    setmetatable(tweens, tweens_mt)
+    return tweens
+end
+
+function advance(tweens, dt)
+    local start = tweens.start
+    local finish = tweens.finish
+    local r = tweens.r
+    local delta = tweens.delta
+    local delay = tweens.delay
+    local easing = tweens.easing
+    local obj = tweens.obj
+    local field = tweens.field
+    local finished = {}
+    local nfinished = 0
+    if tweens.prev_dt ~= dt then
+        recompute_deltas(tweens, dt)
+        tweens.prev_dt = dt
+    end
+    for i = 1, tweens.n do
+        if delay[i] > 0 then
+            delay[i] = delay[i] - dt
+        else
+            if r[i] < 1 then
+                local v0 = start[i]
+                local r0 = r[i]
+                obj[i][field[i]] = v0 + (finish[i] - v0) * easing[i](r0)
+                r[i] = r0 + delta[i]
+            else
+                obj[i][field[i]] = finish[i]
+                nfinished = nfinished + 1
+                finished[nfinished] = i
+            end
+        end
+    end
+    for fi = nfinished, 1, -1 do
+        local i = finished[fi]
+        local n = tweens.n
+        local time = tweens.time
+        local action = tweens.action
+        local todo = action[i]
+        local index = tweens.index
+
+        swap_remove(start, i, n)
+        swap_remove(finish, i, n)
+        swap_remove(r, i, n)
+        swap_remove(delta, i, n)
+        swap_remove(time, i, n)
+        swap_remove(delay, i, n)
+        swap_remove(easing, i, n)
+        swap_remove(action, i, n)
+        index[obj[i]][field[i]] = nil
+        index[obj[n]][field[n]] = i
+        swap_remove(obj, i, n)
+        swap_remove(field, i, n)
+
+        tweens.n = n - 1
+
+        if todo then
+            todo()
+        end
+    end
+end
+
+function recompute_deltas(tweens, dt)
+    local delta = tweens.delta
+    local time = tweens.time
+    for i = 1, tweens.n do
+        delta[i] = dt / time[i]
+    end
+end
+
+function swap_remove(table, i, n)
+    table[i] = table[n]
+    table[n] = nil
+end
+
+function add(tweens, obj, spec)
+    local fields = {}
+    local time = 0
+    local delay = 0
+    local easing = nil
+    local action = nil
+    local reverse = false
+    for field, value in pairs(spec) do
+        if field == "time" then
+            time = value
+        elseif field == "easing" then
+            easing = value
+        elseif field == "action" then
+            action = value
+        elseif field == "delay" then
+            delay = value
+        elseif field == "reverse" then
+            reverse = value
+        else
+            fields[field] = value
+        end
+    end
+    for field, value in pairs(fields) do
+        if reverse then
+            obj[field], value = value, obj[field]
+        end
+        add_tween(tweens, obj, field, value, time, delay, easing, action)
+        action = nil -- only attach action to one field
+    end
+end
+
+function add_tween(tweens, table, field, finish, time, delay, easing, action)
+    local obj, c_field = find_field_owner(table, field)
+    if not obj then
+        error("No such field: " .. field)
+    end
+    local tween
+    if c_field then
+        tween = make_native_tween(obj, field, delay, finish, time, easing)
+    end
+    if not tween then
+        if easing == nil then
+            easing = lt.LinearEase
+        elseif type(easing) == "string" then
+            local func = ease_func_table[easing]
+            if not func then
+                error("Unsupported easing function: " easing)
+            end
+            easing = func
+        end
+        tween = {
+            v0 = obj[field],
+            v = to,
+            t = 0,
+            period = secs,
+            delay = delay,
+            ease = ease,
+        }
+    end
+    local obj_tweens = rawget(obj, "_tweens")
+    if not obj_tweens then
+        obj_tweens = {}
+        rawset(obj, "_tweens", obj_tweens)
+    end
+    obj_tweens[field] = tween
+    local obj_actions = rawget(obj, "_tween_actions")
+    if action then
+        if not obj_actions then
+            obj_actions = {}
+            rawset(obj, "_tween_actions", obj_actions)
+        end
+        obj_actions[field] = action
+    elseif obj_actions then
+        -- Remove any action that might have been there before
+        obj_actions[field] = nil
+    end
+    local obj_tweenset = rawget(obj, "_tweenset")
+    if obj_tweenset == nil then
+        obj_tweenset = tweens
+        rawset(obj, "_tweenset", obj_tweenset)
+    elseif obj_tweenset ~= tweens then
+        local level = called_from_tween_method and 3 or 2
+        error("Attempt to add object to two different tween sets (that's not supported, sorry).", level)
+    end
+    local obj_index = rawget(obj, "_tween_index")
+    if not obj_index then
+        obj_index = #tweens + 1
+        rawset(obj, "_tween_index", obj_index)
+    end
+    tweens[obj_index] = obj
+end
+
+-------------------------------------------------------------
+
+
+local tweens_mt = {__mode = "v"}
+
+-------------------------------------------------------------
+
 local
 function cleanup_obj_tween_fields(obj)
     rawset(obj, "_tweens", nil)
     rawset(obj, "_tween_actions", nil)
     rawset(obj, "_tween_index", nil)
     rawset(obj, "_tweenset", nil)
+end
+
+function lt.TweenSet()
+    local tweens = {}
+    setmetatable(tweens, tweens_mt) -- make tweens' keys weak references
+    return tweens
+end
+
+function lt.UseTweens(tweens)
+    local env = getfenv(2)
+    local mt = {
+        __index     = function(t, k) return env[k] end,
+        __newindex  = function(t, k, v) env[k] = v end,
+    }
+    local new_env = {
+        _tweens_in_scope = tweens
+    }
+    setmetatable(new_env, mt)
+    setfenv(2, new_env)
 end
 
 function lt.ClearTweenSet(tweens)
@@ -75,7 +309,6 @@ local lt_get = lt.GetObjectField
 -- descendents.  Returns the owner or nil if the field
 -- doesn't exist.  Also returns true if the field is a
 -- C field (and therefore a candidate for fast tweening).
-local
 function find_field_owner(obj, field)
     local value = rawget(obj, field)
     if value then
@@ -144,7 +377,13 @@ function lt.AddTween(tweens, table, field, to, secs, delay, ease, action, called
         obj_actions[field] = nil
     end
     local obj_tweenset = rawget(obj, "_tweenset")
-    rawset(obj, "_tweenset", obj_tweenset)
+    if obj_tweenset == nil then
+        obj_tweenset = tweens
+        rawset(obj, "_tweenset", obj_tweenset)
+    elseif obj_tweenset ~= tweens then
+        local level = called_from_tween_method and 3 or 2
+        error("Attempt to add object to two different tween sets (that's not supported, sorry).", level)
+    end
     local obj_index = rawget(obj, "_tween_index")
     if not obj_index then
         obj_index = #tweens + 1
@@ -306,28 +545,15 @@ ease_func_table = {
 }
 
 -------------------------------------------------------------
-local tweens_mt = {
-    __mode = "v",
-    __index = {
-        Add = function(tweenset, obj, spec) lt.Tween(obj, spec, tweenset) end,
-        Advance = lt.AdvanceTweens,
-        Clear = lt.ClearTweenSet,
-    },
-}
-
-function lt.TweenSet()
-    local tweens = {}
-    setmetatable(tweens, tweens_mt)
-    return tweens
-end
-
--------------------------------------------------------------
 
 local global_tweens = lt.TweenSet()
 
 -- node:Tween{x = 5, y = 6, time = 2.5, easing = "linear", tweens = my_tween_set, action = function() log("done!") end}
-function lt.Tween(node, tween_info, tweenset)
-    local tweens = tweenset or global_tweens
+function lt.Tween(node, tween_info)
+    local tweens = rawget(getfenv(2), "_tweens_in_scope")
+    if not tweens then
+        tweens = global_tweens
+    end
     local fields = {}
     local time = 0
     local delay = 0
