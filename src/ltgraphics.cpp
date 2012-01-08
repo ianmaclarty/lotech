@@ -76,7 +76,7 @@ void ltInitGraphics() {
     blend_mode_stack.clear();
     texture_mode_stack.clear();
     glEnableClientState(GL_VERTEX_ARRAY);
-    #ifndef LTIOS
+    #ifndef LTGLES1
     glEnableClientState(GL_INDEX_ARRAY);
     #endif
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -86,7 +86,7 @@ void ltInitGraphics() {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glViewport(screen_viewport_x, screen_viewport_y, screen_viewport_width, screen_viewport_height);
-    #ifdef LTIOS
+    #ifdef LTGLES1
     glOrthof(viewport_left, viewport_right, viewport_bottom, viewport_top, -1.0f, 1.0f);
     #else
     glOrtho(viewport_left, viewport_right, viewport_bottom, viewport_top, -1.0f, 1.0f);
@@ -326,7 +326,7 @@ void ltPushPerspective(LTfloat near, LTfloat origin, LTfloat far) {
     LTfloat r = (origin - near) / origin; 
     LTfloat near_half_width = 0.5f * (viewport_width - r * viewport_width);
     LTfloat near_half_height = 0.5f * (viewport_height - r * viewport_height);
-    #ifdef LTIOS
+    #ifdef LTGLES1
         glFrustumf(-near_half_width, near_half_width, -near_half_height, near_half_height, near, far);
     #else
         glFrustum(-near_half_width, near_half_width, -near_half_height, near_half_height, near, far);

@@ -108,3 +108,7 @@ bool LTObject::hasType(LTType t) {
 const char* LTObject::typeName() {
     return ltTypeName(type);
 }
+
+int libtest(int x) {
+    return x * 10;
+}

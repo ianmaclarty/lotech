@@ -502,7 +502,7 @@ void LTDownFilter::draw() {
 }
 
 bool LTDownFilter::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
-    if (event->type != LT_EVENT_POINTER_DOWN || x >= left && x <= right && y >= bottom && y <= top) {
+    if (event->type != LT_EVENT_POINTER_DOWN || (x >= left && x <= right && y >= bottom && y <= top)) {
         if (!consumePointerEvent(x, y, event)) {
             return child->propogatePointerEvent(x, y, event);
         } else {

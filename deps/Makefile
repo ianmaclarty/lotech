@@ -6,7 +6,12 @@ BOX2D_DIR=$(BOX2D)
 ZLIB_DIR=$(ZLIB)
 LIBPNG_DIR=$(LIBPNG)
 
-all: liblua.a libbox2d.a libz.a libpng.a headers
+TARGETS=liblua.a libbox2d.a libz.a libpng.a headers
+ifeq ($(TARGET_PLATFORM),android)
+TARGETS+=libopenal.a openal_headers
+endif
+
+all: $(TARGETS)
 
 ifeq ($(TARGET_PLATFORM),ios)
 ############################ iOS Targets ##############################
@@ -72,6 +77,52 @@ libpng.a: rebuild
 	rm libpng-armv*.a
 endif
 
+ifeq ($(TARGET_PLATFORM),android)
+############################ Android Targets ##############################
+
+liblua.a: rebuild
+	cd $(LUAJIT_DIR) && $(MAKE) \
+		HOST_CC="gcc -m32 -arch i386" \
+		CROSS=$(NDKP) \
+		TARGET_FLAGS="--sysroot $(NDKSYSROOT)" \
+		TARGET=arm TARGET_SYS=Linux \
+		clean all
+	cp $(LUAJIT_DIR)/src/libluajit.a $@
+
+libbox2d.a: rebuild
+	cd $(BOX2D_DIR) && $(MAKE) \
+		CROSS=$(NDKP) \
+		TARGET_FLAGS="$(NDKSTL) --sysroot $(NDKSYSROOT) -marm" \
+		clean all
+	cp $(BOX2D_DIR)/libbox2d.a .
+
+libz.a: rebuild
+	cd $(ZLIB_DIR) && $(MAKE) \
+		CROSS=$(NDKP) \
+		TARGET_FLAGS="--sysroot $(NDKSYSROOT) -marm" \
+		clean all
+	cp $(ZLIB_DIR)/libz.a .
+
+libpng.a: rebuild
+	cd $(LIBPNG_DIR) && $(MAKE) \
+		CROSS=$(NDKP) \
+		TARGET_FLAGS="--sysroot $(NDKSYSROOT) -marm" \
+		clean all
+	cp $(LIBPNG_DIR)/libpng.a .
+
+libopenal.a: rebuild
+	cd openal-android && $(MAKE) \
+		CROSS=$(NDKP) \
+		TARGET_FLAGS="--sysroot $(NDKSYSROOT) -marm" \
+		clean all
+	cp openal-android/libopenal.a .
+
+.PHONY: openal_headers
+openal_headers:
+	cp -r openal-android/include/AL include/OpenAL
+
+endif
+
 ifeq ($(TARGET_PLATFORM),osx)
 ############################ Mac OS X Targets ##############################
 
@@ -107,6 +158,7 @@ headers: rebuild
 	cp $(LUA_DIR)/src/lua.h include/
 	cp $(LUA_DIR)/src/lauxlib.h include/
 	cp $(LUA_DIR)/src/lualib.h include/
+	cp $(LUA_DIR)/src/luaconf.h include/
 	for h in `find $(BOX2D_DIR)/Box2D -name "*.h"`; do \
 	    d=`echo $$h | sed 's/^[^\/]*\///g'`; \
 	    d=`dirname $$d`; \

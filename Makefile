@@ -1,14 +1,14 @@
 include Make.common
 
-TARGET_DIR=lib-$(TARGET_PLATFORM)
+TARGET_DIR=$(TARGET_PLATFORM)
 PWD=$(shell pwd)
 
 all: $(TARGET_DIR)/liblt.a deplibs headers
 
-ifeq ($(TARGET_PLATFORM),ios)
 ############################ iOS Target ##############################
+ifeq ($(TARGET_PLATFORM),ios)
 .PHONY: $(TARGET_DIR)/liblt.a
-$(TARGET_DIR)/liblt.a: | $(TARGET_DIR)
+$(TARGET_DIR)/liblt.a: headers | $(TARGET_DIR)
 	mkdir -p buildtmp.ios.armv6
 	mkdir -p buildtmp.ios.armv7
 	cd src && $(MAKE) \
@@ -24,13 +24,26 @@ $(TARGET_DIR)/liblt.a: | $(TARGET_DIR)
 	lipo -create buildtmp.ios.armv6/liblt.a buildtmp.ios.armv7/liblt.a -output $@
 endif
 
-ifeq ($(TARGET_PLATFORM),osx)
-############################ Max OS X Target ##############################
+############################ Android Target ##############################
+ifeq ($(TARGET_PLATFORM),android)
 .PHONY: $(TARGET_DIR)/liblt.a
-$(TARGET_DIR)/liblt.a: | $(TARGET_DIR)
+$(TARGET_DIR)/liblt.a: headers | $(TARGET_DIR)
+	mkdir -p buildtmp.android
+	cd src && $(MAKE) \
+		CROSS=$(NDKP) \
+		TARGET_FLAGS="$(NDKSTL) --sysroot $(NDKSYSROOT)" \
+		OUT_DIR=$(PWD)/buildtmp.android \
+		all
+	cp buildtmp.android/liblt.a $(TARGET_DIR)/
+endif
+
+############################ Max OS X Target ##############################
+ifeq ($(TARGET_PLATFORM),osx)
+.PHONY: $(TARGET_DIR)/liblt.a
+$(TARGET_DIR)/liblt.a: headers | $(TARGET_DIR)
 	mkdir -p buildtmp.osx
 	cd src && $(MAKE) \
-		TARGET_FLAGS="-m64 -arch x86_64 -DLTWINHEIGHT=640 -DLTWINWIDTH=960 -DLTENVELOPE" \
+		TARGET_FLAGS="-m64 -arch x86_64 -DLTENVELOPE" \
 		OUT_DIR=$(PWD)/buildtmp.osx \
 		all
 	cp buildtmp.osx/liblt.a $(TARGET_DIR)/
@@ -43,8 +56,8 @@ deplibs: | $(TARGET_DIR)
 	cp -r deps/include $(TARGET_DIR)
 
 .PHONY: headers
-headers: | $(TARGET_DIR)
-	cp src/*.h $(TARGET_DIR)/include
+headers: deplibs | $(TARGET_DIR)
+	cp src/*.h $(TARGET_DIR)/include/
 
 $(TARGET_DIR):
 	mkdir -p $@

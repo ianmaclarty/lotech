@@ -1,4 +1,4 @@
-TARGET_PLATFORM:=osx
+TARGET_PLATFORM:=android
 
 LUA=lua-5.1.4
 LUAJIT=luajit-2.0
@@ -9,3 +9,10 @@ LIBPNG=libpng-1.4.3
 ISDK=/Developer/Platforms/iPhoneOS.platform/Developer
 ISDKVER=iPhoneOS4.3.sdk
 ISDKP=$(ISDK)/usr/bin/
+
+NDK=/Users/ian/muheyo/android-ndk-r7
+NDKABI=8
+NDKVER=$(NDK)/toolchains/arm-linux-androideabi-4.4.3
+NDKP=$(NDKVER)/prebuilt/darwin-x86/bin/arm-linux-androideabi-
+NDKSYSROOT=$(NDK)/platforms/android-$(NDKABI)/arch-arm
+NDKSTL=-I$(NDK)/sources/cxx-stl/gnu-libstdc++/include -I$(NDK)/sources/cxx-stl/gnu-libstdc++/libs/armeabi/include

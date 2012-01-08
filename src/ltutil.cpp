@@ -1,4 +1,9 @@
+#ifndef LTANDROID
 #include <glob.h>
+#endif
+#ifdef LTANDROID
+#include <android/log.h>
+#endif
 #include <sys/stat.h> 
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,19 +21,22 @@ void ltAbort() {
 #define MAX_MSG_LEN 2048
 
 void ltLog(const char *fmt, ...) {
+    char msg[MAX_MSG_LEN];
     va_list argp;
     va_start(argp, fmt);
-    vfprintf(stderr, fmt, argp);
+    vsnprintf(msg, MAX_MSG_LEN, fmt, argp);
     va_end(argp);
+#ifdef LTANDROID
+    __android_log_print(ANDROID_LOG_INFO, "Lotech", "%s", msg);
+#else
+    fprintf(stderr, "%s", msg);
     fprintf(stderr, "\n");
+#endif
+#ifdef LTDEVMODE
     if (ltAmClient()) {
-        char msg[MAX_MSG_LEN];
-        va_list argp;
-        va_start(argp, fmt);
-        vsnprintf(msg, MAX_MSG_LEN, fmt, argp);
-        va_end(argp);
         ltClientLog(msg);
     }    
+#endif
 }
 
 bool ltFileExists(const char *file) {
@@ -37,6 +45,7 @@ bool ltFileExists(const char *file) {
 }
 
 char* ltGlob(const char **patterns) {
+#ifndef LTANDROID
     glob_t globbuf;
     globbuf.gl_offs = 0;
     int flags = 0;
@@ -59,4 +68,8 @@ char* ltGlob(const char **patterns) {
     *ptr = '\0';
     globfree(&globbuf);
     return matches;
+#else
+    ltLog("glob not supported on android");
+    return NULL;
+#endif
 }

@@ -8,20 +8,22 @@ MM_FILES:=$(wildcard *.mm)
 MM_O_FILES:=$(patsubst %.mm,$(OUT_DIR)/%.o,$(MM_FILES))
 
 O_FILES=$(CPP_O_FILES)
-INCLUDE_FLAGS=-I. -I../deps/$(LUA)/src -I../deps/$(BOX2D) -I../deps/$(ZLIB) -I../deps/$(LIBPNG)
+INCLUDE_FLAGS=-I. -I../$(TARGET_PLATFORM)/include
 GPP_FLAGS= $(INCLUDE_FLAGS) -O3 -DLTDEPTHBUF -DLTDEVMODE $(TARGET_FLAGS) -Wall
 GPP=$(CROSS)g++
 AR=$(CROSS)ar rcus
 
 ifeq ($(TARGET_PLATFORM),ios)
-GPP_FLAGS+=-DLTIOS
+GPP_FLAGS+=-DLTIOS -DLTGLES1
 O_FILES+=$(MM_O_FILES)
 endif
 ifeq ($(TARGET_PLATFORM),osx)
 GPP_FLAGS+=-DLTOSX
 O_FILES+=$(MM_O_FILES)
 endif
-
+ifeq ($(TARGET_PLATFORM),android)
+GPP_FLAGS+=-DLTANDROID -DLTGLES1
+endif
 
 $(CPP_O_FILES): $(OUT_DIR)/%.o: %.cpp
 	@echo CPP   $@
