@@ -6,6 +6,7 @@
 
 #include "ltaudio.h"
 
+#include "ltresource.h"
 #include "ltutil.h"
 
 static ALCcontext* audio_context = NULL;
@@ -246,15 +247,15 @@ void ltAudioGC() {
     }
 }
 
-static int read_4_byte_little_endian_int(FILE *file) {
+static int read_4_byte_little_endian_int(LTResource *rsc) {
     int val = 0;
-    fread(&val, 1, 4, file);
+    ltReadResource(rsc, &val, 4);
     return val;
 }
 
-static int read_2_byte_little_endian_int(FILE *file) {
+static int read_2_byte_little_endian_int(LTResource *rsc) {
     int val = 0;
-    fread(&val, 1, 2, file);
+    ltReadResource(rsc, &val, 2);
     return val;
 }
 
@@ -262,102 +263,101 @@ LTAudioSample *ltReadAudioSample(const char *path, const char *name) {
     char chunkid[5];
     memset(chunkid, 0, 5);
 
-    FILE *in = fopen(path, "r");
-    if (in == NULL) {
-        ltLog("Unable to open %s: %s", path, strerror(errno));
-        fclose(in);
+    LTResource *rsc = ltOpenResource(path);
+    if (rsc == NULL) {
+        ltLog("Unable to open resource %s", path);
         return NULL;
     }
 
-    fread(chunkid, 1, 4, in);
+    ltReadResource(rsc, chunkid, 4);
     if (strcmp(chunkid, "RIFF") != 0) {
         ltLog("RIFF chunk id not found in %s", path);
-        fclose(in);
+        ltCloseResource(rsc);
         return NULL;
     }
 
-    read_4_byte_little_endian_int(in); // file size
+    read_4_byte_little_endian_int(rsc); // file size
 
-    fread(chunkid, 1, 4, in);
+    ltReadResource(rsc, chunkid, 4);
 
     if (strcmp(chunkid, "WAVE") != 0) {
         ltLog("WAVE format id not found in %s", path);
-        fclose(in);
+        ltCloseResource(rsc);
         return NULL;
     }
 
-    fread(chunkid, 1, 4, in);
+    ltReadResource(rsc, chunkid, 4);
     if (strcmp(chunkid, "fmt ") != 0) {
         ltLog("fmt chunk id not found in %s", path);
-        fclose(in);
+        ltCloseResource(rsc);
         return NULL;
     }
 
-    int chunksize = read_4_byte_little_endian_int(in);
+    int chunksize = read_4_byte_little_endian_int(rsc);
     if (chunksize != 16) {
         ltLog("fmt chunk size is not 16");
-        fclose(in);
+        ltCloseResource(rsc);
         return NULL;
     }
 
-    int format_id = read_2_byte_little_endian_int(in);
+    int format_id = read_2_byte_little_endian_int(rsc);
     if (format_id != 1) {
         ltLog("Format id should be 1 for PCM");
-        fclose(in);
+        ltCloseResource(rsc);
         return NULL;
     }
 
-    int num_channels = read_2_byte_little_endian_int(in);
+    int num_channels = read_2_byte_little_endian_int(rsc);
     if (num_channels != 1 && num_channels != 2) {
         ltLog("Unsupported number of channels: %d in %s", num_channels, path);
-        fclose(in);
+        ltCloseResource(rsc);
         return NULL;
     }
 
-    int sample_rate = read_4_byte_little_endian_int(in);
+    int sample_rate = read_4_byte_little_endian_int(rsc);
 
-    read_4_byte_little_endian_int(in); // byte rate
-    read_2_byte_little_endian_int(in); // bytes per sample (all channels)
+    read_4_byte_little_endian_int(rsc); // byte rate
+    read_2_byte_little_endian_int(rsc); // bytes per sample (all channels)
 
-    int bits_per_sample = read_2_byte_little_endian_int(in);
+    int bits_per_sample = read_2_byte_little_endian_int(rsc);
     if (bits_per_sample != 8 && bits_per_sample != 16) {
         ltLog("Unsupported bits per sample %d in %s", bits_per_sample, path);
-        fclose(in);
+        ltCloseResource(rsc);
         return NULL;
     }
 
     int bytes_per_sample = bits_per_sample / 8;
 
-    fread(chunkid, 1, 4, in);
+    ltReadResource(rsc, chunkid, 4);
     if (strcmp(chunkid, "data") != 0) {
         ltLog("Data chunk not found in %s", path);
-        fclose(in);
+        ltCloseResource(rsc);
         return NULL;
     }
 
-    int data_size = read_4_byte_little_endian_int(in);
+    int data_size = read_4_byte_little_endian_int(rsc);
 
     unsigned char *data = new unsigned char[data_size];
 
-    int num_bytes_read = fread(data, 1, data_size, in);
+    int num_bytes_read = ltReadResource(rsc, data, data_size);
 
     if (num_bytes_read != data_size) {
         ltLog("Unable to read all bytes in %s: %s", path, strerror(errno));
-        fclose(in);
+        ltCloseResource(rsc);
         delete[] data;
         return NULL;
     }
 
     unsigned char trailing;
-    num_bytes_read = fread(&trailing, 1, 1, in);
-    if (num_bytes_read != 0 || !feof(in)) {
+    num_bytes_read = ltReadResource(rsc, &trailing, 1);
+    if (num_bytes_read != 0) {
         ltLog("Extra bytes at end of %s", path);
-        fclose(in);
+        ltCloseResource(rsc);
         delete[] data;
         return NULL;
     }
 
-    fclose(in);
+    ltCloseResource(rsc);
 
     ALuint buf_id;
     ALenum format;

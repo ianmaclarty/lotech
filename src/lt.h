@@ -20,6 +20,7 @@
 #include "ltpickle.h"
 #include "ltprotocol.h"
 #include "ltrandom.h"
+#include "ltresource.h"
 #include "ltscene.h"
 #include "ltstate.h"
 #include "lttime.h"

@@ -1,4 +1,4 @@
-TARGET_PLATFORM:=android
+TARGET_PLATFORM:=osx
 
 LUA=lua-5.1.4
 LUAJIT=luajit-2.0
@@ -11,7 +11,7 @@ ISDKVER=iPhoneOS4.3.sdk
 ISDKP=$(ISDK)/usr/bin/
 
 NDK=/Users/ian/muheyo/android-ndk-r7
-NDKABI=8
+NDKABI=9
 NDKVER=$(NDK)/toolchains/arm-linux-androideabi-4.4.3
 NDKP=$(NDKVER)/prebuilt/darwin-x86/bin/arm-linux-androideabi-
 NDKSYSROOT=$(NDK)/platforms/android-$(NDKABI)/arch-arm

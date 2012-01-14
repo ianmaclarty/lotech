@@ -1,5 +1,6 @@
 /* Copyright (C) 2010 Ian MacLarty */
 #include "ltimage.h"
+#include "ltresource.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -170,8 +171,16 @@ static void lt_png_warning_fn(png_structp png_ptr, png_const_charp warning_msg) 
     ltLog("libpng warning while reading %s: %s", file, warning_msg);
 }
 
+static void lt_png_read_fn(png_structp png_ptr, png_bytep data, png_size_t length) {
+    LTResource *in = (LTResource*)png_get_io_ptr(png_ptr);
+    int n = ltReadResource(in, data, length);
+    if (n < (int)length) {
+        ltLog("Error reading png data");
+    }
+}
+
 LTImageBuffer *ltReadImage(const char *path, const char *name) {
-    FILE *in;
+    LTResource *in;
     png_structp png_ptr; 
     png_infop info_ptr; 
     png_infop end_ptr; 
@@ -193,21 +202,21 @@ LTImageBuffer *ltReadImage(const char *path, const char *name) {
 
     png_byte **rows;
 
-    in = fopen(path, "rb");
+    in = ltOpenResource(path);
     if (in == NULL) {
         ltLog("Error: Unable to open %s for reading: %s", path, strerror(errno));
         return NULL;
     }
 
     // Check for 8 byte signature.
-    int n = fread(sig, 1, 8, in);
+    int n = ltReadResource(in, sig, 8);
     if (n != 8) {
-        fclose(in);
+        ltCloseResource(in);
         ltLog("Unable to read first 8 bytes of %s", path);
         return NULL;
     }
     if (!png_check_sig(sig, 8)) {
-        fclose(in);
+        ltCloseResource(in);
         ltLog("%s has an invalid PNG signature", path);
         return NULL;
     }
@@ -220,11 +229,11 @@ LTImageBuffer *ltReadImage(const char *path, const char *name) {
 
     if (setjmp(png_jmpbuf(png_ptr))) {
         png_destroy_read_struct(&png_ptr, &info_ptr, &end_ptr);
-        fclose(in);
+        ltCloseResource(in);
         return NULL;
     }
 
-    png_init_io(png_ptr, in);
+    png_set_read_fn(png_ptr, in, lt_png_read_fn);
     png_set_sig_bytes(png_ptr, 8);
 
     // Read the data.
@@ -238,7 +247,7 @@ LTImageBuffer *ltReadImage(const char *path, const char *name) {
         png_set_filler(png_ptr, 0xFF, PNG_FILLER_BEFORE);
     #endif
     png_read_png(png_ptr, info_ptr, png_transforms, NULL);
-    fclose(in);
+    ltCloseResource(in);
     png_get_IHDR(png_ptr, info_ptr, &uwidth, &uheight, &bit_depth, &color_type,
         NULL, NULL, NULL);
     width = (int)uwidth;

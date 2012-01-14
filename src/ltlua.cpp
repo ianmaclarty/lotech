@@ -25,6 +25,7 @@ extern "C" {
 #include "ltlua.h"
 #include "ltparticles.h"
 #include "ltphysics.h"
+#include "ltresource.h"
 #include "ltstate.h"
 #include "ltstore.h"
 #include "lttext.h"
@@ -327,7 +328,7 @@ static const char *resource_path(const char *resource, const char *suffix) {
     #else
         int len = strlen(resource) + strlen(suffix) + 3;
         path = new char[len];
-        snprintf((char*)path, len, "./%s%s", resource, suffix);
+        snprintf((char*)path, len, "%s%s", resource, suffix);
     #endif
     return path;
 }
@@ -350,13 +351,7 @@ static const char *image_path(const char *name) {
             return ltIOSBundlePath(name, ".png");
         }
     #else
-        const char *path = resource_path(name, ".png2x");
-        if (ltFileExists(path)) {
-            return path;
-        } else {
-            delete[] path;
-            return resource_path(name, ".png");
-        }
+        return resource_path(name, ".png");
     #endif
 }
 
@@ -2849,23 +2844,22 @@ static int lt_OpenURL(lua_State *L) {
  */
 
 typedef struct LoadF {
-  int extraline;
-  FILE *f;
-  char buff[LUAL_BUFFERSIZE];
+    LTResource *r;
+    char buff[LUAL_BUFFERSIZE];
+    int eof;
 } LoadF;
 
 
 static const char *getF (lua_State *L, void *ud, size_t *size) {
-  LoadF *lf = (LoadF *)ud;
-  (void)L;
-  if (lf->extraline) {
-    lf->extraline = 0;
-    *size = 1;
-    return "\n";
-  }
-  if (feof(lf->f)) return NULL;
-  *size = fread(lf->buff, 1, sizeof(lf->buff), lf->f);
-  return (*size > 0) ? lf->buff : NULL;
+    LoadF *lf = (LoadF *)ud;
+    if (lf->eof) {
+        return NULL;
+    }
+    *size = ltReadResource(lf->r, lf->buff, sizeof(lf->buff));
+    if (*size < sizeof(lf->buff)) {
+        lf->eof = 1;
+    }
+    return (*size > 0) ? lf->buff : NULL;
 }
 
 
@@ -2878,44 +2872,22 @@ static int errfile (lua_State *L, const char *what, int fnameindex) {
 }
 
 
-static int loadfile (lua_State *L, const char *filename) {
+static int loadfile (lua_State *L, LTResource *rsc) {
   LoadF lf;
-  int status, readstatus;
-  int c;
+  int status;
   int fnameindex = lua_gettop(L) + 1;  /* index of filename on the stack */
 
-  const char *basename = strrchr(filename, '/');
+  const char *basename = strrchr(rsc->name, '/');
   if (basename == NULL) {
-    basename = filename;
+    basename = rsc->name;
   } else {
     basename++;
   }
 
-  lf.extraline = 0;
   lua_pushfstring(L, "@%s", basename);
-  lf.f = fopen(filename, "r");
-  if (lf.f == NULL) return errfile(L, "open", fnameindex);
-  c = getc(lf.f);
-  if (c == '#') {  /* Unix exec. file? */
-    lf.extraline = 1;
-    while ((c = getc(lf.f)) != EOF && c != '\n') ;  /* skip first line */
-    if (c == '\n') c = getc(lf.f);
-  }
-  if (c == LUA_SIGNATURE[0]) {  /* binary file? */
-    lf.f = freopen(filename, "rb", lf.f);  /* reopen in binary mode */
-    if (lf.f == NULL) return errfile(L, "reopen", fnameindex);
-    /* skip eventual `#!...' */
-   while ((c = getc(lf.f)) != EOF && c != LUA_SIGNATURE[0]) ;
-    lf.extraline = 0;
-  }
-  ungetc(c, lf.f);
+  lf.r = rsc;
+  lf.eof = 0;
   status = lua_load(L, getF, &lf, lua_tostring(L, -1));
-  readstatus = ferror(lf.f);
-  fclose(lf.f);  /* close file (even in case of errors) */
-  if (readstatus) {
-    lua_settop(L, fnameindex);  /* ignore results from `lua_load' */
-    return errfile(L, "read", fnameindex);
-  }
   lua_remove(L, fnameindex);
   return status;
 }
@@ -2929,18 +2901,24 @@ static int import(lua_State *L) {
     }
     const char *path;
     path = resource_path(module, ".lua");
-    int r = loadfile(g_L, path);
-    delete[] path;
-    if (r != 0) {
-        const char *msg = lua_tostring(g_L, -1);
-        lua_pop(L, 1);
-        return luaL_error(L, "%s", msg);
+    LTResource *rsc = ltOpenResource(path);
+    if (rsc != NULL) {
+        int r = loadfile(g_L, rsc);
+        delete[] path;
+        ltCloseResource(rsc);
+        if (r != 0) {
+            const char *msg = lua_tostring(g_L, -1);
+            lua_pop(L, 1);
+            return luaL_error(L, "%s", msg);
+        }
+        for (int i = 2; i <= nargs; i++) {
+            lua_pushvalue(L, i);
+        }
+        lua_call(g_L, nargs - 1, LUA_MULTRET);
+        return lua_gettop(L) - top;
+    } else {
+        return luaL_error(L, "File %s does no exist", path);
     }
-    for (int i = 2; i <= nargs; i++) {
-        lua_pushvalue(L, i);
-    }
-    lua_call(g_L, nargs - 1, LUA_MULTRET);
-    return lua_gettop(L) - top;
 }
 
 /************************ Logging *****************************/
@@ -3121,9 +3099,11 @@ static void call_lt_func(const char *func) {
 static void run_lua_file(const char *file) {
     if (!g_suspended) {
         const char *f = resource_path(file, ".lua");
-        if (ltFileExists(f)) {
-            check_status(loadfile(g_L, f));
+        LTResource *r = ltOpenResource(f);
+        if (r != NULL) {
+            check_status(loadfile(g_L, r));
             docall(g_L, 0);
+            ltCloseResource(r);
         } else {
             ltLog("File %s does not exist", f);
         }
