@@ -24,6 +24,7 @@ static std::map<LTTrack *, bool> active_tracks;
 static bool audio_is_suspended = false;
 
 void ltAudioInit() {
+#ifndef LTANDROID
     audio_device = alcOpenDevice(NULL);
     if (audio_device == NULL) {
         ltLog("Unable to open audio device");
@@ -36,6 +37,7 @@ void ltAudioInit() {
     }
     alcMakeContextCurrent(audio_context);
     alGetError();
+#endif
 }
 
 void ltAudioTeardown() {
@@ -376,7 +378,7 @@ LTAudioSample *ltReadAudioSample(const char *path, const char *name) {
 
     ALenum err = alGetError();
     if (err != AL_NO_ERROR) {
-        ltLog("alBufferData returned an error");
+        ltLog("alBufferData returned error %x", err);
         return NULL;
     }
     

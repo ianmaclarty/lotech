@@ -110,7 +110,7 @@ libpng.a: rebuild
 		clean all
 	cp $(LIBPNG_DIR)/libpng.a .
 
-libopenal.a: rebuild
+libopenal.a: rebuild.openal
 	cd openal-android && $(MAKE) \
 		CROSS=$(NDKP) \
 		TARGET_FLAGS="--sysroot $(NDKSYSROOT) -marm" \

@@ -1427,7 +1427,7 @@ static void pack_image(lua_State *L, LTImagePacker *packer, LTImageBuffer *buf,
         packer->height = MIN_TEX_SIZE;
 
         if (!ltPackImage(packer, buf)) {
-            luaL_error(L, "Image %s is too large.", buf->name);
+            luaL_error(L, "Image %s is too large (%dx%d).", buf->name, buf->bb_width(), buf->bb_height());
         }
     }
 }
@@ -1486,7 +1486,7 @@ static int lt_LoadImages(lua_State *L) {
                 // If buf is NULL ltReadImage would have already logged an error.
                 pack_image(L, packer, buf, minfilter, magfilter);
             }
-        } else {
+        } else if (lua_istable(L, -1)) {
             // A table entry means we should load the image as a font.
             lua_getfield(L, -1, "font");
             const char *name = lua_tostring(L, -1);
@@ -1514,6 +1514,8 @@ static int lt_LoadImages(lua_State *L) {
                 }
                 delete glyph_list;
             }
+        } else {
+            return luaL_error(L, "Entries must be strings or tables");
         }
 
         i++;
@@ -3161,7 +3163,9 @@ static void set_globals() {
 }
 
 void ltLuaSetup() {
+    #ifndef LTANDROID
     ltAudioInit();
+    #endif
     g_L = luaL_newstate();
     if (g_L == NULL) {
         ltLog("Cannot create lua state: not enough memory.");
@@ -3173,6 +3177,7 @@ void ltLuaSetup() {
     lua_setglobal(g_L, "import");
     lua_pushcfunction(g_L, log);
     lua_setglobal(g_L, "log");
+    luaL_register(g_L, "lt", ltlib);
     luaL_register(g_L, "lt", ltlib);
     lua_gc(g_L, LUA_GCRESTART, 0);
     run_lua_file("lt");

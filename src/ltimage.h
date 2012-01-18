@@ -12,7 +12,7 @@
 #include "ltscene.h"
 #include "ltgraphics.h"
 
-#ifdef LTIOS
+#ifdef LTGLES1
     #define LT_PIXEL_VISIBLE(pxl)     (pxl & 0xFF000000)
 #else
     #define LT_PIXEL_VISIBLE(pxl)     (pxl & 0xFF)

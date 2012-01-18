@@ -1,4 +1,5 @@
 #include "ltresource.h"
+#include "ltutil.h"
 
 #include <string.h>
 
@@ -11,15 +12,20 @@ void ltSetAssetManager(AAssetManager* mgr) {
 }
 
 LTResource *ltOpenResource(const char* filename) {
+    AAsset* asset = AAssetManager_open(asset_mgr, filename, AASSET_MODE_STREAMING);
+    if (asset == NULL) {
+        return NULL;
+    }
     LTResource *rsc = new LTResource();
-    rsc->assert = AAssetManager_open(asset_mgr, filename, AASSET_MODE_STREAMING);
+    rsc->asset = asset;
     rsc->name = new char[strlen(filename) + 1];
     strcpy(rsc->name, filename);
     return rsc;
 }
 
 int ltReadResource(LTResource *rsc, void* buf, int count) {
-    return AAsset_read(rsc->asset, buf, count);
+    int n = AAsset_read(rsc->asset, buf, count);
+    return n;
 }
 
 void ltCloseResource(LTResource *rsc) {

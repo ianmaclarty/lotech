@@ -2,17 +2,21 @@
 #include "ltstore.h"
 
 void ltSaveState() {
+    #ifndef LTANDROID
     LTPickler *pickler = ltLuaPickleState();
     if (pickler != NULL) {
-        ltStorePickledData("ltstate", pickler);
+        ltStorePickledData(pickler);
         delete pickler;
     }
+    #endif
 }
 
 void ltRestoreState() {
-    LTUnpickler *unpickler = ltRetrievePickledData("ltstate");
+    #ifndef LTANDROID
+    LTUnpickler *unpickler = ltRetrievePickledData();
     if (unpickler != NULL) {
         ltLuaUnpickleState(unpickler);
         delete unpickler;
     }
+    #endif
 }

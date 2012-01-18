@@ -14,7 +14,7 @@
 #include "ltprotocol.h"
 
 void ltAbort() {
-    ltLog("FATAL INTERNAL ERROR. ABORTING.");
+    ltLog("ABORTING.");
     exit(1);
 }
 

@@ -67,3 +67,7 @@ clean:
 	rm -rf buildtmp.$(TARGET_PLATFORM)*
 	cd deps && $(MAKE) clean
 	rm -rf $(TARGET_DIR)/*
+
+.PHONY: tags
+tags:
+	ctags `find . -name "*.h"` `find . -name "*.cpp"` `find . -name "*.c"` src/*.mm
