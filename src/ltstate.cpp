@@ -5,7 +5,7 @@ void ltSaveState() {
     #ifndef LTANDROID
     LTPickler *pickler = ltLuaPickleState();
     if (pickler != NULL) {
-        ltStorePickledData(pickler);
+        ltStorePickledData("ltstate", pickler);
         delete pickler;
     }
     #endif
@@ -13,7 +13,7 @@ void ltSaveState() {
 
 void ltRestoreState() {
     #ifndef LTANDROID
-    LTUnpickler *unpickler = ltRetrievePickledData();
+    LTUnpickler *unpickler = ltRetrievePickledData("ltstate");
     if (unpickler != NULL) {
         ltLuaUnpickleState(unpickler);
         delete unpickler;
