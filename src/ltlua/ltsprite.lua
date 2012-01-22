@@ -56,7 +56,7 @@ function lt.AdvanceSprites(spriteset, step)
                 curr_frame = curr_frame + 1
                 if curr_frame > num_frames then
                     if sprite.loop then
-                        curr_frame = 1
+                        curr_frame = type(sprite.loop) == "number" and sprite.loop or 1
                     else
                         curr_frame = num_frames
                     end

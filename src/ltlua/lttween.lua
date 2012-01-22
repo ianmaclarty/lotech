@@ -7,6 +7,14 @@ function cleanup_obj_tween_fields(obj)
     rawset(obj, "_tweenset", nil)
 end
 
+function lt.RemoveTweens(obj)
+    local tweens = rawget(obj, _tweens)
+    if tweens then
+        tweens[rawget(obj._tween_index)] = nil
+        cleanup_obj_tween_fields(obj)
+    end
+end
+
 function lt.ClearTweenSet(tweens)
     for index, obj in pairs(tweens) do
         cleanup_obj_tween_fields(obj)
