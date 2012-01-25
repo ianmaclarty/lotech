@@ -1591,6 +1591,27 @@ static int lt_PlayTrack(lua_State *L) {
     return 0;
 }
 
+static int lt_PauseTrack(lua_State *L) {
+    check_nargs(L, 1);
+    LTTrack *track = (LTTrack*)get_object(L, 1, LT_TYPE_TRACK);
+    track->pause();
+    return 0;
+}
+
+static int lt_StopTrack(lua_State *L) {
+    check_nargs(L, 1);
+    LTTrack *track = (LTTrack*)get_object(L, 1, LT_TYPE_TRACK);
+    track->stop();
+    return 0;
+}
+
+static int lt_RewindTrack(lua_State *L) {
+    check_nargs(L, 1);
+    LTTrack *track = (LTTrack*)get_object(L, 1, LT_TYPE_TRACK);
+    track->rewind();
+    return 0;
+}
+
 static int lt_QueueSampleInTrack(lua_State *L) {
     int num_args = check_nargs(L, 2);
     LTTrack *track = (LTTrack*)get_object(L, 1, LT_TYPE_TRACK);
@@ -3011,6 +3032,9 @@ static const luaL_Reg ltlib[] = {
     {"Track",                           lt_Track},
     {"PlaySampleOnce",                  lt_PlaySampleOnce},
     {"PlayTrack",                       lt_PlayTrack},
+    {"PauseTrack",                      lt_PauseTrack},
+    {"StopTrack",                       lt_StopTrack},
+    {"RewindTrack",                     lt_RewindTrack},
     {"QueueSampleInTrack",              lt_QueueSampleInTrack},
     {"SetTrackLoop",                    lt_SetTrackLoop},
     {"TrackQueueSize",                  lt_TrackQueueSize},

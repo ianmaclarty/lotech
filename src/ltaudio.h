@@ -42,6 +42,9 @@ struct LTTrack : LTObject {
     void queueSample(LTAudioSample *sample);
     void setLoop(bool loop);
     void play();
+    void pause();
+    void stop();
+    void rewind();
     int  numSamples();
     int  numProcessedSamples();
     int  numPendingSamples(); // numSamples() - numProcessedSamples()

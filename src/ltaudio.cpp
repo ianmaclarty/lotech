@@ -132,6 +132,18 @@ void LTTrack::play() {
     alSourcePlay(source_id);
 }
 
+void LTTrack::pause() {
+    alSourcePause(source_id);
+}
+
+void LTTrack::stop() {
+    alSourceStop(source_id);
+}
+
+void LTTrack::rewind() {
+    alSourceRewind(source_id);
+}
+
 void LTTrack::setLoop(bool loop) {
     alSourcei(source_id, AL_LOOPING, loop ? AL_TRUE : AL_FALSE);
 }
