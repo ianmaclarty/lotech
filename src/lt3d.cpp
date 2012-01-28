@@ -2,6 +2,8 @@
 #include "ltgraphics.h"
 #include "ltimage.h"
 
+static bool depth_test_on = false;
+
 LTPerspective::LTPerspective(LTfloat near, LTfloat origin, LTfloat far,
         LTSceneNode *child) : LTWrapNode(child, LT_TYPE_PERSPECTIVE)
 {
@@ -31,18 +33,37 @@ LTfloat* LTPerspective::field_ptr(const char *field_name) {
     return NULL;
 }
 
-LTDepthTest::LTDepthTest(LTSceneNode *child) : LTWrapNode(child, LT_TYPE_DEPTHTEST)
+LTDepthTest::LTDepthTest(bool on, LTSceneNode *child) : LTWrapNode(child, LT_TYPE_DEPTHTEST)
 {
+    LTDepthTest::on = on;
 }
 
 void LTDepthTest::draw() {
-    #ifdef LTDEPTHBUF
-    glEnable(GL_DEPTH_TEST);
-    #endif
-    child->draw();
-    #ifdef LTDEPTHBUF
-    glDisable(GL_DEPTH_TEST);
-    #endif
+    if (on) {
+        if (not depth_test_on) {
+            #ifdef LTDEPTHBUF
+            glEnable(GL_DEPTH_TEST);
+            #endif
+            depth_test_on = true;
+            child->draw();
+            depth_test_on = false;
+            #ifdef LTDEPTHBUF
+            glDisable(GL_DEPTH_TEST);
+            #endif
+        }
+    } else {
+        if (depth_test_on) {
+            #ifdef LTDEPTHBUF
+            glDisable(GL_DEPTH_TEST);
+            #endif
+            depth_test_on = false;
+            child->draw();
+            depth_test_on = true;
+            #ifdef LTDEPTHBUF
+            glEnable(GL_DEPTH_TEST);
+            #endif
+        }
+    }
 }
 
 bool LTDepthTest::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {

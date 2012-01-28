@@ -18,7 +18,8 @@ struct LTPerspective : LTWrapNode {
 };
 
 struct LTDepthTest : LTWrapNode {
-    LTDepthTest(LTSceneNode *child);
+    bool on;
+    LTDepthTest(bool on, LTSceneNode *child);
     virtual void draw();
     bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
 };

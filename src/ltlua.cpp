@@ -636,9 +636,13 @@ static int lt_Fog(lua_State *L) {
 }
 
 static int lt_DepthTest(lua_State *L) {
-    check_nargs(L, 1);
+    int nargs = check_nargs(L, 1);
     LTSceneNode *child = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
-    push_wrap(L, new LTDepthTest(child));
+    bool on = true;
+    if (nargs > 1) {
+        on = lua_toboolean(L, 2);
+    }
+    push_wrap(L, new LTDepthTest(on, child));
     set_ref_field(L, -1, "child", 1); // Add ref from new node to child.
     return 1;
 }
