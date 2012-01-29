@@ -64,7 +64,7 @@ void ltInitGraphics() {
     glFogf(GL_FOG_MODE, GL_LINEAR);
     ltDisableTextures();
     glDisable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
+    glDepthFunc(GL_LEQUAL);
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     GLbitfield clear_mask = GL_COLOR_BUFFER_BIT;
     #ifdef LTDEPTHBUF
