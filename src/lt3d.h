@@ -24,6 +24,13 @@ struct LTDepthTest : LTWrapNode {
     bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
 };
 
+struct LTDepthMask : LTWrapNode {
+    bool on;
+    LTDepthMask(bool on, LTSceneNode *child);
+    virtual void draw();
+    bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
+};
+
 struct LTPitch : LTWrapNode {
     LTfloat pitch;
 

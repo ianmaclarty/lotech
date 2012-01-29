@@ -3,6 +3,7 @@
 #include "ltimage.h"
 
 static bool depth_test_on = false;
+static bool depth_mask_on = true;
 
 LTPerspective::LTPerspective(LTfloat near, LTfloat origin, LTfloat far,
         LTSceneNode *child) : LTWrapNode(child, LT_TYPE_PERSPECTIVE)
@@ -67,6 +68,35 @@ void LTDepthTest::draw() {
 }
 
 bool LTDepthTest::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
+    return child->propogatePointerEvent(x, y, event);
+}
+
+LTDepthMask::LTDepthMask(bool on, LTSceneNode *child) : LTWrapNode(child, LT_TYPE_DEPTHMASK)
+{
+    LTDepthMask::on = on;
+}
+
+void LTDepthMask::draw() {
+    if (on) {
+        if (not depth_mask_on) {
+            glDepthMask(GL_TRUE);
+            depth_mask_on = true;
+            child->draw();
+            depth_mask_on = false;
+            glDepthMask(GL_FALSE);
+        }
+    } else {
+        if (depth_mask_on) {
+            glDepthMask(GL_FALSE);
+            depth_mask_on = false;
+            child->draw();
+            depth_mask_on = true;
+            glDepthMask(GL_TRUE);
+        }
+    }
+}
+
+bool LTDepthMask::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
     return child->propogatePointerEvent(x, y, event);
 }
 

@@ -34,6 +34,7 @@ lt.classes = {
             Button                      = lt.Button,
             Fog                         = lt.Fog,
             DepthTest                   = lt.DepthTest,
+            DepthMask                   = lt.DepthMask,
         }
     },
     Layer = {

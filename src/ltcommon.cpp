@@ -40,6 +40,7 @@ const LTTypeInfo types[] = {
     {"Pitch",           LT_TYPE_WRAP},
     {"Fog",             LT_TYPE_WRAP},
     {"DepthTest",       LT_TYPE_WRAP},
+    {"DepthMask",       LT_TYPE_WRAP},
     {"HitFilter",       LT_TYPE_WRAP},
     {"DownFilter",      LT_TYPE_WRAP},
     {"Wrap",            LT_TYPE_SCENENODE},

@@ -647,6 +647,18 @@ static int lt_DepthTest(lua_State *L) {
     return 1;
 }
 
+static int lt_DepthMask(lua_State *L) {
+    int nargs = check_nargs(L, 1);
+    LTSceneNode *child = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
+    bool on = true;
+    if (nargs > 1) {
+        on = lua_toboolean(L, 2);
+    }
+    push_wrap(L, new LTDepthMask(on, child));
+    set_ref_field(L, -1, "child", 1); // Add ref from new node to child.
+    return 1;
+}
+
 static int lt_Tint(lua_State *L) {
     int num_args = check_nargs(L, 4);
     LTSceneNode *child = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
@@ -2991,6 +3003,7 @@ static const luaL_Reg ltlib[] = {
     {"Pitch",                           lt_Pitch},
     {"Fog",                             lt_Fog},
     {"DepthTest",                       lt_DepthTest},
+    {"DepthMask",                       lt_DepthMask},
     {"Translate",                       lt_Translate},
     {"Rotate",                          lt_Rotate},
     {"HitFilter",                       lt_HitFilter},
