@@ -1089,7 +1089,7 @@ static int lt_MakeNativeTween(lua_State *L) {
         ease_func = ease_func_info->func;
     }
     LTTween *tween = (LTTween*)lua_newuserdata(L, sizeof(LTTween));
-    ltInitTween(tween, obj, field_ptr, value, time, ease_func);
+    ltInitTween(tween, obj, field_ptr, value, time, delay, ease_func);
     return 1;
 }
 
@@ -1138,7 +1138,7 @@ static int lt_AdvanceTweens(lua_State *L) {
 }
 
 static int lt_AddTween(lua_State *L) {
-    check_nargs(L, 6);
+    check_nargs(L, 7);
     LTTweenSet *tweens = (LTTweenSet*)get_object(L, 1, LT_TYPE_TWEENSET);
     LTObject *obj = get_object(L, 2, LT_TYPE_OBJECT);
     const char *field = lua_tostring(L, 3);
@@ -1152,8 +1152,9 @@ static int lt_AddTween(lua_State *L) {
     }
     LTfloat target_val = luaL_checknumber(L, 4);
     LTfloat time = luaL_checknumber(L, 5);
+    LTfloat delay = luaL_checknumber(L, 6);
     size_t len;
-    const char *ease_func_str = lua_tolstring(L, 6, &len);
+    const char *ease_func_str = lua_tolstring(L, 7, &len);
     if (ease_func_str == NULL) {
         return luaL_error(L, "Expecting a string in argument 6");
     }
@@ -1170,12 +1171,12 @@ static int lt_AddTween(lua_State *L) {
     }
     lua_pop(L, 1);
     if (slot < 0) {
-        slot = tweens->add(obj, field_ptr, target_val, time, ease_func, slot);
+        slot = tweens->add(obj, field_ptr, target_val, time, delay, ease_func, slot);
         lua_pushlightuserdata(L, field_ptr);
         lua_pushinteger(L, slot);
         lua_rawset(L, 1); // Record the slot number of the field_ptr in the wrapper table.
     } else {
-        tweens->add(obj, field_ptr, target_val, time, ease_func, slot);
+        tweens->add(obj, field_ptr, target_val, time, delay, ease_func, slot);
     }
     add_ref(L, 1, 2); // Add a reference to the field owner.
     lua_pushboolean(L, 1);

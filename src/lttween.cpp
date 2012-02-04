@@ -13,7 +13,7 @@ LTTweenSet::~LTTweenSet() {
     delete[] tweens;
 }
 
-int LTTweenSet::add(LTObject *owner, LTfloat *field_ptr, LTfloat target_val, LTfloat time, LTEaseFunc ease, int slot) {
+int LTTweenSet::add(LTObject *owner, LTfloat *field_ptr, LTfloat target_val, LTfloat time, LTfloat delay, LTEaseFunc ease, int slot) {
     if (slot < 0) {
         if (occupants == capacity) {
             int new_capacity = capacity * 2;
@@ -27,12 +27,12 @@ int LTTweenSet::add(LTObject *owner, LTfloat *field_ptr, LTfloat target_val, LTf
         occupants++;
     }
     LTTween *tween = &tweens[slot];
-    ltInitTween(tween, owner, field_ptr, target_val, time, ease);
+    ltInitTween(tween, owner, field_ptr, target_val, time, delay, ease);
     return slot;
 }
 
 void ltInitTween(LTTween *tween, LTObject *owner, LTfloat *field_ptr,
-    LTfloat v, LTfloat time, LTEaseFunc ease)
+    LTfloat v, LTfloat time, LTfloat delay, LTEaseFunc ease)
 {
     tween->owner = owner;
     tween->field_ptr = field_ptr;
@@ -40,10 +40,15 @@ void ltInitTween(LTTween *tween, LTObject *owner, LTfloat *field_ptr,
     tween->v0 = *field_ptr;
     tween->v = v;
     tween->time = time;
+    tween->delay = delay;
     tween->ease = ease;
 }
 
 bool ltAdvanceTween(LTTween *tween, LTfloat dt) {
+    if (tween->delay > 0) {
+        tween->delay -= dt;
+        return false;
+    }
     LTfloat t = tween->t;
     if (t < 1.0f) {
         LTfloat v0 = tween->v0;
