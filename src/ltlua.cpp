@@ -3336,6 +3336,7 @@ static const char *lt_key_str(LTKey key) {
         case LT_KEY_APOS: return ";"; 
         case LT_KEY_COMMA: return ","; 
         case LT_KEY_PERIOD: return "."; 
+        case LT_KEY_SLASH: return "/"; 
         case LT_KEY_PLUS: return "+"; 
         case LT_KEY_MINUS: return "-"; 
         case LT_KEY_TICK: return "`"; 

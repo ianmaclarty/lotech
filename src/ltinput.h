@@ -55,6 +55,7 @@ enum LTKey {
     LT_KEY_APOS,
     LT_KEY_COMMA,
     LT_KEY_PERIOD,
+    LT_KEY_SLASH,
     LT_KEY_PLUS,
     LT_KEY_MINUS,
     LT_KEY_TICK,
