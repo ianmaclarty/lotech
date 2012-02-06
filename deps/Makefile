@@ -151,6 +151,34 @@ libpng.a: rebuild
 	cp $(LIBPNG_DIR)/libpng.a .
 endif
 
+ifeq ($(TARGET_PLATFORM),linux)
+############################ Linux Targets ##############################
+
+liblua.a: rebuild
+	cd $(LUAJIT_DIR) && $(MAKE) \
+		clean all
+	cp $(LUAJIT_DIR)/src/libluajit.a $@
+
+libbox2d.a: rebuild
+	cd $(BOX2D_DIR) && $(MAKE) \
+		clean all
+	cp $(BOX2D_DIR)/libbox2d.a .
+
+libz.a: rebuild
+	cd $(ZLIB_DIR) && $(MAKE) \
+		clean all
+	cp $(ZLIB_DIR)/libz.a .
+
+libpng.a: rebuild
+	cd $(LIBPNG_DIR) && $(MAKE) \
+		clean all
+	cp $(LIBPNG_DIR)/libpng.a .
+
+endif
+
+##########################################################
+##########################################################
+
 .PHONY: headers
 headers: rebuild
 	mkdir -p include

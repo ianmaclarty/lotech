@@ -1,4 +1,4 @@
-TARGET_PLATFORM:=osx
+TARGET_PLATFORM:=linux
 
 LUA=lua-5.1.4
 LUAJIT=luajit-2.0

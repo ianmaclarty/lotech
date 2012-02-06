@@ -49,6 +49,21 @@ $(TARGET_DIR)/liblt.a: headers | $(TARGET_DIR)
 	cp buildtmp.osx/liblt.a $(TARGET_DIR)/
 endif
 
+############################ Linux Target ##############################
+ifeq ($(TARGET_PLATFORM),linux)
+.PHONY: $(TARGET_DIR)/liblt.a
+$(TARGET_DIR)/liblt.a: headers | $(TARGET_DIR)
+	mkdir -p buildtmp.linux
+	cd src && $(MAKE) \
+		OUT_DIR=$(PWD)/buildtmp.linux \
+		all
+	cp buildtmp.linux/liblt.a $(TARGET_DIR)/
+endif
+
+
+##########################################################
+##########################################################
+
 .PHONY: deplibs
 deplibs: | $(TARGET_DIR)
 	cd deps && $(MAKE)

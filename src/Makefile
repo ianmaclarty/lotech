@@ -24,6 +24,9 @@ endif
 ifeq ($(TARGET_PLATFORM),android)
 GPP_FLAGS+=-DLTANDROID -DLTGLES1
 endif
+ifeq ($(TARGET_PLATFORM),linux)
+GPP_FLAGS+=-DLTLINUX
+endif
 
 $(CPP_O_FILES): $(OUT_DIR)/%.o: %.cpp
 	@echo CPP   $@
