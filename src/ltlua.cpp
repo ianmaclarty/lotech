@@ -1039,6 +1039,8 @@ static int lt_DrawVector(lua_State *L) {
         mode = LT_DRAWMODE_TRIANGLE_FAN;
     } else if (strcmp(mode_str, "triangles") == 0) {
         mode = LT_DRAWMODE_TRIANGLES;
+    } else if (strcmp(mode_str, "lines") == 0) {
+        mode = LT_DRAWMODE_LINES;
     } else if (strcmp(mode_str, "points") == 0) {
         mode = LT_DRAWMODE_POINTS;
     } else {

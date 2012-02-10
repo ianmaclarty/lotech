@@ -35,6 +35,7 @@ enum LTDrawMode {
     LT_DRAWMODE_TRIANGLE_STRIP = GL_TRIANGLE_STRIP,
     LT_DRAWMODE_TRIANGLE_FAN   = GL_TRIANGLE_FAN,
     LT_DRAWMODE_POINTS         = GL_POINTS,
+    LT_DRAWMODE_LINES          = GL_LINES,
 };
 
 struct LTDrawVector : LTSceneNode {
