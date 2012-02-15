@@ -423,6 +423,7 @@ LTRectNode::LTRectNode(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2) : LTScene
 
 void LTRectNode::draw() {
     ltDisableTextures();
+
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     GLfloat v[] = {
         x1, y1,

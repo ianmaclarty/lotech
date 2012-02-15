@@ -3255,7 +3255,7 @@ void ltLuaResume() {
     ltAudioResume();
 }
 
-void ltLuaAdvance(LTfloat secs) {
+void ltLuaAdvance(LTdouble secs) {
     if (g_L != NULL && !g_suspended && push_lt_func("Advance")) {
         lua_pushnumber(g_L, secs);
         docall(g_L, 1);
