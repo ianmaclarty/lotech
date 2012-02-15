@@ -238,6 +238,7 @@ void ltDrawAdBackground() {
     glColorPointer(4, GL_FLOAT, stride, v + 2);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     glDisableClientState(GL_COLOR_ARRAY);
+    ltRestoreTint();
     */
     #endif
 }
