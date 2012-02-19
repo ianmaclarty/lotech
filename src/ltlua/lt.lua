@@ -1,4 +1,5 @@
 -- Copyright 2011 Ian MacLarty
+import "lttimer"
 import "ltutil"
 import "ltrefs"
 import "ltui"
