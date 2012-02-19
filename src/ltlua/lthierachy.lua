@@ -120,6 +120,10 @@ lt.classes = {
         super = "Wrap",
         methods = {}
     },
+    DepthMask = {
+        super = "Wrap",
+        methods = {}
+    },
 
     -- Vectors
     Vector = {
