@@ -131,25 +131,25 @@ ifeq ($(TARGET_PLATFORM),osx)
 
 liblua.a: rebuild
 	cd $(LUAJIT_DIR) && $(MAKE) \
-		CC="gcc -m64 -arch x86_64" \
+		CC="gcc -m32 -arch i386" \
 		clean all
 	cp $(LUAJIT_DIR)/src/libluajit.a $@
 
 libbox2d.a: rebuild
 	cd $(BOX2D_DIR) && $(MAKE) \
-		TARGET_FLAGS="-m64 -arch x86_64" \
+		TARGET_FLAGS="-m32 -arch i386" \
 		clean all
 	cp $(BOX2D_DIR)/libbox2d.a .
 
 libz.a: rebuild
 	cd $(ZLIB_DIR) && $(MAKE) \
-		TARGET_FLAGS="-m64 -arch x86_64" \
+		TARGET_FLAGS="-m32 -arch i386" \
 		clean all
 	cp $(ZLIB_DIR)/libz.a .
 
 libpng.a: rebuild
 	cd $(LIBPNG_DIR) && $(MAKE) \
-		TARGET_FLAGS="-m64 -arch x86_64" \
+		TARGET_FLAGS="-m32 -arch i386" \
 		clean all
 	cp $(LIBPNG_DIR)/libpng.a .
 endif

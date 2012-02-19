@@ -43,7 +43,7 @@ ifeq ($(TARGET_PLATFORM),osx)
 $(TARGET_DIR)/liblt.a: headers | $(TARGET_DIR)
 	mkdir -p buildtmp.osx
 	cd src && $(MAKE) \
-		TARGET_FLAGS="-m64 -arch x86_64" \
+		TARGET_FLAGS="-m32 -arch i386" \
 		OUT_DIR=$(PWD)/buildtmp.osx \
 		all
 	cp buildtmp.osx/liblt.a $(TARGET_DIR)/
@@ -79,7 +79,7 @@ endif
 .PHONY: deplibs
 deplibs: | $(TARGET_DIR)
 	cd deps && $(MAKE)
-	cp deps/*.a deps/*.lib $(TARGET_DIR)
+	-cp deps/*.a deps/*.lib $(TARGET_DIR)
 	cp -r deps/include $(TARGET_DIR)
 
 .PHONY: headers
