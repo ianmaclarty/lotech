@@ -1,6 +1,7 @@
 /* Copyright (C) 2011 Ian MacLarty */
 #ifndef LTPROTOCOL_H
 #define LTPROTOCOL_H
+#ifndef LTMINGW
 
 bool ltAmClient();
 void ltClientInit();
@@ -21,4 +22,5 @@ const char* ltServerStateStr();
 // Returns NULL if no more logs.  Free the returned string with delete[].
 char *ltPopClientLog();
 
+#endif
 #endif

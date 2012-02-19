@@ -1,5 +1,7 @@
 #ifndef LTANDROID
+#ifndef LTMINGW
 #include <glob.h>
+#endif
 #endif
 #ifdef LTANDROID
 #include <android/log.h>
@@ -31,6 +33,7 @@ void ltLog(const char *fmt, ...) {
 #else
     fprintf(stderr, "%s", msg);
     fprintf(stderr, "\n");
+    fflush(stderr);
 #endif
 #ifdef LTDEVMODE
     if (ltAmClient()) {
@@ -46,6 +49,7 @@ bool ltFileExists(const char *file) {
 
 char* ltGlob(const char **patterns) {
 #ifndef LTANDROID
+#ifndef LTMINGW
     glob_t globbuf;
     globbuf.gl_offs = 0;
     int flags = 0;
@@ -68,6 +72,10 @@ char* ltGlob(const char **patterns) {
     *ptr = '\0';
     globfree(&globbuf);
     return matches;
+#else
+    ltLog("glob not supported on mingw");
+    return NULL;
+#endif
 #else
     ltLog("glob not supported on android");
     return NULL;

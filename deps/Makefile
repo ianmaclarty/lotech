@@ -10,6 +10,9 @@ TARGETS=liblua.a libbox2d.a libz.a libpng.a headers
 ifeq ($(TARGET_PLATFORM),android)
 TARGETS+=libopenal.a openal_headers
 endif
+ifeq ($(TARGET_PLATFORM),mingw)
+TARGETS+=glfw_headers libglfw.a libOpenAL32.dll.a openal_headers glew32s.lib glew_headers
+endif
 
 all: $(TARGETS)
 
@@ -155,8 +158,7 @@ ifeq ($(TARGET_PLATFORM),linux)
 ############################ Linux Targets ##############################
 
 liblua.a: rebuild
-	cd $(LUAJIT_DIR) && $(MAKE) \
-		clean all
+	cd $(LUAJIT_DIR) && $(MAKE)
 	cp $(LUAJIT_DIR)/src/libluajit.a $@
 
 libbox2d.a: rebuild
@@ -173,6 +175,53 @@ libpng.a: rebuild
 	cd $(LIBPNG_DIR) && $(MAKE) \
 		clean all
 	cp $(LIBPNG_DIR)/libpng.a .
+
+endif
+
+ifeq ($(TARGET_PLATFORM),mingw)
+############################ MinGW Targets ##############################
+
+liblua.a: rebuild
+	#cd $(LUA_DIR) && $(MAKE) mingw
+	#cp $(LUA_DIR)/src/liblua.a $@
+	cd $(LUAJIT_DIR) && $(MAKE) BUILDMODE=static
+	cp $(LUAJIT_DIR)/src/libluajit.a $@
+
+libbox2d.a: rebuild
+	cd $(BOX2D_DIR) && $(MAKE) \
+		clean all
+	cp $(BOX2D_DIR)/libbox2d.a .
+
+libz.a: rebuild
+	cd $(ZLIB_DIR) && $(MAKE) \
+		clean all
+	cp $(ZLIB_DIR)/libz.a .
+
+libpng.a: rebuild
+	cd $(LIBPNG_DIR) && $(MAKE) \
+		clean all
+	cp $(LIBPNG_DIR)/libpng.a .
+
+.PHONY: glfw_headers
+glfw_headers:
+	cp -r glfw-2.7.3.bin.WIN32/include/* include/
+
+libglfw.a:
+	cp glfw-2.7.3.bin.WIN32/lib-mingw/libglfw.a .
+
+libOpenAL32.dll.a:
+	cp openal-soft-1.13-win32/lib/Win32/libOpenAL32.dll.a .
+
+glew32s.lib:
+	cp glew-1.7.0-win32/lib/glew32s.lib .
+
+.PHONY: openal_headers
+openal_headers:
+	cp -r openal-soft-1.13-win32/include/* include/
+
+.PHONY: glew_headers
+glew_headers:
+	cp -r glew-1.7.0-win32/include/* include/
 
 endif
 
@@ -206,4 +255,5 @@ clean:
 	cd $(ZLIB_DIR) && $(MAKE) clean
 	cd $(LIBPNG_DIR) && $(MAKE) clean
 	rm -rf *.a
+	rm -rf *.lib
 	rm -rf include/*

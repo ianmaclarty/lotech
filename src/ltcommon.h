@@ -1,11 +1,14 @@
-/* Copyright (C) 2010 Ian MacLarty */
+/* Copyright (C) 2012 Ian MacLarty */
 #ifndef LTCOMMON_H
 #define LTCOMMON_H
 
 #ifdef LTLINUX
-    #define GL_GLEXT_PROTOTYPES
-    #include <GL/gl.h>
-    #include <GL/glext.h>
+    #include <GL/glfw.h>
+#endif
+#ifdef LTMINGW
+    #define GLEW_STATIC 1
+    #include <GL/glew.h>
+    #include <GL/glfw.h>
 #endif
 #ifdef LTIOS
     #include <OpenGLES/ES1/gl.h>
