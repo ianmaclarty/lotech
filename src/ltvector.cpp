@@ -42,6 +42,8 @@ void LTDrawVector::draw() {
     glDrawArrays(mode, 0, vector->size);
     if (color_offset >= 0) {
         glDisableClientState(GL_COLOR_ARRAY);
+        glColorPointer(4, GL_FLOAT, 0, 0);
+        ltRestoreTint();
     }
 }
 

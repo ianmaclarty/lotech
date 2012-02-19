@@ -3,8 +3,16 @@
 #define LTAUDIO_H
 
 #include <stdlib.h>
+#ifdef LTLINUX
+#include <AL/al.h>
+#include <AL/alc.h>
+#elif LTMINGW
+#include <AL/al.h>
+#include <AL/alc.h>
+#else
 #include <OpenAL/al.h>
 #include <OpenAL/alc.h>
+#endif
 
 #include "ltcommon.h"
 

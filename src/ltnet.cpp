@@ -1,4 +1,5 @@
 /* Copyright (C) 2010 Ian MacLarty */
+#ifndef LTMINGW
 #include "ltnet.h"
 
 #include "ltcommon.h"
@@ -613,3 +614,4 @@ const char* LTClientConnection::stateStr() {
     }
     return "unknown";
 }
+#endif

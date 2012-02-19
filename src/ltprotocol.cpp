@@ -1,4 +1,5 @@
 /* Copyright (C) 2011 Ian MacLarty */
+#ifndef LTMINGW
 #include "ltprotocol.h"
 
 #include <list>
@@ -407,3 +408,4 @@ static LTCommand* decode_command(const char *buf, int size) {
     }
     return NULL;
 }
+#endif

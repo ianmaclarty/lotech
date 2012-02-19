@@ -79,7 +79,6 @@ void ltInitGraphics() {
     #ifndef LTGLES1
     glEnableClientState(GL_INDEX_ARRAY);
     #endif
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     glEnable(GL_BLEND);
     apply_blend_mode(LT_BLEND_MODE_NORMAL);
     apply_texture_mode(LT_TEXTURE_MODE_MODULATE);
@@ -239,6 +238,7 @@ void ltDrawAdBackground() {
     glColorPointer(4, GL_FLOAT, stride, v + 2);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     glDisableClientState(GL_COLOR_ARRAY);
+    ltRestoreTint();
     */
     #endif
 }
@@ -377,6 +377,14 @@ void ltPeekTint(LTColor *color) {
         color->b = 1.0f;
         color->a = 1.0f;
     }
+}
+
+void ltRestoreTint() {
+    LTColor c;
+    if (!tint_stack.empty()) {
+        c = tint_stack.front();
+    }
+    glColor4f(c.r, c.g, c.b, c.a);
 }
 
 static void apply_blend_mode(LTBlendMode mode) {

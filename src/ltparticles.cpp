@@ -331,6 +331,7 @@ void LTParticleSystem::draw() {
         glDrawElements(GL_TRIANGLES, num_particles * 6, GL_UNSIGNED_SHORT, indices);
 
         glDisableClientState(GL_COLOR_ARRAY);
+        ltRestoreTint();
     }
 }
 

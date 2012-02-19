@@ -43,16 +43,43 @@ ifeq ($(TARGET_PLATFORM),osx)
 $(TARGET_DIR)/liblt.a: headers | $(TARGET_DIR)
 	mkdir -p buildtmp.osx
 	cd src && $(MAKE) \
-		TARGET_FLAGS="-m64 -arch x86_64 -DLTENVELOPE" \
+		TARGET_FLAGS="-m64 -arch x86_64" \
 		OUT_DIR=$(PWD)/buildtmp.osx \
 		all
 	cp buildtmp.osx/liblt.a $(TARGET_DIR)/
 endif
 
+############################ Linux Target ##############################
+ifeq ($(TARGET_PLATFORM),linux)
+.PHONY: $(TARGET_DIR)/liblt.a
+$(TARGET_DIR)/liblt.a: headers | $(TARGET_DIR)
+	mkdir -p buildtmp.linux
+	cd src && $(MAKE) \
+		OUT_DIR=$(PWD)/buildtmp.linux \
+		all
+	cp buildtmp.linux/liblt.a $(TARGET_DIR)/
+endif
+
+############################ MinGW Target ##############################
+ifeq ($(TARGET_PLATFORM),mingw)
+.PHONY: $(TARGET_DIR)/liblt.a
+$(TARGET_DIR)/liblt.a: headers | $(TARGET_DIR)
+	mkdir -p buildtmp.mingw
+	cd src && $(MAKE) \
+		OUT_DIR=$(PWD)/buildtmp.mingw \
+		all
+	cp buildtmp.mingw/liblt.a $(TARGET_DIR)/
+endif
+
+
+
+##########################################################
+##########################################################
+
 .PHONY: deplibs
 deplibs: | $(TARGET_DIR)
 	cd deps && $(MAKE)
-	cp deps/*.a $(TARGET_DIR)
+	cp deps/*.a deps/*.lib $(TARGET_DIR)
 	cp -r deps/include $(TARGET_DIR)
 
 .PHONY: headers

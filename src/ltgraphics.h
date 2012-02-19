@@ -135,6 +135,7 @@ void ltPopPerspective();
 void ltPushTint(LTfloat r, LTfloat g, LTfloat b, LTfloat a);
 void ltPopTint();
 void ltPeekTint(LTColor *color);
+void ltRestoreTint();
 void ltPushBlendMode(LTBlendMode mode);
 void ltPopBlendMode();
 void ltPushTextureMode(LTTextureMode mode);

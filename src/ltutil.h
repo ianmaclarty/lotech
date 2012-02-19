@@ -14,15 +14,27 @@ bool ltFileExists(const char *file);
 char* ltGlob(const char **patterns);
 
 static inline float ltRandBetween(float lo, float hi) {
+#ifdef _WIN32
+    return ((float)rand() / (float)RAND_MAX) * (hi - lo) + lo;
+#else
     return ((float)random() / (float)RAND_MAX) * (hi - lo) + lo;
+#endif
 }
 
 static inline float ltRandMinus1_1() {
+#ifdef _WIN32
+    return ((float)rand() / (float)(RAND_MAX / 2)) - 1.0f;
+#else
     return ((float)random() / (float)(RAND_MAX / 2)) - 1.0f;
+#endif
 }
 
 static inline float ltRand0_1() {
+#ifdef _WIN32
+    return ((float)rand() / (float)(RAND_MAX / 2)) - 1.0f;
+#else
     return (float)random() / (float)(RAND_MAX);
+#endif
 }
 
 #endif

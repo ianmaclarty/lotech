@@ -12,7 +12,7 @@ void ltLuaReset();
 void ltLuaSuspend();
 void ltLuaResume();
 
-void ltLuaAdvance(LTfloat secs);
+void ltLuaAdvance(LTdouble secs);
 void ltLuaRender();
 
 void ltLuaKeyDown(LTKey);

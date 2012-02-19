@@ -17,12 +17,13 @@
 // l, b, r and t are the left, bottom, right and top dimensions of the bounding box.
 #define BBCHUNK_FORMAT "w%dh%dl%db%dr%dt%d"
 
-static bool g_textures_enabled = false;
+static bool g_textures_enabled = true;
 static GLuint g_current_bound_texture = 0;
 
 void ltEnableAtlas(LTAtlas *atlas) {
     if (!g_textures_enabled) {
         glEnable(GL_TEXTURE_2D);
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
         g_textures_enabled = true;
     }
     if (g_current_bound_texture != atlas->texture_id) {
@@ -34,6 +35,7 @@ void ltEnableAtlas(LTAtlas *atlas) {
 void ltEnableTexture(GLuint texture_id) {
     if (!g_textures_enabled) {
         glEnable(GL_TEXTURE_2D);
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
         g_textures_enabled = true;
     }
     if (g_current_bound_texture != texture_id) {
@@ -45,6 +47,7 @@ void ltEnableTexture(GLuint texture_id) {
 void ltDisableTextures() {
     if (g_textures_enabled) {
         glDisable(GL_TEXTURE_2D);
+        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
         g_textures_enabled = false;
         g_current_bound_texture = 0;
     }
