@@ -319,6 +319,8 @@ static int max_atlas_size() {
 
 /************************** Resolve paths ****************/
 
+static const char* resource_prefix = "";
+
 static const char *resource_path(const char *resource, const char *suffix) {
     const char *path;
     #ifdef LTIOS
@@ -326,9 +328,9 @@ static const char *resource_path(const char *resource, const char *suffix) {
     #elif LTOSX
         path = ltOSXBundlePath(resource, suffix);
     #else
-        int len = strlen(resource) + strlen(suffix) + 3;
+        int len = strlen(resource_prefix) + strlen(resource) + strlen(suffix) + 3;
         path = new char[len];
-        snprintf((char*)path, len, "%s%s", resource, suffix);
+        snprintf((char*)path, len, "%s%s%s", resource_prefix, resource, suffix);
     #endif
     return path;
 }
@@ -3228,6 +3230,10 @@ void ltLuaSetup() {
     set_globals();
     run_lua_file("config");
     ltRestoreState();
+}
+
+void ltLuaSetResourcePrefix(const char *prefix) {
+    resource_prefix = prefix;
 }
 
 void ltLuaTeardown() {

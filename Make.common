@@ -1,4 +1,5 @@
-TARGET_PLATFORM:=osx
+DIR := $(dir $(lastword $(MAKEFILE_LIST)))
+TARGET_PLATFORM:=$(shell cat $(DIR)/target)
 
 LUA=lua-5.1.4
 LUAJIT=luajit-2.0
