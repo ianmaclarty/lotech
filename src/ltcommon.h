@@ -3,6 +3,7 @@
 #define LTCOMMON_H
 
 #ifdef LTLINUX
+    #include <GL/glew.h>
     #include <GL/glfw.h>
 #endif
 #ifdef LTMINGW
