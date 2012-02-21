@@ -27,3 +27,7 @@ local ad = lt.AdvanceTimers
 function lt.AdvanceGlobalTimers(dt)
     ad(dt, global_timers)
 end
+
+function lt.ClearGlobalTimers()
+    global_timers = {}
+end

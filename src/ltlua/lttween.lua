@@ -394,3 +394,7 @@ end
 function lt.AdvanceGlobalTweens(dt)
     lt.AdvanceTweens(global_tweens, dt or lt.secs_per_frame)
 end
+
+function lt.ClearGlobalTweens(dt)
+    global_tweens:Clear();
+end

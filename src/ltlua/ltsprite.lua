@@ -74,3 +74,7 @@ end
 function lt.AdvanceGlobalSprites(dt)
     lt.AdvanceSprites(global_sprites, dt or lt.secs_per_frame)
 end
+
+function lt.ClearGlobalSprites()
+    global_sprites = lt.SpriteSet()
+end
