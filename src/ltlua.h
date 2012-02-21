@@ -30,6 +30,8 @@ void ltLuaGarbageCollect();
 
 int ltLuaInitRef();
 
+void ltLuaSetResourcePrefix(const char *prefix);
+
 // The caller should free the pickler with delete.
 LTPickler *ltLuaPickleState();
 void ltLuaUnpickleState(LTUnpickler *unpickler);

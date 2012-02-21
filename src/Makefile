@@ -32,11 +32,11 @@ GPP_FLAGS+=-DLTMINGW -DLTENVELOPE
 endif
 
 $(CPP_O_FILES): $(OUT_DIR)/%.o: %.cpp
-	@echo CPP   $@
+	@echo CPP   `basename $@`
 	@$(GPP) $(GPP_FLAGS) -c $< -o $@
 
 $(MM_O_FILES): $(OUT_DIR)/%.o: %.mm
-	@echo CPP   $@
+	@echo MM   `basename $@`
 	@$(GPP) -ObjC++ $(GPP_FLAGS) -c $< -o $@
 
 $(OUT_DIR)/liblt.a: $(O_FILES)
