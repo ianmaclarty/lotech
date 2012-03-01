@@ -35,6 +35,7 @@ lt.classes = {
             Fog                         = lt.Fog,
             DepthTest                   = lt.DepthTest,
             DepthMask                   = lt.DepthMask,
+            ContainsPoint               = lt.SceneNodeContainsPoint,
         }
     },
     Layer = {

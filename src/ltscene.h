@@ -169,7 +169,7 @@ struct LTRectNode : LTSceneNode {
     virtual LTfloat* field_ptr(const char *field_name);
 };
 
-// Filters all pointer events.  XXX Think about renaming.
+// Filters all pointer events.
 struct LTHitFilter : LTWrapNode {
     LTfloat left, bottom, right, top;
 
