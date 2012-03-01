@@ -40,6 +40,7 @@ extern "C" {
 
 static lua_State *g_L = NULL;
 static int g_wrefs_ref = LUA_NOREF;
+static int g_ud_metatables_ref = LUA_NOREF;
 static bool g_suspended = false;
 static bool g_initialized = false;
 static bool g_gamecenter_initialized = false;
@@ -187,11 +188,10 @@ static void push_wrap(lua_State *L, LTObject *obj) {
         return;
     }
     lua_newtable(L);
-    lua_getglobal(L, "lt");
-    lua_getfield(L, -1, "metatables");
+    lua_rawgeti(L, LUA_REGISTRYINDEX, g_ud_metatables_ref);
     lua_getfield(L, -1, ltTypeName(obj->type));
-    lua_setmetatable(L, -4);
-    lua_pop(L, 2); // pop lt, metatables. wrapper table now on top.
+    lua_setmetatable(L, -3);
+    lua_pop(L, 1); // pop metatables. wrapper table now on top.
     // Push wrapper table field that will point to the C++ object.
     lua_pushstring(L, LT_USERDATA_KEY);
     // Push user data for C++ obj.
@@ -3166,6 +3166,15 @@ static void setup_wref_ref() {
     }
 }
 
+static void setup_ud_metatables_ref() {
+    if (g_L != NULL) {
+        lua_getglobal(g_L, "lt");
+        lua_getfield(g_L, -1, "metatables");
+        g_ud_metatables_ref = luaL_ref(g_L, LUA_REGISTRYINDEX);
+        lua_pop(g_L, 1); // pop lt.
+    }
+}
+
 static void set_viewport_globals() {
     if (g_L != NULL) {
         lua_getglobal(g_L, "lt");
@@ -3236,6 +3245,7 @@ void ltLuaSetup() {
     lua_gc(g_L, LUA_GCRESTART, 0);
     run_lua_file("lt");
     setup_wref_ref();
+    setup_ud_metatables_ref();
     set_globals();
     run_lua_file("config");
     ltRestoreState();
