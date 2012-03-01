@@ -39,6 +39,7 @@ extern "C" {
 #define LT_USERDATA_KEY "_ud"
 
 static lua_State *g_L = NULL;
+static int g_wrefs_ref = LUA_NOREF;
 static bool g_suspended = false;
 static bool g_initialized = false;
 static bool g_gamecenter_initialized = false;
@@ -102,25 +103,22 @@ static void docall(lua_State *L, int nargs) {
 // Returns a weak reference to the value at the given index.  Does not
 // modify the stack.
 static int make_weak_ref(lua_State *L, int index) {
-    lua_getglobal(L, "lt");
-    lua_getfield(L, -1, "wrefs");
+    lua_rawgeti(L, LUA_REGISTRYINDEX, g_wrefs_ref);
     if (index > 0) {
         lua_pushvalue(L, index);
     } else {
         lua_pushvalue(L, index - 2);
     }
     int ref = luaL_ref(L, -2);
-    lua_pop(L, 2); // pop lt and wrefs.
+    lua_pop(L, 1); // pop wrefs.
     return ref;
 }
 
 // Pushes referenced value.
 static void get_weak_ref(lua_State *L, int ref) {
-    lua_getglobal(L, "lt");
-    lua_getfield(L, -1, "wrefs");
+    lua_rawgeti(L, LUA_REGISTRYINDEX, g_wrefs_ref);
     lua_rawgeti(L, -1, ref);
     lua_remove(L, -2); // remove wrefs.
-    lua_remove(L, -2); // remove lt.
 }
 
 /************************* Wrapping/unwrapping of c++ objects ******/
@@ -2707,7 +2705,7 @@ static int lt_BodyOrFixtureTouching(lua_State *L) {
                     if (
                            (f1 != NULL && f2 == NULL && (a == f1 || b == f1))
                         || (f1 == NULL && f2 != NULL && (a == f2 || b == f2)) 
-                        || (f1 != NULL && f2 != NULL && (a == f1 && b == f2 || a == f2 && b == f1))
+                        || (f1 != NULL && f2 != NULL && ((a == f1 && b == f2) || (a == f2 && b == f1)))
                     ) {
                         lua_pushboolean(L, 1);
                         return 1;
@@ -3159,6 +3157,15 @@ static void run_lua_file(const char *file) {
     }
 }
 
+static void setup_wref_ref() {
+    if (g_L != NULL) {
+        lua_getglobal(g_L, "lt");
+        lua_getfield(g_L, -1, "wrefs");
+        g_wrefs_ref = luaL_ref(g_L, LUA_REGISTRYINDEX);
+        lua_pop(g_L, 1); // pop lt.
+    }
+}
+
 static void set_viewport_globals() {
     if (g_L != NULL) {
         lua_getglobal(g_L, "lt");
@@ -3177,6 +3184,7 @@ static void set_viewport_globals() {
         lua_pop(g_L, 1); // pop lt
     }
 }
+
 static void set_globals() {
     if (g_L != NULL) {
         lua_getglobal(g_L, "lt");
@@ -3227,6 +3235,7 @@ void ltLuaSetup() {
     luaL_register(g_L, "lt", ltlib);
     lua_gc(g_L, LUA_GCRESTART, 0);
     run_lua_file("lt");
+    setup_wref_ref();
     set_globals();
     run_lua_file("config");
     ltRestoreState();
