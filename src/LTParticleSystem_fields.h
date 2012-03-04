@@ -32,46 +32,44 @@
 
 #include "ltcommon.h"
 #include "ltparticles.h"
-/* maximum key range = 71, duplicates = 0 */
+/* maximum key range = 79, duplicates = 0 */
 
-#ifdef __GNUC__
-__inline
-#else
-#ifdef __cplusplus
+#if (defined (__STDC_VERSION__) && __STDC_VERSION__ >= 199901L) || defined(__cplusplus) || defined(__GNUC_STDC_INLINE__)
 inline
-#endif
+#elif defined(__GNUC__)
+__inline
 #endif
 static unsigned int
 LTParticleSystem_field_hash (register const char *str, register unsigned int len)
 {
   static unsigned char asso_values[] =
     {
-      75, 75, 75, 75, 75, 75, 75, 75, 75, 75,
-      75, 75, 75, 75, 75, 75, 75, 75, 75, 75,
-      75, 75, 75, 75, 75, 75, 75, 75, 75, 75,
-      75, 75, 75, 75, 75, 75, 75, 75, 75, 75,
-      75, 75, 75, 75, 75, 75, 75, 75, 75, 75,
-      75, 75, 75, 75, 75, 75, 75, 75, 75, 75,
-      75, 75, 75, 75, 75, 75, 75, 75, 75, 75,
-      75, 75, 75, 75, 75, 75, 75, 75, 75, 75,
-      75, 75, 75, 75, 75, 75, 75, 75, 75, 75,
-      75, 75, 75, 75, 75, 25, 75, 30, 75, 75,
-       5,  0, 75, 25, 75,  5, 75, 75,  0, 75,
-      20,  5, 35, 75,  5,  0, 15,  5, 75, 75,
-      10,  5, 75, 75, 75, 75, 75, 75, 75, 75,
-      75, 75, 75, 75, 75, 75, 75, 75, 75, 75,
-      75, 75, 75, 75, 75, 75, 75, 75, 75, 75,
-      75, 75, 75, 75, 75, 75, 75, 75, 75, 75,
-      75, 75, 75, 75, 75, 75, 75, 75, 75, 75,
-      75, 75, 75, 75, 75, 75, 75, 75, 75, 75,
-      75, 75, 75, 75, 75, 75, 75, 75, 75, 75,
-      75, 75, 75, 75, 75, 75, 75, 75, 75, 75,
-      75, 75, 75, 75, 75, 75, 75, 75, 75, 75,
-      75, 75, 75, 75, 75, 75, 75, 75, 75, 75,
-      75, 75, 75, 75, 75, 75, 75, 75, 75, 75,
-      75, 75, 75, 75, 75, 75, 75, 75, 75, 75,
-      75, 75, 75, 75, 75, 75, 75, 75, 75, 75,
-      75, 75, 75, 75, 75, 75
+      87, 87, 87, 87, 87, 87, 87, 87, 87, 87,
+      87, 87, 87, 87, 87, 87, 87, 87, 87, 87,
+      87, 87, 87, 87, 87, 87, 87, 87, 87, 87,
+      87, 87, 87, 87, 87, 87, 87, 87, 87, 87,
+      87, 87, 87, 87, 87, 87, 87, 87, 87, 87,
+      87, 87, 87, 87, 87, 87, 87, 87, 87, 87,
+      87, 87, 87, 87, 87, 87, 87, 87, 87, 87,
+      87, 87, 87, 87, 87, 87, 87, 87, 87, 87,
+      87, 87, 87, 87, 87, 87, 87, 87, 87, 87,
+      87, 87, 87, 87, 87, 20, 87, 30, 87, 87,
+       5,  0, 87, 15, 87,  5, 87, 87, 10, 87,
+      20,  5, 35, 87, 15,  0, 15,  0, 87, 87,
+      25, 20, 87, 87, 87, 87, 87, 87, 87, 87,
+      87, 87, 87, 87, 87, 87, 87, 87, 87, 87,
+      87, 87, 87, 87, 87, 87, 87, 87, 87, 87,
+      87, 87, 87, 87, 87, 87, 87, 87, 87, 87,
+      87, 87, 87, 87, 87, 87, 87, 87, 87, 87,
+      87, 87, 87, 87, 87, 87, 87, 87, 87, 87,
+      87, 87, 87, 87, 87, 87, 87, 87, 87, 87,
+      87, 87, 87, 87, 87, 87, 87, 87, 87, 87,
+      87, 87, 87, 87, 87, 87, 87, 87, 87, 87,
+      87, 87, 87, 87, 87, 87, 87, 87, 87, 87,
+      87, 87, 87, 87, 87, 87, 87, 87, 87, 87,
+      87, 87, 87, 87, 87, 87, 87, 87, 87, 87,
+      87, 87, 87, 87, 87, 87, 87, 87, 87, 87,
+      87, 87, 87, 87, 87, 87
     };
   register int hval = len;
 
@@ -104,36 +102,36 @@ LTParticleSystem_field_info (register const char *str, register unsigned int len
 {
   enum
     {
-      TOTAL_KEYWORDS = 44,
+      TOTAL_KEYWORDS = 45,
       MIN_WORD_LENGTH = 4,
       MAX_WORD_LENGTH = 26,
-      MIN_HASH_VALUE = 4,
-      MAX_HASH_VALUE = 74
+      MIN_HASH_VALUE = 8,
+      MAX_HASH_VALUE = 86
     };
 
   static struct LTFieldInfo wordlist[] =
     {
-      {""}, {""}, {""}, {""},
-      {"life", ((size_t) ( (char *)&((LTParticleSystem *)(0))->life - (char *)0 ))},
-      {""}, {""}, {""},
+      {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""},
       {"end_size", ((size_t) ( (char *)&((LTParticleSystem *)(0))->end_size - (char *)0 ))},
       {""},
       {"speed", ((size_t) ( (char *)&((LTParticleSystem *)(0))->speed - (char *)0 ))},
       {""},
       {"elapsed", ((size_t) ( (char *)&((LTParticleSystem *)(0))->elapsed - (char *)0 ))},
-      {""}, {""},
+      {""},
+      {"life", ((size_t) ( (char *)&((LTParticleSystem *)(0))->life - (char *)0 ))},
       {"start_size", ((size_t) ( (char *)&((LTParticleSystem *)(0))->start_size - (char *)0 ))},
       {""},
       {"end_size_variance", ((size_t) ( (char *)&((LTParticleSystem *)(0))->end_size_variance - (char *)0 ))},
-      {"life_variance", ((size_t) ( (char *)&((LTParticleSystem *)(0))->life_variance - (char *)0 ))},
+      {""},
       {"end_color_blue", ((size_t) ( (char *)&((LTParticleSystem *)(0))->end_color.b - (char *)0 ))},
       {""},
       {"start_color_blue", ((size_t) ( (char *)&((LTParticleSystem *)(0))->start_color.b - (char *)0 ))},
-      {"emit_counter", ((size_t) ( (char *)&((LTParticleSystem *)(0))->emit_counter - (char *)0 ))},
+      {""},
       {"end_color_red", ((size_t) ( (char *)&((LTParticleSystem *)(0))->end_color.r - (char *)0 ))},
       {"start_size_variance", ((size_t) ( (char *)&((LTParticleSystem *)(0))->start_size_variance - (char *)0 ))},
       {"start_color_red", ((size_t) ( (char *)&((LTParticleSystem *)(0))->start_color.r - (char *)0 ))},
-      {""}, {""},
+      {""},
+      {"emit_counter", ((size_t) ( (char *)&((LTParticleSystem *)(0))->emit_counter - (char *)0 ))},
       {"end_color_variance_blue", ((size_t) ( (char *)&((LTParticleSystem *)(0))->end_color_variance.b - (char *)0 ))},
       {""},
       {"start_color_variance_blue", ((size_t) ( (char *)&((LTParticleSystem *)(0))->start_color_variance.b - (char *)0 ))},
@@ -142,17 +140,18 @@ LTParticleSystem_field_info (register const char *str, register unsigned int len
       {"emission_rate", ((size_t) ( (char *)&((LTParticleSystem *)(0))->emission_rate - (char *)0 ))},
       {"start_color_variance_red", ((size_t) ( (char *)&((LTParticleSystem *)(0))->start_color_variance.r - (char *)0 ))},
       {"angle", ((size_t) ( (char *)&((LTParticleSystem *)(0))->angle - (char *)0 ))},
-      {"tangential_accel", ((size_t) ( (char *)&((LTParticleSystem *)(0))->tangential_accel - (char *)0 ))},
+      {""},
       {"end_spin_variance", ((size_t) ( (char *)&((LTParticleSystem *)(0))->end_spin_variance - (char *)0 ))},
-      {""}, {""},
+      {"life_variance", ((size_t) ( (char *)&((LTParticleSystem *)(0))->life_variance - (char *)0 ))},
+      {""},
       {"end_color_green", ((size_t) ( (char *)&((LTParticleSystem *)(0))->end_color.g - (char *)0 ))},
       {""},
       {"start_color_green", ((size_t) ( (char *)&((LTParticleSystem *)(0))->start_color.g - (char *)0 ))},
       {""},
       {"speed_variance", ((size_t) ( (char *)&((LTParticleSystem *)(0))->speed_variance - (char *)0 ))},
       {"tangential_accel_variance", ((size_t) ( (char *)&((LTParticleSystem *)(0))->tangential_accel_variance - (char *)0 ))},
+      {"tangential_accel", ((size_t) ( (char *)&((LTParticleSystem *)(0))->tangential_accel - (char *)0 ))},
       {""},
-      {"radial_accel", ((size_t) ( (char *)&((LTParticleSystem *)(0))->radial_accel - (char *)0 ))},
       {"end_spin", ((size_t) ( (char *)&((LTParticleSystem *)(0))->end_spin - (char *)0 ))},
       {"end_color_variance_green", ((size_t) ( (char *)&((LTParticleSystem *)(0))->end_color_variance.g - (char *)0 ))},
       {"end_color_alpha", ((size_t) ( (char *)&((LTParticleSystem *)(0))->end_color.a - (char *)0 ))},
@@ -160,24 +159,28 @@ LTParticleSystem_field_info (register const char *str, register unsigned int len
       {"start_color_alpha", ((size_t) ( (char *)&((LTParticleSystem *)(0))->start_color.a - (char *)0 ))},
       {"duration", ((size_t) ( (char *)&((LTParticleSystem *)(0))->duration - (char *)0 ))},
       {"start_spin_variance", ((size_t) ( (char *)&((LTParticleSystem *)(0))->start_spin_variance - (char *)0 ))},
-      {""},
-      {"radial_accel_variance", ((size_t) ( (char *)&((LTParticleSystem *)(0))->radial_accel_variance - (char *)0 ))},
-      {"source_position_y", ((size_t) ( (char *)&((LTParticleSystem *)(0))->source_position.y - (char *)0 ))},
-      {""},
+      {""}, {""}, {""}, {""},
       {"end_color_variance_alpha", ((size_t) ( (char *)&((LTParticleSystem *)(0))->end_color_variance.a - (char *)0 ))},
       {""},
       {"start_color_variance_alpha", ((size_t) ( (char *)&((LTParticleSystem *)(0))->start_color_variance.a - (char *)0 ))},
-      {"source_position_x", ((size_t) ( (char *)&((LTParticleSystem *)(0))->source_position.x - (char *)0 ))},
+      {"aspect_ratio", ((size_t) ( (char *)&((LTParticleSystem *)(0))->aspect_ratio - (char *)0 ))},
       {""},
       {"gravity_y", ((size_t) ( (char *)&((LTParticleSystem *)(0))->gravity.y - (char *)0 ))},
       {"start_spin", ((size_t) ( (char *)&((LTParticleSystem *)(0))->start_spin - (char *)0 ))},
-      {"source_position_variance_y", ((size_t) ( (char *)&((LTParticleSystem *)(0))->source_position_variance.y - (char *)0 ))},
-      {""}, {""},
-      {"gravity_x", ((size_t) ( (char *)&((LTParticleSystem *)(0))->gravity.x - (char *)0 ))},
+      {"radial_accel_variance", ((size_t) ( (char *)&((LTParticleSystem *)(0))->radial_accel_variance - (char *)0 ))},
+      {"radial_accel", ((size_t) ( (char *)&((LTParticleSystem *)(0))->radial_accel - (char *)0 ))},
       {""},
-      {"source_position_variance_x", ((size_t) ( (char *)&((LTParticleSystem *)(0))->source_position_variance.x - (char *)0 ))},
+      {"gravity_x", ((size_t) ( (char *)&((LTParticleSystem *)(0))->gravity.x - (char *)0 ))},
       {""}, {""},
-      {"angle_variance", ((size_t) ( (char *)&((LTParticleSystem *)(0))->angle_variance - (char *)0 ))}
+      {"source_position_y", ((size_t) ( (char *)&((LTParticleSystem *)(0))->source_position.y - (char *)0 ))},
+      {""},
+      {"angle_variance", ((size_t) ( (char *)&((LTParticleSystem *)(0))->angle_variance - (char *)0 ))},
+      {""}, {""},
+      {"source_position_x", ((size_t) ( (char *)&((LTParticleSystem *)(0))->source_position.x - (char *)0 ))},
+      {""}, {""}, {""},
+      {"source_position_variance_y", ((size_t) ( (char *)&((LTParticleSystem *)(0))->source_position_variance.y - (char *)0 ))},
+      {""}, {""}, {""}, {""},
+      {"source_position_variance_x", ((size_t) ( (char *)&((LTParticleSystem *)(0))->source_position_variance.x - (char *)0 ))}
     };
 
   if (len <= MAX_WORD_LENGTH && len >= MIN_WORD_LENGTH)

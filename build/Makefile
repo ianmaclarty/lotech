@@ -78,7 +78,7 @@ $(C_O_FILES): %.o: %.c $(C_H_FILES)
 
 .PHONY: fields
 fields:
-	../tools/fieldgen.sh ../src/lt/ltparticles.h LTParticleSystem
+	../tools/fieldgen.sh ../src/ltparticles.h LTParticleSystem
 
 ../src/lt/lteasefunchash.h: ../src/lt/lttween.h ../tools/easegen.sh
 	../tools/easegen.sh $<

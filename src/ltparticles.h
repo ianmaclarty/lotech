@@ -67,7 +67,7 @@ struct LTParticleSystem : LTSceneNode {
     LTfloat start_spin_variance;
     LTfloat end_spin;
     LTfloat end_spin_variance;
-    LTfloat aspect_ratio; // w / h
+    LTfloat aspect_ratio;
 
     LTfloat emission_rate;
     int max_particles;
