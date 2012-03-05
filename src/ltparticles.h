@@ -77,6 +77,8 @@ struct LTParticleSystem : LTSceneNode {
     LTParticle *particles;
     LTParticleQuad *quads;
     GLushort *indices;
+    LTvertbuf quads_vbo;
+    LTvertbuf indices_vbo;
 
     LTFixture *fixture; // A fixture to restrict start positions.
 

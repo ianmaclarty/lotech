@@ -76,9 +76,20 @@ LTParticleSystem::LTParticleSystem(LTImage *img, int n)
     }
 
     fixture = NULL;
+
+    glGenBuffers(1, &quads_vbo);
+    glGenBuffers(1, &indices_vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, quads_vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(quads[0]) * n, quads, GL_STATIC_DRAW); // try GL_DYNAMIC_DRAW
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indices_vbo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices[0]) * n * 6, indices, GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
 LTParticleSystem::~LTParticleSystem() {
+    glDeleteBuffers(1, &quads_vbo);
+    glDeleteBuffers(1, &indices_vbo);
     delete[] particles;
     delete[] quads;
     delete[] indices;
@@ -208,7 +219,7 @@ void LTParticleSystem::advance(LTfloat dt) {
         }
 
         elapsed += dt;
-        if (duration != -1.0f && duration < elapsed || !active) {
+        if ((duration != -1.0f && duration < elapsed) || !active) {
             stop();
         }
     }
@@ -312,25 +323,31 @@ void LTParticleSystem::advance(LTfloat dt) {
             num_particles--;
         }
     }
+
+    glBindBuffer(GL_ARRAY_BUFFER, quads_vbo);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(quads[0]) * num_particles, quads);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 void LTParticleSystem::draw() {
     if (num_particles > 0) {
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ARRAY_BUFFER, quads_vbo);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indices_vbo);
+
         glEnableClientState(GL_COLOR_ARRAY);
         ltEnableTexture(texture_id);
 
         GLsizei stride = sizeof(LTParticleVertexData);
-        unsigned char *start = (unsigned char*)quads;
-        unsigned char *color_start = (unsigned char*)&quads[0].bottom_left.color;
-        unsigned char *tex_start = (unsigned char*)&quads[0].bottom_left.tex_coord_x;
-        glVertexPointer(2, GL_FLOAT, stride, start);
-        glColorPointer(4, GL_UNSIGNED_BYTE, stride, color_start);
-        glTexCoordPointer(2, GL_SHORT, stride, tex_start);
+        glVertexPointer(2, GL_FLOAT, stride, 0);
+        glColorPointer(4, GL_UNSIGNED_BYTE, stride, (GLvoid*)offsetof(LTParticleVertexData, color));
+        glTexCoordPointer(2, GL_SHORT, stride, (GLvoid*)offsetof(LTParticleVertexData, tex_coord_x));
         
-        glDrawElements(GL_TRIANGLES, num_particles * 6, GL_UNSIGNED_SHORT, indices);
+        glDrawElements(GL_TRIANGLES, num_particles * 6, GL_UNSIGNED_SHORT, 0);
 
         glDisableClientState(GL_COLOR_ARRAY);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
         ltRestoreTint();
     }
 }
