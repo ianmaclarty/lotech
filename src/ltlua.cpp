@@ -710,6 +710,8 @@ static int lt_BlendMode(lua_State *L) {
         mode = LT_BLEND_MODE_COLOR;
     } else if (strcmp(modestr, "normal") == 0) {
         mode = LT_BLEND_MODE_NORMAL;
+    } else if (strcmp(modestr, "off") == 0) {
+        mode = LT_BLEND_MODE_OFF;
     } else {
         return luaL_error(L, "Invalid blend mode: %s", modestr);
     }

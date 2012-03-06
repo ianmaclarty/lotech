@@ -91,6 +91,7 @@ enum LTBlendMode {
     LT_BLEND_MODE_NORMAL,
     LT_BLEND_MODE_ADD,
     LT_BLEND_MODE_COLOR,
+    LT_BLEND_MODE_OFF,
 };
 
 enum LTTextureMode {

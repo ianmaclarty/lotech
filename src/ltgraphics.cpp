@@ -427,6 +427,9 @@ static void apply_blend_mode(LTBlendMode mode) {
         case LT_BLEND_MODE_COLOR:
             glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
             break;
+        case LT_BLEND_MODE_OFF:
+            glDisable(GL_BLEND);
+            break;
     }
 }
 
@@ -437,6 +440,10 @@ void ltPushBlendMode(LTBlendMode mode) {
 
 void ltPopBlendMode() {
     if (!blend_mode_stack.empty()) {
+        LTBlendMode mode = blend_mode_stack.front();
+        if (mode == LT_BLEND_MODE_OFF) {
+            glEnable(GL_BLEND);
+        }
         blend_mode_stack.pop_front();
         if (!blend_mode_stack.empty()) {
             apply_blend_mode(blend_mode_stack.front());
