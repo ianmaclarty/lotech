@@ -28,7 +28,15 @@ struct LTRenderTarget : LTSceneNode {
     LTtexcoord      tex_coords[8];
     LTtexbuf        texbuf;
 
-    LTRenderTarget(int w, int h, bool depthbuf, LTTextureFilter minfilter, LTTextureFilter magfilter);
+    // Viewport
+    LTfloat vp_x1;
+    LTfloat vp_y1;
+    LTfloat vp_x2;
+    LTfloat vp_y2;
+
+    LTRenderTarget(int w, int h,
+        LTfloat vp_x1, LTfloat vp_y1, LTfloat vp_x2, LTfloat vp_y2,
+        bool depthbuf, LTTextureFilter minfilter, LTTextureFilter magfilter);
     virtual ~LTRenderTarget();
 
     // Render a scene node to this rendertarget, optionally clearing to

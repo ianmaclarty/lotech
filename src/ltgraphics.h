@@ -107,9 +107,10 @@ void ltInitGraphics();
 void ltPrepareForRendering(
     int screen_viewport_x, int screen_viewport_y,
     int screen_viewport_width, int screen_viewport_height,
-    LTfloat viewport_left, LTfloat viewport_right,
-    LTfloat viewport_bottom, LTfloat viewport_top,
+    LTfloat viewport_left, LTfloat viewport_bottom,
+    LTfloat viewport_right, LTfloat viewport_top,
     LTColor *clear_color, bool clear_depthbuf);
+void ltFinishRendering();
 
 // The following functions should be called only once.
 void ltSetViewPort(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2);

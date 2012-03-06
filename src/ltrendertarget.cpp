@@ -3,11 +3,17 @@
 #define FBEXT(f) f##EXT
 #define FB_EXT(f) f##_EXT
 
-LTRenderTarget::LTRenderTarget(int w, int h, bool depthbuf,
-        LTTextureFilter minfilter, LTTextureFilter magfilter) : LTSceneNode(LT_TYPE_RENDERTARGET) {
+LTRenderTarget::LTRenderTarget(int w, int h, 
+        LTfloat vp_x1, LTfloat vp_y1, LTfloat vp_x2, LTfloat vp_y2,
+        bool depthbuf, LTTextureFilter minfilter, LTTextureFilter magfilter)
+        : LTSceneNode(LT_TYPE_RENDERTARGET) {
     LTRenderTarget::width = w;
     LTRenderTarget::height = h;
     LTRenderTarget::depthbuf_enabled = depthbuf;
+    LTRenderTarget::vp_x1 = vp_x1;
+    LTRenderTarget::vp_y1 = vp_y1;
+    LTRenderTarget::vp_x2 = vp_x2;
+    LTRenderTarget::vp_y2 = vp_y2;
 
     // Generate frame buffer.
     FBEXT(glGenFramebuffers)(1, &fbo);
@@ -110,10 +116,12 @@ void LTRenderTarget::renderNode(LTSceneNode *node, LTColor *clear_color) {
     }
 
     ltPrepareForRendering(
-        0, 0, width, height, -1.0f, 1.0f, -1.0f, 1.0,
+        0, 0, width, height, vp_x1, vp_y1, vp_x2, vp_y2,
         clear_color, depthbuf_enabled);
 
     node->draw();
+
+    ltFinishRendering();
 
     if (depth_renderbuf) {
         FBEXT(glBindRenderbuffer)(FB_EXT(GL_RENDERBUFFER), 0);

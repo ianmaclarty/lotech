@@ -1083,10 +1083,15 @@ static int lt_DrawVector(lua_State *L) {
 /************************* Render targets ******************/
 
 static int lt_RenderTarget(lua_State *L) {
-    check_nargs(L, 2);
+    check_nargs(L, 6);
     int w = luaL_checkinteger(L, 1);
     int h = luaL_checkinteger(L, 2);
-    LTRenderTarget *render_target = new LTRenderTarget(w, h, false, LT_TEXTURE_FILTER_LINEAR, LT_TEXTURE_FILTER_LINEAR);
+    LTfloat x1 = luaL_checknumber(L, 3);
+    LTfloat y1 = luaL_checknumber(L, 4);
+    LTfloat x2 = luaL_checknumber(L, 5);
+    LTfloat y2 = luaL_checknumber(L, 6);
+    LTRenderTarget *render_target = new LTRenderTarget(w, h, x1, y1, x2, y2,
+        false, LT_TEXTURE_FILTER_LINEAR, LT_TEXTURE_FILTER_LINEAR);
     push_wrap(L, render_target);
     return 1;
 }

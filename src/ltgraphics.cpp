@@ -23,7 +23,8 @@ static int screen_viewport_width = 480;
 static int screen_viewport_height = 320;
 
 // Screen dimensions used to compute size of pixels in loaded
-// images.  These don't have to match the actual screen dimensions.
+// images and the aspect ration when using an envelope.
+// These don't have to match the actual screen dimensions.
 static LTfloat design_width = 960.0f;
 static LTfloat design_height = 640.0f;
 
@@ -34,6 +35,15 @@ static LTfloat viewport_right = 1.0f;
 static LTfloat viewport_top = 1.0f;
 static LTfloat viewport_width = 2.0f;
 static LTfloat viewport_height = 2.0f;
+
+// Used for recording the main viewport when rendering into
+// a offscreen render target.
+static LTfloat orig_viewport_left = -1.0f;
+static LTfloat orig_viewport_bottom = -1.0f;
+static LTfloat orig_viewport_right = 1.0f;
+static LTfloat orig_viewport_top = 1.0f;
+static LTfloat orig_viewport_width = 2.0f;
+static LTfloat orig_viewport_height = 2.0f;
 
 static LTfloat design_viewport_left = -1.0f;
 static LTfloat design_viewport_bottom = -1.0f;
@@ -67,18 +77,34 @@ void ltInitGraphics() {
     ltPrepareForRendering(
         screen_viewport_x, screen_viewport_y,
         screen_viewport_width, screen_viewport_height,
-        viewport_left, viewport_right,
-        viewport_bottom, viewport_top,
+        viewport_left, viewport_bottom,
+        viewport_right, viewport_top,
         &clear_color, clear_depthbuf);
 }
 
 void ltPrepareForRendering(
     int screen_viewport_x, int screen_viewport_y,
     int screen_viewport_width, int screen_viewport_height,
-    LTfloat viewport_left, LTfloat viewport_right,
-    LTfloat viewport_bottom, LTfloat viewport_top,
+    LTfloat vp_left, LTfloat vp_bottom,
+    LTfloat vp_right, LTfloat vp_top,
     LTColor *clear_color, bool clear_depthbuf) 
 {
+    // Record original viewport values.
+    orig_viewport_left = viewport_left;
+    orig_viewport_bottom = viewport_bottom;
+    orig_viewport_right = viewport_right;
+    orig_viewport_top = viewport_top;
+    orig_viewport_width = viewport_width;
+    orig_viewport_height = viewport_height;
+
+    // Update viewport variables to new values
+    viewport_left = vp_left;
+    viewport_bottom = vp_bottom;
+    viewport_right = vp_right;
+    viewport_top = vp_top;
+    viewport_width = vp_right - vp_left;
+    viewport_height = vp_top - vp_bottom;
+
     glDisable(GL_DITHER);
     glDisable(GL_ALPHA_TEST);
     glDisable(GL_STENCIL_TEST);
@@ -122,6 +148,15 @@ void ltPrepareForRendering(
     glScalef(1.0f / (GLfloat)LT_MAX_TEX_COORD, 1.0f / (GLfloat)LT_MAX_TEX_COORD, 1.0f);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
+}
+
+void ltFinishRendering() {
+    viewport_left   = orig_viewport_left;
+    viewport_bottom = orig_viewport_bottom;
+    viewport_right  = orig_viewport_right;
+    viewport_top    = orig_viewport_top;
+    viewport_width  = orig_viewport_width;
+    viewport_height = orig_viewport_height;
 }
 
 void ltSetViewPort(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2) {
