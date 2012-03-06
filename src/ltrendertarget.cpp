@@ -1,5 +1,7 @@
 #include "ltrendertarget.h"
 
+#define GL_DEPTH_COMPONENT16_EXT GL_DEPTH_COMPONENT16
+
 LTRenderTarget::LTRenderTarget(int w, int h, 
         LTfloat vp_x1, LTfloat vp_y1, LTfloat vp_x2, LTfloat vp_y2,
         bool depthbuf, LTTextureFilter minfilter, LTTextureFilter magfilter)
