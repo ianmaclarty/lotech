@@ -22,6 +22,14 @@
     #include <GLES/gl.h>
 #endif
 
+#ifdef LTGLES1
+#define FBEXT(f) f##OES
+#define FB_EXT(f) f##_OES
+#else
+#define FBEXT(f) f##EXT
+#define FB_EXT(f) f##_EXT
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 

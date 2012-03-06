@@ -1,8 +1,5 @@
 #include "ltrendertarget.h"
 
-#define FBEXT(f) f##EXT
-#define FB_EXT(f) f##_EXT
-
 LTRenderTarget::LTRenderTarget(int w, int h, 
         LTfloat vp_x1, LTfloat vp_y1, LTfloat vp_x2, LTfloat vp_y2,
         bool depthbuf, LTTextureFilter minfilter, LTTextureFilter magfilter)
@@ -48,7 +45,7 @@ LTRenderTarget::LTRenderTarget(int w, int h,
     if (depthbuf_enabled) {
         FBEXT(glGenRenderbuffers)(1, &depth_renderbuf);
         FBEXT(glBindRenderbuffer)(FB_EXT(GL_RENDERBUFFER), depth_renderbuf);
-        FBEXT(glRenderbufferStorage)(FB_EXT(GL_RENDERBUFFER), GL_DEPTH_COMPONENT16, tex_width, tex_height);
+        FBEXT(glRenderbufferStorage)(FB_EXT(GL_RENDERBUFFER), FB_EXT(GL_DEPTH_COMPONENT16), tex_width, tex_height);
         FBEXT(glFramebufferRenderbuffer)(FB_EXT(GL_FRAMEBUFFER), FB_EXT(GL_DEPTH_ATTACHMENT), FB_EXT(GL_RENDERBUFFER), depth_renderbuf); 
         FBEXT(glBindRenderbuffer)(FB_EXT(GL_RENDERBUFFER), 0);
     } else {
@@ -110,10 +107,6 @@ LTRenderTarget::~LTRenderTarget() {
 
 void LTRenderTarget::renderNode(LTSceneNode *node, LTColor *clear_color) {
     FBEXT(glBindFramebuffer)(FB_EXT(GL_FRAMEBUFFER), fbo);
-    if (depthbuf_enabled) {
-        // XXX Do we need to do this?
-        FBEXT(glBindRenderbuffer)(FB_EXT(GL_RENDERBUFFER), depth_renderbuf);
-    }
 
     ltPrepareForRendering(
         0, 0, width, height, vp_x1, vp_y1, vp_x2, vp_y2,
@@ -121,12 +114,9 @@ void LTRenderTarget::renderNode(LTSceneNode *node, LTColor *clear_color) {
 
     node->draw();
 
-    ltFinishRendering();
-
     if (depth_renderbuf) {
         FBEXT(glBindRenderbuffer)(FB_EXT(GL_RENDERBUFFER), 0);
     }
-    FBEXT(glBindFramebuffer)(FB_EXT(GL_FRAMEBUFFER), 0); 
 }
 
 void LTRenderTarget::draw() {

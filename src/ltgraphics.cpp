@@ -12,6 +12,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+static LTframebuf main_framebuffer = 0;
+
 // Actual screen dimensions in pixels.
 static int screen_width = 480;
 static int screen_height = 320;
@@ -74,12 +76,16 @@ void ltInitGraphics() {
     static bool clear_depthbuf = false;
     #endif
 
+    FBEXT(glBindFramebuffer)(FB_EXT(GL_FRAMEBUFFER), main_framebuffer); 
+
     ltPrepareForRendering(
         screen_viewport_x, screen_viewport_y,
         screen_viewport_width, screen_viewport_height,
         viewport_left, viewport_bottom,
         viewport_right, viewport_top,
         &clear_color, clear_depthbuf);
+
+    ltFinishRendering();
 }
 
 void ltPrepareForRendering(
@@ -157,6 +163,10 @@ void ltFinishRendering() {
     viewport_top    = orig_viewport_top;
     viewport_width  = orig_viewport_width;
     viewport_height = orig_viewport_height;
+}
+
+void ltSetMainFrameBuffer(LTframebuf fbo) {
+    main_framebuffer = fbo;
 }
 
 void ltSetViewPort(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2) {

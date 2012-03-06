@@ -112,6 +112,8 @@ void ltPrepareForRendering(
     LTColor *clear_color, bool clear_depthbuf);
 void ltFinishRendering();
 
+void ltSetMainFrameBuffer(LTframebuf fbo);
+
 // The following functions should be called only once.
 void ltSetViewPort(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2);
 void ltSetScreenSize(int width, int height);
