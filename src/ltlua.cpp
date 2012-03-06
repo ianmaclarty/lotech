@@ -32,6 +32,7 @@ extern "C" {
 #include "lttween.h"
 #include "ltutil.h"
 #include "ltvector.h"
+#include "ltrendertarget.h"
 
 #include "lteasefunchash.h"
 
@@ -455,9 +456,29 @@ static int lt_DrawEllipse(lua_State *L) {
 }
 
 static int lt_DrawSceneNode(lua_State *L) {
-    check_nargs(L, 1);
+    int nargs = check_nargs(L, 1);
     LTSceneNode *node = (LTSceneNode*)get_object(L, 1, LT_TYPE_SCENENODE);
-    node->draw();
+    if (nargs > 1) {
+        LTRenderTarget *target = (LTRenderTarget *)get_object(L, 2, LT_TYPE_RENDERTARGET);
+        LTColor clear_color(0.0f, 0.0f, 0.0f, 1.0f);
+        bool do_clear = false;
+        if (nargs > 2) {
+            do_clear = true;
+            clear_color.r = luaL_checknumber(L, 3);
+        }
+        if (nargs > 3) {
+            clear_color.g = luaL_checknumber(L, 4);
+        }
+        if (nargs > 4) {
+            clear_color.b = luaL_checknumber(L, 5);
+        }
+        if (nargs > 5) {
+            clear_color.a = luaL_checknumber(L, 6);
+        }
+        target->renderNode(node, do_clear ? &clear_color : NULL);
+    } else {
+        node->draw();
+    }
     return 0;
 }
 
@@ -1054,6 +1075,17 @@ static int lt_DrawVector(lua_State *L) {
         add_ref(L, -1, 5); // Add reference from node to image.
     }
 
+    return 1;
+}
+
+/************************* Render targets ******************/
+
+static int lt_RenderTarget(lua_State *L) {
+    check_nargs(L, 2);
+    int w = luaL_checkinteger(L, 1);
+    int h = luaL_checkinteger(L, 2);
+    LTRenderTarget *render_target = new LTRenderTarget(w, h, false, LT_TEXTURE_FILTER_LINEAR, LT_TEXTURE_FILTER_LINEAR);
+    push_wrap(L, render_target);
     return 1;
 }
 
@@ -3040,6 +3072,8 @@ static const luaL_Reg ltlib[] = {
     {"ParticleSystem",                  lt_ParticleSystem},
     {"ParticleSystemAdvance",           lt_ParticleSystemAdvance},
     {"ParticleSystemFixtureFilter",     lt_ParticleSystemFixtureFilter},
+
+    {"RenderTarget",                    lt_RenderTarget},
 
     {"MakeNativeTween",                 lt_MakeNativeTween},
     {"AdvanceNativeTween",              lt_AdvanceNativeTween},

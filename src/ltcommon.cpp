@@ -52,6 +52,7 @@ const LTTypeInfo types[] = {
     {"BodyTracker",     LT_TYPE_WRAP},
     {"ParticleSystem",  LT_TYPE_SCENENODE},
     {"TweenSet",        LT_TYPE_OBJECT},
+    {"RenderTarget",    LT_TYPE_SCENENODE},
 };
 
 ct_assert(sizeof(types) == (int)LT_NUM_TYPES * sizeof(LTTypeInfo));

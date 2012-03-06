@@ -53,7 +53,11 @@ void ltDisableTextures() {
     }
 }
 
-static GLint lt2glFilter(LTTextureFilter f) {
+LTtexid ltGetCurrentBoundTexture() {
+    return g_current_bound_texture;
+}
+
+GLint lt2glFilter(LTTextureFilter f) {
     switch (f) {
         case LT_TEXTURE_FILTER_LINEAR:
             return GL_LINEAR;
@@ -89,6 +93,9 @@ LTAtlas::LTAtlas(LTImagePacker *packer, LTTextureFilter minfilter, LTTextureFilt
         glTexImage2D(GL_TEXTURE_2D, 0, 4, buf->width, buf->height, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, buf->bb_pixels);
     #endif
     delete buf;
+    if (g_current_bound_texture != 0) {
+        glBindTexture(GL_TEXTURE_2D, g_current_bound_texture);
+    }
 }
 
 LTAtlas::~LTAtlas() {

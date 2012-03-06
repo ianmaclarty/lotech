@@ -49,6 +49,10 @@ lt.classes = {
             Size            = lt.LayerSize,
         }
     },
+    RenderTarget = {
+        super = "SceneNode",
+        methods = {}
+    },
     Translate = {
         super = "Wrap",
         methods = {}

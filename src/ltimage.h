@@ -28,6 +28,8 @@ struct LTAtlas;
 void ltEnableAtlas(LTAtlas *atlas);
 void ltEnableTexture(LTtexid texture_id);
 void ltDisableTextures();
+LTtexid ltGetCurrentBoundTexture();
+GLint lt2glFilter(LTTextureFilter f);
 
 struct LTImageBuffer {
     // Dimensions of original image (not bounding box).

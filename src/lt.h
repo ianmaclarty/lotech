@@ -28,5 +28,6 @@
 #include "ltutil.h"
 #include "ltaudio.h"
 #include "ltvector.h"
+#include "ltrendertarget.h"
 
 #endif

@@ -49,7 +49,9 @@ typedef float           LTdegrees;
 
 typedef LTuint32        LTpixel;
 typedef GLuint          LTvertbuf;
+typedef GLuint          LTframebuf;
 typedef GLuint          LTtexbuf;
+typedef GLuint          LTrenderbuf;
 typedef GLuint          LTtexid;
 typedef GLushort        LTvertindex;
 typedef GLshort         LTtexcoord;
@@ -97,6 +99,7 @@ enum LTType {
     LT_TYPE_BODYTRACKER,
     LT_TYPE_PARTICLESYSTEM,
     LT_TYPE_TWEENSET,
+    LT_TYPE_RENDERTARGET,
     LT_NUM_TYPES
 };
 

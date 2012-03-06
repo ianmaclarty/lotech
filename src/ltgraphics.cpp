@@ -57,6 +57,28 @@ static void apply_blend_mode(LTBlendMode mode);
 static void apply_texture_mode(LTTextureMode mode);
 
 void ltInitGraphics() {
+    static LTColor clear_color(0.0f, 0.0f, 0.0f, 0.0f);
+    #ifdef LTDEPTHBUF
+    static bool clear_depthbuf = true;
+    #else
+    static bool clear_depthbuf = false;
+    #endif
+
+    ltPrepareForRendering(
+        screen_viewport_x, screen_viewport_y,
+        screen_viewport_width, screen_viewport_height,
+        viewport_left, viewport_right,
+        viewport_bottom, viewport_top,
+        &clear_color, clear_depthbuf);
+}
+
+void ltPrepareForRendering(
+    int screen_viewport_x, int screen_viewport_y,
+    int screen_viewport_width, int screen_viewport_height,
+    LTfloat viewport_left, LTfloat viewport_right,
+    LTfloat viewport_bottom, LTfloat viewport_top,
+    LTColor *clear_color, bool clear_depthbuf) 
+{
     glDisable(GL_DITHER);
     glDisable(GL_ALPHA_TEST);
     glDisable(GL_STENCIL_TEST);
@@ -65,12 +87,17 @@ void ltInitGraphics() {
     ltDisableTextures();
     glDisable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-    GLbitfield clear_mask = GL_COLOR_BUFFER_BIT;
-    #ifdef LTDEPTHBUF
-        clear_mask |= GL_DEPTH_BUFFER_BIT;
-    #endif
-    glClear(clear_mask);
+    if (clear_color != NULL || clear_depthbuf) {
+        GLbitfield clear_mask = 0;
+        if (clear_color) {
+            glClearColor(clear_color->r, clear_color->g, clear_color->b, clear_color->a);
+            clear_mask |= GL_COLOR_BUFFER_BIT;
+        }
+        if (clear_depthbuf) {
+            clear_mask |= GL_DEPTH_BUFFER_BIT;
+        }
+        glClear(clear_mask);
+    }
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
     tint_stack.clear();
     blend_mode_stack.clear();
@@ -114,6 +141,7 @@ void ltSetViewPort(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2) {
     pixel_height = viewport_height / design_height;
 }
 
+#ifdef LTADS
 static LTfloat get_ad_height_ratio() {
     #ifdef LTIOS
     LTfloat h;
@@ -138,6 +166,7 @@ static LTfloat get_ad_height_ratio() {
     return 0.0f;
     #endif
 }
+#endif // LTADS
 
 void ltAdjustViewportAspectRatio() {
     LTfloat w0 = design_width;
