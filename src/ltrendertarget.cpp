@@ -36,7 +36,7 @@ LTRenderTarget::LTRenderTarget(int w, int h,
     #ifdef LTGLES1
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex_width, tex_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, texdata);
     #else
-        glTexImage2D(GL_TEXTURE_2D, 0, 4, tex_width, tex_height, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, texdata);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, tex_width, tex_height, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, texdata);
     #endif
     free(texdata);
 

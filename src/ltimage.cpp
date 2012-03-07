@@ -90,7 +90,7 @@ LTAtlas::LTAtlas(LTImagePacker *packer, LTTextureFilter minfilter, LTTextureFilt
     #ifdef LTGLES1
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, buf->width, buf->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, buf->bb_pixels);
     #else
-        glTexImage2D(GL_TEXTURE_2D, 0, 4, buf->width, buf->height, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, buf->bb_pixels);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, buf->width, buf->height, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, buf->bb_pixels);
     #endif
     delete buf;
     if (g_current_bound_texture != 0) {
