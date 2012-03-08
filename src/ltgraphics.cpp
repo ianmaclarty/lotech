@@ -84,8 +84,6 @@ void ltInitGraphics() {
         viewport_left, viewport_bottom,
         viewport_right, viewport_top,
         &clear_color, clear_depthbuf);
-
-    ltFinishRendering();
 }
 
 void ltPrepareForRendering(
@@ -393,21 +391,26 @@ LTfloat ltGetViewPortTopEdge() {
     return viewport_top;
 }
 
-void ltPushPerspective(LTfloat near, LTfloat origin, LTfloat far) {
+void ltPushPerspective(LTfloat near, LTfloat origin, LTfloat far, LTfloat vanish_x, LTfloat vanish_y) {
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
     LTfloat r = (origin - near) / origin; 
     LTfloat near_half_width = 0.5f * (viewport_width - r * viewport_width);
     LTfloat near_half_height = 0.5f * (viewport_height - r * viewport_height);
+    vanish_x *= (1.0f - r);
+    vanish_y *= (1.0f - r);
     #ifdef LTGLES1
-        glFrustumf(-near_half_width, near_half_width, -near_half_height, near_half_height, near, far);
+        glFrustumf(-near_half_width - vanish_x, near_half_width - vanish_x,
+            -near_half_height - vanish_y, near_half_height - vanish_y, near, far);
     #else
-        glFrustum(-near_half_width, near_half_width, -near_half_height, near_half_height, near, far);
+        glFrustum(-near_half_width - vanish_x, near_half_width - vanish_x,
+            -near_half_height - vanish_y, near_half_height - vanish_y, near, far);
     #endif
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
-    glTranslatef(-(viewport_width * 0.5f + viewport_left), -(viewport_height * 0.5f + viewport_bottom), -origin);
+    glTranslatef(-(viewport_width * 0.5f + viewport_left),
+        -(viewport_height * 0.5f + viewport_bottom), -origin);
 }
 
 void ltPopPerspective() {

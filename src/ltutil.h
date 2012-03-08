@@ -4,6 +4,8 @@
 
 #include <stdlib.h>
 
+#define LT_TRACE ltLog("%s:%d %s", __FILE__, __LINE__, __PRETTY_FUNCTION__)
+
 void ltAbort(); // Use only for internal errors.
 void ltLog(const char *fmt, ...);
 bool ltFileExists(const char *file);

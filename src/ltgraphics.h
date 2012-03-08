@@ -139,7 +139,8 @@ LTfloat ltGetViewPortTopEdge();
 
 LTDisplayOrientation ltGetDisplayOrientation();
 
-void ltPushPerspective(LTfloat near, LTfloat origin, LTfloat far);
+void ltPushPerspective(LTfloat near, LTfloat origin, LTfloat far,
+    LTfloat vanish_x, LTfloat vanish_y);
 void ltPopPerspective();
 
 void ltPushTint(LTfloat r, LTfloat g, LTfloat b, LTfloat a);

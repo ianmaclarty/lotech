@@ -9,8 +9,11 @@ struct LTPerspective : LTWrapNode {
     LTfloat near;
     LTfloat origin;
     LTfloat far;
+    LTfloat vanish_x;
+    LTfloat vanish_y;
 
-    LTPerspective(LTfloat near, LTfloat origin, LTfloat far, LTSceneNode *child);
+    LTPerspective(LTfloat near, LTfloat origin, LTfloat far, LTfloat vanish_x, LTfloat vanish_y,
+        LTSceneNode *child);
     
     virtual void draw();
     bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);

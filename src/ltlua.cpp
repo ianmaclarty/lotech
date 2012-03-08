@@ -460,7 +460,7 @@ static int lt_DrawSceneNode(lua_State *L) {
     LTSceneNode *node = (LTSceneNode*)get_object(L, 1, LT_TYPE_SCENENODE);
     if (nargs > 1) {
         LTRenderTarget *target = (LTRenderTarget *)get_object(L, 2, LT_TYPE_RENDERTARGET);
-        LTColor clear_color(0.0f, 0.0f, 0.0f, 1.0f);
+        LTColor clear_color(0.0f, 0.0f, 0.0f, 0.0f);
         bool do_clear = false;
         if (nargs > 2) {
             do_clear = true;
@@ -620,12 +620,20 @@ static int lt_Scale(lua_State *L) {
 }
 
 static int lt_Perspective(lua_State *L) {
-    check_nargs(L, 4);
+    int nargs = check_nargs(L, 4);
     LTSceneNode *child = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
     LTfloat near = luaL_checknumber(L, 2);
     LTfloat origin = luaL_checknumber(L, 3);
     LTfloat far = luaL_checknumber(L, 4);
-    LTPerspective *node = new LTPerspective(near, origin, far, child);
+    LTfloat vanish_x = 0.0f;
+    LTfloat vanish_y = 0.0f;
+    if (nargs > 4) {
+        vanish_x = luaL_checknumber(L, 5);
+    }
+    if (nargs > 5) {
+        vanish_y = luaL_checknumber(L, 6);
+    }
+    LTPerspective *node = new LTPerspective(near, origin, far, vanish_x, vanish_y, child);
     push_wrap(L, node);
     set_ref_field(L, -1, "child", 1); // Add reference from new node to child.
     return 1;

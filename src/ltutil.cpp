@@ -31,14 +31,21 @@ void ltLog(const char *fmt, ...) {
 #ifdef LTANDROID
     __android_log_print(ANDROID_LOG_INFO, "Lotech", "%s", msg);
 #else
-    fprintf(stderr, "%s", msg);
-    fprintf(stderr, "\n");
+    fprintf(stderr, "%s\n", msg);
     fflush(stderr);
 #endif
 #ifdef LTDEVMODE
     if (ltAmClient()) {
         ltClientLog(msg);
     }    
+#if defined LTLINUX || defined LTOSX
+    /*
+    FILE* log_file = fopen("/Users/ian/lt.log", "a");
+    fprintf(log_file, "%s\n", msg);
+    fflush(log_file);
+    fclose(log_file);
+    */
+#endif
 #endif
 }
 
@@ -48,8 +55,7 @@ bool ltFileExists(const char *file) {
 }
 
 char* ltGlob(const char **patterns) {
-#ifndef LTANDROID
-#ifndef LTMINGW
+#if !defined LTANDROID && !defined LTMINGW
     glob_t globbuf;
     globbuf.gl_offs = 0;
     int flags = 0;
@@ -73,11 +79,7 @@ char* ltGlob(const char **patterns) {
     globfree(&globbuf);
     return matches;
 #else
-    ltLog("glob not supported on mingw");
-    return NULL;
-#endif
-#else
-    ltLog("glob not supported on android");
+    ltLog("glob not supported on mingw or android");
     return NULL;
 #endif
 }

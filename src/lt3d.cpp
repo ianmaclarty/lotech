@@ -6,15 +6,17 @@ static bool depth_test_on = false;
 static bool depth_mask_on = true;
 
 LTPerspective::LTPerspective(LTfloat near, LTfloat origin, LTfloat far,
-        LTSceneNode *child) : LTWrapNode(child, LT_TYPE_PERSPECTIVE)
+        LTfloat vanish_x, LTfloat vanish_y, LTSceneNode *child) : LTWrapNode(child, LT_TYPE_PERSPECTIVE)
 {
     LTPerspective::near = near;
     LTPerspective::origin = origin;
     LTPerspective::far = far;
+    LTPerspective::vanish_x = vanish_x;
+    LTPerspective::vanish_y = vanish_y;
 }
 
 void LTPerspective::draw() {
-    ltPushPerspective(near, origin, far);
+    ltPushPerspective(near, origin, far, vanish_x, vanish_y);
     child->draw();
     ltPopPerspective();
 }
@@ -30,6 +32,10 @@ LTfloat* LTPerspective::field_ptr(const char *field_name) {
         return &origin;
     } else if (strcmp(field_name, "far") == 0) {
         return &far;
+    } else if (strcmp(field_name, "vanish_x") == 0) {
+        return &vanish_x;
+    } else if (strcmp(field_name, "vanish_y") == 0) {
+        return &vanish_y;
     }
     return NULL;
 }
