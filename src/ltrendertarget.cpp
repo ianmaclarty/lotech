@@ -31,8 +31,6 @@ LTRenderTarget::LTRenderTarget(int w, int h,
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, lt2glFilter(minfilter)); 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, lt2glFilter(magfilter));
     glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-    int texsize = tex_width * tex_height * 4;
-    void* texdata = malloc(texsize);
     #ifdef LTGLES1
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex_width, tex_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
     #else
