@@ -1,7 +1,6 @@
 #include "ltrendertarget.h"
 #include "ltutil.h"
-
-#define GL_DEPTH_COMPONENT16_EXT GL_DEPTH_COMPONENT16
+#include "ltopengl.h"
 
 LTRenderTarget::LTRenderTarget(int w, int h, 
         LTfloat vp_x1, LTfloat vp_y1, LTfloat vp_x2, LTfloat vp_y2,
@@ -16,8 +15,8 @@ LTRenderTarget::LTRenderTarget(int w, int h,
     LTRenderTarget::vp_y2 = vp_y2;
 
     // Generate frame buffer.
-    FBEXT(glGenFramebuffers)(1, &fbo);
-    FBEXT(glBindFramebuffer)(FB_EXT(GL_FRAMEBUFFER), fbo);
+    fbo = ltGenFramebuffer();
+    ltBindFramebuffer(fbo);
 
     // Compute dimensions of target texture (must be powers of 2).
     tex_width = 64;
@@ -26,42 +25,17 @@ LTRenderTarget::LTRenderTarget(int w, int h,
     while (tex_height < height) tex_height <<= 1;
 
     // Generate texture.
-    glGenTextures(1, &texture_id);
-    glBindTexture(GL_TEXTURE_2D, texture_id);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, lt2glFilter(minfilter)); 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, lt2glFilter(magfilter));
-    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-    #ifdef LTGLES1
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex_width, tex_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-    #else
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, tex_width, tex_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-    #endif
+    texture_id = ltGenTexture();
+    ltBindTexture(texture_id);
+    ltTextureMinFilter(minfilter);
+    ltTextureMagFilter(magfilter);
+    ltTexImage(tex_width, tex_height, NULL);
 
     // Attach texture to frame buffer.
-    FBEXT(glFramebufferTexture2D)(FB_EXT(GL_FRAMEBUFFER), FB_EXT(GL_COLOR_ATTACHMENT0), GL_TEXTURE_2D, texture_id, 0);
-    GLenum status = FBEXT(glCheckFramebufferStatus)(FB_EXT(GL_FRAMEBUFFER));
-    if (status != FB_EXT(GL_FRAMEBUFFER_COMPLETE)) {
+    ltFramebufferTexture(texture_id);
+    if (!ltFramebufferComplete()) {
         ltLog("Unable to create frame buffer of size %dx%d", tex_width, tex_height);
         ltAbort();
-    }
-
-    // Generate depth buffer if required.
-    if (depthbuf_enabled) {
-        FBEXT(glGenRenderbuffers)(1, &depth_renderbuf);
-        FBEXT(glBindRenderbuffer)(FB_EXT(GL_RENDERBUFFER), depth_renderbuf);
-        FBEXT(glRenderbufferStorage)(FB_EXT(GL_RENDERBUFFER), FB_EXT(GL_DEPTH_COMPONENT16), tex_width, tex_height);
-        FBEXT(glFramebufferRenderbuffer)(FB_EXT(GL_FRAMEBUFFER), FB_EXT(GL_DEPTH_ATTACHMENT), FB_EXT(GL_RENDERBUFFER), depth_renderbuf); 
-        FBEXT(glBindRenderbuffer)(FB_EXT(GL_RENDERBUFFER), 0);
-    } else {
-        depth_renderbuf = 0;
-    }
-
-    FBEXT(glBindFramebuffer)(FB_EXT(GL_FRAMEBUFFER), 0); 
-
-    // Restore previously bound texture.
-    LTtexid currtex = ltGetCurrentBoundTexture();
-    if (currtex != 0) {
-        glBindTexture(GL_TEXTURE_2D, currtex);
     }
 
     // Set up texture coords for drawing.
@@ -73,9 +47,9 @@ LTRenderTarget::LTRenderTarget(int w, int h,
     tex_coords[2] = tex_right;  tex_coords[3] = tex_top;
     tex_coords[4] = tex_right;  tex_coords[5] = 0;
     tex_coords[6] = 0;          tex_coords[7] = 0;
-    glGenBuffers(1, &texbuf);
-    glBindBuffer(GL_ARRAY_BUFFER, texbuf);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(LTtexcoord) * 8, tex_coords, GL_STATIC_DRAW);
+    texbuf = ltGenVertBuffer();
+    ltBindVertBuffer(texbuf);
+    ltStaticVertBufferData(sizeof(LTtexcoord) * 8, tex_coords);
 
     // Set up world vertices for drawing.
     LTfloat pix_w = ltGetPixelWidth();
@@ -94,64 +68,35 @@ LTRenderTarget::LTRenderTarget(int w, int h,
     world_vertices[5] = world_bottom;
     world_vertices[6] = world_left;
     world_vertices[7] = world_bottom;
-    glGenBuffers(1, &vertbuf);
-    glBindBuffer(GL_ARRAY_BUFFER, vertbuf);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 8, world_vertices, GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    FBEXT(glBindFramebuffer)(FB_EXT(GL_FRAMEBUFFER), 0);
-    LT_TRACE;
+    vertbuf = ltGenVertBuffer();
+    ltBindVertBuffer(vertbuf);
+    ltStaticVertBufferData(sizeof(LTfloat) * 8, world_vertices);
 }
 
 LTRenderTarget::~LTRenderTarget() {
-    LT_TRACE;
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    FBEXT(glBindFramebuffer)(FB_EXT(GL_FRAMEBUFFER), 0);
-
-    LT_TRACE;
-    glDeleteBuffers(1, &texbuf);
-    LT_TRACE;
-    glDeleteBuffers(1, &vertbuf);
-    LT_TRACE;
-    glDeleteTextures(1, &texture_id);
-    LT_TRACE;
-    if (depthbuf_enabled) {
-        FBEXT(glDeleteRenderbuffers)(1, &depth_renderbuf);
-    }
-    LT_TRACE;
-    FBEXT(glDeleteFramebuffers)(1, &fbo);
-    LT_TRACE;
+    ltDeleteVertBuffer(texbuf);
+    ltDeleteVertBuffer(vertbuf);
+    ltDeleteTexture(texture_id);
+    ltDeleteFramebuffer(fbo);
 }
 
 void LTRenderTarget::renderNode(LTSceneNode *node, LTColor *clear_color) {
-    LT_TRACE;
-    FBEXT(glBindFramebuffer)(FB_EXT(GL_FRAMEBUFFER), fbo);
-    LT_TRACE;
+    ltBindFramebuffer(fbo);
 
     ltPrepareForRendering(
         0, 0, width, height, vp_x1, vp_y1, vp_x2, vp_y2,
         clear_color, depthbuf_enabled);
-    LT_TRACE;
 
     node->draw();
 
-    LT_TRACE;
     ltFinishRendering();
-    LT_TRACE;
 }
 
 void LTRenderTarget::draw() {
-    LT_TRACE;
     ltEnableTexture(texture_id);
-    LT_TRACE;
-    glBindBuffer(GL_ARRAY_BUFFER, vertbuf);
-    LT_TRACE;
-    glVertexPointer(2, GL_FLOAT, 0, 0);
-    LT_TRACE;
-    glBindBuffer(GL_ARRAY_BUFFER, texbuf);
-    LT_TRACE;
-    glTexCoordPointer(2, GL_SHORT, 0, 0);
-    LT_TRACE;
-    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-    LT_TRACE;
+    ltBindVertBuffer(vertbuf);
+    ltVertexPointer(2, LT_VERT_DATA_TYPE_FLOAT, 0, 0);
+    ltBindVertBuffer(texbuf);
+    ltTexCoordPointer(2, LT_VERT_DATA_TYPE_SHORT, 0, 0);
+    ltDrawArrays(LT_DRAWMODE_TRIANGLE_FAN, 0, 4);
 }

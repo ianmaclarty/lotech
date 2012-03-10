@@ -63,16 +63,16 @@ LTParticleSystem::LTParticleSystem(LTImage *img, int n)
         quads[i].top_right.tex_coord_x    = img->tex_coords[2];
         quads[i].top_right.tex_coord_y    = img->tex_coords[3];
     }
-    indices = new GLushort[n * 6];
+    indices = new LTushort[n * 6];
     for (int i = 0; i < n; i++) {
         int i6 = i * 6;
         int i4 = i * 4;
-        indices[i6+0] = (GLushort) i4+0;
-        indices[i6+1] = (GLushort) i4+1;
-        indices[i6+2] = (GLushort) i4+2;
-        indices[i6+5] = (GLushort) i4+1;
-        indices[i6+4] = (GLushort) i4+2;
-        indices[i6+3] = (GLushort) i4+3;
+        indices[i6+0] = (LTushort) i4+0;
+        indices[i6+1] = (LTushort) i4+1;
+        indices[i6+2] = (LTushort) i4+2;
+        indices[i6+5] = (LTushort) i4+1;
+        indices[i6+4] = (LTushort) i4+2;
+        indices[i6+3] = (LTushort) i4+3;
     }
 
     fixture = NULL;
@@ -102,7 +102,7 @@ void LTParticleSystem::reset() {
     }
 }
 
-static GLfloat clamp(GLfloat f) {
+static LTfloat clamp(LTfloat f) {
     return f > 1.0f ? 1.0f : (f < 0.0f ? 0.0f : f);
 }
 
@@ -208,7 +208,7 @@ void LTParticleSystem::advance(LTfloat dt) {
         }
 
         elapsed += dt;
-        if (duration != -1.0f && duration < elapsed || !active) {
+        if ((duration != -1.0f && duration < elapsed) || !active) {
             stop();
         }
     }
@@ -256,28 +256,28 @@ void LTParticleSystem::advance(LTfloat dt) {
             quad->top_left.color = color;
             quad->top_right.color = color;
 
-            GLfloat size_2_x = (p->size / 2.0f) * aspect_ratio;
-            GLfloat size_2_y = (p->size / 2.0f);
+            LTfloat size_2_x = (p->size / 2.0f) * aspect_ratio;
+            LTfloat size_2_y = (p->size / 2.0f);
             if( p->rotation ) {
-                GLfloat x1 = -size_2_x;
-                GLfloat y1 = -size_2_y;
+                LTfloat x1 = -size_2_x;
+                LTfloat y1 = -size_2_y;
 
-                GLfloat x2 = size_2_x;
-                GLfloat y2 = size_2_y;
-                GLfloat x = p->pos.x;
-                GLfloat y = p->pos.y;
+                LTfloat x2 = size_2_x;
+                LTfloat y2 = size_2_y;
+                LTfloat x = p->pos.x;
+                LTfloat y = p->pos.y;
 
-                GLfloat r = (GLfloat) -(p->rotation * LT_RADIANS_PER_DEGREE);
-                GLfloat cr = cosf(r);
-                GLfloat sr = sinf(r);
-                GLfloat ax = x1 * cr - y1 * sr + x;
-                GLfloat ay = x1 * sr + y1 * cr + y;
-                GLfloat bx = x2 * cr - y1 * sr + x;
-                GLfloat by = x2 * sr + y1 * cr + y;
-                GLfloat cx = x2 * cr - y2 * sr + x;
-                GLfloat cy = x2 * sr + y2 * cr + y;
-                GLfloat dx = x1 * cr - y2 * sr + x;
-                GLfloat dy = x1 * sr + y2 * cr + y;
+                LTfloat r = (LTfloat) -(p->rotation * LT_RADIANS_PER_DEGREE);
+                LTfloat cr = cosf(r);
+                LTfloat sr = sinf(r);
+                LTfloat ax = x1 * cr - y1 * sr + x;
+                LTfloat ay = x1 * sr + y1 * cr + y;
+                LTfloat bx = x2 * cr - y1 * sr + x;
+                LTfloat by = x2 * sr + y1 * cr + y;
+                LTfloat cx = x2 * cr - y2 * sr + x;
+                LTfloat cy = x2 * sr + y2 * cr + y;
+                LTfloat dx = x1 * cr - y2 * sr + x;
+                LTfloat dy = x1 * sr + y2 * cr + y;
 
                 quad->bottom_left.vertex.x = ax;
                 quad->bottom_left.vertex.y = ay;
@@ -316,21 +316,21 @@ void LTParticleSystem::advance(LTfloat dt) {
 
 void LTParticleSystem::draw() {
     if (num_particles > 0) {
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glEnableClientState(GL_COLOR_ARRAY);
+        ltBindVertBuffer(0);
+        ltEnableColorArrays();
         ltEnableTexture(texture_id);
 
-        GLsizei stride = sizeof(LTParticleVertexData);
-        unsigned char *start = (unsigned char*)quads;
-        unsigned char *color_start = (unsigned char*)&quads[0].bottom_left.color;
-        unsigned char *tex_start = (unsigned char*)&quads[0].bottom_left.tex_coord_x;
-        glVertexPointer(2, GL_FLOAT, stride, start);
-        glColorPointer(4, GL_UNSIGNED_BYTE, stride, color_start);
-        glTexCoordPointer(2, GL_SHORT, stride, tex_start);
+        int stride = sizeof(LTParticleVertexData);
+        LTubyte *start = (unsigned char*)quads;
+        LTubyte *color_start = (unsigned char*)&quads[0].bottom_left.color;
+        LTubyte *tex_start = (unsigned char*)&quads[0].bottom_left.tex_coord_x;
+        ltVertexPointer(2, LT_VERT_DATA_TYPE_FLOAT, stride, start);
+        ltColorPointer(4, LT_VERT_DATA_TYPE_UBYTE, stride, color_start);
+        ltTexCoordPointer(2, LT_VERT_DATA_TYPE_SHORT, stride, tex_start);
         
-        glDrawElements(GL_TRIANGLES, num_particles * 6, GL_UNSIGNED_SHORT, indices);
+        ltDrawElements(LT_DRAWMODE_TRIANGLES, num_particles * 6, indices);
 
-        glDisableClientState(GL_COLOR_ARRAY);
+        ltDisableColorArrays();
         ltRestoreTint();
     }
 }

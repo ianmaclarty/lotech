@@ -73,10 +73,10 @@ struct LTParticleSystem : LTSceneNode {
     int max_particles;
     int num_particles;
     LTfloat emit_counter;
-    GLuint texture_id;
+    LTtexid texture_id;
     LTParticle *particles;
     LTParticleQuad *quads;
-    GLushort *indices;
+    LTushort *indices;
 
     LTFixture *fixture; // A fixture to restrict start positions.
 

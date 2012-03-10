@@ -33,6 +33,7 @@ extern "C" {
 #include "ltutil.h"
 #include "ltvector.h"
 #include "ltrendertarget.h"
+#include "ltopengl.h"
 
 #include "lteasefunchash.h"
 
@@ -3342,6 +3343,7 @@ void ltLuaAdvance(LTdouble secs) {
 void ltLuaRender() {
     if (g_L != NULL && !g_suspended) {
         if (!g_initialized) {
+            ltInitGLState();
             ltAdjustViewportAspectRatio();
             set_viewport_globals();
             run_lua_file("main");

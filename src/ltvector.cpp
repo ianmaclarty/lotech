@@ -27,22 +27,22 @@ LTDrawVector::LTDrawVector(LTDrawMode mode, LTVector *vector,
 
 void LTDrawVector::draw() {
     int stride = vector->stride * sizeof(LTfloat);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glVertexPointer(dimensions, GL_FLOAT, stride, vector->data + vertex_offset);
+    ltBindVertBuffer(0);
+    ltVertexPointer(dimensions, LT_VERT_DATA_TYPE_FLOAT, stride, vector->data + vertex_offset);
     if (texture_offset >= 0 && image != NULL) {
         ltEnableAtlas(image->atlas);
-        glTexCoordPointer(2, GL_FLOAT, stride, vector->data + texture_offset);
+        ltTexCoordPointer(2, LT_VERT_DATA_TYPE_FLOAT, stride, vector->data + texture_offset);
     } else {
         ltDisableTextures();
     }
     if (color_offset >= 0) {
-        glEnableClientState(GL_COLOR_ARRAY);
-        glColorPointer(4, GL_FLOAT, stride, vector->data + color_offset);
+        ltEnableColorArrays();
+        ltColorPointer(4, LT_VERT_DATA_TYPE_FLOAT, stride, vector->data + color_offset);
     }
-    glDrawArrays(mode, 0, vector->size);
+    ltDrawArrays(mode, 0, vector->size);
     if (color_offset >= 0) {
-        glDisableClientState(GL_COLOR_ARRAY);
-        glColorPointer(4, GL_FLOAT, 0, 0);
+        ltDisableColorArrays();
+        ltColorPointer(4, LT_VERT_DATA_TYPE_FLOAT, 0, 0); // XXX necessary?
         ltRestoreTint();
     }
 }
@@ -89,10 +89,10 @@ void LTDrawTexturedQuads::draw() {
     if (num_elems == 0) {
         return;
     }
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    ltBindVertBuffer(0);
     int stride = vector->stride * sizeof(LTfloat);
-    glVertexPointer(2, GL_FLOAT, stride, vector->data + offset);
+    ltVertexPointer(2, LT_VERT_DATA_TYPE_FLOAT, stride, vector->data + offset);
     ltEnableAtlas(image->atlas);
-    glTexCoordPointer(2, GL_FLOAT, stride, vector->data + offset + 2);
-    glDrawElements(GL_TRIANGLE_STRIP, num_elems, GL_UNSIGNED_SHORT, elements);
+    ltTexCoordPointer(2, LT_VERT_DATA_TYPE_FLOAT, stride, vector->data + offset + 2);
+    ltDrawElements(LT_DRAWMODE_TRIANGLE_STRIP, num_elems, elements);
 }

@@ -46,30 +46,22 @@ LTDepthTest::LTDepthTest(bool on, LTSceneNode *child) : LTWrapNode(child, LT_TYP
 }
 
 void LTDepthTest::draw() {
+    bool prev_depth_test = depth_test_on;
     if (on) {
-        if (not depth_test_on) {
-            #ifdef LTDEPTHBUF
-            glEnable(GL_DEPTH_TEST);
-            #endif
-            depth_test_on = true;
-            child->draw();
-            depth_test_on = false;
-            #ifdef LTDEPTHBUF
-            glDisable(GL_DEPTH_TEST);
-            #endif
-        }
+        ltEnableDepthTest();
+        depth_test_on = true;
     } else {
-        if (depth_test_on) {
-            #ifdef LTDEPTHBUF
-            glDisable(GL_DEPTH_TEST);
-            #endif
-            depth_test_on = false;
-            child->draw();
-            depth_test_on = true;
-            #ifdef LTDEPTHBUF
-            glEnable(GL_DEPTH_TEST);
-            #endif
+        ltDisableDepthTest();
+        depth_test_on = false;
+    }
+    child->draw();
+    if (prev_depth_test != depth_test_on) {
+        if (prev_depth_test) {
+            ltEnableDepthTest();
+        } else {
+            ltDisableDepthTest();
         }
+        depth_test_on = prev_depth_test;
     }
 }
 
@@ -83,22 +75,22 @@ LTDepthMask::LTDepthMask(bool on, LTSceneNode *child) : LTWrapNode(child, LT_TYP
 }
 
 void LTDepthMask::draw() {
+    bool prev_depth_mask = depth_mask_on;
     if (on) {
-        if (not depth_mask_on) {
-            glDepthMask(GL_TRUE);
-            depth_mask_on = true;
-            child->draw();
-            depth_mask_on = false;
-            glDepthMask(GL_FALSE);
+        ltEnableDepthMask();
+        depth_mask_on = true;
+    } else{
+        ltDisableDepthMask();
+        depth_mask_on = false;
+    }
+    child->draw();
+    if (prev_depth_mask != depth_mask_on) {
+        if (prev_depth_mask) {
+            ltEnableDepthMask();
+        } else {
+            ltDisableDepthMask();
         }
-    } else {
-        if (depth_mask_on) {
-            glDepthMask(GL_FALSE);
-            depth_mask_on = false;
-            child->draw();
-            depth_mask_on = true;
-            glDepthMask(GL_TRUE);
-        }
+        depth_mask_on = prev_depth_mask;
     }
 }
 
@@ -111,7 +103,7 @@ LTPitch::LTPitch(LTfloat pitch, LTSceneNode *child) : LTWrapNode(child, LT_TYPE_
 }
 
 void LTPitch::draw() {
-    glRotatef(pitch, 1, 0, 0);
+    ltRotate(pitch, 1, 0, 0);
     child->draw();
 }
 
@@ -135,12 +127,12 @@ LTFog::LTFog(LTfloat start, LTfloat end, LTColor color, LTSceneNode *child)
 }
 
 void LTFog::draw() {
-    glEnable(GL_FOG);
-    glFogfv(GL_FOG_COLOR, (const GLfloat*)&color);
-    glFogf(GL_FOG_START, start);
-    glFogf(GL_FOG_END, end);
+    ltEnableFog();
+    ltFogColor(color.r, color.g, color.b);
+    ltFogStart(start);
+    ltFogEnd(end);
     child->draw();
-    glDisable(GL_FOG);
+    ltDisableFog();
 }
 
 bool LTFog::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {

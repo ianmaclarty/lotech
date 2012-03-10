@@ -111,14 +111,14 @@ void LTFixture::draw() {
                 ltDrawPoly((LTfloat *)poly->m_vertices, poly->m_vertexCount);
                 ltPopTint();
                 for (int i = 0; i < poly->m_vertexCount - 1; i++) {
-                    glVertexPointer(2, GL_FLOAT, 0, &poly->m_vertices[i]);
-                    glDrawArrays(GL_LINE_STRIP, 0, 2);
+                    ltVertexPointer(2, LT_VERT_DATA_TYPE_FLOAT, 0, &poly->m_vertices[i]);
+                    ltDrawArrays(LT_DRAWMODE_LINE_STRIP, 0, 2);
                 }
                 b2Vec2 final_line[2];
                 final_line[0] = poly->m_vertices[poly->m_vertexCount - 1];
                 final_line[1] = poly->m_vertices[0];
-                glVertexPointer(2, GL_FLOAT, 0, final_line);
-                glDrawArrays(GL_LINE_STRIP, 0, 2);
+                ltVertexPointer(2, LT_VERT_DATA_TYPE_FLOAT, 0, final_line);
+                ltDrawArrays(LT_DRAWMODE_LINE_STRIP, 0, 2);
                 break;
             }
             case b2Shape::e_typeCount:
@@ -162,7 +162,7 @@ LTBodyTracker::LTBodyTracker(LTBody *body, LTSceneNode *child,
 }
 
 void LTBodyTracker::draw() {
-    static GLfloat rmat[16] = {
+    static LTfloat rmat[16] = {
         1.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 1.0f, 0.0f,

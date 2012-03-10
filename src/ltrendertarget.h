@@ -10,7 +10,6 @@
 struct LTRenderTarget : LTSceneNode {
     LTframebuf      fbo;
     LTtexid         texture_id;
-    LTrenderbuf     depth_renderbuf;
     bool            depthbuf_enabled;
 
     int             width;
@@ -26,7 +25,7 @@ struct LTRenderTarget : LTSceneNode {
     LTfloat         world_vertices[8];
     LTvertbuf       vertbuf; // for world vertices
     LTtexcoord      tex_coords[8];
-    LTtexbuf        texbuf;
+    LTvertbuf       texbuf;
 
     // Viewport
     LTfloat vp_x1;

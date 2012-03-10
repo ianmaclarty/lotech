@@ -12,16 +12,7 @@
 #include "ltscene.h"
 #include "ltgraphics.h"
 
-#ifdef LTGLES1
-    #define LT_PIXEL_VISIBLE(pxl)     (pxl & 0xFF000000)
-#else
-    #define LT_PIXEL_VISIBLE(pxl)     (pxl & 0xFF)
-#endif
-
-enum LTTextureFilter {
-    LT_TEXTURE_FILTER_LINEAR,
-    LT_TEXTURE_FILTER_NEAREST,
-};
+#define LT_PIXEL_VISIBLE(pxl)     (pxl & 0xFF000000)
 
 struct LTAtlas;
 
@@ -29,7 +20,6 @@ void ltEnableAtlas(LTAtlas *atlas);
 void ltEnableTexture(LTtexid texture_id);
 void ltDisableTextures();
 LTtexid ltGetCurrentBoundTexture();
-GLint lt2glFilter(LTTextureFilter f);
 
 struct LTImageBuffer {
     // Dimensions of original image (not bounding box).
@@ -119,8 +109,8 @@ struct LTAtlas {
 
 struct LTImage : LTSceneNode {
     LTAtlas   *atlas;
-    LTvertbuf vertbuf;
-    LTtexbuf  texbuf;
+    LTvertbuf  vertbuf;
+    LTvertbuf  texbuf;
 
     // Texture coords of image bounding box in atlas.
     LTtexcoord   tex_coords[8];

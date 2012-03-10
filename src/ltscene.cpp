@@ -4,6 +4,7 @@
 
 #include "ltimage.h"
 #include "ltscene.h"
+#include "ltopengl.h"
 
 LTSceneNode::LTSceneNode(LTType type) : LTObject(type) {
     event_handlers = NULL;
@@ -349,9 +350,9 @@ LTLineNode::LTLineNode(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2) : LTScene
 
 void LTLineNode::draw() {
     ltDisableTextures();
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glVertexPointer(2, GL_FLOAT, 0, &x1);
-    glDrawArrays(GL_LINE_STRIP, 0, 2);
+    ltBindVertBuffer(0);
+    ltVertexPointer(2, LT_VERT_DATA_TYPE_FLOAT, 0, &x1);
+    ltDrawArrays(LT_DRAWMODE_LINE_STRIP, 0, 2);
 }
 
 LTfloat* LTLineNode::field_ptr(const char *field_name) {
@@ -381,9 +382,9 @@ LTTriangleNode::LTTriangleNode(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2, L
 
 void LTTriangleNode::draw() {
     ltDisableTextures();
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glVertexPointer(2, GL_FLOAT, 0, &x1);
-    glDrawArrays(GL_TRIANGLE_FAN, 0, 3);
+    ltBindVertBuffer(0);
+    ltVertexPointer(2, LT_VERT_DATA_TYPE_FLOAT, 0, &x1);
+    ltDrawArrays(LT_DRAWMODE_TRIANGLE_FAN, 0, 3);
 }
 
 LTfloat* LTTriangleNode::field_ptr(const char *field_name) {
@@ -418,15 +419,15 @@ LTRectNode::LTRectNode(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2) : LTScene
 void LTRectNode::draw() {
     ltDisableTextures();
 
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    GLfloat v[] = {
+    ltBindVertBuffer(0);
+    LTfloat v[] = {
         x1, y1,
         x2, y1,
         x2, y2,
         x1, y2
     };
-    glVertexPointer(2, GL_FLOAT, 0, v);
-    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+    ltVertexPointer(2, LT_VERT_DATA_TYPE_FLOAT, 0, v);
+    ltDrawArrays(LT_DRAWMODE_TRIANGLE_FAN, 0, 4);
 }
 
 LTfloat* LTRectNode::field_ptr(const char *field_name) {

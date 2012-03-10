@@ -1,5 +1,6 @@
 /* Copyright (C) 2010 Ian MacLarty */
 #include "ltgraphics.h"
+#include "ltopengl.h"
 #include "ltimage.h"
 #ifdef LTIOS
 #   include "ltads.h"
@@ -65,9 +66,6 @@ static std::list<LTColor> tint_stack;
 static std::list<LTBlendMode> blend_mode_stack;
 static std::list<LTTextureMode> texture_mode_stack;
 
-static void apply_blend_mode(LTBlendMode mode);
-static void apply_texture_mode(LTTextureMode mode);
-
 void ltInitGraphics() {
     static LTColor clear_color(0.0f, 0.0f, 0.0f, 0.0f);
     #ifdef LTDEPTHBUF
@@ -76,7 +74,7 @@ void ltInitGraphics() {
     static bool clear_depthbuf = false;
     #endif
 
-    FBEXT(glBindFramebuffer)(FB_EXT(GL_FRAMEBUFFER), main_framebuffer); 
+    ltBindFramebuffer(main_framebuffer);
 
     ltPrepareForRendering(
         screen_viewport_x, screen_viewport_y,
@@ -109,49 +107,40 @@ void ltPrepareForRendering(
     viewport_width = vp_right - vp_left;
     viewport_height = vp_top - vp_bottom;
 
-    glDisable(GL_DITHER);
-    glDisable(GL_ALPHA_TEST);
-    glDisable(GL_STENCIL_TEST);
-    glDisable(GL_FOG);
-    glFogf(GL_FOG_MODE, GL_LINEAR);
+    ltDisableDither();
+    ltDisableAlphaTest();
+    ltDisableStencilTest();
+    ltDisableFog();
+    ltFogMode(LT_FOG_MODE_LINEAR);
     ltDisableTextures();
-    glDisable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LEQUAL);
+    ltDisableDepthTest();
+    ltEnableDepthMask();
+    ltDepthFunc(LT_DEPTH_FUNC_LEQUAL);
     if (clear_color != NULL || clear_depthbuf) {
-        GLbitfield clear_mask = 0;
         if (clear_color) {
-            glClearColor(clear_color->r, clear_color->g, clear_color->b, clear_color->a);
-            clear_mask |= GL_COLOR_BUFFER_BIT;
+            ltClearColor(clear_color->r, clear_color->g, clear_color->b, clear_color->a);
         }
-        if (clear_depthbuf) {
-            clear_mask |= GL_DEPTH_BUFFER_BIT;
-        }
-        glClear(clear_mask);
+        ltClear(clear_color != NULL, clear_depthbuf);
     }
-    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+    ltColor(1.0f, 1.0f, 1.0f, 1.0f);
     tint_stack.clear();
     blend_mode_stack.clear();
     texture_mode_stack.clear();
-    glEnableClientState(GL_VERTEX_ARRAY);
+    ltEnableVertexArrays();
     #ifndef LTGLES1
-    glEnableClientState(GL_INDEX_ARRAY);
+    //ltEnableIndexArrays();
     #endif
-    glEnable(GL_BLEND);
-    apply_blend_mode(LT_BLEND_MODE_NORMAL);
-    apply_texture_mode(LT_TEXTURE_MODE_MODULATE);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glViewport(screen_viewport_x, screen_viewport_y, screen_viewport_width, screen_viewport_height);
-    #ifdef LTGLES1
-    glOrthof(viewport_left, viewport_right, viewport_bottom, viewport_top, -1.0f, 1.0f);
-    #else
-    glOrtho(viewport_left, viewport_right, viewport_bottom, viewport_top, -1.0f, 1.0f);
-    #endif
-    glMatrixMode(GL_TEXTURE);
-    glLoadIdentity();
-    glScalef(1.0f / (GLfloat)LT_MAX_TEX_COORD, 1.0f / (GLfloat)LT_MAX_TEX_COORD, 1.0f);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
+    ltBlendMode(LT_BLEND_MODE_NORMAL);
+    ltTextureMode(LT_TEXTURE_MODE_MODULATE);
+    ltMatrixMode(LT_MATRIX_MODE_PROJECTION);
+    ltLoadIdentity();
+    ltViewport(screen_viewport_x, screen_viewport_y, screen_viewport_width, screen_viewport_height);
+    ltOrtho(viewport_left, viewport_right, viewport_bottom, viewport_top, -1.0f, 1.0f);
+    ltMatrixMode(LT_MATRIX_MODE_TEXTURE);
+    ltLoadIdentity();
+    ltScale(1.0f / (LTfloat)LT_MAX_TEX_COORD, 1.0f / (LTfloat)LT_MAX_TEX_COORD, 1.0f);
+    ltMatrixMode(LT_MATRIX_MODE_MODELVIEW);
+    ltLoadIdentity();
 }
 
 void ltFinishRendering() {
@@ -290,28 +279,6 @@ void ltDrawAdBackground() {
     ltPushTint(0.2f, 0.2f, 0.2f, 1.0f);
     ltDrawRect(l, b, r, t);
     ltPopTint();
-    /*
-    LTfloat ct = 0.8f;
-    LTfloat cb = 0.1f;
-    //LTfloat u = b - (t - b) / 20.0f;
-    LTfloat v[] = {
-        l, t, ct, ct, ct, 1.0f,
-        r, t, ct, ct, ct, 1.0f,
-        l, b, cb, cb, cb, 1.0f,
-        r, b, cb, cb, cb, 1.0f,
-        //l, u, cb, cb, cb, 0.0f,
-        //r, u, cb, cb, cb, 0.0f,
-    };
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    LTfloat stride = 6 * sizeof(LTfloat);
-    glVertexPointer(2, GL_FLOAT, stride, v);
-    ltDisableTextures();
-    glEnableClientState(GL_COLOR_ARRAY);
-    glColorPointer(4, GL_FLOAT, stride, v + 2);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-    glDisableClientState(GL_COLOR_ARRAY);
-    ltRestoreTint();
-    */
     #endif
 }
 
@@ -392,32 +359,27 @@ LTfloat ltGetViewPortTopEdge() {
 }
 
 void ltPushPerspective(LTfloat near, LTfloat origin, LTfloat far, LTfloat vanish_x, LTfloat vanish_y) {
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
+    ltMatrixMode(LT_MATRIX_MODE_PROJECTION);
+    ltPushMatrix();
+    ltLoadIdentity();
     LTfloat r = (origin - near) / origin; 
     LTfloat near_half_width = 0.5f * (viewport_width - r * viewport_width);
     LTfloat near_half_height = 0.5f * (viewport_height - r * viewport_height);
     vanish_x *= (1.0f - r);
     vanish_y *= (1.0f - r);
-    #ifdef LTGLES1
-        glFrustumf(-near_half_width - vanish_x, near_half_width - vanish_x,
-            -near_half_height - vanish_y, near_half_height - vanish_y, near, far);
-    #else
-        glFrustum(-near_half_width - vanish_x, near_half_width - vanish_x,
-            -near_half_height - vanish_y, near_half_height - vanish_y, near, far);
-    #endif
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glTranslatef(-(viewport_width * 0.5f + viewport_left),
+    ltFrustum(-near_half_width - vanish_x, near_half_width - vanish_x,
+        -near_half_height - vanish_y, near_half_height - vanish_y, near, far);
+    ltMatrixMode(LT_MATRIX_MODE_MODELVIEW);
+    ltPushMatrix();
+    ltTranslate(-(viewport_width * 0.5f + viewport_left),
         -(viewport_height * 0.5f + viewport_bottom), -origin);
 }
 
 void ltPopPerspective() {
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
+    ltMatrixMode(LT_MATRIX_MODE_PROJECTION);
+    ltPopMatrix();
+    ltMatrixMode(LT_MATRIX_MODE_MODELVIEW);
+    ltPopMatrix();
 }
 
 void ltPushTint(LTfloat r, LTfloat g, LTfloat b, LTfloat a) {
@@ -430,7 +392,7 @@ void ltPushTint(LTfloat r, LTfloat g, LTfloat b, LTfloat a) {
         new_top.a *= top->a;
     }
     tint_stack.push_front(new_top);
-    glColor4f(new_top.r, new_top.g, new_top.b, new_top.a);
+    ltColor(new_top.r, new_top.g, new_top.b, new_top.a);
 }
 
 void ltPopTint() {
@@ -438,9 +400,9 @@ void ltPopTint() {
         tint_stack.pop_front();
         if (!tint_stack.empty()) {
             LTColor *top = &tint_stack.front();
-            glColor4f(top->r, top->g, top->b, top->a);
+            ltColor(top->r, top->g, top->b, top->a);
         } else {
-            glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+            ltColor(1.0f, 1.0f, 1.0f, 1.0f);
         }
     }
 }
@@ -461,126 +423,85 @@ void ltRestoreTint() {
     if (!tint_stack.empty()) {
         c = tint_stack.front();
     }
-    glColor4f(c.r, c.g, c.b, c.a);
-}
-
-static void apply_blend_mode(LTBlendMode mode) {
-    switch (mode) {
-        case LT_BLEND_MODE_NORMAL:
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            break;
-        case LT_BLEND_MODE_ADD:
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-            break;
-        case LT_BLEND_MODE_COLOR:
-            glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
-            break;
-        case LT_BLEND_MODE_OFF:
-            glDisable(GL_BLEND);
-            break;
-    }
+    ltColor(c.r, c.g, c.b, c.a);
 }
 
 void ltPushBlendMode(LTBlendMode mode) {
     blend_mode_stack.push_front(mode);
-    apply_blend_mode(mode);
+    ltBlendMode(mode);
 }
 
 void ltPopBlendMode() {
     if (!blend_mode_stack.empty()) {
-        LTBlendMode mode = blend_mode_stack.front();
-        if (mode == LT_BLEND_MODE_OFF) {
-            glEnable(GL_BLEND);
-        }
         blend_mode_stack.pop_front();
         if (!blend_mode_stack.empty()) {
-            apply_blend_mode(blend_mode_stack.front());
+            ltBlendMode(blend_mode_stack.front());
         } else {
-            apply_blend_mode(LT_BLEND_MODE_NORMAL);
+            ltBlendMode(LT_BLEND_MODE_NORMAL);
         }
     }
 }
 
 void ltPushTextureMode(LTTextureMode mode) {
     texture_mode_stack.push_front(mode);
-    apply_texture_mode(mode);
+    ltTextureMode(mode);
 }
 
 void ltPopTextureMode() {
     if (!texture_mode_stack.empty()) {
         texture_mode_stack.pop_front();
         if (!texture_mode_stack.empty()) {
-            apply_texture_mode(texture_mode_stack.front());
+            ltTextureMode(texture_mode_stack.front());
         } else {
-            apply_texture_mode(LT_TEXTURE_MODE_MODULATE);
+            ltTextureMode(LT_TEXTURE_MODE_MODULATE);
         }
-    }
-}
-
-static void apply_texture_mode(LTTextureMode mode) {
-    switch (mode) {
-        case LT_TEXTURE_MODE_MODULATE:
-            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-            break;
-        case LT_TEXTURE_MODE_ADD:
-            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);
-            break;
-        case LT_TEXTURE_MODE_DECAL:
-            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
-            break;
-        case LT_TEXTURE_MODE_BLEND:
-            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_BLEND);
-            break;
-        case LT_TEXTURE_MODE_REPLACE:
-            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-            break;
     }
 }
 
 void ltDrawUnitSquare() {
     static bool initialized = false;
-    static const GLfloat vertices[] = {-0.5f, 0.5f, -0.5f, -0.5f, 0.5f, -0.5f, 0.5f, 0.5f};
-    static GLuint buffer_id;
+    static const LTfloat vertices[] = {-0.5f, 0.5f, -0.5f, -0.5f, 0.5f, -0.5f, 0.5f, 0.5f};
+    static LTvertbuf buffer_id;
 
     if (!initialized) {
-        glGenBuffers(1, &buffer_id);
-        glBindBuffer(GL_ARRAY_BUFFER, buffer_id);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 8, vertices, GL_STATIC_DRAW);
+        buffer_id = ltGenVertBuffer();
+        ltBindVertBuffer(buffer_id);
+        ltStaticVertBufferData(sizeof(LTfloat) * 8, vertices);
         initialized = true;
     }
 
     ltDisableTextures();
-    glBindBuffer(GL_ARRAY_BUFFER, buffer_id);
-    glVertexPointer(2, GL_FLOAT, 0, 0);
-    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+    ltBindVertBuffer(buffer_id);
+    ltVertexPointer(2, LT_VERT_DATA_TYPE_FLOAT, 0, 0);
+    ltDrawArrays(LT_DRAWMODE_TRIANGLE_FAN, 0, 4);
 }
 
 void ltDrawUnitCircle() {
     static bool initialized = false;
     static const int num_vertices = 128;
-    static GLfloat vertices[num_vertices * 2];
-    static GLuint buffer_id;
+    static LTfloat vertices[num_vertices * 2];
+    static LTvertbuf buffer_id;
 
     if (!initialized) {
         for (int i = 0; i < num_vertices * 2; i += 2) {
             float theta = ((float)i / (float)num_vertices) * 2.0f * LT_PI;
-            vertices[i] = (GLfloat)cosf(theta);
-            vertices[i + 1] = (GLfloat)sinf(theta);
+            vertices[i] = (LTfloat)cosf(theta);
+            vertices[i + 1] = (LTfloat)sinf(theta);
         }
-        glGenBuffers(1, &buffer_id);
-        glBindBuffer(GL_ARRAY_BUFFER, buffer_id);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * num_vertices * 2, vertices, GL_STATIC_DRAW);
+        buffer_id = ltGenVertBuffer();
+        ltBindVertBuffer(buffer_id);
+        ltStaticVertBufferData(sizeof(LTfloat) * num_vertices * 2, vertices);
         initialized = true;
     }
 
     ltDisableTextures();
-    glBindBuffer(GL_ARRAY_BUFFER, buffer_id);
-    glVertexPointer(2, GL_FLOAT, 0, 0);
-    glDrawArrays(GL_TRIANGLE_FAN, 0, num_vertices);
+    ltBindVertBuffer(buffer_id);
+    ltVertexPointer(2, LT_VERT_DATA_TYPE_FLOAT, 0, 0);
+    ltDrawArrays(LT_DRAWMODE_TRIANGLE_FAN, 0, num_vertices);
 }
 
 void ltDrawRect(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2) {
-    GLfloat vertices[8];
+    LTfloat vertices[8];
     vertices[0] = x1;
     vertices[1] = y1;
     vertices[2] = x2;
@@ -590,46 +511,22 @@ void ltDrawRect(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2) {
     vertices[6] = x1;
     vertices[7] = y2;
     ltDisableTextures();
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glVertexPointer(2, GL_FLOAT, 0, vertices);
-    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+    ltBindVertBuffer(0);
+    ltVertexPointer(2, LT_VERT_DATA_TYPE_FLOAT, 0, vertices);
+    ltDrawArrays(LT_DRAWMODE_TRIANGLE_FAN, 0, 4);
 }
 
 void ltDrawEllipse(LTfloat x, LTfloat y, LTfloat rx, LTfloat ry) {
-    glPushMatrix();
-        glTranslatef(x, y, 0.0f);
-        glScalef(rx, ry, 1.0f);
+    ltPushMatrix();
+        ltTranslate(x, y, 0.0f);
+        ltScale(rx, ry, 1.0f);
         ltDrawUnitCircle();
-    glPopMatrix();
+    ltPopMatrix();
 }
 
 void ltDrawPoly(LTfloat *vertices, int num_vertices) {
     ltDisableTextures();
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glVertexPointer(2, GL_FLOAT, 0, vertices);
-    glDrawArrays(GL_TRIANGLE_FAN, 0, num_vertices);
-}
-
-void ltTranslate(LTfloat x, LTfloat y, LTfloat z) {
-    glTranslatef(x, y, z);
-}
-
-void ltRotate(LTdegrees degrees, LTfloat x, LTfloat y, LTfloat z) {
-    glRotatef(degrees, x, y, z);
-}
-
-void ltScale(LTfloat x, LTfloat y, LTfloat z) {
-    glScalef(x, y, z);
-}
-
-void ltPushMatrix() {
-    glPushMatrix();
-}
-
-void ltPopMatrix() {
-    glPopMatrix();
-}
-
-void ltMultMatrix(LTfloat *m) {
-    glMultMatrixf(m);
+    ltBindVertBuffer(0);
+    ltVertexPointer(2, LT_VERT_DATA_TYPE_FLOAT, 0, vertices);
+    ltDrawArrays(LT_DRAWMODE_TRIANGLE_FAN, 0, num_vertices);
 }

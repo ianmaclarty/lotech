@@ -30,14 +30,6 @@ struct LTEmitter : LTObject {
     void advance(LTfloat dt);
 };
 
-enum LTDrawMode {
-    LT_DRAWMODE_TRIANGLES      = GL_TRIANGLES,
-    LT_DRAWMODE_TRIANGLE_STRIP = GL_TRIANGLE_STRIP,
-    LT_DRAWMODE_TRIANGLE_FAN   = GL_TRIANGLE_FAN,
-    LT_DRAWMODE_POINTS         = GL_POINTS,
-    LT_DRAWMODE_LINES          = GL_LINES,
-};
-
 struct LTDrawVector : LTSceneNode {
     LTVector *vector;
     int dimensions;

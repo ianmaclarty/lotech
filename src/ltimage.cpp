@@ -1,6 +1,7 @@
 /* Copyright (C) 2010 Ian MacLarty */
 #include "ltimage.h"
 #include "ltresource.h"
+#include "ltopengl.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -17,54 +18,21 @@
 // l, b, r and t are the left, bottom, right and top dimensions of the bounding box.
 #define BBCHUNK_FORMAT "w%dh%dl%db%dr%dt%d"
 
-static bool g_textures_enabled = true;
-static GLuint g_current_bound_texture = 0;
-
 void ltEnableAtlas(LTAtlas *atlas) {
-    if (!g_textures_enabled) {
-        glEnable(GL_TEXTURE_2D);
-        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-        g_textures_enabled = true;
-    }
-    if (g_current_bound_texture != atlas->texture_id) {
-        glBindTexture(GL_TEXTURE_2D, atlas->texture_id);
-        g_current_bound_texture = atlas->texture_id;
-    }
+    ltEnableTexturing();
+    ltEnableTextureCoordArrays();
+    ltBindTexture(atlas->texture_id);
 }
 
-void ltEnableTexture(GLuint texture_id) {
-    if (!g_textures_enabled) {
-        glEnable(GL_TEXTURE_2D);
-        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-        g_textures_enabled = true;
-    }
-    if (g_current_bound_texture != texture_id) {
-        glBindTexture(GL_TEXTURE_2D, texture_id);
-        g_current_bound_texture = texture_id;
-    }
+void ltEnableTexture(LTtexid texture_id) {
+    ltEnableTexturing();
+    ltEnableTextureCoordArrays();
+    ltBindTexture(texture_id);
 }
 
 void ltDisableTextures() {
-    if (g_textures_enabled) {
-        glDisable(GL_TEXTURE_2D);
-        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-        g_textures_enabled = false;
-        g_current_bound_texture = 0;
-    }
-}
-
-LTtexid ltGetCurrentBoundTexture() {
-    return g_current_bound_texture;
-}
-
-GLint lt2glFilter(LTTextureFilter f) {
-    switch (f) {
-        case LT_TEXTURE_FILTER_LINEAR:
-            return GL_LINEAR;
-        case LT_TEXTURE_FILTER_NEAREST:
-            return GL_NEAREST;
-        default: return GL_LINEAR;
-    }
+    ltDisableTexturing();
+    ltDisableTextureCoordArrays();
 }
 
 LTAtlas::LTAtlas(LTImagePacker *packer, LTTextureFilter minfilter, LTTextureFilter magfilter) {
@@ -82,24 +50,16 @@ LTAtlas::LTAtlas(LTImagePacker *packer, LTTextureFilter minfilter, LTTextureFilt
         ltWriteImage(dump_file, buf);
     }
 #endif
-    glGenTextures(1, &texture_id);
-    glBindTexture(GL_TEXTURE_2D, texture_id);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, lt2glFilter(minfilter)); 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, lt2glFilter(magfilter));
-    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-    #ifdef LTGLES1
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, buf->width, buf->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, buf->bb_pixels);
-    #else
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, buf->width, buf->height, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, buf->bb_pixels);
-    #endif
+    texture_id = ltGenTexture();
+    ltBindTexture(texture_id);
+    ltTextureMinFilter(minfilter);
+    ltTextureMagFilter(magfilter);
+    ltTexImage(buf->width, buf->height, buf->bb_pixels);
     delete buf;
-    if (g_current_bound_texture != 0) {
-        glBindTexture(GL_TEXTURE_2D, g_current_bound_texture);
-    }
 }
 
 LTAtlas::~LTAtlas() {
-    glDeleteTextures(1, &texture_id);
+    ltDeleteTexture(texture_id);
 }
 
 LTImageBuffer::LTImageBuffer(const char *name) {
@@ -247,15 +207,9 @@ LTImageBuffer *ltReadImage(const char *path, const char *name) {
     png_set_sig_bytes(png_ptr, 8);
 
     // Read the data.
-    #ifdef LTGLES1
-        png_transforms = PNG_TRANSFORM_STRIP_16 | PNG_TRANSFORM_PACKING |
-            PNG_TRANSFORM_GRAY_TO_RGB | PNG_TRANSFORM_EXPAND;
-        png_set_filler(png_ptr, 0xFF, PNG_FILLER_AFTER);
-    #else
-        png_transforms = PNG_TRANSFORM_STRIP_16 | PNG_TRANSFORM_PACKING |
-            PNG_TRANSFORM_GRAY_TO_RGB | PNG_TRANSFORM_SWAP_ALPHA | PNG_TRANSFORM_BGR | PNG_TRANSFORM_EXPAND;
-        png_set_filler(png_ptr, 0xFF, PNG_FILLER_BEFORE);
-    #endif
+    png_transforms = PNG_TRANSFORM_STRIP_16 | PNG_TRANSFORM_PACKING |
+        PNG_TRANSFORM_GRAY_TO_RGB | PNG_TRANSFORM_EXPAND;
+    png_set_filler(png_ptr, 0xFF, PNG_FILLER_AFTER);
     png_read_png(png_ptr, info_ptr, png_transforms, NULL);
     ltCloseResource(in);
     png_get_IHDR(png_ptr, info_ptr, &uwidth, &uheight, &bit_depth, &color_type,
@@ -748,9 +702,9 @@ LTImage::LTImage(LTAtlas *atls, int atlas_w, int atlas_h, LTImagePacker *packer)
     world_vertices[5] = world_bottom;
     world_vertices[6] = world_left;
     world_vertices[7] = world_bottom;
-    glGenBuffers(1, &vertbuf);
-    glBindBuffer(GL_ARRAY_BUFFER, vertbuf);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 8, world_vertices, GL_STATIC_DRAW);
+    vertbuf = ltGenVertBuffer();
+    ltBindVertBuffer(vertbuf);
+    ltStaticVertBufferData(sizeof(LTfloat) * 8, world_vertices);
 
     if (rotated) {
         tex_coords[0] = tex_left + tex_height;   tex_coords[1] = tex_bottom + tex_width;
@@ -763,17 +717,14 @@ LTImage::LTImage(LTAtlas *atls, int atlas_w, int atlas_h, LTImagePacker *packer)
         tex_coords[4] = tex_left + tex_width;    tex_coords[5] = tex_bottom;
         tex_coords[6] = tex_left;                tex_coords[7] = tex_bottom;
     }
-    glGenBuffers(1, &texbuf);
-    glBindBuffer(GL_ARRAY_BUFFER, texbuf);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(LTtexcoord) * 8, tex_coords, GL_STATIC_DRAW);
+    texbuf = ltGenVertBuffer();
+    ltBindVertBuffer(texbuf);
+    ltStaticVertBufferData(sizeof(LTtexcoord) * 8, tex_coords);
 }
 
 LTImage::~LTImage() {
-    // Make sure vertbuf or texbuf are not bound before deleting them.
-    // This seems to fix an occasional crash on OSX.
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glDeleteBuffers(1, &vertbuf);
-    glDeleteBuffers(1, &texbuf);
+    ltDeleteVertBuffer(vertbuf);
+    ltDeleteVertBuffer(texbuf);
     atlas->ref_count--;
     if (atlas->ref_count <= 0) {
         delete atlas;
@@ -782,11 +733,11 @@ LTImage::~LTImage() {
 
 void LTImage::draw() {
     ltEnableAtlas(atlas);
-    glBindBuffer(GL_ARRAY_BUFFER, vertbuf);
-    glVertexPointer(2, GL_FLOAT, 0, 0);
-    glBindBuffer(GL_ARRAY_BUFFER, texbuf);
-    glTexCoordPointer(2, GL_SHORT, 0, 0);
-    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+    ltBindVertBuffer(vertbuf);
+    ltVertexPointer(2, LT_VERT_DATA_TYPE_FLOAT, 0, 0);
+    ltBindVertBuffer(texbuf);
+    ltTexCoordPointer(2, LT_VERT_DATA_TYPE_SHORT, 0, 0);
+    ltDrawArrays(LT_DRAWMODE_TRIANGLE_FAN, 0, 4);
 }
 
 LTfloat* LTImage::field_ptr(const char *field_name) {

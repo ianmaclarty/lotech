@@ -7,6 +7,7 @@
 
 #include "ltevent.h"
 #include "ltgraphics.h"
+#include "ltopengl.h"
 
 struct LTSceneNode : LTObject {
     std::list<LTPointerEventHandler *> *event_handlers;

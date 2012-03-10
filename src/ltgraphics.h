@@ -10,6 +10,7 @@
 
 #include "ltcommon.h"
 #include "ltevent.h"
+#include "ltopengl.h"
 
 #define LT_MAX_TEX_COORD 8192
 
@@ -41,10 +42,10 @@ struct LTPoint {
 };
 
 struct LTCompactColor {
-    GLubyte r;
-    GLubyte g;
-    GLubyte b;
-    GLubyte a;
+    LTubyte r;
+    LTubyte g;
+    LTubyte b;
+    LTubyte a;
 
     LTCompactColor() {
         r = 255;
@@ -53,7 +54,7 @@ struct LTCompactColor {
         a = 255;
     }
 
-    LTCompactColor(GLubyte r, GLubyte g, GLubyte b, GLubyte a) {
+    LTCompactColor(LTubyte r, LTubyte g, LTubyte b, LTubyte a) {
         LTCompactColor::r = r;
         LTCompactColor::g = g;
         LTCompactColor::b = b;
@@ -85,21 +86,6 @@ struct LTColor {
 enum LTDisplayOrientation {
     LT_DISPLAY_ORIENTATION_PORTRAIT,
     LT_DISPLAY_ORIENTATION_LANDSCAPE,
-};
-
-enum LTBlendMode {
-    LT_BLEND_MODE_NORMAL,
-    LT_BLEND_MODE_ADD,
-    LT_BLEND_MODE_COLOR,
-    LT_BLEND_MODE_OFF,
-};
-
-enum LTTextureMode {
-    LT_TEXTURE_MODE_MODULATE,
-    LT_TEXTURE_MODE_ADD,
-    LT_TEXTURE_MODE_DECAL,
-    LT_TEXTURE_MODE_BLEND,
-    LT_TEXTURE_MODE_REPLACE,
 };
 
 // Should be called before rendering each frame.

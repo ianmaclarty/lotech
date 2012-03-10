@@ -2,34 +2,6 @@
 #ifndef LTCOMMON_H
 #define LTCOMMON_H
 
-#ifdef LTLINUX
-    #include <GL/glew.h>
-    #include <GL/glfw.h>
-#endif
-#ifdef LTMINGW
-    #define GLEW_STATIC 1
-    #include <GL/glew.h>
-    #include <GL/glfw.h>
-#endif
-#ifdef LTIOS
-    #include <OpenGLES/ES1/gl.h>
-    #include <OpenGLES/ES1/glext.h>
-#endif
-#ifdef LTOSX
-    #include <OpenGL/GL.h>
-#endif
-#ifdef LTANDROID
-    #include <GLES/gl.h>
-#endif
-
-#ifdef LTGLES1
-#define FBEXT(f) f##OES
-#define FB_EXT(f) f##_OES
-#else
-#define FBEXT(f) f##EXT
-#define FB_EXT(f) f##_EXT
-#endif
-
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -49,20 +21,14 @@
 typedef float           LTfloat;
 typedef double          LTdouble;
 typedef unsigned int    LTuint;
-// We check this is 32 bits in ltcommon.cpp.
+typedef unsigned short  LTushort;
+typedef unsigned char   LTubyte;
 typedef unsigned int    LTuint32;
 
 typedef float           LTsecs;
 typedef float           LTdegrees;
 
 typedef LTuint32        LTpixel;
-typedef GLuint          LTvertbuf;
-typedef GLuint          LTframebuf;
-typedef GLuint          LTtexbuf;
-typedef GLuint          LTrenderbuf;
-typedef GLuint          LTtexid;
-typedef GLushort        LTvertindex;
-typedef GLshort         LTtexcoord;
 
 // Used in gperf generated tables.
 struct LTFieldInfo {
