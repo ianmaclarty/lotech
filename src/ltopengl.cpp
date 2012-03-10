@@ -198,21 +198,23 @@ void ltBlendMode(LTBlendMode new_mode) {
     if (old_mode != new_mode) {
         switch (new_mode) {
             case LT_BLEND_MODE_NORMAL:
-                if (old_mode == LT_BLEND_MODE_OFF) {
-                    glEnable(GL_BLEND);
-                }
+                glEnable(GL_BLEND);
+                glBlendEquation(GL_FUNC_ADD);
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                 break;
             case LT_BLEND_MODE_ADD:
-                if (old_mode == LT_BLEND_MODE_OFF) {
-                    glEnable(GL_BLEND);
-                }
+                glEnable(GL_BLEND);
+                glBlendEquation(GL_FUNC_ADD);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+                break;
+            case LT_BLEND_MODE_SUBTRACT:
+                glEnable(GL_BLEND);
+                glBlendEquation(GL_FUNC_REVERSE_SUBTRACT);
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE);
                 break;
             case LT_BLEND_MODE_COLOR:
-                if (old_mode == LT_BLEND_MODE_OFF) {
-                    glEnable(GL_BLEND);
-                }
+                glEnable(GL_BLEND);
+                glBlendEquation(GL_FUNC_ADD);
                 glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
                 break;
             case LT_BLEND_MODE_OFF:
