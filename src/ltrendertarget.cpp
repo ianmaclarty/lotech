@@ -76,8 +76,8 @@ LTRenderTarget::LTRenderTarget(int w, int h,
 LTRenderTarget::~LTRenderTarget() {
     ltDeleteVertBuffer(texbuf);
     ltDeleteVertBuffer(vertbuf);
-    ltDeleteTexture(texture_id);
     ltDeleteFramebuffer(fbo);
+    ltDeleteTexture(texture_id);
 }
 
 void LTRenderTarget::renderNode(LTSceneNode *node, LTColor *clear_color) {

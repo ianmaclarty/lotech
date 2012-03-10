@@ -40,10 +40,18 @@ void ltLog(const char *fmt, ...) {
     }    
 #if defined LTLINUX || defined LTOSX
     /*
-    FILE* log_file = fopen("/Users/ian/lt.log", "a");
+    static int count = 0;
+    FILE* log_file;
+    if (count == 1000) {
+        log_file = fopen("/Users/ian/lt.log", "w");
+        count = 0;
+    } else {
+        log_file = fopen("/Users/ian/lt.log", "a");
+    }
     fprintf(log_file, "%s\n", msg);
     fflush(log_file);
     fclose(log_file);
+    count++;
     */
 #endif
 #endif

@@ -1,4 +1,4 @@
-#ifdef LTGLES1
+    #ifdef LTGLES1
 #define GLEXT(f) f##OES
 #define GL_EXT(f) f##_OES
 #else
@@ -24,7 +24,7 @@ static void set_state_str();
 #define trace
 #endif
 
-//#define LTGLCHECK
+#define LTGLCHECK
 #ifdef LTGLCHECK
 #define check_for_errors if (glGetError() != GL_NO_ERROR) \
     {ltLog("OpenGL error at %s:%d %s", __FILE__, __LINE__, __func__); ltAbort();}
