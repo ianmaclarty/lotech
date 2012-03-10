@@ -24,8 +24,13 @@ static void set_state_str();
 #define trace
 #endif
 
+//#define LTGLCHECK
+#ifdef LTGLCHECK
 #define check_for_errors if (glGetError() != GL_NO_ERROR) \
     {ltLog("OpenGL error at %s:%d %s", __FILE__, __LINE__, __func__); ltAbort();}
+#else
+#define check_for_errors
+#endif
 
 // State
 static bool texturing = false;
