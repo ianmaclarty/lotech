@@ -33,40 +33,57 @@ static void set_state_str();
 #endif
 
 // State
-static bool texturing = false;
-static bool texture_coord_arrays = false;
-static LTBlendMode blend_mode = LT_BLEND_MODE_OFF;
-static LTTextureMode texture_mode = LT_TEXTURE_MODE_MODULATE;
-static bool depth_test = false;
-static bool depth_mask = true;
-static bool dither = false;
-static bool alpha_test = false;
-static bool stencil_test = false;
-static bool vertex_arrays = false;
-static bool index_arrays = false;
-static bool color_arrays = false;
-static bool fog = false;
-static LTtexid bound_texture = 0;
-static LTframebuf bound_framebuffer = 0;
-static LTvertbuf bound_vertbuffer = 0;
+static bool texturing;
+static bool texture_coord_arrays;
+static LTBlendMode blend_mode;
+static LTTextureMode texture_mode;
+static bool depth_test;
+static bool depth_mask;
+static bool dither;
+static bool alpha_test;
+static bool stencil_test;
+static bool vertex_arrays;
+static bool index_arrays;
+static bool color_arrays;
+static bool fog;
+static LTtexid bound_texture;
+static LTframebuf bound_framebuffer;
+static LTvertbuf bound_vertbuffer;
 
 void ltInitGLState() {
     glDisable(GL_TEXTURE_2D);
+    texturing = false;
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+    texture_coord_arrays = false;
     glDisable(GL_BLEND);
+    blend_mode = LT_BLEND_MODE_OFF;
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    texture_mode = LT_TEXTURE_MODE_MODULATE;
     glDisable(GL_DEPTH_TEST);
+    depth_test = false;
     glDepthMask(GL_TRUE);
+    depth_mask = true;
     glDisable(GL_DITHER);
+    dither = false;
     glDisable(GL_ALPHA_TEST);
+    alpha_test = false;
     glDisable(GL_STENCIL_TEST);
+    stencil_test = false;
     glDisableClientState(GL_VERTEX_ARRAY);
+    vertex_arrays = false;
     glDisableClientState(GL_INDEX_ARRAY);
+    index_arrays = false;
     glDisableClientState(GL_COLOR_ARRAY);
+    color_arrays = false;
     glDisable(GL_FOG);
+    fog = false;
     glBindTexture(GL_TEXTURE_2D, 0);
+    bound_texture = 0;
     GLEXT(glBindFramebuffer)(GL_EXT(GL_FRAMEBUFFER), 0);
+    bound_framebuffer = 0;
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+    bound_vertbuffer = 0;
+
     check_for_errors
     trace
 }
