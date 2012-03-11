@@ -717,6 +717,8 @@ static int lt_BlendMode(lua_State *L) {
         mode = LT_BLEND_MODE_ADD;
     } else if (strcmp(modestr, "subtract") == 0) {
         mode = LT_BLEND_MODE_SUBTRACT;
+    //} else if (strcmp(modestr, "diff") == 0) {
+    //    mode = LT_BLEND_MODE_DIFF;
     } else if (strcmp(modestr, "color") == 0) {
         mode = LT_BLEND_MODE_COLOR;
     } else if (strcmp(modestr, "normal") == 0) {

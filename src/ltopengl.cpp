@@ -186,7 +186,7 @@ void ltTexImage(int width, int height, void *data) {
     #ifdef LTGLES1
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
     #else
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, data);
     #endif
     check_for_errors
     trace
@@ -212,6 +212,13 @@ void ltBlendMode(LTBlendMode new_mode) {
                 glBlendEquation(GL_FUNC_REVERSE_SUBTRACT);
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE);
                 break;
+                /*
+            case LT_BLEND_MODE_DIFF:
+                glEnable(GL_BLEND);
+                glBlendEquation(GL_FUNC_SUBTRACT);
+                glBlendFunc(GL_ONE, GL_ONE);
+                break;
+                */
             case LT_BLEND_MODE_COLOR:
                 glEnable(GL_BLEND);
                 glBlendEquation(GL_FUNC_ADD);
@@ -682,6 +689,9 @@ static void set_state_str() {
             break;
         case LT_BLEND_MODE_ADD:
             blend_mode_str = "A";
+            break;
+        case LT_BLEND_MODE_SUBTRACT:
+            blend_mode_str = "S";
             break;
         case LT_BLEND_MODE_COLOR:
             blend_mode_str = "C";

@@ -207,8 +207,14 @@ LTImageBuffer *ltReadImage(const char *path, const char *name) {
     png_set_sig_bytes(png_ptr, 8);
 
     // Read the data.
-    png_transforms = PNG_TRANSFORM_STRIP_16 | PNG_TRANSFORM_PACKING |
-        PNG_TRANSFORM_GRAY_TO_RGB | PNG_TRANSFORM_EXPAND;
+    #ifdef LTGLES1
+        png_transforms = PNG_TRANSFORM_STRIP_16 | PNG_TRANSFORM_PACKING |
+            PNG_TRANSFORM_GRAY_TO_RGB | PNG_TRANSFORM_EXPAND;
+    #else
+        png_transforms = PNG_TRANSFORM_STRIP_16 | PNG_TRANSFORM_PACKING |
+            PNG_TRANSFORM_GRAY_TO_RGB | PNG_TRANSFORM_BGR | PNG_TRANSFORM_EXPAND;
+    #endif
+    png_set_filler(png_ptr, 0xFF, PNG_FILLER_AFTER);
     png_set_filler(png_ptr, 0xFF, PNG_FILLER_AFTER);
     png_read_png(png_ptr, info_ptr, png_transforms, NULL);
     ltCloseResource(in);

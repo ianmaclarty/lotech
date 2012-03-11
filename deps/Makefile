@@ -130,24 +130,24 @@ ifeq ($(TARGET_PLATFORM),osx)
 ############################ Mac OS X Targets ##############################
 
 liblua.a: rebuild
-	cd $(LUA_DIR) && $(MAKE) macosx CC="gcc -m32 -arch i386"
+	cd $(LUA_DIR) && $(MAKE) macosx CC="gcc -m64 -arch x86_64"
 	cp $(LUA_DIR)/src/liblua.a $@
 
 libbox2d.a: rebuild
 	cd $(BOX2D_DIR) && $(MAKE) \
-		TARGET_FLAGS="-m32 -arch i386" \
+		TARGET_FLAGS="-m64 -arch x86_64" \
 		clean all
 	cp $(BOX2D_DIR)/libbox2d.a .
 
 libz.a: rebuild
 	cd $(ZLIB_DIR) && $(MAKE) \
-		TARGET_FLAGS="-m32 -arch i386" \
+		TARGET_FLAGS="-m64 -arch x86_64" \
 		clean all
 	cp $(ZLIB_DIR)/libz.a .
 
 libpng.a: rebuild
 	cd $(LIBPNG_DIR) && $(MAKE) \
-		TARGET_FLAGS="-m32 -arch i386" \
+		TARGET_FLAGS="-m64 -arch x86_64" \
 		clean all
 	cp $(LIBPNG_DIR)/libpng.a .
 endif
