@@ -54,6 +54,7 @@ const LTTypeInfo types[] = {
     {"ParticleSystem",  LT_TYPE_SCENENODE},
     {"TweenSet",        LT_TYPE_OBJECT},
     {"RenderTarget",    LT_TYPE_SCENENODE},
+    {"RandomGenerator", LT_TYPE_OBJECT},
 };
 
 ct_assert(sizeof(types) == (int)LT_NUM_TYPES * sizeof(LTTypeInfo));
