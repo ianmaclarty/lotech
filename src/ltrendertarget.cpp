@@ -25,11 +25,14 @@ LTRenderTarget::LTRenderTarget(int w, int h,
     while (tex_height < height) tex_height <<= 1;
 
     // Generate texture.
+    void* data = malloc(tex_width * tex_height * 4);
+    memset(data, tex_width * tex_height * 4, 0);
     texture_id = ltGenTexture();
     ltBindTexture(texture_id);
     ltTextureMinFilter(minfilter);
     ltTextureMagFilter(magfilter);
-    ltTexImage(tex_width, tex_height, NULL);
+    ltTexImage(tex_width, tex_height, data);
+    free(data);
 
     // Attach texture to frame buffer.
     ltFramebufferTexture(texture_id);

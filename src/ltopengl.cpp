@@ -19,9 +19,9 @@ static void set_state_str();
 
 //#define LTGLTRACE
 #ifdef LTGLTRACE
-#define trace {set_state_str(); ltLog("%s:%4d %-30s %s", __FILE__, __LINE__, __func__, state_str);}
+#define gltrace {set_state_str(); ltLog("%s:%4d %-30s %s", __FILE__, __LINE__, __func__, state_str);}
 #else
-#define trace
+#define gltrace
 #endif
 
 #define LTGLCHECK
@@ -85,115 +85,118 @@ void ltInitGLState() {
     bound_vertbuffer = 0;
 
     check_for_errors
-    trace
+    gltrace
 }
 
 void ltEnableTexturing() {
-    trace
+    gltrace
     if (!texturing) {
         glEnable(GL_TEXTURE_2D);
         check_for_errors
         texturing = true;
     }
-    trace
+    gltrace
 }
 
 void ltDisableTexturing() {
-    trace
+    gltrace
     if (texturing) {
         glDisable(GL_TEXTURE_2D);
         check_for_errors
         texturing = false;
     }
-    trace
+    gltrace
 }
 
 void ltEnableTextureCoordArrays() {
-    trace
+    gltrace
     if (!texture_coord_arrays) {
         glEnableClientState(GL_TEXTURE_COORD_ARRAY);
         check_for_errors
         texture_coord_arrays = true;
     }
-    trace
+    gltrace
 }
 
 void ltDisableTextureCoordArrays() {
-    trace
+    gltrace
     if (texture_coord_arrays) {
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
         check_for_errors
         texture_coord_arrays = false;
     }
-    trace
+    gltrace
 }
 
 void ltTextureMode(LTTextureMode mode) {
-    trace
+    gltrace
     if (mode != texture_mode) {
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, mode);
         check_for_errors
         texture_mode = mode;
     }
-    trace
+    gltrace
 }
 
 void ltTextureMagFilter(LTTextureFilter filter) {
-    trace
+    gltrace
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
     check_for_errors
-    trace
+    gltrace
 }
 
 void ltTextureMinFilter(LTTextureFilter filter) {
-    trace
+    gltrace
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter); 
     check_for_errors
-    trace
+    gltrace
 }
 
 void ltBindTexture(LTtexid texture_id) {
-    trace
+    gltrace
     if (bound_texture != texture_id) {
         glBindTexture(GL_TEXTURE_2D, texture_id);
         check_for_errors
         bound_texture = texture_id;
     }
-    trace
+    gltrace
 }
 
 LTtexid ltGenTexture() {
-    trace
+    gltrace
     LTtexid t;
     glGenTextures(1, &t);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+    glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_FALSE);
     check_for_errors
-    trace
+    gltrace
     return t;
 }
 
 void ltDeleteTexture(LTtexid texture_id) {
-    trace
+    gltrace
     if (bound_texture == texture_id) {
         ltBindTexture(0);
     }
     glDeleteTextures(1, &texture_id);
     check_for_errors
-    trace
+    gltrace
 }
 
 void ltTexImage(int width, int height, void *data) {
-    trace
+    gltrace
     #ifdef LTGLES1
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
     #else
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, data);
     #endif
     check_for_errors
-    trace
+    gltrace
 }
 
 void ltBlendMode(LTBlendMode new_mode) {
-    trace
+    gltrace
     LTBlendMode old_mode = blend_mode;
     if (old_mode != new_mode) {
         switch (new_mode) {
@@ -231,198 +234,198 @@ void ltBlendMode(LTBlendMode new_mode) {
         blend_mode = new_mode;
         check_for_errors
     }
-    trace
+    gltrace
 }
 
 void ltEnableDepthTest() {
-    trace
+    gltrace
     if (!depth_test) {
         glEnable(GL_DEPTH_TEST);
         check_for_errors
         depth_test = true;
     }
-    trace
+    gltrace
 }
 
 void ltDisableDepthTest() {
-    trace
+    gltrace
     if (depth_test) {
         glDisable(GL_DEPTH_TEST);
         check_for_errors
         depth_test = false;
     }
-    trace
+    gltrace
 }
 
 void ltEnableDepthMask() {
-    trace
+    gltrace
     if (!depth_mask) {
         glDepthMask(GL_TRUE);
         check_for_errors
         depth_mask = true;
     }
-    trace
+    gltrace
 }
 
 void ltDisableDepthMask() {
-    trace
+    gltrace
     if (depth_mask) {
         glDepthMask(GL_FALSE);
         check_for_errors
         depth_mask = false;
     }
-    trace
+    gltrace
 }
 
 void ltDepthFunc(LTDepthFunc f) {
-    trace
+    gltrace
     glDepthFunc(f);
     check_for_errors
-    trace
+    gltrace
 }
 
 void ltEnableDither() {
-    trace
+    gltrace
     if (!dither) {
         glEnable(GL_DITHER);
         check_for_errors
         dither = true;
     }
-    trace
+    gltrace
 }
 
 void ltDisableDither() {
-    trace
+    gltrace
     if (dither) {
         glDisable(GL_DITHER);
         check_for_errors
         dither = false;
     }
-    trace
+    gltrace
 }
 
 void ltEnableAlphaTest() {
-    trace
+    gltrace
     if (!alpha_test) {
         glEnable(GL_ALPHA_TEST);
         check_for_errors
         alpha_test = true;
     }
-    trace
+    gltrace
 }
 
 void ltDisableAlphaTest() {
-    trace
+    gltrace
     if (alpha_test) {
         glDisable(GL_ALPHA_TEST);
         check_for_errors
         alpha_test = false;
     }
-    trace
+    gltrace
 }
 
 void ltEnableStencilTest() {
-    trace
+    gltrace
     if (!stencil_test) {
         glEnable(GL_STENCIL_TEST);
         check_for_errors
         stencil_test = true;
     }
-    trace
+    gltrace
 }
 
 void ltDisableStencilTest() {
-    trace
+    gltrace
     if (stencil_test) {
         glDisable(GL_STENCIL_TEST);
         check_for_errors
         stencil_test = false;
     }
-    trace
+    gltrace
 }
 
 void ltEnableVertexArrays() {
-    trace
+    gltrace
     if (!vertex_arrays) {
         glEnableClientState(GL_VERTEX_ARRAY);
         check_for_errors
         vertex_arrays = true;
     }
-    trace
+    gltrace
 }
 
 void ltDisableVertexArrays() {
-    trace
+    gltrace
     if (vertex_arrays) {
         glDisableClientState(GL_VERTEX_ARRAY);
         check_for_errors
         vertex_arrays = false;
     }
-    trace
+    gltrace
 }
 
 void ltEnableIndexArrays() {
-    trace
+    gltrace
     if (!index_arrays) {
         glEnableClientState(GL_INDEX_ARRAY);
         check_for_errors
         index_arrays = true;
     }
-    trace
+    gltrace
 }
 
 void ltDisableIndexArrays() {
-    trace
+    gltrace
     if (index_arrays) {
         glDisableClientState(GL_INDEX_ARRAY);
         check_for_errors
         index_arrays = false;
     }
-    trace
+    gltrace
 }
 
 void ltEnableColorArrays() {
-    trace
+    gltrace
     if (!color_arrays) {
         glEnableClientState(GL_COLOR_ARRAY);
         check_for_errors
         color_arrays = true;
     }
-    trace
+    gltrace
 }
 
 void ltDisableColorArrays() {
-    trace
+    gltrace
     if (color_arrays) {
         glDisableClientState(GL_COLOR_ARRAY);
         check_for_errors
         color_arrays = false;
     }
-    trace
+    gltrace
 }
 
 void ltEnableFog() {
-    trace
+    gltrace
     if (!fog) {
         glEnable(GL_FOG);
         check_for_errors
         fog = true;
     }
-    trace
+    gltrace
 }
 
 void ltDisableFog() {
-    trace
+    gltrace
     if (fog) {
         glDisable(GL_FOG);
         check_for_errors
         fog = false;
     }
-    trace
+    gltrace
 }
 
 void ltFogColor(LTfloat r, LTfloat g, LTfloat b) {
-    trace
+    gltrace
     GLfloat colv[4];
     colv[0] = r;
     colv[1] = g;
@@ -430,39 +433,39 @@ void ltFogColor(LTfloat r, LTfloat g, LTfloat b) {
     colv[3] = 1.0f;
     glFogfv(GL_FOG_COLOR, (const GLfloat*)colv);
     check_for_errors
-    trace
+    gltrace
 }
 
 void ltFogStart(LTfloat start) {
-    trace
+    gltrace
     glFogf(GL_FOG_START, start);
     check_for_errors
-    trace
+    gltrace
 }
 
 void ltFogEnd(LTfloat end) {
-    trace
+    gltrace
     glFogf(GL_FOG_END, end);
     check_for_errors
-    trace
+    gltrace
 }
 
 void ltFogMode(LTFogMode mode) {
-    trace
+    gltrace
     glFogf(GL_FOG_MODE, mode);
     check_for_errors
-    trace
+    gltrace
 }
 
 void ltClearColor(LTfloat r, LTfloat g, LTfloat b, LTfloat a) {
-    trace
+    gltrace
     glClearColor(r, g, b, a);
     check_for_errors
-    trace
+    gltrace
 }
 
 void ltClear(bool color, bool depthbuf) {
-    trace
+    gltrace
     GLbitfield clear_mask = 0;
     if (color) {
         clear_mask |= GL_COLOR_BUFFER_BIT;
@@ -472,122 +475,122 @@ void ltClear(bool color, bool depthbuf) {
     }
     glClear(clear_mask);
     check_for_errors
-    trace
+    gltrace
 }
 
 void ltColor(LTfloat r, LTfloat g, LTfloat b, LTfloat a) {
-    trace
+    gltrace
     glColor4f(r, g, b, a);
     check_for_errors
-    trace
+    gltrace
 }
 
 void ltMatrixMode(LTMatrixMode mode) {
-    trace
+    gltrace
     glMatrixMode(mode);
     check_for_errors
-    trace
+    gltrace
 }
 
 void ltPushMatrix() {
-    trace
+    gltrace
     glPushMatrix();
     check_for_errors
-    trace
+    gltrace
 }
 
 void ltPopMatrix() {
-    trace
+    gltrace
     glPopMatrix();
     check_for_errors
-    trace
+    gltrace
 }
 
 void ltMultMatrix(LTfloat *m) {
-    trace
+    gltrace
     glMultMatrixf(m);
     check_for_errors
-    trace
+    gltrace
 }
 
 void ltLoadIdentity() {
-    trace
+    gltrace
     glLoadIdentity();
     check_for_errors
-    trace
+    gltrace
 }
 
 void ltOrtho(LTfloat left, LTfloat right, LTfloat bottom, LTfloat top, LTfloat near, LTfloat far) {
-    trace
+    gltrace
     #ifdef LTGLES1
     glOrthof(left, right, bottom, top, near, far);
     #else
     glOrtho(left, right, bottom, top, near, far);
     #endif
     check_for_errors
-    trace
+    gltrace
 }
 
 void ltFrustum(LTfloat left, LTfloat right, LTfloat bottom, LTfloat top, LTfloat near, LTfloat far) {
-    trace
+    gltrace
     #ifdef LTGLES1
     glFrustumf(left, right, bottom, top, near, far);
     #else
     glFrustum(left, right, bottom, top, near, far);
     #endif
     check_for_errors
-    trace
+    gltrace
 }
 
 void ltTranslate(LTfloat x, LTfloat y, LTfloat z) {
-    trace
+    gltrace
     glTranslatef(x, y, z);
     check_for_errors
-    trace
+    gltrace
 }
 
 void ltRotate(LTdegrees degrees, LTfloat x, LTfloat y, LTfloat z) {
-    trace
+    gltrace
     glRotatef(degrees, x, y, z);
     check_for_errors
-    trace
+    gltrace
 }
 
 void ltScale(LTfloat x, LTfloat y, LTfloat z) {
-    trace
+    gltrace
     glScalef(x, y, z);
     check_for_errors
-    trace
+    gltrace
 }
 
 void ltViewport(int x, int y, int width, int height) {
-    trace
+    gltrace
     glViewport(x, y, width, height);
     check_for_errors
-    trace
+    gltrace
 }
 
 LTvertbuf ltGenVertBuffer() {
-    trace
+    gltrace
     LTvertbuf vb;
     glGenBuffers(1, &vb);
     check_for_errors
-    trace
+    gltrace
     return vb;
 }
 
 void ltBindVertBuffer(LTvertbuf vb) {
-    trace
+    gltrace
     if (bound_vertbuffer != vb) {
         glBindBuffer(GL_ARRAY_BUFFER, vb);
         check_for_errors
         bound_vertbuffer = vb;
     }
-    trace
+    gltrace
 }
 
 void ltDeleteVertBuffer(LTvertbuf vb) {
-    trace
+    gltrace
     // Make sure vb is not bound before deleting it.
     // This seems to fix an occasional crash on OSX.
     if (bound_vertbuffer == vb) {
@@ -595,85 +598,85 @@ void ltDeleteVertBuffer(LTvertbuf vb) {
     }
     glDeleteBuffers(1, &vb);
     check_for_errors
-    trace
+    gltrace
 }
 
 void ltStaticVertBufferData(int size, const void *data) {
-    trace
+    gltrace
     glBufferData(GL_ARRAY_BUFFER, size, data, GL_STATIC_DRAW);
     check_for_errors
-    trace
+    gltrace
 }
 
 void ltVertexPointer(int size, LTVertDataType type, int stride, void *data) {
-    trace
+    gltrace
     glVertexPointer(size, type, stride, data);
     check_for_errors
-    trace
+    gltrace
 }
 
 void ltColorPointer(int size, LTVertDataType type, int stride, void *data) {
-    trace
+    gltrace
     glColorPointer(size, type, stride, data);
     check_for_errors
-    trace
+    gltrace
 }
 
 void ltTexCoordPointer(int size, LTVertDataType type, int stride, void *data) {
-    trace
+    gltrace
     glTexCoordPointer(size, type, stride, data);
     check_for_errors
-    trace
+    gltrace
 }
 
 void ltDrawArrays(LTDrawMode mode, int start, int count) {
-    trace
+    gltrace
     glDrawArrays(mode, start, count);
     check_for_errors
-    trace
+    gltrace
 }
 
 void ltDrawElements(LTDrawMode mode, int n, LTvertindex *indices) {
-    trace
+    gltrace
     glDrawElements(mode, n, GL_UNSIGNED_SHORT, indices);
     check_for_errors
-    trace
+    gltrace
 }
 
 LTframebuf ltGenFramebuffer() {
-    trace
+    gltrace
     LTframebuf fb;
     GLEXT(glGenFramebuffers)(1, &fb);
     check_for_errors
-    trace
+    gltrace
     return fb;
 }
 
 void ltBindFramebuffer(LTframebuf fb) {
-    trace
+    gltrace
     if (bound_framebuffer != fb) {
         GLEXT(glBindFramebuffer)(GL_EXT(GL_FRAMEBUFFER), fb);
         check_for_errors
         bound_framebuffer = fb;
     }
-    trace
+    gltrace
 }
 
 void ltDeleteFramebuffer(LTframebuf fb) {
-    trace
+    gltrace
     if (bound_framebuffer == fb) {
         ltBindFramebuffer(0);
     }
     glDeleteFramebuffers(1, &fb);
     check_for_errors
-    trace
+    gltrace
 }
 
 void ltFramebufferTexture(LTtexid texture_id) {
-    trace
+    gltrace
     GLEXT(glFramebufferTexture2D)(GL_EXT(GL_FRAMEBUFFER), GL_EXT(GL_COLOR_ATTACHMENT0), GL_TEXTURE_2D, texture_id, 0);
     check_for_errors
-    trace
+    gltrace
 }
 
 bool ltFramebufferComplete() {

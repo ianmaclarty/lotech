@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <cstdarg>
+//#include <fcntl.h>
 
 #include "ltutil.h"
 #include "ltprotocol.h"
@@ -40,18 +41,12 @@ void ltLog(const char *fmt, ...) {
     }    
 #if defined LTLINUX || defined LTOSX
     /*
-    static int count = 0;
     FILE* log_file;
-    if (count == 1000) {
-        log_file = fopen("/Users/ian/lt.log", "w");
-        count = 0;
-    } else {
-        log_file = fopen("/Users/ian/lt.log", "a");
-    }
+    log_file = fopen("/Users/ian/lt.log", "a");
     fprintf(log_file, "%s\n", msg);
     fflush(log_file);
+    fcntl(fileno(log_file), F_FULLFSYNC);
     fclose(log_file);
-    count++;
     */
 #endif
 #endif

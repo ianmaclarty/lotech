@@ -19,15 +19,15 @@
 #define BBCHUNK_FORMAT "w%dh%dl%db%dr%dt%d"
 
 void ltEnableAtlas(LTAtlas *atlas) {
+    ltBindTexture(atlas->texture_id);
     ltEnableTexturing();
     ltEnableTextureCoordArrays();
-    ltBindTexture(atlas->texture_id);
 }
 
 void ltEnableTexture(LTtexid texture_id) {
+    ltBindTexture(texture_id);
     ltEnableTexturing();
     ltEnableTextureCoordArrays();
-    ltBindTexture(texture_id);
 }
 
 void ltDisableTextures() {

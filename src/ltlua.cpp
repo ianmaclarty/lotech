@@ -3019,9 +3019,18 @@ static int import(lua_State *L) {
 
 static int log(lua_State *L) {
     check_nargs(L, 1);
+    lua_Debug ar;
+    lua_getstack(L, 1, &ar);
+    lua_getinfo(L, "nSl", &ar);
+    int line = ar.currentline;
+    const char *source = ar.source;
+    const char *filename = "<<string>>";
+    if (source[0] == '@') {
+        filename = &source[1];
+    }
     const char *msg = lua_tostring(L, 1);
     if (msg != NULL) {
-        ltLog("%s", msg);
+        ltLog("%s:%d: %s", filename, line, msg);
     } else {
         ltLog("Unable to log NULL message");
     }
