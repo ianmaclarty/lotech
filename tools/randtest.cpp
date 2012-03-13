@@ -2,7 +2,7 @@
 #include <time.h>
 #include "ltrandom.h"
 
-#define SAMPLE_SIZE 100000
+#define SAMPLE_SIZE 1000000
 
 static void int_test(LTRandomGenerator *r, int n);
 static void bool_test(LTRandomGenerator *r);
@@ -22,6 +22,11 @@ int main() {
     int_test(&r, 20);
     int_test(&r, 30);
     bool_test(&r);
+    if (ltRandomQuickCheck()) {
+        printf("Quick check passed\n");
+    } else {
+        printf("Quick check FAILED\n");
+    }
     return 0;
 }
 
@@ -37,6 +42,7 @@ static void int_test(LTRandomGenerator *r, int n) {
     for (int i = 0; i < n; i++) {
         printf("  %d: %d\n", i, icounts[i]);
     }
+    free(icounts);
 }
 
 static void bool_test(LTRandomGenerator *r) {

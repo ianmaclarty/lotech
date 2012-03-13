@@ -14,7 +14,7 @@ struct LTRandomGenerator : LTObject {
     LTdouble nextDouble(); // returns a double in the range [0.0, 1.0).
     LTfloat nextFloat(); // returns a float in the range [0.0f, 1.0f).
 
-private:
+// private
     int *ran_x;
     int *ran_arr_buf;
     int *ran_arr_ptr;
@@ -22,5 +22,7 @@ private:
     void ran_array(int *aa, int n);
     int ran_arr_cycle();
 };
+
+bool ltRandomQuickCheck();
 
 #endif

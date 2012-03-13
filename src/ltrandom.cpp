@@ -101,3 +101,14 @@ int LTRandomGenerator::ran_arr_cycle() {
   ran_arr_ptr=ran_arr_buf+1;
   return ran_arr_buf[0];
 }
+
+bool ltRandomQuickCheck() {
+  LTRandomGenerator r(310952);
+  int m; int a[2009]; 
+  for (m=0;m<=2009;m++) r.ran_array(a,1009);
+  if (a[0] != 995235265) return false;
+  r.ran_start(310952);
+  for (m=0;m<=1009;m++) r.ran_array(a,2009);
+  if (a[0] != 995235265) return false;
+  return true;
+}
