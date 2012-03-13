@@ -12,7 +12,6 @@ static void rand_col_image(LTRandomGenerator *r, int w, int h, const char *name)
 
 int main() {
     LTRandomGenerator r(time(NULL));
-    /*
     int_test(&r, 1);
     int_test(&r, 2);
     int_test(&r, 3);
@@ -31,8 +30,10 @@ int main() {
     } else {
         printf("Quick check FAILED\n");
     }
-    */
-    rand_col_image(&r, 1000, 500, "randimage1.png");
+    rand_col_image(&r, 281, 281, "randimage1.png");
+    rand_bw_image(&r, 300, 451, "randimage2.png");
+    rand_col_image(&r, 1000, 500, "randimage3.png");
+    rand_bw_image(&r, 1000, 500, "randimage4.png");
     return 0;
 }
 
@@ -82,6 +83,7 @@ static void rand_bw_image(LTRandomGenerator *r, int w, int h, const char *name) 
         }
     }
     ltWriteImage(name, &buf);
+    printf("Generated %s\n", name);
 }
 
 static LTpixel colors[] = {
@@ -110,4 +112,5 @@ static void rand_col_image(LTRandomGenerator *r, int w, int h, const char *name)
         }
     }
     ltWriteImage(name, &buf);
+    printf("Generated %s\n", name);
 }

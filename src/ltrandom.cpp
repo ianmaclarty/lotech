@@ -25,28 +25,23 @@ LTRandomGenerator::~LTRandomGenerator() {
 }
 
 int LTRandomGenerator::nextInt(int n) {
-    // I don't want to convert to floats, because I want to get the same
-    // results on different architectures.
-    //
-    // This seems to work ok, although requires more testing.
-    return ran_arr_next() % n;
-    /*
-     * This might be better (?)
-    unsigned int r = ran_arr_next();
-    unsigned char *c0 = (unsigned char*)&r;
-    unsigned char c[4];
-    // Swap bytes, because most significant bits should be "more random".
-    c[0] = c0[3];
-    c[1] = c0[2];
-    c[2] = c0[1];
-    c[3] = c0[0];
-    return (*((unsigned int*)c)) % n;
-    */
+    // Avoid modulo bias.
+    int m = n - 1;
+    m |= m >> 1; 
+    m |= m >> 2; 
+    m |= m >> 4; 
+    m |= m >> 8; 
+    m |= m >> 16;
+    int r;
+    do {
+        r = ran_arr_next() & m;
+    } while (r >= n);
+    return r;
 }
 
 bool LTRandomGenerator::nextBool() {
-    static const int t = 1 << 27;
-    return ran_arr_next() & t;
+    static const int b = 1 << 27; // Pick a bit to use.
+    return ran_arr_next() & b;
 }
 
 LTdouble LTRandomGenerator::nextDouble() {
