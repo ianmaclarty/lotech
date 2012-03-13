@@ -68,10 +68,13 @@ LTImageBuffer::LTImageBuffer(const char *name) {
     is_glyph = false;
     glyph_char = '\0';
     scaling = 1.0f;
+    bb_pixels = NULL;
 }
 
 LTImageBuffer::~LTImageBuffer() {
-    delete[] bb_pixels;
+    if (bb_pixels != NULL) {
+        delete[] bb_pixels;
+    }
     delete[] name;
 }
 
