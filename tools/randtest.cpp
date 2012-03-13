@@ -8,7 +8,8 @@
 static void int_test(LTRandomGenerator *r, int n);
 static void bool_test(LTRandomGenerator *r);
 static void rand_bw_image(LTRandomGenerator *r, int w, int h, const char *name);
-static void rand_col_image(LTRandomGenerator *r, int w, int h, const char *name);
+static void rand_color_image(LTRandomGenerator *r, int w, int h, const char *name);
+static void rand_scatter_image(LTRandomGenerator *r, int w, int h, const char *name);
 
 int main() {
     LTRandomGenerator r(time(NULL));
@@ -30,10 +31,13 @@ int main() {
     } else {
         printf("Quick check FAILED\n");
     }
-    rand_col_image(&r, 281, 281, "randimage1.png");
+    rand_color_image(&r, 281, 281, "randimage1.png");
     rand_bw_image(&r, 300, 451, "randimage2.png");
-    rand_col_image(&r, 1000, 500, "randimage3.png");
+    rand_color_image(&r, 1000, 500, "randimage3.png");
     rand_bw_image(&r, 1000, 500, "randimage4.png");
+    rand_scatter_image(&r, 500, 500, "scatterimage5.png");
+    rand_scatter_image(&r, 281, 281, "scatterimage6.png");
+    rand_scatter_image(&r, 444, 431, "scatterimage7.png");
     return 0;
 }
 
@@ -97,7 +101,7 @@ static LTpixel colors[] = {
 
 static int ncols = sizeof(colors) / 4;
 
-static void rand_col_image(LTRandomGenerator *r, int w, int h, const char *name) {
+static void rand_color_image(LTRandomGenerator *r, int w, int h, const char *name) {
     LTImageBuffer buf(name);
     buf.width = w;
     buf.height = h;
@@ -110,6 +114,30 @@ static void rand_col_image(LTRandomGenerator *r, int w, int h, const char *name)
         for (int j = 0; j < h; j++) {
             buf.bb_pixels[j * w + i] = colors[r->nextInt(ncols)];
         }
+    }
+    ltWriteImage(name, &buf);
+    printf("Generated %s\n", name);
+}
+
+static void rand_scatter_image(LTRandomGenerator *r, int w, int h, const char *name) {
+    int n = w * h * 128;
+    LTImageBuffer buf(name);
+    buf.width = w;
+    buf.height = h;
+    buf.bb_left = 0;
+    buf.bb_top = h - 1;
+    buf.bb_right = w - 1;
+    buf.bb_bottom = 0;
+    buf.bb_pixels = new LTpixel[w * h];
+    memset(buf.bb_pixels, 0xFF, w * h * 4);
+    for (int i = 0; i < n; i++) {
+        int x = r->nextInt(w);
+        int y = r->nextInt(h);
+        int val = (buf.bb_pixels[y * w + x] & 0xFF000000) >> 24;
+        if (val > 0) {
+            val--;
+        }
+        buf.bb_pixels[y * w + x] = (val << 8) | (val << 16) | (val << 24) | 0xFF;
     }
     ltWriteImage(name, &buf);
     printf("Generated %s\n", name);
