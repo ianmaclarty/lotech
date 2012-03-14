@@ -9,7 +9,7 @@ randtest: randtest.cpp
 		-o randtest -llt -lpng -lz -llua -lbox2d -lGLEW -lglfw -framework OpenGL -framework OpenAL -framework Cocoa
 else
 randtest: randtest.cpp
-	g++ -g -DLTLINUX -I$(LTDIR)/linux/include -L$(LTDIR)/linux randtest.cpp \
+	g++ -O3 -DLTLINUX -I$(LTDIR)/linux/include -L$(LTDIR)/linux randtest.cpp \
 		-o randtest -llt -lpng -lz -llua -lbox2d -lGLEW -lglfw -lopenal
 endif
 
