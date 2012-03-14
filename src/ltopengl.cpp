@@ -1,6 +1,10 @@
-    #ifdef LTGLES1
+#ifdef LTGLES1
 #define GLEXT(f) f##OES
 #define GL_EXT(f) f##_OES
+#define glBlendEquation glBlendEquationOES
+#define GL_FUNC_ADD GL_FUNC_ADD_OES
+#define GL_FUNC_SUBTRACT GL_FUNC_SUBTRACT_OES
+#define GL_FUNC_REVERSE_SUBTRACT GL_FUNC_REVERSE_SUBTRACT_OES
 #else
 #define GLEXT(f) f##EXT
 #define GL_EXT(f) f##_EXT
@@ -71,7 +75,9 @@ void ltInitGLState() {
     stencil_test = false;
     glDisableClientState(GL_VERTEX_ARRAY);
     vertex_arrays = false;
+#if !defined(LTGLES1)
     glDisableClientState(GL_INDEX_ARRAY);
+#endif
     index_arrays = false;
     glDisableClientState(GL_COLOR_ARRAY);
     color_arrays = false;
@@ -166,9 +172,11 @@ LTtexid ltGenTexture() {
     gltrace
     LTtexid t;
     glGenTextures(1, &t);
+#if !defined(LTGLES1)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
     glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_FALSE);
+#endif
     check_for_errors
     gltrace
     return t;
@@ -202,6 +210,7 @@ void ltBlendMode(LTBlendMode new_mode) {
         switch (new_mode) {
             case LT_BLEND_MODE_NORMAL:
                 glEnable(GL_BLEND);
+                glBlendEquation(GL_FUNC_ADD);
                 glBlendEquation(GL_FUNC_ADD);
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                 break;
@@ -367,7 +376,9 @@ void ltDisableVertexArrays() {
 void ltEnableIndexArrays() {
     gltrace
     if (!index_arrays) {
+#if !defined(LTGLES1)
         glEnableClientState(GL_INDEX_ARRAY);
+#endif
         check_for_errors
         index_arrays = true;
     }
@@ -377,7 +388,9 @@ void ltEnableIndexArrays() {
 void ltDisableIndexArrays() {
     gltrace
     if (index_arrays) {
+#if !defined(LTGLES1)
         glDisableClientState(GL_INDEX_ARRAY);
+#endif
         check_for_errors
         index_arrays = false;
     }
@@ -667,7 +680,7 @@ void ltDeleteFramebuffer(LTframebuf fb) {
     if (bound_framebuffer == fb) {
         ltBindFramebuffer(0);
     }
-    glDeleteFramebuffers(1, &fb);
+    GLEXT(glDeleteFramebuffers)(1, &fb);
     check_for_errors
     gltrace
 }
