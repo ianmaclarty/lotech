@@ -250,6 +250,16 @@ lt.classes = {
         super = "Wrap",
         methods = {}
     },
+
+    -- Random numbers
+    RandomGenerator = {
+        super = "Object",
+        methods = {
+            Int = lt.NextRandomInt,
+            Num = lt.NextRandomNumber,
+            Bool = lt.NextRandomBool,
+        }
+    }
 }
 
 -- Populate lt.metatables.
