@@ -150,6 +150,7 @@ libpng.a: rebuild
 		TARGET_FLAGS="-m64 -arch x86_64" \
 		clean all
 	cp $(LIBPNG_DIR)/libpng.a .
+
 endif
 
 ifeq ($(TARGET_PLATFORM),linux)

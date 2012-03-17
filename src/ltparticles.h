@@ -67,9 +67,8 @@ struct LTParticleSystem : LTSceneNode {
     LTfloat start_spin_variance;
     LTfloat end_spin;
     LTfloat end_spin_variance;
-    LTfloat aspect_ratio;
-
     LTfloat emission_rate;
+
     int max_particles;
     int num_particles;
     LTfloat emit_counter;
@@ -77,6 +76,10 @@ struct LTParticleSystem : LTSceneNode {
     LTParticle *particles;
     LTParticleQuad *quads;
     LTushort *indices;
+    LTfloat img_left;
+    LTfloat img_right;
+    LTfloat img_bottom;
+    LTfloat img_top;
 
     LTFixture *fixture; // A fixture to restrict start positions.
 

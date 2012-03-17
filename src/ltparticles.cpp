@@ -3,8 +3,6 @@
 #include "ltparticles.h"
 #include "ltutil.h"
 
-#include "LTParticleSystem_fields.h"
-
 ct_assert(sizeof(LTPoint) == 8);
 ct_assert(sizeof(LTCompactColor) == 4);
 
@@ -40,8 +38,6 @@ LTParticleSystem::LTParticleSystem(LTImage *img, int n)
     end_spin = 0.0f;
     end_spin_variance = 0.0f;
     
-    aspect_ratio = img->bb_width / img->bb_height;
-
     max_particles = n;
     emission_rate = -1.0f;
 
@@ -51,6 +47,11 @@ LTParticleSystem::LTParticleSystem(LTImage *img, int n)
     particles = new LTParticle[n];
     // We maintain a reference to the LTImage object in the Lua wrapper.
     texture_id = img->atlas->texture_id;
+    img_left = img->world_vertices[0];
+    img_right = img->world_vertices[2];
+    img_bottom = img->world_vertices[5];
+    img_top = img->world_vertices[1];
+
     quads = new LTParticleQuad[n];
 
     for (int i = 0; i < n; i++) {
@@ -256,14 +257,13 @@ void LTParticleSystem::advance(LTfloat dt) {
             quad->top_left.color = color;
             quad->top_right.color = color;
 
-            LTfloat size_2_x = (p->size / 2.0f) * aspect_ratio;
-            LTfloat size_2_y = (p->size / 2.0f);
-            if( p->rotation ) {
-                LTfloat x1 = -size_2_x;
-                LTfloat y1 = -size_2_y;
+            LTfloat x1 = img_left * p->size;
+            LTfloat y1 = img_bottom * p->size;
+            LTfloat x2 = img_right * p->size;
+            LTfloat y2 = img_top * p->size;
 
-                LTfloat x2 = size_2_x;
-                LTfloat y2 = size_2_y;
+            if( p->rotation ) {
+
                 LTfloat x = p->pos.x;
                 LTfloat y = p->pos.y;
 
@@ -291,17 +291,17 @@ void LTParticleSystem::advance(LTfloat dt) {
                 quad->top_right.vertex.x = cx;
                 quad->top_right.vertex.y = cy;
             } else {
-                quad->bottom_left.vertex.x = p->pos.x - size_2_x;
-                quad->bottom_left.vertex.y = p->pos.y - size_2_y;
+                quad->bottom_left.vertex.x = p->pos.x + x1;
+                quad->bottom_left.vertex.y = p->pos.y + y1;
 
-                quad->bottom_right.vertex.x = p->pos.x + size_2_x;
-                quad->bottom_right.vertex.y = p->pos.y - size_2_y;
+                quad->bottom_right.vertex.x = p->pos.x + x2;
+                quad->bottom_right.vertex.y = p->pos.y + y1;
 
-                quad->top_left.vertex.x = p->pos.x - size_2_x;
-                quad->top_left.vertex.y = p->pos.y + size_2_y;
+                quad->top_left.vertex.x = p->pos.x + x1;
+                quad->top_left.vertex.y = p->pos.y + y2;
 
-                quad->top_right.vertex.x = p->pos.x + size_2_x;
-                quad->top_right.vertex.y = p->pos.y + size_2_y;
+                quad->top_right.vertex.x = p->pos.x + x2;
+                quad->top_right.vertex.y = p->pos.y + y2;
             }
             i++;
         } else {
@@ -336,10 +336,92 @@ void LTParticleSystem::draw() {
 }
 
 LTfloat* LTParticleSystem::field_ptr(const char *field_name) {
-    LTFieldInfo *field = LTParticleSystem_field_info(field_name, strlen(field_name));
-    if (field != NULL) {
-        LTfloat *ptr = (LTfloat*) ((char*)this + field->offset);
-        return ptr;
+    if (strcmp(field_name, "duration") == 0) {
+        return &duration;
+    } else if (strcmp(field_name, "elapsed") == 0) {
+        return &elapsed;
+    } else if (strcmp(field_name, "source_position_x") == 0) {
+        return &(source_position.x);
+    } else if (strcmp(field_name, "source_position_y") == 0) {
+        return &(source_position.y);
+    } else if (strcmp(field_name, "source_position_variance_x") == 0) {
+        return &(source_position_variance.x);
+    } else if (strcmp(field_name, "source_position_variance_y") == 0) {
+        return &(source_position_variance.y);
+    } else if (strcmp(field_name, "angle") == 0) {
+        return &angle;
+    } else if (strcmp(field_name, "angle_variance") == 0) {
+        return &angle_variance;
+    } else if (strcmp(field_name, "gravity_x") == 0) {
+        return &(gravity.x);
+    } else if (strcmp(field_name, "gravity_y") == 0) {
+        return &(gravity.y);
+    } else if (strcmp(field_name, "speed") == 0) {
+        return &speed;
+    } else if (strcmp(field_name, "speed_variance") == 0) {
+        return &speed_variance;
+    } else if (strcmp(field_name, "tangential_accel") == 0) {
+        return &tangential_accel;
+    } else if (strcmp(field_name, "tangential_accel_variance") == 0) {
+        return &tangential_accel_variance;
+    } else if (strcmp(field_name, "radial_accel") == 0) {
+        return &radial_accel;
+    } else if (strcmp(field_name, "radial_accel_variance") == 0) {
+        return &radial_accel_variance;
+    } else if (strcmp(field_name, "start_size") == 0) {
+        return &start_size;
+    } else if (strcmp(field_name, "start_size_variance") == 0) {
+        return &start_size_variance;
+    } else if (strcmp(field_name, "end_size") == 0) {
+        return &end_size;
+    } else if (strcmp(field_name, "end_size_variance") == 0) {
+        return &end_size_variance;
+    } else if (strcmp(field_name, "life") == 0) {
+        return &life;
+    } else if (strcmp(field_name, "life_variance") == 0) {
+        return &life_variance;
+    } else if (strcmp(field_name, "start_color_red") == 0) {
+        return &(start_color.r);
+    } else if (strcmp(field_name, "start_color_green") == 0) {
+        return &(start_color.g);
+    } else if (strcmp(field_name, "start_color_blue") == 0) {
+        return &(start_color.b);
+    } else if (strcmp(field_name, "start_color_alpha") == 0) {
+        return &(start_color.a);
+    } else if (strcmp(field_name, "start_color_variance_red") == 0) {
+        return &(start_color_variance.r);
+    } else if (strcmp(field_name, "start_color_variance_green") == 0) {
+        return &(start_color_variance.g);
+    } else if (strcmp(field_name, "start_color_variance_blue") == 0) {
+        return &(start_color_variance.b);
+    } else if (strcmp(field_name, "start_color_variance_alpha") == 0) {
+        return &(start_color_variance.a);
+    } else if (strcmp(field_name, "end_color_red") == 0) {
+        return &(end_color.r);
+    } else if (strcmp(field_name, "end_color_green") == 0) {
+        return &(end_color.g);
+    } else if (strcmp(field_name, "end_color_blue") == 0) {
+        return &(end_color.b);
+    } else if (strcmp(field_name, "end_color_alpha") == 0) {
+        return &(end_color.a);
+    } else if (strcmp(field_name, "end_color_variance_red") == 0) {
+        return &(end_color_variance.r);
+    } else if (strcmp(field_name, "end_color_variance_green") == 0) {
+        return &(end_color_variance.g);
+    } else if (strcmp(field_name, "end_color_variance_blue") == 0) {
+        return &(end_color_variance.b);
+    } else if (strcmp(field_name, "end_color_variance_alpha") == 0) {
+        return &(end_color_variance.a);
+    } else if (strcmp(field_name, "start_spin") == 0) {
+        return &start_spin;
+    } else if (strcmp(field_name, "start_spin_variance") == 0) {
+        return &start_spin_variance;
+    } else if (strcmp(field_name, "end_spin") == 0) {
+        return &end_spin;
+    } else if (strcmp(field_name, "end_spin_variance") == 0) {
+        return &end_spin_variance;
+    } else if (strcmp(field_name, "emission_rate") == 0) {
+        return &emission_rate;
     }
     return NULL;
 }

@@ -1,8 +1,8 @@
 #ifdef LTOSX
+#include "ltgraphics.h"
 #include "ltosx.h"
 #include "ltosxutil.h"
 #include "ltcommon.h"
-#include "ltgraphics.h"
 #include "ltlua.h"
 #include "ltprotocol.h"
 #include "ltstate.h"
