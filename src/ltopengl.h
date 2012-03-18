@@ -15,10 +15,7 @@
     #include <OpenGLES/ES1/glext.h>
 #endif
 #ifdef LTOSX
-    #define GLEW_STATIC 1
-    #include <GL/glew.h>
-    #include <GL/glfw.h>
-    //#include <OpenGL/GL.h>
+    #include <OpenGL/GL.h>
 #endif
 #ifdef LTANDROID
     #include <GLES/gl.h>

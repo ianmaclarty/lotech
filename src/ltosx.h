@@ -10,7 +10,6 @@ void ltOSXTeardown();
 
 void ltOSXResize(int width, int height);
 
-void ltOSXAdvance(float secs);
 void ltOSXRender();
 
 void ltOSXMouseDown(NSEvent *event, NSView *view);

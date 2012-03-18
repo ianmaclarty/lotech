@@ -7,7 +7,18 @@
 #include "ltprotocol.h"
 #include "ltstate.h"
 
+static LTKey get_lt_key(NSEvent *event);
+
 static NSLock *mutex = [[NSLock alloc] init];
+
+struct event_and_pos {
+    NSEvent *event;
+    NSPoint pos;
+};
+
+#define MAX_EVENTS 1024
+static event_and_pos event_queue[MAX_EVENTS];
+static int event_queue_top = -1;
 
 static void lock() {
     [mutex lock];
@@ -17,7 +28,7 @@ static void unlock() {
     [mutex unlock];
 }
 
-static int w, h, but;
+static int w, h;
 
 void ltOSXInit() {
     lock();
@@ -43,18 +54,55 @@ void ltOSXResize(int width, int height) {
     unlock();
 }
 
-void ltOSXAdvance(LTfloat secs) {
+void ltOSXRender() {
+    static const LTdouble f = 1.0/60.0;
+    static LTdouble t0 = -1.0;
+    static LTdouble t_accum = 0.0;
     lock();
-    ltLuaAdvance(secs);
+
+    // Handle events
+    while (event_queue_top >= 0) {
+        event_and_pos top = event_queue[event_queue_top];
+        switch ([(top.event) type]) {
+            case NSLeftMouseDown:
+                ltLuaPointerDown(1, top.pos.x, h - top.pos.y);
+                break;
+            case NSLeftMouseUp:
+                ltLuaPointerUp(1, top.pos.x, h - top.pos.y);
+                break;
+            case NSMouseMoved:
+                ltLuaPointerMove(0, top.pos.x, h - top.pos.y);
+                break;
+            case NSKeyDown:
+                ltLuaKeyDown(get_lt_key(top.event));
+                break;
+            case NSKeyUp:
+                ltLuaKeyUp(get_lt_key(top.event));
+                break;
+        }
+        [(top.event) release];
+        event_queue_top--;
+    }
+
+    // Advance
+    if (t0 < 0.0) {
+        t0 = [NSDate timeIntervalSinceReferenceDate];
+    } else {
+        LTdouble t = [NSDate timeIntervalSinceReferenceDate];
+        t_accum += t - t0;
+        while (t_accum >= f) {
+            ltLuaAdvance(f);
+            t_accum -= f;
+        }
+        t0 = t;
+    }
+
+    // Render
+    ltLuaRender();
+
     #ifdef LTDEVMODE
     ltClientStep();
     #endif
-    unlock();
-}
-
-void ltOSXRender() {
-    lock();
-    ltLuaRender();
     unlock();
 }
 
@@ -66,26 +114,30 @@ static NSPoint get_pos(NSEvent *event, NSView *view) {
     }
 }
 
+static void push_event(NSEvent *event, NSView *view) {
+    if ((event_queue_top + 1) < MAX_EVENTS) {
+        event_queue_top++;
+        event_queue[event_queue_top].event = event;
+        [event retain];
+        event_queue[event_queue_top].pos = get_pos(event, view);
+    }
+}
+
 void ltOSXMouseDown(NSEvent *event, NSView *view) {
     lock();
-    NSPoint pos = get_pos(event, view);
-    but = 1;
-    ltLuaPointerDown(but, pos.x, h - pos.y);
+    push_event(event, view);
     unlock();
 }
 
 void ltOSXMouseUp(NSEvent *event, NSView *view) {
     lock();
-    NSPoint pos = get_pos(event, view);
-    ltLuaPointerUp(but, pos.x, h - pos.y);
-    but = 0;
+    push_event(event, view);
     unlock();
 }
 
 void ltOSXMouseMoved(NSEvent *event, NSView *view) {
     lock();
-    NSPoint pos = get_pos(event, view);
-    ltLuaPointerMove(but, pos.x, h - pos.y);
+    push_event(event, view);
     unlock();
 }
 
@@ -94,6 +146,20 @@ void ltOSXSaveState() {
     ltSaveState();
     ltOSXSyncStore();
     unlock();
+}
+
+void ltOSXKeyUp(NSEvent *event) {
+    lock();
+    push_event(event, nil);
+    unlock();
+}
+
+void ltOSXKeyDown(NSEvent *event) {
+    if (![event isARepeat]) {
+        lock();
+        push_event(event, nil);
+        unlock();
+    }
 }
 
 static LTKey get_lt_key(NSEvent *event) {
@@ -222,20 +288,6 @@ static LTKey get_lt_key(NSEvent *event) {
             fprintf(stderr, "Unknown key pressed: %hu\n", code);
             #endif
             return LT_KEY_UNKNOWN;
-    }
-}
-
-void ltOSXKeyUp(NSEvent *event) {
-    lock();
-    ltLuaKeyUp(get_lt_key(event));
-    unlock();
-}
-
-void ltOSXKeyDown(NSEvent *event) {
-    if (![event isARepeat]) {
-        lock();
-        ltLuaKeyDown(get_lt_key(event));
-        unlock();
     }
 }
 
