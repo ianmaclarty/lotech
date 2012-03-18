@@ -11,6 +11,8 @@ static LTKey get_lt_key(NSEvent *event);
 
 static NSLock *mutex = [[NSLock alloc] init];
 
+static bool context_changed = false;
+
 struct event_and_pos {
     NSEvent *event;
     NSPoint pos;
@@ -59,6 +61,11 @@ void ltOSXRender() {
     static LTdouble t0 = -1.0;
     static LTdouble t_accum = 0.0;
     lock();
+
+    if (context_changed) {
+        ltLuaPostContextChange();
+        context_changed = false;
+    }
 
     // Handle events
     while (event_queue_top >= 0) {
@@ -160,6 +167,14 @@ void ltOSXKeyDown(NSEvent *event) {
         push_event(event, nil);
         unlock();
     }
+}
+
+void ltOSXPreContextChange() {
+    ltLuaPreContextChange();
+    context_changed = true;
+}
+
+void ltOSXPostContextChange() {
 }
 
 static LTKey get_lt_key(NSEvent *event) {

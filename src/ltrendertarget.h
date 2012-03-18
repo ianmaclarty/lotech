@@ -43,6 +43,12 @@ struct LTRenderTarget : LTSceneNode {
     void renderNode(LTSceneNode *node, LTColor *clear_color);
 
     virtual void draw();
+    virtual void preContextChange();
+    virtual void postContextChange();
+
+private:
+
+    void setup();
 };
 
 #endif

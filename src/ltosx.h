@@ -20,8 +20,7 @@ void ltOSXKeyDown(NSEvent *event);
 
 void ltOSXSaveState();
 
-//void ltOSXKeyDown(NSEvent *event);
-//void ltOSXKeyUp(NSEvent *event);
-
+void ltOSXPreContextChange();
+void ltOSXPostContextChange();
 #endif
 #endif

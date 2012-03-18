@@ -42,6 +42,7 @@ extern "C" {
 #define LT_USERDATA_KEY "_ud"
 
 static lua_State *g_L = NULL;
+static int g_userdata_key_ref = LUA_NOREF;
 static int g_wrefs_ref = LUA_NOREF;
 static int g_ud_metatables_ref = LUA_NOREF;
 static bool g_suspended = false;
@@ -135,7 +136,7 @@ static LTObject* get_object(lua_State *L, int index, LTType type) {
     if (!lua_istable(L, index)) {
         luaL_error(L, "Expecting a table in argument %d.", index);
     }
-    lua_pushstring(L, LT_USERDATA_KEY);
+    lua_rawgeti(L, LUA_REGISTRYINDEX, g_userdata_key_ref);
     if (index < 0) index--;
     lua_rawget(L, index);
     LTObject **ud = (LTObject**)luaL_checkudata(L, -1, LT_USERDATA_MT);
@@ -198,7 +199,7 @@ static void push_wrap(lua_State *L, LTObject *obj) {
     lua_setmetatable(L, -3);
     lua_pop(L, 1); // pop metatables. wrapper table now on top.
     // Push wrapper table field that will point to the C++ object.
-    lua_pushstring(L, LT_USERDATA_KEY);
+    lua_rawgeti(L, LUA_REGISTRYINDEX, g_userdata_key_ref);
     // Push user data for C++ obj.
     LTObject **ud = (LTObject **)lua_newuserdata(L, sizeof(LTObject *));
     *ud = obj;
@@ -3200,22 +3201,23 @@ static void run_lua_file(const char *file) {
     }
 }
 
+static void setup_userdata_key_ref() {
+    lua_pushstring(g_L, LT_USERDATA_KEY);
+    g_userdata_key_ref = luaL_ref(g_L, LUA_REGISTRYINDEX);
+}
+
 static void setup_wref_ref() {
-    if (g_L != NULL) {
-        lua_getglobal(g_L, "lt");
-        lua_getfield(g_L, -1, "wrefs");
-        g_wrefs_ref = luaL_ref(g_L, LUA_REGISTRYINDEX);
-        lua_pop(g_L, 1); // pop lt.
-    }
+    lua_getglobal(g_L, "lt");
+    lua_getfield(g_L, -1, "wrefs");
+    g_wrefs_ref = luaL_ref(g_L, LUA_REGISTRYINDEX);
+    lua_pop(g_L, 1); // pop lt.
 }
 
 static void setup_ud_metatables_ref() {
-    if (g_L != NULL) {
-        lua_getglobal(g_L, "lt");
-        lua_getfield(g_L, -1, "metatables");
-        g_ud_metatables_ref = luaL_ref(g_L, LUA_REGISTRYINDEX);
-        lua_pop(g_L, 1); // pop lt.
-    }
+    lua_getglobal(g_L, "lt");
+    lua_getfield(g_L, -1, "metatables");
+    g_ud_metatables_ref = luaL_ref(g_L, LUA_REGISTRYINDEX);
+    lua_pop(g_L, 1); // pop lt.
 }
 
 static void set_viewport_globals() {
@@ -3287,6 +3289,7 @@ void ltLuaSetup() {
     luaL_register(g_L, "lt", ltlib);
     lua_gc(g_L, LUA_GCRESTART, 0);
     run_lua_file("lt");
+    setup_userdata_key_ref();
     setup_wref_ref();
     setup_ud_metatables_ref();
     set_globals();
@@ -3623,4 +3626,60 @@ void ltLuaUnpickleState(LTUnpickler *unpickler) {
         lua_setfield(g_L, -2, "state");
         lua_pop(g_L, 1);
     }
+}
+
+/************************************************************/
+
+void ltLuaPreContextChange() {
+    if (g_L == NULL) {
+        return;
+    }
+    lua_State *L = g_L;
+    // Traverse weak refs table, calling preContextChange method on 
+    // all scene nodes.
+    lua_rawgeti(L, LUA_REGISTRYINDEX, g_wrefs_ref);
+    lua_pushnil(L);
+    while (lua_next(L, -2) != 0) {
+        if (lua_istable(g_L, -1)) {
+            lua_rawgeti(L, LUA_REGISTRYINDEX, g_userdata_key_ref);
+            void *ud = lua_touserdata(L, -1);
+            if (ud != NULL) {
+                LTObject *obj = (LTObject*)ud;
+                if (obj->hasType(LT_TYPE_SCENENODE)) {
+                    LTSceneNode *node = (LTSceneNode*)obj;
+                    node->preContextChange();
+                }
+            }
+            lua_pop(L, 1); // pop userdata
+        }
+        lua_pop(L, 1); // pop value (key now on top of stack).
+    }
+    lua_pop(L, 1); // pop wrefs table.
+}
+
+void ltLuaPostContextChange() {
+    if (g_L == NULL) {
+        return;
+    }
+    lua_State *L = g_L;
+    // Traverse weak refs table, calling preContextChange method on 
+    // all scene nodes.
+    lua_rawgeti(L, LUA_REGISTRYINDEX, g_wrefs_ref);
+    lua_pushnil(L);
+    while (lua_next(L, -2) != 0) {
+        if (lua_istable(g_L, -1)) {
+            lua_rawgeti(L, LUA_REGISTRYINDEX, g_userdata_key_ref);
+            void *ud = lua_touserdata(L, -1);
+            if (ud != NULL) {
+                LTObject *obj = (LTObject*)ud;
+                if (obj->hasType(LT_TYPE_SCENENODE)) {
+                    LTSceneNode *node = (LTSceneNode*)obj;
+                    node->postContextChange();
+                }
+            }
+            lua_pop(L, 1); // pop userdata
+        }
+        lua_pop(L, 1); // pop value (key now on top of stack).
+    }
+    lua_pop(L, 1); // pop wrefs table.
 }

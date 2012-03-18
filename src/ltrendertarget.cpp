@@ -14,10 +14,6 @@ LTRenderTarget::LTRenderTarget(int w, int h,
     LTRenderTarget::vp_x2 = vp_x2;
     LTRenderTarget::vp_y2 = vp_y2;
 
-    // Generate frame buffer.
-    fbo = ltGenFramebuffer();
-    ltBindFramebuffer(fbo);
-
     // Compute dimensions of target texture (must be powers of 2).
     tex_width = 64;
     tex_height = 64;
@@ -30,6 +26,53 @@ LTRenderTarget::LTRenderTarget(int w, int h,
     ltTextureMinFilter(minfilter);
     ltTextureMagFilter(magfilter);
     ltTexImage(tex_width, tex_height, NULL);
+
+    setup();
+
+}
+
+LTRenderTarget::~LTRenderTarget() {
+    ltDeleteVertBuffer(texbuf);
+    ltDeleteVertBuffer(vertbuf);
+    ltDeleteFramebuffer(fbo);
+    ltDeleteTexture(texture_id);
+}
+
+void LTRenderTarget::renderNode(LTSceneNode *node, LTColor *clear_color) {
+    ltBindFramebuffer(fbo);
+
+    ltPrepareForRendering(
+        0, 0, width, height, vp_x1, vp_y1, vp_x2, vp_y2,
+        clear_color, depthbuf_enabled);
+
+    node->draw();
+
+    ltFinishRendering();
+}
+
+void LTRenderTarget::draw() {
+    ltEnableTexture(texture_id);
+    ltBindVertBuffer(vertbuf);
+    ltVertexPointer(2, LT_VERT_DATA_TYPE_FLOAT, 0, 0);
+    ltBindVertBuffer(texbuf);
+    ltTexCoordPointer(2, LT_VERT_DATA_TYPE_SHORT, 0, 0);
+    ltDrawArrays(LT_DRAWMODE_TRIANGLE_FAN, 0, 4);
+}
+
+void LTRenderTarget::preContextChange() {
+    ltDeleteVertBuffer(texbuf);
+    ltDeleteVertBuffer(vertbuf);
+    ltDeleteFramebuffer(fbo);
+}
+
+void LTRenderTarget::postContextChange() {
+    setup();
+}
+
+void LTRenderTarget::setup() {
+    // Generate frame buffer.
+    fbo = ltGenFramebuffer();
+    ltBindFramebuffer(fbo);
 
     // Attach texture to frame buffer.
     ltFramebufferTexture(texture_id);
@@ -71,32 +114,4 @@ LTRenderTarget::LTRenderTarget(int w, int h,
     vertbuf = ltGenVertBuffer();
     ltBindVertBuffer(vertbuf);
     ltStaticVertBufferData(sizeof(LTfloat) * 8, world_vertices);
-}
-
-LTRenderTarget::~LTRenderTarget() {
-    ltDeleteVertBuffer(texbuf);
-    ltDeleteVertBuffer(vertbuf);
-    ltDeleteFramebuffer(fbo);
-    ltDeleteTexture(texture_id);
-}
-
-void LTRenderTarget::renderNode(LTSceneNode *node, LTColor *clear_color) {
-    ltBindFramebuffer(fbo);
-
-    ltPrepareForRendering(
-        0, 0, width, height, vp_x1, vp_y1, vp_x2, vp_y2,
-        clear_color, depthbuf_enabled);
-
-    node->draw();
-
-    ltFinishRendering();
-}
-
-void LTRenderTarget::draw() {
-    ltEnableTexture(texture_id);
-    ltBindVertBuffer(vertbuf);
-    ltVertexPointer(2, LT_VERT_DATA_TYPE_FLOAT, 0, 0);
-    ltBindVertBuffer(texbuf);
-    ltTexCoordPointer(2, LT_VERT_DATA_TYPE_SHORT, 0, 0);
-    ltDrawArrays(LT_DRAWMODE_TRIANGLE_FAN, 0, 4);
 }

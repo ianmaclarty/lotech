@@ -33,6 +33,11 @@ struct LTSceneNode : LTObject {
     // The scene node takes over ownership of the handler and
     // will free it when the scene node is freed.
     void addHandler(LTPointerEventHandler *handler);
+
+    // Called before changing OpenGL context.
+    virtual void preContextChange() {};
+    // Called after changing OpenGL context.
+    virtual void postContextChange() {};
 };
 
 // Layers group nodes together.
