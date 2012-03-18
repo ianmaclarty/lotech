@@ -45,10 +45,6 @@ function lt.Store(key, val)
     local t = type(val)
     if t == "string" or t == "number" or t == "boolean" or t == "nil" then
         local state = lt.state
-        if not state then
-            state = {}
-            lt.state = state
-        end
         state[key] = val
     else
         log("tried to store a value of type " .. t .. " for key " .. key)

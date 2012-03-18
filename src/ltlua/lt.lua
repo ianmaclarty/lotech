@@ -1,7 +1,4 @@
 -- Copyright 2011 Ian MacLarty
-if jit then
-    jit.off()
-end
 import "lttimer"
 import "ltutil"
 import "ltrefs"

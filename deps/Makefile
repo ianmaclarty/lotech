@@ -5,6 +5,8 @@ LUAJIT_DIR=$(LUAJIT)
 BOX2D_DIR=$(BOX2D)
 ZLIB_DIR=$(ZLIB)
 LIBPNG_DIR=$(LIBPNG)
+GLEW_DIR=$(GLEW)
+GLFW_DIR=$(GLFW)
 
 TARGETS=liblua.a libbox2d.a libz.a libpng.a headers
 ifeq ($(TARGET_PLATFORM),android)
@@ -12,6 +14,9 @@ TARGETS+=libopenal.a openal_headers
 endif
 ifeq ($(TARGET_PLATFORM),mingw)
 TARGETS+=glfw_headers libglfw.a libOpenAL32.dll.a openal_headers glew32s.lib glew_headers
+endif
+ifeq ($(TARGET_PLATFORM),osx)
+TARGETS+=glfw_headers libglfw.a libGLEW.a glew_headers
 endif
 
 all: $(TARGETS)
@@ -151,6 +156,26 @@ libpng.a: rebuild
 		clean all
 	cp $(LIBPNG_DIR)/libpng.a .
 
+libGLEW.a: rebuild
+	cd $(GLEW_DIR) && $(MAKE) \
+		CC="gcc -m64 -arch x86_64" \
+		clean all
+	cp $(GLEW_DIR)/lib/libGLEW.a .
+
+libglfw.a: rebuild
+	cd $(GLFW_DIR) && $(MAKE) \
+		CC="gcc -m64 -arch x86_64" \
+		cocoa
+	cp $(GLFW_DIR)/lib/cocoa/libglfw.a .
+
+.PHONY: glfw_headers
+glfw_headers:
+	cp -r glfw-2.7.3/include/* include/
+
+.PHONY: glew_headers
+glew_headers:
+	cp -r glew-1.7.0/include/* include/
+
 endif
 
 ifeq ($(TARGET_PLATFORM),linux)
@@ -201,10 +226,6 @@ libpng.a: rebuild
 		clean all
 	cp $(LIBPNG_DIR)/libpng.a .
 
-.PHONY: glfw_headers
-glfw_headers:
-	cp -r glfw-2.7.3.bin.WIN32/include/* include/
-
 libglfw.a:
 	cp glfw-2.7.3.bin.WIN32/lib-mingw/libglfw.a .
 
@@ -217,6 +238,10 @@ glew32s.lib:
 .PHONY: openal_headers
 openal_headers:
 	cp -r openal-soft-1.13-win32/include/* include/
+
+.PHONY: glfw_headers
+glfw_headers:
+	cp -r glfw-2.7.3.bin.WIN32/include/* include/
 
 .PHONY: glew_headers
 glew_headers:

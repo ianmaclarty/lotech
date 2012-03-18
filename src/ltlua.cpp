@@ -3623,6 +3623,10 @@ void ltLuaUnpickleState(LTUnpickler *unpickler) {
     if (g_L != NULL && unpickler != NULL) {
         lua_getglobal(g_L, "lt");
         unpickle_value(g_L, unpickler);
+        if (lua_isnil(g_L, -1)) {
+            lua_pop(g_L, 1);
+            lua_newtable(g_L);
+        }
         lua_setfield(g_L, -2, "state");
         lua_pop(g_L, 1);
     }
