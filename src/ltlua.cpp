@@ -34,6 +34,7 @@ extern "C" {
 #include "ltvector.h"
 #include "ltrendertarget.h"
 #include "ltopengl.h"
+#include "ltrandom.h"
 
 #include "lteasefunchash.h"
 
@@ -67,6 +68,7 @@ static void check_status(int status) {
 }
 
 // Copied from lua source.
+#ifdef LTDEVMODE
 static int traceback(lua_State *L) {
   if (!lua_isstring(L, 1))  /* 'message' not a string? */
     return 1;  /* keep it intact */
@@ -85,6 +87,7 @@ static int traceback(lua_State *L) {
   lua_call(L, 2, 1);  /* call debug.traceback */
   return 1;
 }
+#endif
 
 // Copied from lua source and modified.
 static void docall(lua_State *L, int nargs) {
@@ -1154,6 +1157,7 @@ static int lt_AdvanceNativeTween(lua_State *L) {
     return 1;
 }
 
+/*
 static int lt_TweenSet(lua_State *L) {
     push_wrap(L, new LTTweenSet());
     return 1;
@@ -1252,6 +1256,7 @@ static int lt_ClearTweens(lua_State *L) {
     tweens->occupants = 0;
     return 0;
 }
+*/
 
 /************************* Events **************************/
 
@@ -1763,75 +1768,6 @@ static int lt_SampleLength(lua_State *L) {
     LTAudioSample *sample = (LTAudioSample*)get_object(L, 1, LT_TYPE_AUDIOSAMPLE);
     lua_pushnumber(L, sample->length());
     return 1;
-}
-
-/********************* Store *****************************/
-
-static int lt_Store(lua_State *L) {
-    check_nargs(L, 2); 
-    int key_type = lua_type(L, 1);
-    int value_type = lua_type(L, 2);
-    if (key_type == LUA_TSTRING) {
-        const char *key = lua_tostring(L, 1);
-        switch(value_type) {
-            case LUA_TSTRING: {
-                const char *svalue = lua_tostring(L, 2);
-                ltStoreString(key, svalue);
-                break;
-            }
-            case LUA_TNUMBER: {
-                LTdouble nvalue = lua_tonumber(L, 2);
-                ltStoreDouble(key, nvalue);
-                break;
-            }
-            case LUA_TBOOLEAN: {
-                bool bvalue = lua_toboolean(L, 2) == 1;
-                ltStoreBool(key, bvalue);
-                break;
-            }
-            case LUA_TNIL: {
-                ltUnstore(key);
-                break;
-            }
-            default: {
-                return luaL_error(L, "The second argument must be a string, number, boolean or nil.");
-            }
-        }
-    } else {
-        return luaL_error(L, "The first argument must be a string.");
-    }
-    return 0;
-}
-
-static int lt_Retrieve(lua_State *L) {
-    check_nargs(L, 1); 
-    int key_type = lua_type(L, 1);
-    if (key_type == LUA_TSTRING) {
-        const char *key = lua_tostring(L, 1);
-        LTStoredValueType val_type = ltGetStoredValueType(key);
-        switch (val_type) {
-            case LT_STORED_VALUE_TYPE_STRING: {
-                char *str = ltRetrieveString(key);
-                lua_pushstring(L, str);
-                delete[] str;
-                break;
-            }
-            case LT_STORED_VALUE_TYPE_DOUBLE: {
-                lua_pushnumber(L, ltRetrieveDouble(key));
-                break;
-            }
-            case LT_STORED_VALUE_TYPE_BOOL: {
-                lua_pushboolean(L, ltRetrieveBool(key));
-                break;
-            }
-            default: {
-                lua_pushnil(L);
-            }
-        }
-        return 1;
-    } else {
-        return luaL_error(L, "The first argument must be a string.");
-    }
 }
 
 /************************* Box2D **************************/
@@ -2930,6 +2866,54 @@ static int lt_OpenURL(lua_State *L) {
     return 0;
 }
 
+/************************* Random numbers **************************/
+
+static int lt_Random(lua_State *L) {
+    check_nargs(L, 1);
+    int seed = luaL_checkinteger(L, 1);
+    LTRandomGenerator *r = new LTRandomGenerator(seed);
+    push_wrap(L, r);
+    return 1;
+}
+
+static int lt_NextRandomInt(lua_State *L) {
+    int nargs = check_nargs(L, 2);
+    LTRandomGenerator *r = (LTRandomGenerator*)get_object(L, 1, LT_TYPE_RANDOMGENERATOR);
+    if (nargs > 2) {
+        int min = luaL_checkinteger(L, 2);
+        int max = luaL_checkinteger(L, 3);
+        lua_pushinteger(L, r->nextInt(max - min + 1) + min);
+    } else {
+        int max = luaL_checkinteger(L, 2);
+        lua_pushinteger(L, r->nextInt(max) + 1);
+    }
+    return 1;
+}
+
+static int lt_NextRandomNumber(lua_State *L) {
+    int nargs = check_nargs(L, 1);
+    LTRandomGenerator *r = (LTRandomGenerator*)get_object(L, 1, LT_TYPE_RANDOMGENERATOR);
+    if (nargs == 1) {
+        lua_pushnumber(L, r->nextDouble());
+    }
+    if (nargs == 2) {
+        LTdouble scale = luaL_checknumber(L, 2);
+        lua_pushnumber(L, r->nextDouble() * scale);
+    } else {
+        LTdouble min = luaL_checknumber(L, 2);
+        LTdouble max = luaL_checknumber(L, 3);
+        lua_pushnumber(L, min + (max - min) * r->nextDouble());
+    }
+    return 1;
+}
+
+static int lt_NextRandomBool(lua_State *L) {
+    check_nargs(L, 1);
+    LTRandomGenerator *r = (LTRandomGenerator*)get_object(L, 1, LT_TYPE_RANDOMGENERATOR);
+    lua_pushboolean(L, r->nextBool());
+    return 1;
+}
+
 /********************* Loading *****************************/
 
 /*
@@ -2954,15 +2938,6 @@ static const char *getF (lua_State *L, void *ud, size_t *size) {
         lf->eof = 1;
     }
     return (*size > 0) ? lf->buff : NULL;
-}
-
-
-static int errfile (lua_State *L, const char *what, int fnameindex) {
-  const char *serr = strerror(errno);
-  const char *filename = lua_tostring(L, fnameindex) + 1;
-  lua_pushfstring(L, "cannot %s %s: %s", what, filename, serr);
-  lua_remove(L, fnameindex);
-  return LUA_ERRFILE;
 }
 
 
@@ -3176,6 +3151,11 @@ static const luaL_Reg ltlib[] = {
     {"ShowLeaderboard",                 lt_ShowLeaderboard},
 
     {"OpenURL",                         lt_OpenURL},
+
+    {"Random",                          lt_Random},
+    {"NextRandomInt",                   lt_NextRandomInt},
+    {"NextRandomNumber",                lt_NextRandomNumber},
+    {"NextRandomBool",                  lt_NextRandomBool},
 
     {NULL, NULL}
 };
@@ -3569,6 +3549,7 @@ static void pickle_value(lua_State *L, LTPickler *pickler) {
     }
 }
 
+/*
 static void dump_fields(lua_State *L) {
     lua_pushnil(L);
     while (lua_next(L, -2) != 0) {
@@ -3576,6 +3557,7 @@ static void dump_fields(lua_State *L) {
         fprintf(stderr, "FIELD = %s\n", lua_tostring(L, -1));
     }
 }
+*/
 
 LTPickler *ltLuaPickleState() {
     if (g_L != NULL) {
