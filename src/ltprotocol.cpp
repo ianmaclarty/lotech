@@ -125,6 +125,10 @@ bool ltClientIsTryingToConnect() {
     }
 }
 
+bool ltClientIsReady() {
+    return client_connection != NULL && client_connection->isReady();
+}
+
 void ltClientLog(const char *msg) {
     LTCommandLog *cmd = new LTCommandLog(msg);
     client_command_queue.push_back(cmd);

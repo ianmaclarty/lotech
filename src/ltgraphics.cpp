@@ -6,6 +6,7 @@
 #   include "ltads.h"
 #   include "ltiosutil.h"
 #endif
+#include "ltprotocol.h"
 
 #include <assert.h>
 #include <math.h>
@@ -264,24 +265,45 @@ void ltAdjustViewportAspectRatio() {
 }
 
 void ltDrawConnectingOverlay() {
-    static LTfloat s = 0.1f;
-    LTfloat l = viewport_left + viewport_width * 0.3;
-    LTfloat r = viewport_right - viewport_width * 0.3;
-    LTfloat b = viewport_bottom + viewport_height * 0.3;
-    LTfloat t = viewport_top - viewport_height * 0.3;
-    ltPushTint(1.0f, 0.0f, 0.0f, 1.0f);
-    ltDrawRect(l, b, r, t);
-    ltPopTint();
-    l = viewport_left + viewport_width      * (0.5f - s);
-    r = viewport_right - viewport_width     * (0.5f - s);
-    b = viewport_bottom + viewport_height   * (0.5f - s);
-    t = viewport_top - viewport_height      * (0.5f - s);
-    ltPushTint(1.0f, 1.0f, 0.0f, 1.0f);
-    ltDrawRect(l, b, r, t);
-    s += 0.005f;
-    if (s > 0.2f) {
-        s = 0.1f;
+#ifdef LTDEVMODE
+    static int s = 0;
+    static int c = 0;
+    LTfloat l = viewport_right - viewport_width * 0.1;
+    LTfloat r = viewport_right;
+    LTfloat b = viewport_top - viewport_height * 0.1;
+    LTfloat t = viewport_top;
+    if (ltClientIsTryingToConnect()) {
+        ltLoadIdentity();
+        fprintf(stderr, "b = %f, h = %f\n", b, viewport_height);
+        if (s & 16) {
+            ltPushTint(0.4f, 0.4f, 0.4f, 1.0f);
+        } else {
+            ltPushTint(0.8f, 0.8f, 0.8f, 1.0f);
+        }
+        ltDrawRect(l, b, r, t);
+        ltPopTint();
+        s++;
+        c = 0;
+    } else if (ltClientIsReady()) {
+        ltLoadIdentity();
+        // Connect successful.  Show green box.
+        if (c < 60) {
+            ltPushTint(0.1f, 0.8f, 0.1f, 1.0f);
+            ltDrawRect(l, b, r, t);
+            ltPopTint();
+            c++;
+        }
+    } else {
+        ltLoadIdentity();
+        // Connect unsuccessful.  Show red box.
+        if (c < 60) {
+            ltPushTint(1.0f, 0.0f, 0.0f, 1.0f);
+            ltDrawRect(l, b, r, t);
+            ltPopTint();
+            c++;
+        }
     }
+#endif
 }
 
 void ltDrawAdBackground() {
