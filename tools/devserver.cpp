@@ -43,7 +43,7 @@ static void cmd_sync() {
     while (*ptr != '\0') {
         if (stat(ptr, &info) == 0) {
             if (info.st_mtime >= last_sync_time) {
-                ltServerUpdateFile(ptr);
+                ltServerClientUpdateFile(ptr);
                 were_updates = true;
             }
         } else {
@@ -56,7 +56,7 @@ static void cmd_sync() {
     if (!were_updates) {
         printf("No files changed since last sync\n");
     }
-    ltServerReset();
+    ltServerClientReset();
 }
 
 static void execute_command() {

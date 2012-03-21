@@ -2,17 +2,19 @@ include ../Make.common
 
 LTDIR=..
 
-.PHONY: randtest
 ifeq ($(TARGET_PLATFORM),osx)
-randtest: randtest.cpp
-	g++ -ObjC++ -g -DLTOSX -I$(LTDIR)/osx/include -L$(LTDIR)/osx randtest.cpp \
-		-o randtest -llt -lpng -lz -llua -lbox2d -lGLEW -lglfw -framework OpenGL -framework OpenAL -framework Cocoa
+GPPOPTS=-ObjC++ -g -DLTOSX -I$(LTDIR)/osx/include -L$(LTDIR)/osx -llt -lpng -lz -llua -lbox2d -lGLEW -lglfw -framework OpenGL -framework OpenAL -framework Cocoa
 else
-randtest: randtest.cpp
-	g++ -O3 -DLTLINUX -I$(LTDIR)/linux/include -L$(LTDIR)/linux randtest.cpp \
-		-o randtest -llt -lpng -lz -llua -lbox2d -lGLEW -lglfw -lopenal
+GPPOPTS=-O3 -DLTLINUX -I$(LTDIR)/linux/include -L$(LTDIR)/linux -llt -lpng -lz -llua -lbox2d -lGLEW -lglfw -lopenal -lGL
 endif
+
+PROGS=randtest devserver
+
+all: $(PROGS)
+
+$(PROGS): %: %.cpp
+	g++ -DLTDEVMODE $< $(GPPOPTS) -o $@ 
 
 .PHONY: clean
 clean:
-	rm ltclient
+	rm -f $(PROGS)

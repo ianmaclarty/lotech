@@ -2,6 +2,7 @@
 #define LTOPENGL_H
 
 #ifdef LTLINUX
+    #define GLEW_STATIC 1
     #include <GL/glew.h>
     #include <GL/glfw.h>
 #endif

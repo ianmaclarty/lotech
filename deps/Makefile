@@ -18,6 +18,9 @@ endif
 ifeq ($(TARGET_PLATFORM),osx)
 TARGETS+=glfw_headers libglfw.a libGLEW.a glew_headers
 endif
+ifeq ($(TARGET_PLATFORM),linux)
+TARGETS+=glfw_headers libglfw.a libGLEW.a glew_headers
+endif
 
 all: $(TARGETS)
 
@@ -199,6 +202,24 @@ libpng.a: rebuild
 	cd $(LIBPNG_DIR) && $(MAKE) \
 		clean all
 	cp $(LIBPNG_DIR)/libpng.a .
+
+libGLEW.a: rebuild
+	cd $(GLEW_DIR) && $(MAKE) \
+		clean all
+	cp $(GLEW_DIR)/lib/libGLEW.a .
+
+libglfw.a: rebuild
+	cd $(GLFW_DIR) && $(MAKE) \
+		x11
+	cp $(GLFW_DIR)/lib/x11/libglfw.a .
+
+.PHONY: glfw_headers
+glfw_headers:
+	cp -r glfw-2.7.3/include/* include/
+
+.PHONY: glew_headers
+glew_headers:
+	cp -r glew-1.7.0/include/* include/
 
 endif
 
