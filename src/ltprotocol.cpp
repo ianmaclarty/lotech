@@ -71,6 +71,14 @@ void ltClientInit() {
     }
 }
 
+void ltClientShutdown() {
+    if (client_connection != NULL) {
+        client_connection->closeClient();
+        delete client_connection;
+        client_connection = NULL;
+    }
+}
+
 void ltClientStep() {
     int len;
     char *buf;

@@ -5,6 +5,7 @@
 
 bool ltAmClient();
 void ltClientInit();
+void ltClientShutdown();
 void ltClientStep();
 void ltClientLog(const char *msg);
 bool ltClientIsTryingToConnect();

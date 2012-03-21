@@ -102,4 +102,16 @@ void ltIOSSaveState() {
     ltIOSSyncStore();
 }
 
+void ltIOSResignActive() {
+#ifdef LTDEVMODE
+    ltClientShutdown();
+#endif
+}
+
+void ltIOSBecomeActive() {
+#ifdef LTDEVMODE
+    ltClientInit();
+#endif
+}
+
 #endif // LTIOS

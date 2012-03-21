@@ -24,5 +24,8 @@ void ltIOSTouchesCancelled(NSSet *touches);
 
 UIViewController *ltIOSGetViewController();
 
+void ltIOSResignActive();
+void ltIOSBecomeActive();
+
 #endif
 #endif
