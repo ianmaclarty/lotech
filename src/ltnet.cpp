@@ -7,13 +7,15 @@
 #define PORT 14091
 #define MAGIC_WORD "lotech"
 #define MAXBUFLEN 64
+#define MAX_LISTENING_STEPS 60
 
 /*
  * A (blocking) TCP socket is set up between the client and server as follows:
  * - The client broadcasts a udp packet on port PORT and then
  *   listens for TCP connections on the same port with a non-blocking socket.
- *   It does this repeatedly, everytime LTClientConnection::connectStep is
- *   called.
+ *   If no connections are received after MAX_LISTENING_STEPS calls
+ *   to connectStep then no connection is established and the client
+ *   goes into the closed state.
  * - The server listens for udp broadcasts on port PORT.  If it receives
  *   one, it tries to open a (blocking) TCP connection to the IP address
  *   the udp packet came from on PORT.
@@ -505,8 +507,6 @@ LTClientConnection::~LTClientConnection() {
     }
 }
 
-#define MAX_LISTENING_STEPS 30
-
 void LTClientConnection::connectStep() {
     int rv;
     switch (state) {
@@ -543,9 +543,9 @@ void LTClientConnection::connectStep() {
             // rv == 0
             listen_step++;
             if (listen_step > MAX_LISTENING_STEPS) {
-                // Try broadcasting again.
+                // Give up.
                 close(sock);
-                state = LT_CLIENT_STATE_BROADCASTING;
+                state = LT_CLIENT_STATE_CLOSED;
                 return;
             }
             return;
@@ -560,6 +560,10 @@ void LTClientConnection::connectStep() {
 
 bool LTClientConnection::isReady() {
     return state == LT_CLIENT_STATE_READY;
+}
+
+bool LTClientConnection::isTryingToConnect() {
+    return state < LT_CLIENT_STATE_READY;
 }
 
 bool LTClientConnection::isError() {

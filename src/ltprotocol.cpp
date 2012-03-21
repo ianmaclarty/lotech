@@ -72,7 +72,6 @@ void ltClientInit() {
 }
 
 void ltClientStep() {
-    static int retry_count = 0;
     int len;
     char *buf;
     if (client_connection == NULL) {
@@ -104,12 +103,17 @@ void ltClientStep() {
     }
     if (client_connection->isError()) {
         fprintf(stderr, "Client connection error: %s\n", client_connection->errmsg);
-        retry_count++;
-        fprintf(stderr, "Retrying...\n");
         client_connection->closeClient();
         delete client_connection;
         client_connection = NULL;
-        ltClientInit();
+    }
+}
+
+bool ltClientIsTryingToConnect() {
+    if (client_connection == NULL) {
+        return false;
+    } else {
+        return client_connection->isTryingToConnect();
     }
 }
 

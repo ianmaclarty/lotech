@@ -35,6 +35,7 @@ extern "C" {
 #include "ltrendertarget.h"
 #include "ltopengl.h"
 #include "ltrandom.h"
+#include "ltprotocol.h"
 
 #include "lteasefunchash.h"
 
@@ -3354,6 +3355,9 @@ void ltLuaRender() {
             ltInitGraphics();
             call_lt_func("Render");
             ltDrawAdBackground();
+            if (ltClientIsTryingToConnect()) {
+                ltDrawConnectingOverlay();
+            }
         }
     }
 }

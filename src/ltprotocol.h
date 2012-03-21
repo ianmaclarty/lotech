@@ -7,6 +7,7 @@ bool ltAmClient();
 void ltClientInit();
 void ltClientStep();
 void ltClientLog(const char *msg);
+bool ltClientIsTryingToConnect();
 
 bool ltAmServer();
 void ltServerInit();

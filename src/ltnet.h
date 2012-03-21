@@ -71,6 +71,7 @@ struct LTClientConnection {
 
     bool isReady();
     bool isError();
+    bool isTryingToConnect();
 
     void sendMsg(const char *buf, int n);
     // See LTServerState::recvMsg.
