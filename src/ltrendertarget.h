@@ -33,8 +33,15 @@ struct LTRenderTarget : LTSceneNode {
     LTfloat vp_x2;
     LTfloat vp_y2;
 
+    // World coords
+    LTfloat wld_x1;
+    LTfloat wld_y1;
+    LTfloat wld_x2;
+    LTfloat wld_y2;
+
     LTRenderTarget(int w, int h,
         LTfloat vp_x1, LTfloat vp_y1, LTfloat vp_x2, LTfloat vp_y2,
+        LTfloat wld_x1, LTfloat wld_y1, LTfloat wld_x2, LTfloat wld_y2,
         bool depthbuf, LTTextureFilter minfilter, LTTextureFilter magfilter);
     virtual ~LTRenderTarget();
 

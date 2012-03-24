@@ -235,6 +235,11 @@ void ltBlendMode(LTBlendMode new_mode) {
                 glBlendEquation(GL_FUNC_ADD);
                 glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
                 break;
+            case LT_BLEND_MODE_MULTIPLY:
+                glEnable(GL_BLEND);
+                glBlendEquation(GL_FUNC_ADD);
+                glBlendFunc(GL_DST_COLOR, GL_ZERO);
+                break;
             case LT_BLEND_MODE_OFF:
                 glDisable(GL_BLEND);
                 break;
@@ -711,6 +716,9 @@ static void set_state_str() {
             break;
         case LT_BLEND_MODE_COLOR:
             blend_mode_str = "C";
+            break;
+        case LT_BLEND_MODE_MULTIPLY:
+            blend_mode_str = "M";
             break;
         case LT_BLEND_MODE_OFF:
             blend_mode_str = "-";

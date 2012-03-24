@@ -4,6 +4,7 @@
 
 LTRenderTarget::LTRenderTarget(int w, int h, 
         LTfloat vp_x1, LTfloat vp_y1, LTfloat vp_x2, LTfloat vp_y2,
+        LTfloat wld_x1, LTfloat wld_y1, LTfloat wld_x2, LTfloat wld_y2,
         bool depthbuf, LTTextureFilter minfilter, LTTextureFilter magfilter)
         : LTSceneNode(LT_TYPE_RENDERTARGET) {
     LTRenderTarget::width = w;
@@ -13,6 +14,10 @@ LTRenderTarget::LTRenderTarget(int w, int h,
     LTRenderTarget::vp_y1 = vp_y1;
     LTRenderTarget::vp_x2 = vp_x2;
     LTRenderTarget::vp_y2 = vp_y2;
+    LTRenderTarget::wld_x1 = wld_x1;
+    LTRenderTarget::wld_y1 = wld_y1;
+    LTRenderTarget::wld_x2 = wld_x2;
+    LTRenderTarget::wld_y2 = wld_y2;
 
     // Compute dimensions of target texture (must be powers of 2).
     tex_width = 64;
@@ -28,7 +33,6 @@ LTRenderTarget::LTRenderTarget(int w, int h,
     ltTexImage(tex_width, tex_height, NULL);
 
     setup();
-
 }
 
 LTRenderTarget::~LTRenderTarget() {
@@ -95,22 +99,14 @@ void LTRenderTarget::setup() {
     ltStaticVertBufferData(sizeof(LTtexcoord) * 8, tex_coords);
 
     // Set up world vertices for drawing.
-    LTfloat pix_w = ltGetPixelWidth();
-    LTfloat pix_h = ltGetPixelHeight();
-    LTfloat world_width = (LTfloat)width * pix_w;
-    LTfloat world_height = (LTfloat)height * pix_h;
-    LTfloat world_left = - world_width * 0.5f;
-    LTfloat world_bottom = - world_height * 0.5f;
-    LTfloat world_top = world_height * 0.5f;
-    LTfloat world_right = world_width * 0.5f;
-    world_vertices[0] = world_left;
-    world_vertices[1] = world_top;
-    world_vertices[2] = world_right;
-    world_vertices[3] = world_top;
-    world_vertices[4] = world_right;
-    world_vertices[5] = world_bottom;
-    world_vertices[6] = world_left;
-    world_vertices[7] = world_bottom;
+    world_vertices[0] = wld_x1;
+    world_vertices[1] = wld_y2;
+    world_vertices[2] = wld_x2;
+    world_vertices[3] = wld_y2;
+    world_vertices[4] = wld_x2;
+    world_vertices[5] = wld_y1;
+    world_vertices[6] = wld_x1;
+    world_vertices[7] = wld_y1;
     vertbuf = ltGenVertBuffer();
     ltBindVertBuffer(vertbuf);
     ltStaticVertBufferData(sizeof(LTfloat) * 8, world_vertices);

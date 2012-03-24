@@ -725,6 +725,8 @@ static int lt_BlendMode(lua_State *L) {
     //    mode = LT_BLEND_MODE_DIFF;
     } else if (strcmp(modestr, "color") == 0) {
         mode = LT_BLEND_MODE_COLOR;
+    } else if (strcmp(modestr, "multiply") == 0) {
+        mode = LT_BLEND_MODE_MULTIPLY;
     } else if (strcmp(modestr, "normal") == 0) {
         mode = LT_BLEND_MODE_NORMAL;
     } else if (strcmp(modestr, "off") == 0) {
@@ -1100,14 +1102,42 @@ static int lt_DrawVector(lua_State *L) {
 /************************* Render targets ******************/
 
 static int lt_RenderTarget(lua_State *L) {
-    check_nargs(L, 6);
+    int nargs = check_nargs(L, 2);
     int w = luaL_checkinteger(L, 1);
     int h = luaL_checkinteger(L, 2);
-    LTfloat x1 = luaL_checknumber(L, 3);
-    LTfloat y1 = luaL_checknumber(L, 4);
-    LTfloat x2 = luaL_checknumber(L, 5);
-    LTfloat y2 = luaL_checknumber(L, 6);
-    LTRenderTarget *render_target = new LTRenderTarget(w, h, x1, y1, x2, y2,
+    LTfloat vp_x1 = -1.0f;
+    LTfloat vp_y1 = -1.0f;
+    LTfloat vp_x2 = 1.0f;
+    LTfloat vp_y2 = 1.0f;
+    if (nargs > 2) {
+        vp_x1 = luaL_checknumber(L, 3);
+        vp_y1 = luaL_checknumber(L, 4);
+        vp_x2 = luaL_checknumber(L, 5);
+        vp_y2 = luaL_checknumber(L, 6);
+    }
+    LTfloat wld_x1;
+    LTfloat wld_y1;
+    LTfloat wld_x2;
+    LTfloat wld_y2;
+    if (nargs == 6) {
+        LTfloat pix_w = ltGetPixelWidth();
+        LTfloat pix_h = ltGetPixelHeight();
+        LTfloat world_width = (LTfloat)w * pix_w;
+        LTfloat world_height = (LTfloat)h * pix_h;
+        wld_x1 = - world_width * 0.5f;
+        wld_y1 = - world_height * 0.5f;
+        wld_x2 = world_width * 0.5f;
+        wld_y2 = world_height * 0.5f;
+    } else {
+        wld_x1 = luaL_checknumber(L, 7);
+        wld_y1 = luaL_checknumber(L, 8);
+        wld_x2 = luaL_checknumber(L, 9);
+        wld_y2 = luaL_checknumber(L, 10);
+    }
+
+    LTRenderTarget *render_target = new LTRenderTarget(w, h,
+        vp_x1, vp_y1, vp_x2, vp_y2,
+        wld_x1, wld_y1, wld_x2, wld_y2,
         false, LT_TEXTURE_FILTER_LINEAR, LT_TEXTURE_FILTER_LINEAR);
     push_wrap(L, render_target);
     return 1;
