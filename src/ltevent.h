@@ -34,18 +34,4 @@ struct LTPointerEventHandler {
     virtual bool consume(LTfloat x, LTfloat y, LTSceneNode *node, LTPointerEvent *event) = 0;
 };
 
-//---------------------------------------------------------------
-
-/* An action to take in response to an event. */
-struct LTAction {
-    virtual ~LTAction() {};
-
-    virtual void doAction() = 0;
-};
-
-/* Queue an action to be run on the next call to ltFirePendingActions. */
-void ltQueueAction(LTAction *action);
-/* Run all pending actions and clear the action queue. */
-void ltFirePendingActions();
-
 #endif

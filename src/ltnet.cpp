@@ -28,6 +28,7 @@
  *   in one go.
  */
 
+/*
 static void checksum(const char *msg, const char *packet, int len) {
     int sum = 0;
     for (int i = 0; i < len; i++) {
@@ -35,6 +36,7 @@ static void checksum(const char *msg, const char *packet, int len) {
     }
     fprintf(stderr, "%s: len = %d, checksum = %d\n", msg, len, sum);
 }
+*/
 
 static void copy_string(char **dest, const char *src) {
     *dest = new char[strlen(src) + 1];

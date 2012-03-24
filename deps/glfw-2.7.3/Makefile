@@ -162,13 +162,13 @@ x11-dist-install: x11
 
 cocoa:
 	cd lib/cocoa && $(MAKE) -f Makefile.cocoa
-	cd examples  && $(MAKE) -f Makefile.cocoa
-	cd tests     && $(MAKE) -f Makefile.cocoa
+	#cd examples  && $(MAKE) -f Makefile.cocoa
+	#cd tests     && $(MAKE) -f Makefile.cocoa
 
 cocoa-clean:
 	cd lib/cocoa && $(MAKE) -f Makefile.cocoa clean
-	cd examples  && $(MAKE) -f Makefile.cocoa clean
-	cd tests     && $(MAKE) -f Makefile.cocoa clean
+	#cd examples  && $(MAKE) -f Makefile.cocoa clean
+	#cd tests     && $(MAKE) -f Makefile.cocoa clean
 
 cocoa-install: cocoa
 	cd lib/cocoa && $(MAKE) -f Makefile.cocoa install

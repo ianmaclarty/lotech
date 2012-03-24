@@ -18,11 +18,10 @@
 
 ct_assert(sizeof(GLfloat) == 4);
 
-static char state_str[1024];
-static void set_state_str();
-
 //#define LTGLTRACE
 #ifdef LTGLTRACE
+static char state_str[1024];
+static void set_state_str();
 #define gltrace {set_state_str(); ltLog("%s:%4d %-30s %s", __FILE__, __LINE__, __func__, state_str);}
 #else
 #define gltrace
@@ -697,6 +696,7 @@ bool ltFramebufferComplete() {
     return status == GL_EXT(GL_FRAMEBUFFER_COMPLETE);
 }
 
+#ifdef LTGLTRACE
 static void set_state_str() {
     const char *blend_mode_str = "?";
     switch (blend_mode) {
@@ -755,3 +755,4 @@ static void set_state_str() {
         alpha_test ? "AT" : "--",
         stencil_test ? "ST" : "--");
 }
+#endif

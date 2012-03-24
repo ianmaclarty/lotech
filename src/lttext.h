@@ -3,7 +3,6 @@
 #define LTTEXT_H
 
 #include <list>
-#include <map>
 
 #include <string.h>
 
