@@ -6,7 +6,7 @@ LTRenderTarget::LTRenderTarget(int w, int h,
         LTfloat vp_x1, LTfloat vp_y1, LTfloat vp_x2, LTfloat vp_y2,
         LTfloat wld_x1, LTfloat wld_y1, LTfloat wld_x2, LTfloat wld_y2,
         bool depthbuf, LTTextureFilter minfilter, LTTextureFilter magfilter)
-        : LTSceneNode(LT_TYPE_RENDERTARGET) {
+        : LTTexturedNode(LT_TYPE_RENDERTARGET) {
     LTRenderTarget::width = w;
     LTRenderTarget::height = h;
     LTRenderTarget::depthbuf_enabled = depthbuf;
@@ -36,8 +36,6 @@ LTRenderTarget::LTRenderTarget(int w, int h,
 }
 
 LTRenderTarget::~LTRenderTarget() {
-    ltDeleteVertBuffer(texbuf);
-    ltDeleteVertBuffer(vertbuf);
     ltDeleteFramebuffer(fbo);
     ltDeleteTexture(texture_id);
 }
@@ -52,15 +50,6 @@ void LTRenderTarget::renderNode(LTSceneNode *node, LTColor *clear_color) {
     node->draw();
 
     ltFinishRendering();
-}
-
-void LTRenderTarget::draw() {
-    ltEnableTexture(texture_id);
-    ltBindVertBuffer(vertbuf);
-    ltVertexPointer(2, LT_VERT_DATA_TYPE_FLOAT, 0, 0);
-    ltBindVertBuffer(texbuf);
-    ltTexCoordPointer(2, LT_VERT_DATA_TYPE_SHORT, 0, 0);
-    ltDrawArrays(LT_DRAWMODE_TRIANGLE_FAN, 0, 4);
 }
 
 void LTRenderTarget::preContextChange() {
@@ -99,14 +88,10 @@ void LTRenderTarget::setup() {
     ltStaticVertBufferData(sizeof(LTtexcoord) * 8, tex_coords);
 
     // Set up world vertices for drawing.
-    world_vertices[0] = wld_x1;
-    world_vertices[1] = wld_y2;
-    world_vertices[2] = wld_x2;
-    world_vertices[3] = wld_y2;
-    world_vertices[4] = wld_x2;
-    world_vertices[5] = wld_y1;
-    world_vertices[6] = wld_x1;
-    world_vertices[7] = wld_y1;
+    world_vertices[0] = wld_x1;  world_vertices[1] = wld_y2;
+    world_vertices[2] = wld_x2;  world_vertices[3] = wld_y2;
+    world_vertices[4] = wld_x2;  world_vertices[5] = wld_y1;
+    world_vertices[6] = wld_x1;  world_vertices[7] = wld_y1;
     vertbuf = ltGenVertBuffer();
     ltBindVertBuffer(vertbuf);
     ltStaticVertBufferData(sizeof(LTfloat) * 8, world_vertices);

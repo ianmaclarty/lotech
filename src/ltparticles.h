@@ -83,7 +83,7 @@ struct LTParticleSystem : LTSceneNode {
 
     LTFixture *fixture; // A fixture to restrict start positions.
 
-    LTParticleSystem(LTImage *img, int max_particles);
+    LTParticleSystem(LTTexturedNode *img, int max_particles);
     virtual ~LTParticleSystem();
 
     bool is_full();

@@ -185,8 +185,10 @@ ifeq ($(TARGET_PLATFORM),linux)
 ############################ Linux Targets ##############################
 
 liblua.a: rebuild
-	cd $(LUAJIT_DIR) && $(MAKE)
-	cp $(LUAJIT_DIR)/src/libluajit.a $@
+	#cd $(LUAJIT_DIR) && $(MAKE)
+	#cp $(LUAJIT_DIR)/src/libluajit.a $@
+	cd $(LUA_DIR) && $(MAKE) linux
+	cp $(LUA_DIR)/src/liblua.a $@
 
 libbox2d.a: rebuild
 	cd $(BOX2D_DIR) && $(MAKE) \

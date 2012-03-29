@@ -7,9 +7,8 @@
 #include "ltimage.h"
 #include "ltgraphics.h"
 
-struct LTRenderTarget : LTSceneNode {
+struct LTRenderTarget : LTTexturedNode {
     LTframebuf      fbo;
-    LTtexid         texture_id;
     bool            depthbuf_enabled;
 
     int             width;
@@ -20,12 +19,6 @@ struct LTRenderTarget : LTSceneNode {
     // These are also used for the dimensions of the depth buffer.
     int             tex_width;
     int             tex_height;
-
-    // For drawing the render target.
-    LTfloat         world_vertices[8];
-    LTvertbuf       vertbuf; // for world vertices
-    LTtexcoord      tex_coords[8];
-    LTvertbuf       texbuf;
 
     // Viewport
     LTfloat vp_x1;
@@ -49,7 +42,6 @@ struct LTRenderTarget : LTSceneNode {
     // the given color first (clear_color may be NULL).
     void renderNode(LTSceneNode *node, LTColor *clear_color);
 
-    virtual void draw();
     virtual void preContextChange();
     virtual void postContextChange();
 

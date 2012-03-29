@@ -19,9 +19,7 @@
 #define BBCHUNK_FORMAT "w%dh%dl%db%dr%dt%d"
 
 void ltEnableAtlas(LTAtlas *atlas) {
-    ltBindTexture(atlas->texture_id);
-    ltEnableTexturing();
-    ltEnableTextureCoordArrays();
+    ltEnableTexture(atlas->texture_id);
 }
 
 void ltEnableTexture(LTtexid texture_id) {
@@ -669,7 +667,30 @@ LTImageBuffer *ltCreateEmptyImageBuffer(const char *name, int w, int h) {
 
 //-----------------------------------------------------------------
 
-LTImage::LTImage(LTAtlas *atls, int atlas_w, int atlas_h, LTImagePacker *packer) : LTSceneNode(LT_TYPE_IMAGE) {
+LTTexturedNode::LTTexturedNode(LTType type) : LTSceneNode(type) {
+    vertbuf = 0;
+    texbuf = 0;
+};
+
+LTTexturedNode::~LTTexturedNode() {
+    if (vertbuf != 0) {
+        ltDeleteVertBuffer(vertbuf);
+    }
+    if (texbuf != 0) {
+        ltDeleteVertBuffer(texbuf);
+    }
+}
+
+void LTTexturedNode::draw() {
+    ltEnableTexture(texture_id);
+    ltBindVertBuffer(vertbuf);
+    ltVertexPointer(2, LT_VERT_DATA_TYPE_FLOAT, 0, 0);
+    ltBindVertBuffer(texbuf);
+    ltTexCoordPointer(2, LT_VERT_DATA_TYPE_SHORT, 0, 0);
+    ltDrawArrays(LT_DRAWMODE_TRIANGLE_FAN, 0, 4);
+}
+
+LTImage::LTImage(LTAtlas *atls, int atlas_w, int atlas_h, LTImagePacker *packer) : LTTexturedNode(LT_TYPE_IMAGE) {
     if (packer->occupant == NULL) {
         ltLog("Packer occupant is NULL");
         ltAbort();
@@ -681,6 +702,7 @@ LTImage::LTImage(LTAtlas *atls, int atlas_w, int atlas_h, LTImagePacker *packer)
 
     atlas = atls;
     atlas->ref_count++;
+    texture_id = atlas->texture_id;
     rotated = packer->rotated;
 
     int texel_w = LT_MAX_TEX_COORD / atlas_w;
@@ -732,21 +754,10 @@ LTImage::LTImage(LTAtlas *atls, int atlas_w, int atlas_h, LTImagePacker *packer)
 }
 
 LTImage::~LTImage() {
-    ltDeleteVertBuffer(vertbuf);
-    ltDeleteVertBuffer(texbuf);
     atlas->ref_count--;
     if (atlas->ref_count <= 0) {
         delete atlas;
     }
-}
-
-void LTImage::draw() {
-    ltEnableAtlas(atlas);
-    ltBindVertBuffer(vertbuf);
-    ltVertexPointer(2, LT_VERT_DATA_TYPE_FLOAT, 0, 0);
-    ltBindVertBuffer(texbuf);
-    ltTexCoordPointer(2, LT_VERT_DATA_TYPE_SHORT, 0, 0);
-    ltDrawArrays(LT_DRAWMODE_TRIANGLE_FAN, 0, 4);
 }
 
 LTfloat* LTImage::field_ptr(const char *field_name) {

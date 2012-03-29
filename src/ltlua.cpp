@@ -980,7 +980,7 @@ static int lt_FillVectorColumnsWithImageQuads(lua_State *L) {
     check_nargs(L, 5);
     LTVector *vector = (LTVector *)get_object(L, 1, LT_TYPE_VECTOR);
     int col = luaL_checkinteger(L, 2) - 1;
-    LTImage *img = (LTImage *)get_object(L, 3, LT_TYPE_IMAGE);
+    LTTexturedNode *img = (LTTexturedNode *)get_object(L, 3, LT_TYPE_TEXTUREDNODE);
     LTVector *offsets = (LTVector *)get_object(L, 4, LT_TYPE_VECTOR);
     int offsets_col = luaL_checkinteger(L, 5) - 1;
     if (vector->size < 4) {
@@ -1031,7 +1031,7 @@ static int lt_FillVectorColumnsWithImageQuads(lua_State *L) {
 static int lt_DrawQuads(lua_State *L) {
     int num_args = check_nargs(L, 2);
     LTVector *vector = (LTVector *)get_object(L, 1, LT_TYPE_VECTOR);
-    LTImage *img = (LTImage *)get_object(L, 2, LT_TYPE_IMAGE);
+    LTTexturedNode *img = (LTTexturedNode *)get_object(L, 2, LT_TYPE_TEXTUREDNODE);
     int col = 0;
     if (num_args > 2) {
         col = luaL_checkinteger(L, 3) - 1;
@@ -1062,7 +1062,7 @@ static int lt_DrawVector(lua_State *L) {
         }
     }
     int tex_os = -1;
-    LTImage *img = NULL;
+    LTTexturedNode *img = NULL;
     if (num_args > 4) {
         tex_os = lua_tointeger(L, 5) - 1;
         if (tex_os != -1 && tex_os > (vector->stride - 2)) {
@@ -1072,7 +1072,7 @@ static int lt_DrawVector(lua_State *L) {
         if (tex_os != -1 && num_args < 6) {
             return luaL_error(L, "An image must be provided if a texture offset is given.");
         }
-        img = (LTImage *)get_object(L, 6, LT_TYPE_IMAGE);
+        img = (LTTexturedNode *)get_object(L, 6, LT_TYPE_TEXTUREDNODE);
     }
     LTDrawMode mode;
     if (strcmp(mode_str, "triangle_strip") == 0) {

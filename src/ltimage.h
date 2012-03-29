@@ -107,16 +107,27 @@ struct LTAtlas {
     virtual ~LTAtlas();
 };
 
-struct LTImage : LTSceneNode {
-    LTAtlas   *atlas;
+// This represents a node that has a texture associated with it.
+// (LTRenderTarget is also a LTTexturedNode).
+struct LTTexturedNode : LTSceneNode {
+    LTtexid texture_id;
+
+    // VBOs for world vertex coords and texture coords.
     LTvertbuf  vertbuf;
     LTvertbuf  texbuf;
 
     // Texture coords of image bounding box in atlas.
     LTtexcoord   tex_coords[8];
-
     // Bounding box dimensions in world coordinates.
     LTfloat   world_vertices[8];
+
+    LTTexturedNode(LTType type);
+    virtual ~LTTexturedNode();
+    virtual void draw();
+};
+
+struct LTImage : LTTexturedNode {
+    LTAtlas   *atlas;
     LTfloat   bb_width;
     LTfloat   bb_height;
 
@@ -134,7 +145,6 @@ struct LTImage : LTSceneNode {
     LTImage(LTAtlas *atlas, int atlas_w, int atlas_h, LTImagePacker *packer);
     virtual ~LTImage();
 
-    virtual void draw();
     virtual bool has_field(const char *field_name);
     virtual LTfloat get_field(const char *field_name);
     virtual LTfloat* field_ptr(const char *field_name);

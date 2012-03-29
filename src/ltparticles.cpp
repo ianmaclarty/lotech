@@ -6,7 +6,7 @@
 ct_assert(sizeof(LTPoint) == 8);
 ct_assert(sizeof(LTCompactColor) == 4);
 
-LTParticleSystem::LTParticleSystem(LTImage *img, int n)
+LTParticleSystem::LTParticleSystem(LTTexturedNode *img, int n)
         : LTSceneNode(LT_TYPE_PARTICLESYSTEM) {
     active = true;
     duration = -1.0f;
@@ -45,8 +45,8 @@ LTParticleSystem::LTParticleSystem(LTImage *img, int n)
     emit_counter = 0.0f;
 
     particles = new LTParticle[n];
-    // We maintain a reference to the LTImage object in the Lua wrapper.
-    texture_id = img->atlas->texture_id;
+    // We maintain a reference to the LTTexturedNode object in the Lua wrapper.
+    texture_id = img->texture_id;
     img_left = img->world_vertices[0];
     img_right = img->world_vertices[2];
     img_bottom = img->world_vertices[5];

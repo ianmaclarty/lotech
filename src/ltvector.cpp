@@ -14,7 +14,7 @@ LTVector::~LTVector() {
 }
 
 LTDrawVector::LTDrawVector(LTDrawMode mode, LTVector *vector,
-    int dims, int vertex_os, int color_os, int tex_os, LTImage *img) : LTSceneNode(LT_TYPE_DRAWVECTOR)
+    int dims, int vertex_os, int color_os, int tex_os, LTTexturedNode *img) : LTSceneNode(LT_TYPE_DRAWVECTOR)
 {
     LTDrawVector::mode = mode;
     LTDrawVector::vector = vector;
@@ -30,7 +30,7 @@ void LTDrawVector::draw() {
     ltBindVertBuffer(0);
     ltVertexPointer(dimensions, LT_VERT_DATA_TYPE_FLOAT, stride, vector->data + vertex_offset);
     if (texture_offset >= 0 && image != NULL) {
-        ltEnableAtlas(image->atlas);
+        ltEnableTexture(image->texture_id);
         ltTexCoordPointer(2, LT_VERT_DATA_TYPE_FLOAT, stride, vector->data + texture_offset);
     } else {
         ltDisableTextures();
@@ -48,7 +48,7 @@ void LTDrawVector::draw() {
 }
 
 LTDrawTexturedQuads::LTDrawTexturedQuads(LTVector *vector,
-    int offset, LTImage *img) : LTSceneNode(LT_TYPE_DRAWQUADS)
+    int offset, LTTexturedNode *img) : LTSceneNode(LT_TYPE_DRAWQUADS)
 {
     LTDrawTexturedQuads::vector = vector;
     LTDrawTexturedQuads::offset = offset;
@@ -92,7 +92,7 @@ void LTDrawTexturedQuads::draw() {
     ltBindVertBuffer(0);
     int stride = vector->stride * sizeof(LTfloat);
     ltVertexPointer(2, LT_VERT_DATA_TYPE_FLOAT, stride, vector->data + offset);
-    ltEnableAtlas(image->atlas);
+    ltEnableTexture(image->texture_id);
     ltTexCoordPointer(2, LT_VERT_DATA_TYPE_FLOAT, stride, vector->data + offset + 2);
     ltDrawElements(LT_DRAWMODE_TRIANGLE_STRIP, num_elems, elements);
 }
