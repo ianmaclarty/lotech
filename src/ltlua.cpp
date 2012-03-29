@@ -3516,10 +3516,6 @@ void ltLuaGameCenterBecameAvailable() {
 
 /************************************************************/
 
-int ltLuaInitRef() {
-    return LUA_NOREF;
-}
-
 void ltLuaGarbageCollect() {
     if (g_L != NULL) {
         lua_gc(g_L, LUA_GCCOLLECT, 0);
