@@ -205,6 +205,16 @@ LTfloat* LTTranslateNode::field_ptr(const char *field_name) {
     return NULL;
 }
 
+const LTFieldDescriptor* LTTranslateNode::fields() {
+    static const LTFieldDescriptor flds[] = {
+        {"x", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(x), NULL, NULL, LT_ACCESS_FULL},
+        {"y", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(y), NULL, NULL, LT_ACCESS_FULL},
+        {"z", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(z), NULL, NULL, LT_ACCESS_FULL},
+        LT_END_FIELD_DESCRIPTOR_LIST
+    };
+    return flds;
+}
+
 LTRotateNode::LTRotateNode(LTdegrees angle, LTfloat cx, LTfloat cy, LTSceneNode *child) : LTWrapNode(child, LT_TYPE_ROTATE) {
     LTRotateNode::angle = angle;
     LTRotateNode::cx = cx;

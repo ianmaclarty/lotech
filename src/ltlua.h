@@ -34,6 +34,8 @@ void ltLuaSetResourcePrefix(const char *prefix);
 LTPickler *ltLuaPickleState();
 void ltLuaUnpickleState(LTUnpickler *unpickler);
 
+const char *ltLuaCacheString(const char *str);
+
 void ltLuaPreContextChange();
 void ltLuaPostContextChange();
 

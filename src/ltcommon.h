@@ -20,6 +20,8 @@
 
 typedef float           LTfloat;
 typedef double          LTdouble;
+typedef int             LTint;
+typedef bool            LTbool;
 typedef unsigned int    LTuint;
 typedef unsigned short  LTushort;
 typedef unsigned char   LTubyte;

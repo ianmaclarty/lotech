@@ -47,6 +47,38 @@ enum LTType {
 
 const char* ltTypeName(LTType type);
 
+enum LTFieldType {
+    LT_FIELD_TYPE_FLOAT,
+    LT_FIELD_TYPE_INT,
+    LT_FIELD_TYPE_BOOL,
+};
+
+enum LTFieldAccess {
+    LT_ACCESS_FULL,
+    LT_ACCESS_READONLY,
+};
+
+struct LTFieldDescriptor {
+    const char *name;
+    LTFieldType type;
+    int offset;
+    void* getter;
+    void* setter; 
+    LTFieldAccess access;
+};
+
+#define LT_END_FIELD_DESCRIPTOR_LIST {NULL, LT_FIELD_TYPE_INT, 0, NULL, NULL, LT_ACCESS_READONLY}
+#define LT_OFFSETOF(f) ((int)((char*)&f - (char*)this))
+
+struct LTObject;
+
+typedef LTfloat (ltFloatGetter)(LTObject*);
+typedef void    (ltFloatSetter)(LTObject*, LTfloat);
+typedef LTint   (ltIntGetter)(LTObject*);
+typedef void    (ltIntSetter)(LTObject*, LTint);
+typedef LTbool  (ltBoolGetter)(LTObject*);
+typedef void    (ltBoolSetter)(LTObject*, LTbool);
+
 struct LTObject {
     int lua_wrap; // Reference to Lua wrapper table.
     LTType type;
@@ -54,16 +86,21 @@ struct LTObject {
     LTObject(LTType type);
     virtual ~LTObject();
 
-    // For tweening and modification from lua.
+    // These are deprecated...
     virtual bool has_field(const char *field_name);
     virtual LTfloat get_field(const char *field_name);
     virtual void set_field(const char *field_name, LTfloat value);
     virtual LTfloat* field_ptr(const char *field_name);
 
-    // Is this object of a certain type?
-    bool hasType(LTType t);
+    // ... in favour of this:
+    // name must be a Lua string.
+    LTFieldDescriptor *field(const char *name);
+    virtual const LTFieldDescriptor *fields();
 
+    bool hasType(LTType t);
     const char* typeName();
 };
+
+void ltInitObjectFieldCache();
 
 #endif

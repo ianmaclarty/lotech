@@ -1,5 +1,6 @@
 /* Copyright (C) 2010 Ian MacLarty */
 #include "ltcommon.h"
+#include "ltlua.h"
 extern "C" {
 #include "lua.h"
 #include "lauxlib.h"
@@ -88,6 +89,7 @@ LTfloat* LTObject::field_ptr(const char *field_name) {
     return NULL;
 }
 
+
 bool LTObject::hasType(LTType t) {
     if (t == LT_TYPE_OBJECT) {
         return true;
@@ -104,4 +106,65 @@ bool LTObject::hasType(LTType t) {
 
 const char* LTObject::typeName() {
     return ltTypeName(type);
+}
+
+//-------------- field access ---------------------
+
+static LTFieldDescriptor* field_cache[LT_NUM_TYPES];
+
+// This is called whenever the Lua engine is (re)initialized.
+void ltInitObjectFieldCache() {
+    for (int i = 0; i < LT_NUM_TYPES; i++) {
+        if (field_cache[i] != NULL) {
+            delete[] field_cache[i];
+        }
+        field_cache[i] = NULL;
+    }
+}
+
+// This is just used to initialize field_cache the first time.
+struct FieldCacheInit {
+    FieldCacheInit() {
+        for (int i = 0; i < LT_NUM_TYPES; i++) {
+            field_cache[i] = NULL;
+        }
+    }
+};
+
+static FieldCacheInit init_field_cache;
+
+LTFieldDescriptor* LTObject::field(const char *name) {
+    LTFieldDescriptor *cache = field_cache[type];
+    if (cache != NULL) {
+        while (cache->name != NULL) {
+            if (cache->name == name) {
+                return cache;
+            }
+            cache++;
+        }
+        return NULL;
+    }
+    // Cache not set up for this object type.
+    const LTFieldDescriptor *flds = fields();
+    const LTFieldDescriptor *ptr = flds;
+    int num_fields = 0;
+    while (ptr->name != NULL) {
+        num_fields++;
+        ptr++;
+    }
+    cache = new LTFieldDescriptor[num_fields + 1];
+    cache[num_fields].name = NULL;
+    for (int i = 0; i < num_fields; i++) {
+        cache[i] = flds[i];
+        cache[i].name = ltLuaCacheString(cache[i].name);
+    }
+    field_cache[type] = cache;
+    return field(name);
+}
+
+const LTFieldDescriptor* LTObject::fields() {
+    static const LTFieldDescriptor flds[] = {
+        LT_END_FIELD_DESCRIPTOR_LIST
+    };
+    return flds;
 }

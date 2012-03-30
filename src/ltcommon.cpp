@@ -2,6 +2,7 @@
 #include "ltcommon.h"
 
 ct_assert(sizeof(int) == 4);
+ct_assert(sizeof(LTint) == 4);
 ct_assert(sizeof(LTubyte) == 1);
 ct_assert(sizeof(LTushort) == 2);
 ct_assert(sizeof(LTuint32) == 4);

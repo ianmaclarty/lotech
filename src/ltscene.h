@@ -85,6 +85,7 @@ struct LTTranslateNode : LTWrapNode {
     virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
 
     virtual LTfloat* field_ptr(const char *field_name);
+    virtual const LTFieldDescriptor *fields();
 };
 
 struct LTRotateNode : LTWrapNode {

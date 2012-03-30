@@ -44,6 +44,7 @@ extern "C" {
 static lua_State *g_L = NULL;
 static int g_userdata_key_ref = LUA_NOREF;
 static int g_wrefs_ref = LUA_NOREF;
+static int g_string_table_ref = LUA_NOREF;
 static int g_ud_metatables_ref = LUA_NOREF;
 static bool g_suspended = false;
 static bool g_initialized = false;
@@ -3243,6 +3244,11 @@ static void setup_wref_ref() {
     lua_pop(g_L, 1); // pop lt.
 }
 
+static void setup_string_table_ref() {
+    lua_newtable(g_L);
+    g_string_table_ref = luaL_ref(g_L, LUA_REGISTRYINDEX);
+}
+
 static void setup_ud_metatables_ref() {
     lua_getglobal(g_L, "lt");
     lua_getfield(g_L, -1, "metatables");
@@ -3301,6 +3307,7 @@ static void set_globals() {
 }
 
 void ltLuaSetup() {
+    ltInitObjectFieldCache();
     #ifndef LTANDROID
     ltAudioInit();
     #endif
@@ -3322,6 +3329,7 @@ void ltLuaSetup() {
     setup_userdata_key_ref();
     setup_wref_ref();
     setup_ud_metatables_ref();
+    setup_string_table_ref();
     set_globals();
     run_lua_file("config");
     ltRestoreState();
@@ -3656,6 +3664,24 @@ void ltLuaUnpickleState(LTUnpickler *unpickler) {
         }
         lua_setfield(g_L, -2, "state");
         lua_pop(g_L, 1);
+    }
+}
+
+/************************************************************/
+
+const char *ltLuaCacheString(const char *str) {
+    if (g_L != NULL) {
+        lua_rawgeti(g_L, LUA_REGISTRYINDEX, g_string_table_ref);
+        lua_pushstring(g_L, str);
+        const char *lstr = lua_tostring(g_L, -1);
+        lua_pushboolean(g_L, 1);
+        lua_rawset(g_L, -3);
+        lua_pop(g_L, 1); // pop string table.
+        return lstr;
+    } else {
+        ltLog("Unable to cache string '%s', because the Lua engine has not been initialized.", str);
+        ltAbort();
+        return NULL;
     }
 }
 
