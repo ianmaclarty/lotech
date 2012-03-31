@@ -83,8 +83,10 @@ extern "C" {
 #endif
 
 #ifdef LTIOS
-#import <UIKit/UIKit.h>
 #import <objc/runtime.h>
+#import <UIKit/UIKit.h>
+#import <QuartzCore/QuartzCore.h>
+#import <GameKit/GameKit.h>
 #endif
 
 // Lotech.

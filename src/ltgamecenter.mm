@@ -3,7 +3,9 @@
 #include "lt.h"
 
 static bool game_center_available = false;
+#ifdef LTGAMECENTER
 static bool game_center_supported = false;
+#endif
 
 @interface GameCenterLeaderboardViewController : GKLeaderboardViewController 
 @end
@@ -11,13 +13,17 @@ static bool game_center_supported = false;
 @implementation GameCenterLeaderboardViewController
 @end
 
+#ifdef LTGAMECENTER
 static GameCenterLeaderboardViewController *leaderboard_view_controller = nil;
+#endif
 
 @interface GameCenterDelegate: NSObject<GKLeaderboardViewControllerDelegate>
 - (void)leaderboardViewControllerDidFinish:(GKLeaderboardViewController *)viewController;
 @end
 
+#ifdef LTGAMECENTER
 static GameCenterDelegate *gamecenter_delegate = nil;
+#endif
 
 @implementation GameCenterDelegate
 - (void)leaderboardViewControllerDidFinish:(GKLeaderboardViewController *)viewController {

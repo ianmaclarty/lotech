@@ -57,7 +57,7 @@ void ltIOSGarbageCollect() {
 void ltIOSTouchesBegan(NSSet *touches) {
     NSEnumerator *e = [touches objectEnumerator];
     UITouch *touch;
-    while (touch = [e nextObject]) {
+    while ((touch = [e nextObject])) {
         CGPoint pos = [touch locationInView:touch.view];
         ltLuaPointerDown((int)touch, pos.x, pos.y);
     }
@@ -66,7 +66,7 @@ void ltIOSTouchesBegan(NSSet *touches) {
 void ltIOSTouchesMoved(NSSet *touches) {
     NSEnumerator *e = [touches objectEnumerator];
     UITouch *touch;
-    while (touch = [e nextObject]) {
+    while ((touch = [e nextObject])) {
         CGPoint pos = [touch locationInView:touch.view];
         ltLuaPointerMove((int)touch, pos.x, pos.y);
     }
@@ -75,7 +75,7 @@ void ltIOSTouchesMoved(NSSet *touches) {
 void ltIOSTouchesEnded(NSSet *touches) {
     NSEnumerator *e = [touches objectEnumerator];
     UITouch *touch;
-    while (touch = [e nextObject]) {
+    while ((touch = [e nextObject])) {
         CGPoint pos = [touch locationInView:touch.view];
         ltLuaPointerUp((int)touch, pos.x, pos.y);
     }
