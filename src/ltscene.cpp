@@ -297,7 +297,6 @@ LTFieldDescriptor* LTTintNode::fields() {
         {"alpha", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(a), NULL, NULL, LT_ACCESS_FULL},
         LT_END_FIELD_DESCRIPTOR_LIST
     };
-    ltLog("LTTintNode::fields() = %p", flds);
     return flds;
 }
 
@@ -312,7 +311,7 @@ void LTTextureModeNode::draw() {
     ltPopTextureMode();
 }
 
-LTBlendModeNode::LTBlendModeNode(LTBlendMode mode, LTSceneNode *child) : LTWrapNode(child, LT_TYPE_TINT) {
+LTBlendModeNode::LTBlendModeNode(LTBlendMode mode, LTSceneNode *child) : LTWrapNode(child, LT_TYPE_BLENDMODE) {
     LTBlendModeNode::blend_mode = mode;
 }
 

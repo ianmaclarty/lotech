@@ -3711,7 +3711,6 @@ const char *ltLuaCacheString(const char *str) {
         lua_pushboolean(g_L, 1);
         lua_rawset(g_L, -3);
         lua_pop(g_L, 1); // pop string table.
-        //ltLog("ltLuaCacheString(\"%s\") = \"%s\"", str, lstr);
         return lstr;
     } else {
         ltLog("Unable to cache string '%s', because the Lua engine has not been initialized.", str);
