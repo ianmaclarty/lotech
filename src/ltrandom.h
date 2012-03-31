@@ -1,9 +1,4 @@
 /* Copyright (C) 2010 Ian MacLarty */
-#ifndef LTRANDOM_H
-#define LTRANDOM_H
-
-#include "ltcommon.h"
-
 struct LTRandomGenerator : LTObject {
     
     LTRandomGenerator(int seed);
@@ -24,5 +19,3 @@ struct LTRandomGenerator : LTObject {
 };
 
 bool ltRandomQuickCheck();
-
-#endif

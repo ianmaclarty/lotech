@@ -1,4 +1,4 @@
-#include "ltrandom.h"
+#include "lt.h"
 
 // This code is based on Knuth's program available at:
 // http://www-cs-staff.stanford.edu/~uno/programs/rng.c.

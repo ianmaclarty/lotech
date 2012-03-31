@@ -1,18 +1,5 @@
 /* Copyright (C) 2010 Ian MacLarty */
-#include "ltgraphics.h"
-#include "ltopengl.h"
-#include "ltimage.h"
-#ifdef LTIOS
-#   include "ltads.h"
-#   include "ltiosutil.h"
-#endif
-#include "ltprotocol.h"
-
-#include <assert.h>
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include "lt.h"
 
 static LTframebuf main_framebuffer = 0;
 

@@ -1,20 +1,4 @@
-#ifndef LTANDROID
-#ifndef LTMINGW
-#include <glob.h>
-#endif
-#endif
-#ifdef LTANDROID
-#include <android/log.h>
-#endif
-#include <sys/stat.h> 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <cstdarg>
-//#include <fcntl.h>
-
-#include "ltutil.h"
-#include "ltprotocol.h"
+#include "lt.h"
 
 void ltAbort() {
     ltLog("ABORTING.");
@@ -23,7 +7,7 @@ void ltAbort() {
 
 #define MAX_MSG_LEN 2048
 
-void ltLog(const char *fmt, ...) {
+extern void ltLog(const char *fmt, ...) {
     char msg[MAX_MSG_LEN];
     va_list argp;
     va_start(argp, fmt);

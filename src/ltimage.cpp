@@ -1,17 +1,5 @@
 /* Copyright (C) 2010 Ian MacLarty */
-#include "ltimage.h"
-#include "ltresource.h"
-#include "ltopengl.h"
-
-#include <assert.h>
-#include <errno.h>
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include "png.h"
-#include "pngconf.h"
+#include "lt.h"
 
 #define BBCHUNK_KEY "LTBB"
 // w and h are the width and height of the original image.
@@ -760,75 +748,19 @@ LTImage::~LTImage() {
     }
 }
 
-LTfloat* LTImage::field_ptr(const char *field_name) {
-    // None of the image fields are updatable.
-    return NULL;
-}
-
-bool LTImage::has_field(const char *field_name) {
-    if (strcmp(field_name, "width") == 0) {
-        return true;
-    }
-    if (strcmp(field_name, "height") == 0) {
-        return true;
-    }
-    if (strcmp(field_name, "left") == 0) {
-        return true;
-    }
-    if (strcmp(field_name, "bottom") == 0) {
-        return true;
-    }
-    if (strcmp(field_name, "right") == 0) {
-        return true;
-    }
-    if (strcmp(field_name, "top") == 0) {
-        return true;
-    }
-    if (strcmp(field_name, "tex_left") == 0) {
-        return true;
-    }
-    if (strcmp(field_name, "tex_bottom") == 0) {
-        return true;
-    }
-    if (strcmp(field_name, "tex_right") == 0) {
-        return true;
-    }
-    if (strcmp(field_name, "tex_top") == 0) {
-        return true;
-    }
-    return false;
-}
-
-LTfloat LTImage::get_field(const char *field_name) {
-    if (strcmp(field_name, "width") == 0) {
-        return orig_width;
-    }
-    if (strcmp(field_name, "height") == 0) {
-        return orig_height;
-    }
-    if (strcmp(field_name, "left") == 0) {
-        return world_vertices[0];
-    }
-    if (strcmp(field_name, "bottom") == 0) {
-        return world_vertices[5];
-    }
-    if (strcmp(field_name, "right") == 0) {
-        return world_vertices[2];
-    }
-    if (strcmp(field_name, "top") == 0) {
-        return world_vertices[1];
-    }
-    if (strcmp(field_name, "tex_left") == 0) {
-        return tex_coords[0];
-    }
-    if (strcmp(field_name, "tex_bottom") == 0) {
-        return tex_coords[5];
-    }
-    if (strcmp(field_name, "tex_right") == 0) {
-        return tex_coords[2];
-    }
-    if (strcmp(field_name, "tex_top") == 0) {
-        return tex_coords[1];
-    }
-    return 0.0f;
+LTFieldDescriptor* LTImage::fields() {
+    static LTFieldDescriptor flds[] = {
+        {"width", LT_FIELD_TYPE_FLOAT,      LT_OFFSETOF(orig_width), NULL, NULL, LT_ACCESS_READONLY},
+        {"height", LT_FIELD_TYPE_FLOAT,     LT_OFFSETOF(orig_height), NULL, NULL, LT_ACCESS_READONLY},
+        {"left", LT_FIELD_TYPE_FLOAT,       LT_OFFSETOF(world_vertices[0]), NULL, NULL, LT_ACCESS_READONLY},
+        {"bottom", LT_FIELD_TYPE_FLOAT,     LT_OFFSETOF(world_vertices[5]), NULL, NULL, LT_ACCESS_READONLY},
+        {"right", LT_FIELD_TYPE_FLOAT,      LT_OFFSETOF(world_vertices[2]), NULL, NULL, LT_ACCESS_READONLY},
+        {"top", LT_FIELD_TYPE_FLOAT,        LT_OFFSETOF(world_vertices[1]), NULL, NULL, LT_ACCESS_READONLY},
+        {"tex_left", LT_FIELD_TYPE_FLOAT,   LT_OFFSETOF(tex_coords[0]), NULL, NULL, LT_ACCESS_READONLY},
+        {"tex_bottom", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(tex_coords[5]), NULL, NULL, LT_ACCESS_READONLY},
+        {"tex_right", LT_FIELD_TYPE_FLOAT,  LT_OFFSETOF(tex_coords[2]), NULL, NULL, LT_ACCESS_READONLY},
+        {"tex_top", LT_FIELD_TYPE_FLOAT,    LT_OFFSETOF(tex_coords[1]), NULL, NULL, LT_ACCESS_READONLY},
+        LT_END_FIELD_DESCRIPTOR_LIST
+    };
+    return flds;
 }

@@ -1,6 +1,4 @@
-#include "ltrendertarget.h"
-#include "ltutil.h"
-#include "ltopengl.h"
+#include "lt.h"
 
 LTRenderTarget::LTRenderTarget(int w, int h, 
         LTfloat vp_x1, LTfloat vp_y1, LTfloat vp_x2, LTfloat vp_y2,

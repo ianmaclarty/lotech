@@ -1,42 +1,6 @@
 /* Copyright (C) 2010, 2011 Ian MacLarty */
 
-#include <string.h>
-#include <errno.h>
-
-#include <cfloat>
-#include <map>
-
-extern "C" {
-#include "lua.h"
-#include "lauxlib.h"
-#include "lualib.h"
-}
-
-#include "Box2D/Box2D.h"
-#include "ltads.h"
-#include "ltaudio.h"
-#include "lt3d.h"
-#include "ltgraphics.h"
-#include "ltharness.h"
-#include "ltimage.h"
-#include "ltiosutil.h"
-#include "ltosxutil.h"
-#include "ltgamecenter.h"
-#include "ltlua.h"
-#include "ltparticles.h"
-#include "ltphysics.h"
-#include "ltresource.h"
-#include "ltstate.h"
-#include "ltstore.h"
-#include "lttext.h"
-#include "lttween.h"
-#include "ltutil.h"
-#include "ltvector.h"
-#include "ltrendertarget.h"
-#include "ltopengl.h"
-#include "ltrandom.h"
-
-#include "lteasefunchash.h"
+#include "lt.h"
 
 #define LT_USERDATA_MT "ltud"
 #define LT_USERDATA_KEY "_ud"
@@ -158,19 +122,50 @@ static LTObject* get_object(lua_State *L, int index, LTType type) {
 
 static int lt_SetObjectField(lua_State *L) {
     const char *fname;
-    LTfloat val;
     LTObject *obj = get_object(L, 1, LT_TYPE_OBJECT);
     fname = luaL_checkstring(L, 2);
-    val = (LTfloat)luaL_checknumber(L, 3);
-    obj->set_field(fname, val);
+    LTFieldDescriptor *field = obj->field(fname);
+    if (field != NULL) {
+        switch (field->type) {
+            case LT_FIELD_TYPE_FLOAT: {
+                LTfloat val = (LTfloat)luaL_checknumber(L, 3);
+                obj->setFloatField(field, val);
+                break;
+            }
+            case LT_FIELD_TYPE_INT: {
+                LTint val = (LTint)luaL_checkinteger(L, 3);
+                obj->setIntField(field, val);
+                break;
+            }
+            case LT_FIELD_TYPE_BOOL: {
+                LTbool val = (LTbool)lua_toboolean(L, 3);
+                obj->setBoolField(field, val);
+                break;
+            }
+        }
+    }
     return 0;
 }
     
 static int lt_GetObjectField(lua_State *L) {
     LTObject *obj = get_object(L, 1, LT_TYPE_OBJECT);
     const char *fname = luaL_checkstring(L, 2);
-    if (obj->has_field(fname)) {
-        lua_pushnumber(L, obj->get_field(fname));
+    LTFieldDescriptor *field = obj->field(fname);
+    if (field != NULL) {
+        switch (field->type) {
+            case LT_FIELD_TYPE_FLOAT: {
+                lua_pushnumber(L, obj->getFloatField(field));
+                break;
+            }
+            case LT_FIELD_TYPE_INT: {
+                lua_pushinteger(L, obj->getIntField(field));
+                break;
+            }
+            case LT_FIELD_TYPE_BOOL: {
+                lua_pushboolean(L, obj->getBoolField(field));
+                break;
+            }
+        }
         return 1;
     } else {
         lua_pushnil(L);
@@ -289,11 +284,25 @@ static void set_object_fields_from_table(lua_State *L, LTObject *obj, int table)
     }
     while (lua_next(L, table) != 0) {
         int key_type = lua_type(L, -2);
-        int val_type = lua_type(L, -1);
-        if (key_type == LUA_TSTRING && val_type == LUA_TNUMBER) {
+        if (key_type == LUA_TSTRING) {
             const char *key = lua_tostring(L, -2);
-            LTfloat val = lua_tonumber(L, -1);
-            obj->set_field(key, val);
+            LTFieldDescriptor *field = obj->field(key);
+            if (field != NULL) {
+                switch (field->type) {
+                    case LT_FIELD_TYPE_FLOAT: {
+                        obj->setFloatField(field, lua_tonumber(L, -1));
+                        break;
+                    }
+                    case LT_FIELD_TYPE_INT: {
+                        obj->setIntField(field, lua_tointeger(L, -1));
+                        break;
+                    }
+                    case LT_FIELD_TYPE_BOOL: {
+                        obj->setBoolField(field, lua_toboolean(L, -1));
+                        break;
+                    }
+                }
+            }
         }
         lua_pop(L, 1);
     }
@@ -1148,16 +1157,17 @@ static int lt_RenderTarget(lua_State *L) {
 
 static int lt_MakeNativeTween(lua_State *L) {
     LTObject *obj = get_object(L, 1, LT_TYPE_OBJECT);
-    const char *field = lua_tostring(L, 2);
-    if (field == NULL) {
+    const char *fname = lua_tostring(L, 2);
+    if (fname == NULL) {
         lua_pushnil(L);
         return 1;
     }
-    LTfloat *field_ptr = obj->field_ptr(field);
-    if (field_ptr == NULL) {
+    LTFieldDescriptor *field = obj->field(fname);
+    if (field == NULL || field->offset < 0 || field->type != LT_FIELD_TYPE_FLOAT || field->access == LT_ACCESS_READONLY) {
         lua_pushnil(L);
         return 1;
     }
+    LTfloat *fptr = (LTfloat*)((char*)obj + field->offset);
     LTfloat delay = luaL_checknumber(L, 3);
     LTfloat value = luaL_checknumber(L, 4);
     LTfloat time = luaL_checknumber(L, 5);
@@ -1171,14 +1181,38 @@ static int lt_MakeNativeTween(lua_State *L) {
             lua_pushnil(L);
             return 1;
         }
-        LTEaseFuncInfo *ease_func_info = LTEaseFunc_lookup(ease_func_str, len);
-        if (ease_func_info == NULL) {
+        if (strcmp(ease_func_str, "in") == 0) {
+            ease_func = ltEase_in;
+        } else if (strcmp(ease_func_str, "out") == 0) {
+            ease_func = ltEase_out;
+        } else if (strcmp(ease_func_str, "inout") == 0) {
+            ease_func = ltEase_inout;
+        } else if (strcmp(ease_func_str, "zoomin") == 0) {
+            ease_func = ltEase_zoomin;
+        } else if (strcmp(ease_func_str, "zoomout") == 0) {
+            ease_func = ltEase_zoomout;
+        } else if (strcmp(ease_func_str, "accel") == 0) {
+            ease_func = ltEase_accel;
+        } else if (strcmp(ease_func_str, "decel") == 0) {
+            ease_func = ltEase_decel;
+        } else if (strcmp(ease_func_str, "bounce") == 0) {
+            ease_func = ltEase_bounce;
+        } else if (strcmp(ease_func_str, "revolve") == 0) {
+            ease_func = ltEase_revolve;
+        } else if (strcmp(ease_func_str, "backin") == 0) {
+            ease_func = ltEase_backin;
+        } else if (strcmp(ease_func_str, "backout") == 0) {
+            ease_func = ltEase_backout;
+        } else if (strcmp(ease_func_str, "linear") == 0) {
+            ease_func = ltEase_linear;
+        } else if (strcmp(ease_func_str, "elastic") == 0) {
+            ease_func = ltEase_elastic;
+        } else {
             return luaL_error(L, "Invalid easing function: ", ease_func_str);
         }
-        ease_func = ease_func_info->func;
     }
     LTTween *tween = (LTTween*)lua_newuserdata(L, sizeof(LTTween));
-    ltInitTween(tween, obj, field_ptr, value, time, delay, ease_func);
+    ltInitTween(tween, obj, fptr, value, time, delay, ease_func);
     return 1;
 }
 
@@ -3677,6 +3711,7 @@ const char *ltLuaCacheString(const char *str) {
         lua_pushboolean(g_L, 1);
         lua_rawset(g_L, -3);
         lua_pop(g_L, 1); // pop string table.
+        //ltLog("ltLuaCacheString(\"%s\") = \"%s\"", str, lstr);
         return lstr;
     } else {
         ltLog("Unable to cache string '%s', because the Lua engine has not been initialized.", str);

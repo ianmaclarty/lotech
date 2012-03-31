@@ -1,3 +1,5 @@
+#include "lt.h"
+
 #ifdef LTGLES1
 #define GLEXT(f) f##OES
 #define GL_EXT(f) f##_OES
@@ -13,8 +15,6 @@
 #ifndef GL_DEPTH_COMPONENT16_EXT
 #define GL_DEPTH_COMPONENT16_EXT GL_DEPTH_COMPONENT16
 #endif
-
-#include "ltopengl.h"
 
 ct_assert(sizeof(GLfloat) == 4);
 

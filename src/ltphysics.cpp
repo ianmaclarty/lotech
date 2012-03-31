@@ -1,9 +1,6 @@
 /* Copyright (C) 2010 Ian MacLarty */
 
-#include <assert.h>
-
-#include "ltphysics.h"
-#include "ltgraphics.h"
+#include "lt.h"
 
 LTWorld::LTWorld(b2Vec2 gravity, bool doSleep, LTfloat scaling) : LTObject(LT_TYPE_WORLD) {
     world = new b2World(gravity);

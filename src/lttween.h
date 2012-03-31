@@ -1,9 +1,4 @@
 /* Copyright (C) 2010 Ian MacLarty */
-#ifndef LTTWEEN_H
-#define LTTWEEN_H
-
-#include "ltcommon.h"
-#include "ltevent.h"
 
 typedef LTfloat(*LTEaseFunc)(LTfloat);
 
@@ -56,5 +51,3 @@ LTfloat ltEase_decel    (LTfloat t);
 LTfloat ltEase_zoomin   (LTfloat t);
 LTfloat ltEase_zoomout  (LTfloat t);
 LTfloat ltEase_revolve  (LTfloat t);
-
-#endif

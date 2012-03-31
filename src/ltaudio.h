@@ -1,21 +1,4 @@
 /* Copyright (C) 2010-2011 Ian MacLarty */
-#ifndef LTAUDIO_H
-#define LTAUDIO_H
-
-#include <stdlib.h>
-#ifdef LTLINUX
-#include <AL/al.h>
-#include <AL/alc.h>
-#elif LTMINGW
-#include <AL/al.h>
-#include <AL/alc.h>
-#else
-#include <OpenAL/al.h>
-#include <OpenAL/alc.h>
-#endif
-
-#include "ltcommon.h"
-
 void ltAudioInit();
 void ltAudioTeardown();
 void ltAudioSuspend();
@@ -58,9 +41,7 @@ struct LTTrack : LTObject {
     int  numPendingSamples(); // numSamples() - numProcessedSamples()
     void dequeueProcessedSamples(int n);
 
-    virtual bool has_field(const char *field_name);
-    virtual LTfloat get_field(const char *field_name);
-    virtual void set_field(const char *field_name, LTfloat value);
+    virtual LTFieldDescriptor* fields();
 };
 
 // name is copied.
@@ -68,5 +49,3 @@ LTAudioSample *ltReadAudioSample(const char *path, const char *name);
 
 // Collect temporary sources created for oneoff buffer playing.
 void ltAudioGC();
-
-#endif

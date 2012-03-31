@@ -1,9 +1,4 @@
 /* Copyright (C) 2010 Ian MacLarty */
-#ifndef LTINPUT_H
-#define LTINPUT_H
-
-#include "ltcommon.h"
-
 enum LTKey {
     LT_KEY_0,
     LT_KEY_1,
@@ -63,5 +58,3 @@ enum LTKey {
     LT_KEY_ESC,
     LT_KEY_UNKNOWN
 };
-
-#endif

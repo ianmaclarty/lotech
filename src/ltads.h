@@ -1,7 +1,5 @@
 /* Copyright (C) 2010 Ian MacLarty */
 #ifdef LTIOS
-#ifndef LTADS_H
-#define LTADS_H
 
 enum LTAdPlacement {
     LT_AD_TOP,
@@ -10,5 +8,4 @@ enum LTAdPlacement {
 
 void ltShowAds(LTAdPlacement placement);
 
-#endif
 #endif

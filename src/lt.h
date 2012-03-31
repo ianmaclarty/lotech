@@ -1,27 +1,99 @@
 /* Copyright (C) 2010-2011 Ian MacLarty */
-#ifndef LT_H
-#define LT_H
 
+#include <string.h>
+#include <errno.h>
+#include <cfloat>
+#include <list>
+#include <map>
+#include <math.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#if !defined(LTANDROID) && !defined(LTMINGW)
+#include <glob.h>
+#endif
+
+// OpenGL
+#ifdef LTLINUX
+    #define GLEW_STATIC 1
+    #include <GL/glew.h>
+    #include <GL/glfw.h>
+#endif
+#ifdef LTMINGW
+    #define GLEW_STATIC 1
+    #include <GL/glew.h>
+    #include <GL/glfw.h>
+#endif
+#ifdef LTIOS
+    #include <OpenGLES/ES1/gl.h>
+    #include <OpenGLES/ES1/glext.h>
+#endif
+#ifdef LTOSX
+    //#include <OpenGL/GL.h>
+    #define GLEW_STATIC 1
+    #include <GL/glew.h>
+    #include <GL/glfw.h>
+#endif
+#ifdef LTANDROID
+    #include <GLES/gl.h>
+#endif
+
+// OpenAL
+#ifdef LTLINUX
+#include <AL/al.h>
+#include <AL/alc.h>
+#elif LTMINGW
+#include <AL/al.h>
+#include <AL/alc.h>
+#else
+#include <OpenAL/al.h>
+#include <OpenAL/alc.h>
+#endif
+
+// Box2D
+#include "Box2D/Box2D.h"
+
+// libPNG
+extern "C" {
+#include "png.h"
+#include "pngconf.h"
+}
+
+// Lua.
+extern "C" {
+#include "lua.h"
+#include "lauxlib.h"
+#include "lualib.h"
+}
+
+// Android specific headers.
+#ifdef LTANDROID
+#include <android/asset_manager.h>
+#include <android/log.h>
+#endif
+
+// Lotech.
 #include "ltcommon.h"
-#include "lt3d.h"
+#include "ltobject.h"
+#include "ltopengl.h"
 #include "ltevent.h"
-#include "ltgraphics.h"
-#include "ltharness.h"
+#include "ltscene.h"
 #include "ltimage.h"
+#include "ltgraphics.h"
+#include "ltpickle.h"
+#include "lt3d.h"
 #include "ltinput.h"
-#include "ltios.h"
-#include "ltiosutil.h"
-#include "ltgamecenter.h"
 #include "ltlua.h"
 #include "ltnet.h"
-#include "ltosx.h"
-#include "ltosxutil.h"
 #include "ltphysics.h"
-#include "ltpickle.h"
 #include "ltprotocol.h"
 #include "ltrandom.h"
 #include "ltresource.h"
-#include "ltscene.h"
 #include "ltstate.h"
 #include "lttime.h"
 #include "lttween.h"
@@ -29,5 +101,14 @@
 #include "ltaudio.h"
 #include "ltvector.h"
 #include "ltrendertarget.h"
+#include "ltparticles.h"
+#include "lttext.h"
+#include "ltstore.h"
 
-#endif
+#include "ltgamecenter.h"
+#include "ltios.h"
+#include "ltiosutil.h"
+
+#include "ltosx.h"
+#include "ltosxutil.h"
+

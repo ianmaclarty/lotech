@@ -1,18 +1,5 @@
 /* Copyright (C) 2011 Ian MacLarty */
-#ifndef LTNET_H
-#define LTNET_H
-
 #ifndef LTMINGW
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <errno.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <fcntl.h>
 
 enum LTServerState {
     LT_SERVER_STATE_INITIALIZED,
@@ -81,7 +68,5 @@ struct LTClientConnection {
 
     const char *stateStr();
 };
-
-#endif
 
 #endif

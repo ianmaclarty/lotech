@@ -1,13 +1,9 @@
 /* Copyright (C) 2010-2011 Ian MacLarty */
-#ifndef LTUTIL_H
-#define LTUTIL_H
-
-#include <stdlib.h>
 
 #define LT_TRACE ltLog("%s:%d %s", __FILE__, __LINE__, __PRETTY_FUNCTION__)
 
 void ltAbort(); // Use only for internal errors.
-void ltLog(const char *fmt, ...);
+extern void ltLog(const char *fmt, ...);
 bool ltFileExists(const char *file);
 
 // Returns an array of null separated matched paths.  The last entry is two
@@ -38,5 +34,3 @@ static inline float ltRand0_1() {
     return (float)random() / (float)(RAND_MAX);
 #endif
 }
-
-#endif

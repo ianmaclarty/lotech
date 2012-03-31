@@ -1,12 +1,4 @@
 /* Copyright (C) 2012 Ian MacLarty */
-#ifndef LTCOMMON_H
-#define LTCOMMON_H
-
-#include <stdlib.h>
-#include <stdio.h>
-
-#include "ltutil.h"
-
 #define ASSERT_CONCAT_(a, b) a##b
 #define ASSERT_CONCAT(a, b) ASSERT_CONCAT_(a, b)
 #define ct_assert(e) enum { ASSERT_CONCAT(assert_line_, __LINE__) = 1/(!!(e)) }
@@ -31,7 +23,3 @@ typedef float           LTsecs;
 typedef float           LTdegrees;
 
 typedef LTuint32        LTpixel;
-
-#include "ltobject.h"
-
-#endif

@@ -1,4 +1,6 @@
 #ifdef LTIOS
+#import <UIKit/UIKit.h>
+
 #include "ltads.h"
 #include "ltios.h"
 #include "ltcommon.h"

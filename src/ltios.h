@@ -1,9 +1,5 @@
 /* Copyright (C) 2010 Ian MacLarty */
 #ifdef LTIOS
-#ifndef LTIOS_H
-#define LTIOS_H
-
-#import <UIKit/UIKit.h>
 
 void ltIOSInit();
 void ltIOSSetViewController(UIViewController *view_c);
@@ -27,5 +23,4 @@ UIViewController *ltIOSGetViewController();
 void ltIOSResignActive();
 void ltIOSBecomeActive();
 
-#endif
 #endif

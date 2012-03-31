@@ -1,4 +1,6 @@
 #ifdef LTOSX
+#import <AppKit/AppKit.h>
+
 #include "ltgraphics.h"
 #include "ltosx.h"
 #include "ltosxutil.h"

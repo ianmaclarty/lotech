@@ -1,9 +1,5 @@
 /* Copyright (C) 2011 Ian MacLarty */
 #ifdef LTOSX
-#ifndef LTOSX_H
-#define LTOSX_H
-
-#import <AppKit/AppKit.h>
 
 void ltOSXInit();
 void ltOSXTeardown();
@@ -22,5 +18,5 @@ void ltOSXSaveState();
 
 void ltOSXPreContextChange();
 void ltOSXPostContextChange();
-#endif
+
 #endif

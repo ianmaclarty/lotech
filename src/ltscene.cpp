@@ -1,10 +1,6 @@
 /* Copyright (C) 2010 Ian MacLarty */
 
-#include <math.h>
-
-#include "ltimage.h"
-#include "ltscene.h"
-#include "ltopengl.h"
+#include "lt.h"
 
 LTSceneNode::LTSceneNode(LTType type) : LTObject(type) {
     event_handlers = NULL;
@@ -62,10 +58,6 @@ bool LTWrapNode::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *eve
     } else {
         return true;
     }
-}
-
-LTfloat* LTWrapNode::field_ptr(const char *field_name) {
-    return NULL;
 }
 
 LTLayer::LTLayer() : LTSceneNode(LT_TYPE_LAYER) {
@@ -192,21 +184,8 @@ bool LTTranslateNode::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent
     }
 }
 
-LTfloat* LTTranslateNode::field_ptr(const char *field_name) {
-    if (strcmp(field_name, "x") == 0) {
-        return &x;
-    }
-    if (strcmp(field_name, "y") == 0) {
-        return &y;
-    }
-    if (strcmp(field_name, "z") == 0) {
-        return &z;
-    }
-    return NULL;
-}
-
-const LTFieldDescriptor* LTTranslateNode::fields() {
-    static const LTFieldDescriptor flds[] = {
+LTFieldDescriptor* LTTranslateNode::fields() {
+    static LTFieldDescriptor flds[] = {
         {"x", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(x), NULL, NULL, LT_ACCESS_FULL},
         {"y", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(y), NULL, NULL, LT_ACCESS_FULL},
         {"z", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(z), NULL, NULL, LT_ACCESS_FULL},
@@ -242,11 +221,12 @@ bool LTRotateNode::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *e
     }
 }
 
-LTfloat* LTRotateNode::field_ptr(const char *field_name) {
-    if (strcmp(field_name, "angle") == 0) {
-        return &angle;
-    }
-    return NULL;
+LTFieldDescriptor* LTRotateNode::fields() {
+    static LTFieldDescriptor flds[] = {
+        {"angle", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(angle), NULL, NULL, LT_ACCESS_FULL},
+        LT_END_FIELD_DESCRIPTOR_LIST
+    };
+    return flds;
 }
 
 LTScaleNode::LTScaleNode(LTfloat sx, LTfloat sy, LTfloat sz, LTfloat s, LTSceneNode *child)
@@ -277,20 +257,15 @@ bool LTScaleNode::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *ev
     }
 }
 
-LTfloat* LTScaleNode::field_ptr(const char *field_name) {
-    if (strcmp(field_name, "scale") == 0) {
-        return &s;
-    }
-    if (strcmp(field_name, "scale_x") == 0) {
-        return &sx;
-    }
-    if (strcmp(field_name, "scale_y") == 0) {
-        return &sy;
-    }
-    if (strcmp(field_name, "scale_z") == 0) {
-        return &sz;
-    }
-    return NULL;
+LTFieldDescriptor* LTScaleNode::fields() {
+    static LTFieldDescriptor flds[] = {
+        {"scale", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(s), NULL, NULL, LT_ACCESS_FULL},
+        {"scale_x", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(sx), NULL, NULL, LT_ACCESS_FULL},
+        {"scale_y", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(sy), NULL, NULL, LT_ACCESS_FULL},
+        {"scale_z", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(sz), NULL, NULL, LT_ACCESS_FULL},
+        LT_END_FIELD_DESCRIPTOR_LIST
+    };
+    return flds;
 }
 
 LTTintNode::LTTintNode(LTfloat r, LTfloat g, LTfloat b, LTfloat a, LTSceneNode *child) : LTWrapNode(child, LT_TYPE_TINT) {
@@ -314,20 +289,16 @@ bool LTTintNode::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *eve
     }
 }
 
-LTfloat* LTTintNode::field_ptr(const char *field_name) {
-    if (strcmp(field_name, "red") == 0) {
-        return &r;
-    }
-    if (strcmp(field_name, "green") == 0) {
-        return &g;
-    }
-    if (strcmp(field_name, "blue") == 0) {
-        return &b;
-    }
-    if (strcmp(field_name, "alpha") == 0) {
-        return &a;
-    }
-    return NULL;
+LTFieldDescriptor* LTTintNode::fields() {
+    static LTFieldDescriptor flds[] = {
+        {"red", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(r), NULL, NULL, LT_ACCESS_FULL},
+        {"green", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(g), NULL, NULL, LT_ACCESS_FULL},
+        {"blue", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(b), NULL, NULL, LT_ACCESS_FULL},
+        {"alpha", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(a), NULL, NULL, LT_ACCESS_FULL},
+        LT_END_FIELD_DESCRIPTOR_LIST
+    };
+    ltLog("LTTintNode::fields() = %p", flds);
+    return flds;
 }
 
 LTTextureModeNode::LTTextureModeNode(LTTextureMode mode, LTSceneNode *child)
@@ -365,20 +336,15 @@ void LTLineNode::draw() {
     ltDrawArrays(LT_DRAWMODE_LINE_STRIP, 0, 2);
 }
 
-LTfloat* LTLineNode::field_ptr(const char *field_name) {
-    if (strcmp(field_name, "x1") == 0) {
-        return &x1;
-    }
-    if (strcmp(field_name, "y1") == 0) {
-        return &y1;
-    }
-    if (strcmp(field_name, "x2") == 0) {
-        return &x2;
-    }
-    if (strcmp(field_name, "y2") == 0) {
-        return &y2;
-    }
-    return NULL;
+LTFieldDescriptor* LTLineNode::fields() {
+    static LTFieldDescriptor flds[] = {
+        {"x1", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(x1), NULL, NULL, LT_ACCESS_FULL},
+        {"y1", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(y1), NULL, NULL, LT_ACCESS_FULL},
+        {"x2", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(x2), NULL, NULL, LT_ACCESS_FULL},
+        {"y2", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(y2), NULL, NULL, LT_ACCESS_FULL},
+        LT_END_FIELD_DESCRIPTOR_LIST
+    };
+    return flds;
 }
 
 LTTriangleNode::LTTriangleNode(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2, LTfloat x3, LTfloat y3) : LTSceneNode(LT_TYPE_TRIANGLE) {
@@ -397,26 +363,17 @@ void LTTriangleNode::draw() {
     ltDrawArrays(LT_DRAWMODE_TRIANGLE_FAN, 0, 3);
 }
 
-LTfloat* LTTriangleNode::field_ptr(const char *field_name) {
-    if (strcmp(field_name, "x1") == 0) {
-        return &x1;
-    }
-    if (strcmp(field_name, "y1") == 0) {
-        return &y1;
-    }
-    if (strcmp(field_name, "x2") == 0) {
-        return &x2;
-    }
-    if (strcmp(field_name, "y2") == 0) {
-        return &y2;
-    }
-    if (strcmp(field_name, "x3") == 0) {
-        return &x3;
-    }
-    if (strcmp(field_name, "y3") == 0) {
-        return &y3;
-    }
-    return NULL;
+LTFieldDescriptor* LTTriangleNode::fields() {
+    static LTFieldDescriptor flds[] = {
+        {"x1", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(x1), NULL, NULL, LT_ACCESS_FULL},
+        {"y1", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(y1), NULL, NULL, LT_ACCESS_FULL},
+        {"x2", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(x2), NULL, NULL, LT_ACCESS_FULL},
+        {"y2", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(y2), NULL, NULL, LT_ACCESS_FULL},
+        {"x3", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(x3), NULL, NULL, LT_ACCESS_FULL},
+        {"y3", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(y3), NULL, NULL, LT_ACCESS_FULL},
+        LT_END_FIELD_DESCRIPTOR_LIST
+    };
+    return flds;
 }
 
 LTRectNode::LTRectNode(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2) : LTSceneNode(LT_TYPE_RECT) {
@@ -440,20 +397,15 @@ void LTRectNode::draw() {
     ltDrawArrays(LT_DRAWMODE_TRIANGLE_FAN, 0, 4);
 }
 
-LTfloat* LTRectNode::field_ptr(const char *field_name) {
-    if (strcmp(field_name, "x1") == 0) {
-        return &x1;
-    }
-    if (strcmp(field_name, "y1") == 0) {
-        return &y1;
-    }
-    if (strcmp(field_name, "x2") == 0) {
-        return &x2;
-    }
-    if (strcmp(field_name, "y2") == 0) {
-        return &y2;
-    }
-    return NULL;
+LTFieldDescriptor* LTRectNode::fields() {
+    static LTFieldDescriptor flds[] = {
+        {"x1", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(x1), NULL, NULL, LT_ACCESS_FULL},
+        {"y1", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(y1), NULL, NULL, LT_ACCESS_FULL},
+        {"x2", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(x2), NULL, NULL, LT_ACCESS_FULL},
+        {"y2", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(y2), NULL, NULL, LT_ACCESS_FULL},
+        LT_END_FIELD_DESCRIPTOR_LIST
+    };
+    return flds;
 }
 
 LTHitFilter::LTHitFilter(LTfloat left, LTfloat bottom, LTfloat right, LTfloat top, LTSceneNode *child) : LTWrapNode(child, LT_TYPE_HITFILTER) {
@@ -479,20 +431,15 @@ bool LTHitFilter::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *ev
     }
 }
 
-LTfloat* LTHitFilter::field_ptr(const char *field_name) {
-    if (strcmp(field_name, "left") == 0) {
-        return &left;
-    }
-    if (strcmp(field_name, "bottom") == 0) {
-        return &bottom;
-    }
-    if (strcmp(field_name, "right") == 0) {
-        return &right;
-    }
-    if (strcmp(field_name, "top") == 0) {
-        return &top;
-    }
-    return NULL;
+LTFieldDescriptor* LTHitFilter::fields() {
+    static LTFieldDescriptor flds[] = {
+        {"left", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(left), NULL, NULL, LT_ACCESS_FULL},
+        {"bottom", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(bottom), NULL, NULL, LT_ACCESS_FULL},
+        {"right", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(right), NULL, NULL, LT_ACCESS_FULL},
+        {"top", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(top), NULL, NULL, LT_ACCESS_FULL},
+        LT_END_FIELD_DESCRIPTOR_LIST
+    };
+    return flds;
 }
 
 LTDownFilter::LTDownFilter(LTfloat left, LTfloat bottom, LTfloat right, LTfloat top, LTSceneNode *child)
@@ -519,18 +466,14 @@ bool LTDownFilter::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *e
     }
 }
 
-LTfloat* LTDownFilter::field_ptr(const char *field_name) {
-    if (strcmp(field_name, "left") == 0) {
-        return &left;
-    }
-    if (strcmp(field_name, "bottom") == 0) {
-        return &bottom;
-    }
-    if (strcmp(field_name, "right") == 0) {
-        return &right;
-    }
-    if (strcmp(field_name, "top") == 0) {
-        return &top;
-    }
-    return NULL;
+LTFieldDescriptor* LTDownFilter::fields() {
+    static LTFieldDescriptor flds[] = {
+        {"left", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(left), NULL, NULL, LT_ACCESS_FULL},
+        {"bottom", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(bottom), NULL, NULL, LT_ACCESS_FULL},
+        {"right", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(right), NULL, NULL, LT_ACCESS_FULL},
+        {"top", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(top), NULL, NULL, LT_ACCESS_FULL},
+        LT_END_FIELD_DESCRIPTOR_LIST
+    };
+    return flds;
 }
+

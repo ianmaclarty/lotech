@@ -1,7 +1,4 @@
-#include "ltresource.h"
-#include "ltutil.h"
-
-#include <string.h>
+#include "lt.h"
 
 #ifdef LTANDROID
 

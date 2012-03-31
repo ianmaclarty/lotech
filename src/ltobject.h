@@ -1,6 +1,4 @@
 /* Copyright (C) 2012 Ian MacLarty */
-#ifndef LTOBJECT_H
-#define LTOBJECT_H
 
 // Used for reflection.  Any subclasses of LTObject that can be used
 // in Lua code should have an entry in this enumeration.
@@ -68,16 +66,16 @@ struct LTFieldDescriptor {
 };
 
 #define LT_END_FIELD_DESCRIPTOR_LIST {NULL, LT_FIELD_TYPE_INT, 0, NULL, NULL, LT_ACCESS_READONLY}
-#define LT_OFFSETOF(f) ((int)((char*)&f - (char*)this))
+#define LT_OFFSETOF(f) ((int)((char*)&(f) - (char*)this))
 
 struct LTObject;
 
-typedef LTfloat (ltFloatGetter)(LTObject*);
-typedef void    (ltFloatSetter)(LTObject*, LTfloat);
-typedef LTint   (ltIntGetter)(LTObject*);
-typedef void    (ltIntSetter)(LTObject*, LTint);
-typedef LTbool  (ltBoolGetter)(LTObject*);
-typedef void    (ltBoolSetter)(LTObject*, LTbool);
+typedef LTfloat (*LTFloatGetter)(LTObject*);
+typedef void    (*LTFloatSetter)(LTObject*, LTfloat);
+typedef LTint   (*LTIntGetter)(LTObject*);
+typedef void    (*LTIntSetter)(LTObject*, LTint);
+typedef LTbool  (*LTBoolGetter)(LTObject*);
+typedef void    (*LTBoolSetter)(LTObject*, LTbool);
 
 struct LTObject {
     int lua_wrap; // Reference to Lua wrapper table.
@@ -86,21 +84,72 @@ struct LTObject {
     LTObject(LTType type);
     virtual ~LTObject();
 
-    // These are deprecated...
-    virtual bool has_field(const char *field_name);
-    virtual LTfloat get_field(const char *field_name);
-    virtual void set_field(const char *field_name, LTfloat value);
-    virtual LTfloat* field_ptr(const char *field_name);
-
-    // ... in favour of this:
     // name must be a Lua string.
     LTFieldDescriptor *field(const char *name);
-    virtual const LTFieldDescriptor *fields();
+    virtual LTFieldDescriptor *fields();
+
+    inline LTfloat getFloatField(LTFieldDescriptor *field) {
+        if (field->offset >= 0) {
+            return *((LTfloat*)((char*)this + field->offset));
+        } else {
+            LTFloatGetter getter = (LTFloatGetter)field->getter;
+            return getter(this);
+        }
+    }
+
+    inline void setFloatField(LTFieldDescriptor *field, LTfloat val) {
+        if (field->access == LT_ACCESS_FULL) {
+            if (field->offset >= 0) {
+                *((LTfloat*)((char*)this + field->offset)) = val;
+            } else {
+                LTFloatSetter setter = (LTFloatSetter)field->setter;
+                setter(this, val);
+            }
+        }
+    }
+
+    inline LTint getIntField(LTFieldDescriptor *field) {
+        if (field->offset >= 0) {
+            return *((LTint*)((char*)this + field->offset));
+        } else {
+            LTIntGetter getter = (LTIntGetter)field->getter;
+            return getter(this);
+        }
+    }
+
+    inline void setIntField(LTFieldDescriptor *field, LTint val) {
+        if (field->access == LT_ACCESS_FULL) {
+            if (field->offset >= 0) {
+                *((LTint*)((char*)this + field->offset)) = val;
+            } else {
+                LTIntSetter setter = (LTIntSetter)field->setter;
+                setter(this, val);
+            }
+        }
+    }
+
+    inline LTbool getBoolField(LTFieldDescriptor *field) {
+        if (field->offset >= 0) {
+            return *((LTbool*)((char*)this + field->offset));
+        } else {
+            LTBoolGetter getter = (LTBoolGetter)field->getter;
+            return getter(this);
+        }
+    }
+
+    inline void setBoolField(LTFieldDescriptor *field, LTbool val) {
+        if (field->access == LT_ACCESS_FULL) {
+            if (field->offset >= 0) {
+                *((LTbool*)((char*)this + field->offset)) = val;
+            } else {
+                LTBoolSetter setter = (LTBoolSetter)field->setter;
+                setter(this, val);
+            }
+        }
+    }
 
     bool hasType(LTType t);
     const char* typeName();
 };
 
 void ltInitObjectFieldCache();
-
-#endif

@@ -1,5 +1,4 @@
-#include "ltlua.h"
-#include "ltstore.h"
+#include "lt.h"
 
 void ltSaveState() {
     #ifndef LTANDROID

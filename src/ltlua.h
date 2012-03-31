@@ -1,11 +1,4 @@
 /* Copyright (C) 2010 Ian MacLarty */
-#ifndef LTLUA_H
-#define LTLUA_H
-
-#include "ltcommon.h"
-#include "ltinput.h"
-#include "ltpickle.h"
-
 void ltLuaSetup();
 void ltLuaTeardown();
 void ltLuaReset();
@@ -38,5 +31,3 @@ const char *ltLuaCacheString(const char *str);
 
 void ltLuaPreContextChange();
 void ltLuaPostContextChange();
-
-#endif /* LTLUA_H */
