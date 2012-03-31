@@ -1,15 +1,5 @@
 #ifdef LTIOS
-#import <UIKit/UIKit.h>
-
-#include "ltads.h"
-#include "ltios.h"
-#include "ltcommon.h"
-#include "ltgraphics.h"
-#include "ltgamecenter.h"
-#include "ltiosutil.h"
-#include "ltlua.h"
-#include "ltprotocol.h"
-#include "ltstate.h"
+#include "lt.h"
 
 static UIViewController *view_controller = nil;
 

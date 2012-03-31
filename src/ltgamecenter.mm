@@ -1,7 +1,6 @@
 #ifdef LTIOS
 #import <GameKit/GameKit.h>
-#include "ltios.h"
-#include "ltlua.h"
+#include "lt.h"
 
 static bool game_center_available = false;
 static bool game_center_supported = false;

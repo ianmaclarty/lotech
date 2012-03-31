@@ -77,6 +77,16 @@ extern "C" {
 #include <android/log.h>
 #endif
 
+// OSX specific headers.
+#ifdef LTOSX
+#import <AppKit/AppKit.h>
+#endif
+
+#ifdef LTIOS
+#import <UIKit/UIKit.h>
+#import <objc/runtime.h>
+#endif
+
 // Lotech.
 #include "ltcommon.h"
 #include "ltobject.h"
