@@ -40,7 +40,9 @@
     #include <GL/glfw.h>
 #endif
 #ifdef LTANDROID
+    #define GL_GLEXT_PROTOTYPES 1
     #include <GLES/gl.h>
+    #include <GLES/glext.h>
 #endif
 
 // OpenAL
