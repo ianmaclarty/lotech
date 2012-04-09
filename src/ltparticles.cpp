@@ -379,6 +379,7 @@ LTFieldDescriptor* LTParticleSystem::fields() {
         {"start_spin_variance", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(start_spin_variance), NULL, NULL, LT_ACCESS_FULL},
         {"end_spin", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(end_spin), NULL, NULL, LT_ACCESS_FULL},
         {"end_spin_variance", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(end_spin_variance), NULL, NULL, LT_ACCESS_FULL},
+        LT_END_FIELD_DESCRIPTOR_LIST,
     };
     return flds;
 }

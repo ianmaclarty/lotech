@@ -3689,9 +3689,13 @@ static void unpickle_value(lua_State *L, LTUnpickler *unpickler) {
 }
 
 void ltLuaUnpickleState(LTUnpickler *unpickler) {
-    if (g_L != NULL && unpickler != NULL) {
+    if (g_L != NULL) {
         lua_getglobal(g_L, "lt");
-        unpickle_value(g_L, unpickler);
+        if (unpickler != NULL) {
+            unpickle_value(g_L, unpickler);
+        } else {
+            lua_pushnil(g_L);
+        }
         if (lua_isnil(g_L, -1)) {
             lua_pop(g_L, 1);
             lua_newtable(g_L);
