@@ -1,6 +1,4 @@
-#include "lt3d.h"
-#include "ltgraphics.h"
-#include "ltimage.h"
+#include "lt.h"
 
 static bool depth_test_on = false;
 static bool depth_mask_on = true;
@@ -25,19 +23,16 @@ bool LTPerspective::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *
     return false;
 }
 
-LTfloat* LTPerspective::field_ptr(const char *field_name) {
-    if (strcmp(field_name, "near") == 0) {
-        return &near;
-    } else if (strcmp(field_name, "origin") == 0) {
-        return &origin;
-    } else if (strcmp(field_name, "far") == 0) {
-        return &far;
-    } else if (strcmp(field_name, "vanish_x") == 0) {
-        return &vanish_x;
-    } else if (strcmp(field_name, "vanish_y") == 0) {
-        return &vanish_y;
-    }
-    return NULL;
+LTFieldDescriptor* LTPerspective::fields() {
+    static LTFieldDescriptor flds[] = {
+        {"near", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(near), NULL, NULL, LT_ACCESS_FULL},
+        {"origin", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(origin), NULL, NULL, LT_ACCESS_FULL},
+        {"far", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(far), NULL, NULL, LT_ACCESS_FULL},
+        {"vanish_x", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(vanish_x), NULL, NULL, LT_ACCESS_FULL},
+        {"vanish_y", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(vanish_y), NULL, NULL, LT_ACCESS_FULL},
+        LT_END_FIELD_DESCRIPTOR_LIST
+    };
+    return flds;
 }
 
 LTDepthTest::LTDepthTest(bool on, LTSceneNode *child) : LTWrapNode(child, LT_TYPE_DEPTHTEST)
@@ -111,11 +106,12 @@ bool LTPitch::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event)
     return false;
 }
 
-LTfloat* LTPitch::field_ptr(const char *field_name) {
-    if (strcmp(field_name, "pitch") == 0) {
-        return &pitch;
-    }
-    return NULL;
+LTFieldDescriptor* LTPitch::fields() {
+    static LTFieldDescriptor flds[] = {
+        {"pitch", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(pitch), NULL, NULL, LT_ACCESS_FULL},
+        LT_END_FIELD_DESCRIPTOR_LIST
+    };
+    return flds;
 }
 
 LTFog::LTFog(LTfloat start, LTfloat end, LTColor color, LTSceneNode *child)
@@ -139,17 +135,14 @@ bool LTFog::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
     return child->propogatePointerEvent(x, y, event);
 }
 
-LTfloat* LTFog::field_ptr(const char *field_name) {
-    if (strcmp(field_name, "start") == 0) {
-        return &start;
-    } else if (strcmp(field_name, "end") == 0) {
-        return &end;
-    } else if (strcmp(field_name, "red") == 0) {
-        return &color.r;
-    } else if (strcmp(field_name, "green") == 0) {
-        return &color.g;
-    } else if (strcmp(field_name, "blue") == 0) {
-        return &color.b;
-    }
-    return NULL;
+LTFieldDescriptor* LTFog::fields() {
+    static LTFieldDescriptor flds[] = {
+        {"start", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(start), NULL, NULL, LT_ACCESS_FULL},
+        {"end", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(end), NULL, NULL, LT_ACCESS_FULL},
+        {"red", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(color.r), NULL, NULL, LT_ACCESS_FULL},
+        {"green", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(color.g), NULL, NULL, LT_ACCESS_FULL},
+        {"blue", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(color.b), NULL, NULL, LT_ACCESS_FULL},
+        LT_END_FIELD_DESCRIPTOR_LIST
+    };
+    return flds;
 }

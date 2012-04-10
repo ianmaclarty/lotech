@@ -1,32 +1,3 @@
-#ifndef LTOPENGL_H
-#define LTOPENGL_H
-
-#ifdef LTLINUX
-    #define GLEW_STATIC 1
-    #include <GL/glew.h>
-    #include <GL/glfw.h>
-#endif
-#ifdef LTMINGW
-    #define GLEW_STATIC 1
-    #include <GL/glew.h>
-    #include <GL/glfw.h>
-#endif
-#ifdef LTIOS
-    #include <OpenGLES/ES1/gl.h>
-    #include <OpenGLES/ES1/glext.h>
-#endif
-#ifdef LTOSX
-    //#include <OpenGL/GL.h>
-    #define GLEW_STATIC 1
-    #include <GL/glew.h>
-    #include <GL/glfw.h>
-#endif
-#ifdef LTANDROID
-    #include <GLES/gl.h>
-#endif
-
-#include "ltcommon.h"
-
 typedef GLuint          LTvertbuf;
 typedef GLuint          LTframebuf;
 typedef GLuint          LTtexid;
@@ -167,5 +138,3 @@ LTframebuf ltGenFramebuffer();
 void ltDeleteFramebuffer(LTframebuf fb);
 void ltFramebufferTexture(LTtexid texture_id);
 bool ltFramebufferComplete();
-
-#endif // LTOPENGL_H

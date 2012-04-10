@@ -1,7 +1,6 @@
 /* Copyright (C) 2010 Ian MacLarty */
 
-#include "ltparticles.h"
-#include "ltutil.h"
+#include "lt.h"
 
 ct_assert(sizeof(LTPoint) == 8);
 ct_assert(sizeof(LTCompactColor) == 4);
@@ -335,93 +334,52 @@ void LTParticleSystem::draw() {
     }
 }
 
-LTfloat* LTParticleSystem::field_ptr(const char *field_name) {
-    if (strcmp(field_name, "duration") == 0) {
-        return &duration;
-    } else if (strcmp(field_name, "elapsed") == 0) {
-        return &elapsed;
-    } else if (strcmp(field_name, "source_position_x") == 0) {
-        return &(source_position.x);
-    } else if (strcmp(field_name, "source_position_y") == 0) {
-        return &(source_position.y);
-    } else if (strcmp(field_name, "source_position_variance_x") == 0) {
-        return &(source_position_variance.x);
-    } else if (strcmp(field_name, "source_position_variance_y") == 0) {
-        return &(source_position_variance.y);
-    } else if (strcmp(field_name, "angle") == 0) {
-        return &angle;
-    } else if (strcmp(field_name, "angle_variance") == 0) {
-        return &angle_variance;
-    } else if (strcmp(field_name, "gravity_x") == 0) {
-        return &(gravity.x);
-    } else if (strcmp(field_name, "gravity_y") == 0) {
-        return &(gravity.y);
-    } else if (strcmp(field_name, "speed") == 0) {
-        return &speed;
-    } else if (strcmp(field_name, "speed_variance") == 0) {
-        return &speed_variance;
-    } else if (strcmp(field_name, "tangential_accel") == 0) {
-        return &tangential_accel;
-    } else if (strcmp(field_name, "tangential_accel_variance") == 0) {
-        return &tangential_accel_variance;
-    } else if (strcmp(field_name, "radial_accel") == 0) {
-        return &radial_accel;
-    } else if (strcmp(field_name, "radial_accel_variance") == 0) {
-        return &radial_accel_variance;
-    } else if (strcmp(field_name, "start_size") == 0) {
-        return &start_size;
-    } else if (strcmp(field_name, "start_size_variance") == 0) {
-        return &start_size_variance;
-    } else if (strcmp(field_name, "end_size") == 0) {
-        return &end_size;
-    } else if (strcmp(field_name, "end_size_variance") == 0) {
-        return &end_size_variance;
-    } else if (strcmp(field_name, "life") == 0) {
-        return &life;
-    } else if (strcmp(field_name, "life_variance") == 0) {
-        return &life_variance;
-    } else if (strcmp(field_name, "start_color_red") == 0) {
-        return &(start_color.r);
-    } else if (strcmp(field_name, "start_color_green") == 0) {
-        return &(start_color.g);
-    } else if (strcmp(field_name, "start_color_blue") == 0) {
-        return &(start_color.b);
-    } else if (strcmp(field_name, "start_color_alpha") == 0) {
-        return &(start_color.a);
-    } else if (strcmp(field_name, "start_color_variance_red") == 0) {
-        return &(start_color_variance.r);
-    } else if (strcmp(field_name, "start_color_variance_green") == 0) {
-        return &(start_color_variance.g);
-    } else if (strcmp(field_name, "start_color_variance_blue") == 0) {
-        return &(start_color_variance.b);
-    } else if (strcmp(field_name, "start_color_variance_alpha") == 0) {
-        return &(start_color_variance.a);
-    } else if (strcmp(field_name, "end_color_red") == 0) {
-        return &(end_color.r);
-    } else if (strcmp(field_name, "end_color_green") == 0) {
-        return &(end_color.g);
-    } else if (strcmp(field_name, "end_color_blue") == 0) {
-        return &(end_color.b);
-    } else if (strcmp(field_name, "end_color_alpha") == 0) {
-        return &(end_color.a);
-    } else if (strcmp(field_name, "end_color_variance_red") == 0) {
-        return &(end_color_variance.r);
-    } else if (strcmp(field_name, "end_color_variance_green") == 0) {
-        return &(end_color_variance.g);
-    } else if (strcmp(field_name, "end_color_variance_blue") == 0) {
-        return &(end_color_variance.b);
-    } else if (strcmp(field_name, "end_color_variance_alpha") == 0) {
-        return &(end_color_variance.a);
-    } else if (strcmp(field_name, "start_spin") == 0) {
-        return &start_spin;
-    } else if (strcmp(field_name, "start_spin_variance") == 0) {
-        return &start_spin_variance;
-    } else if (strcmp(field_name, "end_spin") == 0) {
-        return &end_spin;
-    } else if (strcmp(field_name, "end_spin_variance") == 0) {
-        return &end_spin_variance;
-    } else if (strcmp(field_name, "emission_rate") == 0) {
-        return &emission_rate;
-    }
-    return NULL;
+LTFieldDescriptor* LTParticleSystem::fields() {
+    static LTFieldDescriptor flds[] = {
+        {"duration", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(duration), NULL, NULL, LT_ACCESS_FULL},
+        {"elapsed", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(elapsed), NULL, NULL, LT_ACCESS_FULL},
+        {"life", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(life), NULL, NULL, LT_ACCESS_FULL},
+        {"life_variance", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(life_variance), NULL, NULL, LT_ACCESS_FULL},
+        {"emission_rate", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(emission_rate), NULL, NULL, LT_ACCESS_FULL},
+        {"source_position_x", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(source_position.x), NULL, NULL, LT_ACCESS_FULL},
+        {"source_position_y", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(source_position.y), NULL, NULL, LT_ACCESS_FULL},
+        {"source_position_variance_x", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(source_position_variance.x), NULL, NULL, LT_ACCESS_FULL},
+        {"source_position_variance_y", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(source_position_variance.y), NULL, NULL, LT_ACCESS_FULL},
+        {"angle", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(angle), NULL, NULL, LT_ACCESS_FULL},
+        {"angle_variance", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(angle_variance), NULL, NULL, LT_ACCESS_FULL},
+        {"gravity_x", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(gravity.x), NULL, NULL, LT_ACCESS_FULL},
+        {"gravity_y", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(gravity.y), NULL, NULL, LT_ACCESS_FULL},
+        {"speed", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(speed), NULL, NULL, LT_ACCESS_FULL},
+        {"speed_variance", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(speed_variance), NULL, NULL, LT_ACCESS_FULL},
+        {"tangential_accel", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(tangential_accel), NULL, NULL, LT_ACCESS_FULL},
+        {"tangential_accel_variance", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(tangential_accel_variance), NULL, NULL, LT_ACCESS_FULL},
+        {"radial_accel", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(radial_accel), NULL, NULL, LT_ACCESS_FULL},
+        {"radial_accel_variance", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(radial_accel_variance), NULL, NULL, LT_ACCESS_FULL},
+        {"start_size", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(start_size), NULL, NULL, LT_ACCESS_FULL},
+        {"start_size_variance", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(start_size_variance), NULL, NULL, LT_ACCESS_FULL},
+        {"end_size", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(end_size), NULL, NULL, LT_ACCESS_FULL},
+        {"end_size_variance", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(end_size_variance), NULL, NULL, LT_ACCESS_FULL},
+        {"start_color_red", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(start_color.r), NULL, NULL, LT_ACCESS_FULL},
+        {"start_color_green", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(start_color.g), NULL, NULL, LT_ACCESS_FULL},
+        {"start_color_blue", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(start_color.b), NULL, NULL, LT_ACCESS_FULL},
+        {"start_color_alpha", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(start_color.a), NULL, NULL, LT_ACCESS_FULL},
+        {"start_color_variance_red", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(start_color_variance.r), NULL, NULL, LT_ACCESS_FULL},
+        {"start_color_variance_green", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(start_color_variance.g), NULL, NULL, LT_ACCESS_FULL},
+        {"start_color_variance_blue", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(start_color_variance.b), NULL, NULL, LT_ACCESS_FULL},
+        {"start_color_variance_alpha", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(start_color_variance.a), NULL, NULL, LT_ACCESS_FULL},
+        {"end_color_red", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(end_color.r), NULL, NULL, LT_ACCESS_FULL},
+        {"end_color_green", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(end_color.g), NULL, NULL, LT_ACCESS_FULL},
+        {"end_color_blue", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(end_color.b), NULL, NULL, LT_ACCESS_FULL},
+        {"end_color_alpha", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(end_color.a), NULL, NULL, LT_ACCESS_FULL},
+        {"end_color_variance_red", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(end_color_variance.r), NULL, NULL, LT_ACCESS_FULL},
+        {"end_color_variance_green", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(end_color_variance.g), NULL, NULL, LT_ACCESS_FULL},
+        {"end_color_variance_blue", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(end_color_variance.b), NULL, NULL, LT_ACCESS_FULL},
+        {"end_color_variance_alpha", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(end_color_variance.a), NULL, NULL, LT_ACCESS_FULL},
+        {"start_spin", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(start_spin), NULL, NULL, LT_ACCESS_FULL},
+        {"start_spin_variance", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(start_spin_variance), NULL, NULL, LT_ACCESS_FULL},
+        {"end_spin", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(end_spin), NULL, NULL, LT_ACCESS_FULL},
+        {"end_spin_variance", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(end_spin_variance), NULL, NULL, LT_ACCESS_FULL},
+        LT_END_FIELD_DESCRIPTOR_LIST,
+    };
+    return flds;
 }

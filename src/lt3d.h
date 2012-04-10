@@ -1,9 +1,4 @@
 /* Copyright (C) 2011 Ian MacLarty */
-#ifndef LT3D_H
-#define LT3D_H
-
-#include "ltcommon.h"
-#include "ltscene.h"
 
 struct LTPerspective : LTWrapNode {
     LTfloat near;
@@ -17,7 +12,7 @@ struct LTPerspective : LTWrapNode {
     
     virtual void draw();
     bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
-    virtual LTfloat* field_ptr(const char *field_name);
+    virtual LTFieldDescriptor* fields();
 };
 
 struct LTDepthTest : LTWrapNode {
@@ -41,7 +36,7 @@ struct LTPitch : LTWrapNode {
 
     virtual void draw();
     bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
-    virtual LTfloat* field_ptr(const char *field_name);
+    virtual LTFieldDescriptor* fields();
 };
 
 struct LTFog : LTWrapNode {
@@ -53,7 +48,5 @@ struct LTFog : LTWrapNode {
 
     virtual void draw();
     bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
-    virtual LTfloat* field_ptr(const char *field_name);
+    virtual LTFieldDescriptor* fields();
 };
-
-#endif

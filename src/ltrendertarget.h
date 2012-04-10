@@ -1,11 +1,4 @@
 /* Copyright (C) 2012 Ian MacLarty */
-#ifndef LTRENDERTARGET_H
-#define LTRENDERTARGET_H
-
-#include "ltcommon.h"
-#include "ltscene.h"
-#include "ltimage.h"
-#include "ltgraphics.h"
 
 struct LTRenderTarget : LTTexturedNode {
     LTframebuf      fbo;
@@ -49,5 +42,3 @@ private:
 
     void setup();
 };
-
-#endif

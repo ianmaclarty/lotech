@@ -1,11 +1,5 @@
 #ifdef LTOSX
-#include "ltgraphics.h"
-#include "ltosx.h"
-#include "ltosxutil.h"
-#include "ltcommon.h"
-#include "ltlua.h"
-#include "ltprotocol.h"
-#include "ltstate.h"
+#include "lt.h"
 
 static LTKey get_lt_key(NSEvent *event);
 

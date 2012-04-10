@@ -1,12 +1,4 @@
 /* Copyright (C) 2012 Ian MacLarty */
-#ifndef LTRESOURCE_H
-#define LTRESOURCE_H
-
-#include <stdio.h>
-
-#ifdef LTANDROID
-#include <android/asset_manager.h>
-#endif
 
 #ifdef LTANDROID
 struct LTResource {
@@ -28,5 +20,3 @@ LTResource *ltOpenResource(const char* filename);
 int ltReadResource(LTResource *rsc, void* buf, int count);
 
 void ltCloseResource(LTResource *rsc);
-
-#endif

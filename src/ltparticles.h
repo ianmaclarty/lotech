@@ -1,12 +1,4 @@
 /* Copyright (C) 2010 Ian MacLarty */
-#ifndef LTPARTICLES_H
-#define LTPARTICLES_H
-
-#include "ltcommon.h"
-#include "ltgraphics.h"
-#include "ltimage.h"
-#include "ltphysics.h"
-#include "ltscene.h"
 
 // This is based on the Cocos2D particle system.
 
@@ -93,7 +85,5 @@ struct LTParticleSystem : LTSceneNode {
     void advance(LTfloat dt);
     virtual void draw();
 
-    virtual LTfloat* field_ptr(const char *field_name);
+    virtual LTFieldDescriptor* fields();
 };
-
-#endif

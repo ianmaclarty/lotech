@@ -1,12 +1,5 @@
 /* Copyright (C) 2011 Ian MacLarty */
 #ifdef LTIOS
-#ifndef LTIOSUTIL_H
-#define LTIOSUTIL_H
-
-#include "ltcommon.h"
-#include "ltpickle.h"
-#include "ltstore.h"
-
 bool ltIsIPad();
 bool ltIsRetinaIPhone();
 
@@ -45,5 +38,4 @@ void ltIOSSyncStore();
 void ltIOSLaunchURL(const char *url);
 
 bool ltIOSSupportsES2();
-#endif
 #endif

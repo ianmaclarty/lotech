@@ -1,8 +1,5 @@
 #ifdef LTOSX
-#include "ltosxutil.h"
-#include "ltutil.h"
-
-#import <AppKit/AppKit.h>
+#include "lt.h"
 
 static const char *ltOSXDocPath(const char *file, const char *suffix) {
     NSArray *dirs = NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES);

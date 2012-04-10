@@ -1,10 +1,5 @@
 #ifdef LTIOS
-#import <UIKit/UIKit.h>
-#import <OpenGLES/EAGL.h>
-#import <objc/runtime.h>
-
-#include "ltiosutil.h"
-#include "ltutil.h"
+#include "lt.h"
 
 LTfloat ltIOSScaling() {
     float scale = 1.0f;

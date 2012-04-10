@@ -1,8 +1,6 @@
 /* Copyright (C) 2010 Ian MacLarty */
 #ifndef LTMINGW
-#include "ltnet.h"
-
-#include "ltcommon.h"
+#include "lt.h"
 
 #define PORT 14091
 #define MAGIC_WORD "lotech"

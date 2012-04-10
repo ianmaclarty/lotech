@@ -1,20 +1,4 @@
-#ifndef LTANDROID
-#ifndef LTMINGW
-#include <glob.h>
-#endif
-#endif
-#ifdef LTANDROID
-#include <android/log.h>
-#endif
-#include <sys/stat.h> 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <cstdarg>
-//#include <fcntl.h>
-
-#include "ltutil.h"
-#include "ltprotocol.h"
+#include "lt.h"
 
 void ltAbort() {
     ltLog("ABORTING.");
@@ -23,7 +7,7 @@ void ltAbort() {
 
 #define MAX_MSG_LEN 2048
 
-void ltLog(const char *fmt, ...) {
+extern void ltLog(const char *fmt, ...) {
     char msg[MAX_MSG_LEN];
     va_list argp;
     va_start(argp, fmt);
@@ -85,4 +69,33 @@ char* ltGlob(const char **patterns) {
     ltLog("glob not supported on mingw or android");
     return NULL;
 #endif
+}
+
+const char *ltHomeDir() {
+    const char *homedir;
+    homedir = getenv("HOME");
+    if (homedir == NULL) {
+        struct passwd *pw = getpwuid(getuid());
+        if (pw != NULL) {
+            homedir = pw->pw_dir;
+        }
+    }
+    if (homedir == NULL) {
+        ltLog("Unable to work out home directory.  Aborting.");
+        ltAbort();
+    }
+    if (!ltFileExists(homedir)) {
+        ltLog("Home directory '%s' does not exist.  Aborting.", homedir);
+        ltAbort();
+    }
+    return homedir;
+}
+
+void ltMkDir(const char* dir) {
+    if (!ltFileExists(dir)) {
+        int r = mkdir(dir, S_IRWXU | S_IRWXG);
+        if (r < 0) {
+            ltLog("Error creating directory %s: %s.  Aborting.", dir, strerror(errno));
+        }
+    }
 }

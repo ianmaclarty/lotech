@@ -1,16 +1,4 @@
 /* Copyright (C) 2010 Ian MacLarty */
-#ifndef LTTEXT_H
-#define LTTEXT_H
-
-#include <list>
-
-#include <string.h>
-
-#include "ltcommon.h"
-#include "ltevent.h"
-#include "ltscene.h"
-#include "ltgraphics.h"
-#include "ltimage.h"
 
 // 1 byte = 1 glyph
 #define LT_MAX_GLYPHS 256
@@ -34,5 +22,3 @@ struct LTText : LTSceneNode {
 */
 
 std::list<LTImageBuffer *> *ltImageBufferToGlyphs(LTImageBuffer *buf, const char *glyph_chars);
-
-#endif

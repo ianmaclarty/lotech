@@ -1,13 +1,5 @@
 /* Copyright (C) 2010-2011 Ian MacLarty */
-#include <errno.h>
-#include <string.h>
-#include <list>
-#include <map>
-
-#include "ltaudio.h"
-
-#include "ltresource.h"
-#include "ltutil.h"
+#include "lt.h"
 
 static ALCcontext* audio_context = NULL;
 static ALCdevice* audio_device = NULL;
@@ -169,32 +161,33 @@ void LTTrack::dequeueProcessedSamples(int n) {
     alSourceUnqueueBuffers(source_id, n, NULL);
 }
 
-bool LTTrack::has_field(const char *field_name) {
-    return strcmp(field_name, "gain") == 0 || strcmp(field_name, "pitch") == 0;
-}
-
-LTfloat LTTrack::get_field(const char *field_name) {
+static LTfloat get_gain(LTObject *obj) {
     LTfloat val;
-    if (strcmp(field_name, "gain") == 0) {
-        alGetSourcef(source_id, AL_GAIN, &val);
-        return val;
-    }
-    if (strcmp(field_name, "pitch") == 0) {
-        alGetSourcef(source_id, AL_PITCH, &val);
-        return val;
-    }
-    return 0.0f;
+    alGetSourcef(((LTTrack*)(obj))->source_id, AL_GAIN, &val);
+    return val;
 }
 
-void LTTrack::set_field(const char *field_name, LTfloat value) {
-    if (strcmp(field_name, "gain") == 0) {
-        alSourcef(source_id, AL_GAIN, value);
-        return;
-    }
-    if (strcmp(field_name, "pitch") == 0) {
-        alSourcef(source_id, AL_PITCH, value);
-        return;
-    }
+static void set_gain(LTObject *obj, LTfloat val) {
+    alSourcef(((LTTrack*)(obj))->source_id, AL_GAIN, val);
+}
+
+static LTfloat get_pitch(LTObject *obj) {
+    LTfloat val;
+    alGetSourcef(((LTTrack*)(obj))->source_id, AL_PITCH, &val);
+    return val;
+}
+
+static void set_pitch(LTObject *obj, LTfloat val) {
+    alSourcef(((LTTrack*)(obj))->source_id, AL_PITCH, val);
+}
+
+LTFieldDescriptor* LTTrack::fields() {
+    static LTFieldDescriptor flds[] = {
+        {"gain", LT_FIELD_TYPE_FLOAT, -1, (void*)get_gain, (void*)set_gain, LT_ACCESS_FULL},
+        {"pitch", LT_FIELD_TYPE_FLOAT, -1, (void*)get_pitch, (void*)set_pitch, LT_ACCESS_FULL},
+        LT_END_FIELD_DESCRIPTOR_LIST
+    };
+    return flds;
 }
 
 void ltAudioSuspend() {

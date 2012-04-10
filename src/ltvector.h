@@ -1,9 +1,4 @@
 /* Copyright (C) 2010 Ian MacLarty */
-#ifndef LTVECTOR_H
-#define LTVECTOR_H
-
-#include "ltcommon.h"
-#include "ltimage.h"
 
 struct LTVector : LTObject {
     int stride;   // Size of each record
@@ -54,5 +49,3 @@ struct LTDrawTexturedQuads : LTSceneNode {
     virtual ~LTDrawTexturedQuads();
     virtual void draw();
 };
-
-#endif

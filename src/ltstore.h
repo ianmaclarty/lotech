@@ -1,8 +1,4 @@
 /* Copyright (C) 2011 Ian MacLarty */
-#ifndef LTSTORE_H
-#define LTSTORE_H
-#include "ltcommon.h"
-#include "ltpickle.h"
 
 void ltStorePickledData(const char *key, LTPickler *pickler);
 
@@ -35,5 +31,3 @@ LTdouble ltRetrieveDouble(const char *key);
 LTfloat ltRetrieveFloat(const char *key);
 int ltRetrieveInt(const char *key);
 bool ltRetrieveBool(const char *key);
-
-#endif

@@ -1,6 +1,6 @@
 /* Copyright (C) 2010 Ian MacLarty */
 
-#include "ltvector.h"
+#include "lt.h"
 
 LTVector::LTVector(int capacity, int stride) : LTObject(LT_TYPE_VECTOR) {
     LTVector::stride = stride;

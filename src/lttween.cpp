@@ -1,7 +1,5 @@
 /* Copyright (C) 2010 Ian MacLarty */
-#include "lttween.h"
-#include <math.h>
-#include <string.h>
+#include "lt.h"
 
 LTTweenSet::LTTweenSet() : LTObject(LT_TYPE_TWEENSET) {
     LTTweenSet::capacity = 4;

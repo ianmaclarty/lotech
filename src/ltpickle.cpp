@@ -1,5 +1,4 @@
-#include <string.h>
-#include "ltpickle.h"
+#include "lt.h"
 
 #define INITIAL_CAPACITY 1024
 

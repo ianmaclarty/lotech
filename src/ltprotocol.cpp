@@ -1,15 +1,6 @@
 /* Copyright (C) 2011 Ian MacLarty */
 #ifndef LTMINGW
-#include "ltprotocol.h"
-
-#include <list>
-#include <sys/stat.h>
-
-#include "ltiosutil.h"
-#include "ltosxutil.h"
-#include "ltnet.h"
-#include "ltlua.h"
-#include "ltutil.h"
+#include "lt.h"
 
 #define MAX_BASENAME_LEN 512
 

@@ -1,13 +1,4 @@
 /* Copyright (C) 2010 Ian MacLarty */
-#ifndef LTSCENE_H
-#define LTSCENE_H
-
-#include <list>
-#include <map>
-
-#include "ltevent.h"
-#include "ltgraphics.h"
-#include "ltopengl.h"
 
 struct LTSceneNode : LTObject {
     std::list<LTPointerEventHandler *> *event_handlers;
@@ -71,7 +62,6 @@ struct LTWrapNode : LTSceneNode {
     
     virtual void draw();
     virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
-    virtual LTfloat* field_ptr(const char *field_name);
 };
 
 struct LTTranslateNode : LTWrapNode {
@@ -84,8 +74,7 @@ struct LTTranslateNode : LTWrapNode {
     virtual void draw();
     virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
 
-    virtual LTfloat* field_ptr(const char *field_name);
-    virtual const LTFieldDescriptor *fields();
+    virtual LTFieldDescriptor *fields();
 };
 
 struct LTRotateNode : LTWrapNode {
@@ -99,7 +88,7 @@ struct LTRotateNode : LTWrapNode {
     virtual void draw();
     virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
 
-    virtual LTfloat* field_ptr(const char *field_name);
+    virtual LTFieldDescriptor *fields();
 };
 
 struct LTScaleNode : LTWrapNode {
@@ -113,7 +102,7 @@ struct LTScaleNode : LTWrapNode {
     virtual void draw();
     virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
 
-    virtual LTfloat* field_ptr(const char *field_name);
+    virtual LTFieldDescriptor *fields();
 };
 
 struct LTTintNode : LTWrapNode {
@@ -127,7 +116,7 @@ struct LTTintNode : LTWrapNode {
     virtual void draw();
     virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
 
-    virtual LTfloat* field_ptr(const char *field_name);
+    virtual LTFieldDescriptor *fields();
 };
 
 struct LTTextureModeNode : LTWrapNode {
@@ -153,7 +142,7 @@ struct LTLineNode : LTSceneNode {
     
     virtual void draw();
 
-    virtual LTfloat* field_ptr(const char *field_name);
+    virtual LTFieldDescriptor *fields();
 };
 
 struct LTTriangleNode : LTSceneNode {
@@ -163,7 +152,7 @@ struct LTTriangleNode : LTSceneNode {
     
     virtual void draw();
 
-    virtual LTfloat* field_ptr(const char *field_name);
+    virtual LTFieldDescriptor *fields();
 };
 
 struct LTRectNode : LTSceneNode {
@@ -173,7 +162,7 @@ struct LTRectNode : LTSceneNode {
     
     virtual void draw();
 
-    virtual LTfloat* field_ptr(const char *field_name);
+    virtual LTFieldDescriptor *fields();
 };
 
 // Filters all pointer events.
@@ -184,7 +173,8 @@ struct LTHitFilter : LTWrapNode {
     
     virtual void draw();
     virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
-    virtual LTfloat* field_ptr(const char *field_name);
+
+    virtual LTFieldDescriptor *fields();
 };
 
 // Filters only down events.
@@ -195,7 +185,6 @@ struct LTDownFilter : LTWrapNode {
     
     virtual void draw();
     virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
-    virtual LTfloat* field_ptr(const char *field_name);
-};
 
-#endif
+    virtual LTFieldDescriptor *fields();
+};

@@ -3,12 +3,7 @@
 #import "GADBannerView.h"
 #import "GADBannerViewDelegate.h"
 
-#include "ltads.h"
-#include "ltcommon.h"
-#include "ltios.h"
-#include "ltiosutil.h"
-#include "ltgraphics.h"
-#include "ltlua.h"
+#include "lt.h"
 
 #define ADMOB_REFRESH_RATE 30.0
 

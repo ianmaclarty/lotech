@@ -1,9 +1,4 @@
 /* Copyright (C) 2011 Ian MacLarty */
-#ifndef LTEVENT_H
-#define LTEVENT_H
-
-#include "ltcommon.h"
-
 struct LTSceneNode;
 
 enum LTPointerEventType {
@@ -33,5 +28,3 @@ struct LTPointerEventHandler {
     // Returning true stops the event propogating further.
     virtual bool consume(LTfloat x, LTfloat y, LTSceneNode *node, LTPointerEvent *event) = 0;
 };
-
-#endif

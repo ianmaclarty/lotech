@@ -3,11 +3,12 @@ function lt.Text(str, font, halign, valign)
     halign = halign or "left"
     valign = valign or "center"
 
-    local em = font.m or font.M or font[0] or {width = 0.1, height = 0.1}
+    local em = font.m or font.M or font["0"] or {width = 0.1, height = 0.1}
     local space = em.width * (font.space or 0.3)
     local hmove = em.width * (font.hmove or 0.05)
     local vmove = em.height * (font.vmove or 1.2)
     local kerntable = font.kern
+    local fixed_w = font.fixed and em.width
     local x, y, dx, k, gap = 0, -em.height / 2, 0, 0, 0
     local line = lt.Layer()
 
@@ -28,10 +29,11 @@ function lt.Text(str, font, halign, valign)
                 dx = space
                 gap = space
             else
-                line:Insert(lt.Translate(img, x + img.width / 2, y))
+                local w = fixed_w or img.width
+                line:Insert(lt.Translate(img, x + w/2, y))
                 k = kerntable and kerntable[kernpair]
                 gap = (k and k * em.width or hmove)
-                dx = gap + img.width
+                dx = gap + w
             end
             x = x + dx
         end

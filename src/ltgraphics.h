@@ -1,17 +1,4 @@
 /* Copyright (C) 2010 Ian MacLarty */
-#ifndef LTGRAPHICS_H
-#define LTGRAPHICS_H
-
-#include <list>
-#include <map>
-#include <math.h>
-
-#include <string.h>
-
-#include "ltcommon.h"
-#include "ltevent.h"
-#include "ltopengl.h"
-
 #define LT_MAX_TEX_COORD 8192
 
 struct LTPoint {
@@ -153,4 +140,3 @@ void ltDrawPoly(LTfloat *vertices, int num_vertices); /* Must be convex */
 void ltDrawConnectingOverlay();
 
 void ltDrawAdBackground();
-#endif

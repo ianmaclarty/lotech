@@ -1,8 +1,4 @@
 /* Copyright (C) 2010 Ian MacLarty */
-#ifndef LTPICKLE_H
-#define LTPICKLE_H
-
-#include "ltcommon.h"
 
 struct LTPickler {
     int size;
@@ -41,5 +37,3 @@ struct LTUnpickler {
     int readInt();
     void readData(void *buf, int n);
 };
-
-#endif

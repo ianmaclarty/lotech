@@ -1,17 +1,4 @@
 /* Copyright (C) 2010 Ian MacLarty */
-#ifndef LTIMAGE_H
-#define LTIMAGE_H
-
-#include <list>
-#include <map>
-
-#include <string.h>
-
-#include "ltcommon.h"
-#include "ltevent.h"
-#include "ltscene.h"
-#include "ltgraphics.h"
-
 #define LT_PIXEL_VISIBLE(pxl)     (pxl & 0xFF000000)
 
 struct LTAtlas;
@@ -145,9 +132,5 @@ struct LTImage : LTTexturedNode {
     LTImage(LTAtlas *atlas, int atlas_w, int atlas_h, LTImagePacker *packer);
     virtual ~LTImage();
 
-    virtual bool has_field(const char *field_name);
-    virtual LTfloat get_field(const char *field_name);
-    virtual LTfloat* field_ptr(const char *field_name);
+    virtual LTFieldDescriptor* fields();
 };
-
-#endif

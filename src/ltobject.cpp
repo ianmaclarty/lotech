@@ -1,17 +1,12 @@
 /* Copyright (C) 2010 Ian MacLarty */
-#include "ltcommon.h"
-#include "ltlua.h"
-extern "C" {
-#include "lua.h"
-#include "lauxlib.h"
-}
+#include "lt.h"
 
 struct LTTypeInfo {
     const char *name;
     LTType super_type;
 };
 
-const LTTypeInfo types[] = {
+static const LTTypeInfo types[] = {
     {"Object",          LT_TYPE_OBJECT},
     {"SceneNode",       LT_TYPE_OBJECT},
     {"Translate",       LT_TYPE_WRAP},  
@@ -64,31 +59,6 @@ LTObject::LTObject(LTType type) {
 
 LTObject::~LTObject() {
 }
-
-bool LTObject::has_field(const char *field_name) {
-    return field_ptr(field_name) != NULL;
-}
-
-LTfloat LTObject::get_field(const char *field_name) {
-    LTfloat *ptr = field_ptr(field_name);
-    if (ptr != NULL) {
-        return *ptr;
-    } else {
-        return 0.0f;
-    }
-}
-
-void LTObject::set_field(const char *field_name, LTfloat value) {
-    LTfloat *ptr = field_ptr(field_name);
-    if (ptr != NULL) {
-        *ptr = value;
-    }
-}
-
-LTfloat* LTObject::field_ptr(const char *field_name) {
-    return NULL;
-}
-
 
 bool LTObject::hasType(LTType t) {
     if (t == LT_TYPE_OBJECT) {
@@ -143,27 +113,29 @@ LTFieldDescriptor* LTObject::field(const char *name) {
             cache++;
         }
         return NULL;
+    } else {
+        // Cache not set up for this object type.
+        LTFieldDescriptor *flds = fields();
+        LTFieldDescriptor *ptr = flds;
+        int num_fields = 0;
+        while (ptr->name != NULL) {
+            num_fields++;
+            ptr++;
+        }
+        cache = new LTFieldDescriptor[num_fields + 1];
+        cache[num_fields].name = NULL;
+        for (int i = 0; i < num_fields; i++) {
+            const char *lstr = ltLuaCacheString(flds[i].name);
+            cache[i] = flds[i];
+            cache[i].name = lstr;
+        }
+        field_cache[type] = cache;
+        return field(name);
     }
-    // Cache not set up for this object type.
-    const LTFieldDescriptor *flds = fields();
-    const LTFieldDescriptor *ptr = flds;
-    int num_fields = 0;
-    while (ptr->name != NULL) {
-        num_fields++;
-        ptr++;
-    }
-    cache = new LTFieldDescriptor[num_fields + 1];
-    cache[num_fields].name = NULL;
-    for (int i = 0; i < num_fields; i++) {
-        cache[i] = flds[i];
-        cache[i].name = ltLuaCacheString(cache[i].name);
-    }
-    field_cache[type] = cache;
-    return field(name);
 }
 
-const LTFieldDescriptor* LTObject::fields() {
-    static const LTFieldDescriptor flds[] = {
+LTFieldDescriptor* LTObject::fields() {
+    static LTFieldDescriptor flds[] = {
         LT_END_FIELD_DESCRIPTOR_LIST
     };
     return flds;
