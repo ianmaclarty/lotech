@@ -13,6 +13,7 @@
 #include <netinet/in.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <pwd.h>
 #include <sys/stat.h>
 #if !defined(LTANDROID) && !defined(LTMINGW)
 #include <glob.h>
@@ -93,6 +94,7 @@ extern "C" {
 
 // Lotech.
 #include "ltcommon.h"
+#include "ltconfig.h"
 #include "ltobject.h"
 #include "ltopengl.h"
 #include "ltevent.h"
@@ -125,3 +127,5 @@ extern "C" {
 
 #include "ltosx.h"
 #include "ltosxutil.h"
+
+#include "ltlinuxutil.h"

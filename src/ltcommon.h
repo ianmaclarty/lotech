@@ -13,6 +13,7 @@
 typedef float           LTfloat;
 typedef double          LTdouble;
 typedef int             LTint;
+typedef int             LTint32;
 typedef bool            LTbool;
 typedef unsigned int    LTuint;
 typedef unsigned short  LTushort;

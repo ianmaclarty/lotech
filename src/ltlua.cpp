@@ -3056,6 +3056,24 @@ static int import(lua_State *L) {
     }
 }
 
+/************************ Configuration *****************************/
+
+static int lt_SetAppShortName(lua_State *L) {
+    check_nargs(L, 1);
+    const char *short_name = lua_tostring(L, 1);
+    if (short_name != NULL) {
+        if (lt_app_short_name == NULL) {
+            delete[] lt_app_short_name;
+        }
+        char *tmp = new char[strlen(short_name)];
+        strcpy(tmp, short_name);
+        lt_app_short_name = tmp;
+    } else {
+        luaL_error(L, "Expecting one string argument");
+    }
+    return 0;
+}
+
 /************************ Logging *****************************/
 
 static int log(lua_State *L) {
@@ -3223,6 +3241,8 @@ static const luaL_Reg ltlib[] = {
     {"NextRandomNumber",                lt_NextRandomNumber},
     {"NextRandomBool",                  lt_NextRandomBool},
 
+    {"SetAppShortName",                 lt_SetAppShortName},
+
     {NULL, NULL}
 };
 
@@ -3382,7 +3402,6 @@ void ltLuaTeardown() {
 }
 
 void ltLuaReset() {
-    ltSaveState();
     ltLuaTeardown();
     g_suspended = false;
     g_initialized = false;

@@ -70,3 +70,32 @@ char* ltGlob(const char **patterns) {
     return NULL;
 #endif
 }
+
+const char *ltHomeDir() {
+    const char *homedir;
+    homedir = getenv("HOME");
+    if (homedir == NULL) {
+        struct passwd *pw = getpwuid(getuid());
+        if (pw != NULL) {
+            homedir = pw->pw_dir;
+        }
+    }
+    if (homedir == NULL) {
+        ltLog("Unable to work out home directory.  Aborting.");
+        ltAbort();
+    }
+    if (!ltFileExists(homedir)) {
+        ltLog("Home directory '%s' does not exist.  Aborting.", homedir);
+        ltAbort();
+    }
+    return homedir;
+}
+
+void ltMkDir(const char* dir) {
+    if (!ltFileExists(dir)) {
+        int r = mkdir(dir, S_IRWXU | S_IRWXG);
+        if (r < 0) {
+            ltLog("Error creating directory %s: %s.  Aborting.", dir, strerror(errno));
+        }
+    }
+}

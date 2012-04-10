@@ -5,6 +5,8 @@
 void ltAbort(); // Use only for internal errors.
 extern void ltLog(const char *fmt, ...);
 bool ltFileExists(const char *file);
+void ltMkDir(const char* dir);
+const char *ltHomeDir();
 
 // Returns an array of null separated matched paths.  The last entry is two
 // null characters.  The returned array should be freed by the caller with
