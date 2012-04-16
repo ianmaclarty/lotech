@@ -1,7 +1,9 @@
 #include "lt.h"
 
+#ifdef LTMINGW
 #include <windows.h>
 #include <shlobj.h>
+#endif
 
 void ltAbort() {
     ltLog("ABORTING.");
