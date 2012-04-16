@@ -6,7 +6,9 @@ void ltStorePickledData(const char *key, LTPickler *pickler) {
     #elif LTOSX
         ltOSXStorePickledData(key, pickler);
     #elif LTLINUX
-        ltLinuxStorePickledData(key, pickler);
+        ltStorePickledDataFile(key, pickler);
+    #elif LTMINGW
+        ltStorePickledDataFile(key, pickler);
     #endif
 }
 
@@ -16,7 +18,9 @@ LTUnpickler* ltRetrievePickledData(const char *key) {
     #elif LTOSX
         return ltOSXRetrievePickledData(key);
     #elif LTLINUX
-        return ltLinuxRetrievePickledData(key);
+        return ltRetrievePickledDataFile(key);
+    #elif LTMINGW
+        return ltRetrievePickledDataFile(key);
     #else
         return NULL;
     #endif

@@ -7,6 +7,7 @@ extern void ltLog(const char *fmt, ...);
 bool ltFileExists(const char *file);
 void ltMkDir(const char* dir);
 const char *ltHomeDir();
+const char *ltAppDataDir();
 
 // Returns an array of null separated matched paths.  The last entry is two
 // null characters.  The returned array should be freed by the caller with

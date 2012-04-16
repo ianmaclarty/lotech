@@ -9,14 +9,16 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <pwd.h>
 #include <sys/stat.h>
 #if !defined(LTANDROID) && !defined(LTMINGW)
 #include <glob.h>
+#endif
+#ifndef LTMINGW
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <pwd.h>
 #endif
 
 // OpenGL
@@ -120,6 +122,7 @@ extern "C" {
 #include "ltparticles.h"
 #include "lttext.h"
 #include "ltstore.h"
+#include "ltfilestore.h"
 
 #include "ltgamecenter.h"
 #include "ltios.h"
@@ -127,5 +130,3 @@ extern "C" {
 
 #include "ltosx.h"
 #include "ltosxutil.h"
-
-#include "ltlinuxutil.h"

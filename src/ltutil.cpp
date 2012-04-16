@@ -1,5 +1,8 @@
 #include "lt.h"
 
+#include <windows.h>
+#include <shlobj.h>
+
 void ltAbort() {
     ltLog("ABORTING.");
     exit(1);
@@ -72,6 +75,8 @@ char* ltGlob(const char **patterns) {
 }
 
 const char *ltHomeDir() {
+#ifndef LTMINGW
+    // Non-windows
     const char *homedir;
     homedir = getenv("HOME");
     if (homedir == NULL) {
@@ -81,19 +86,66 @@ const char *ltHomeDir() {
         }
     }
     if (homedir == NULL) {
-        ltLog("Unable to work out home directory.  Aborting.");
+        ltLog("Unable to get home directory.");
         ltAbort();
     }
     if (!ltFileExists(homedir)) {
-        ltLog("Home directory '%s' does not exist.  Aborting.", homedir);
+        ltLog("Home directory '%s' does not exist.", homedir);
         ltAbort();
     }
     return homedir;
+#else
+    // Windows
+    static char homedir[MAX_PATH];
+    if (SHGetFolderPath(NULL, CSIDL_PROFILE, NULL, 0, homedir) != S_OK) {
+        ltLog("Unable to get home directory.");
+        ltAbort();
+    }
+    return homedir;
+#endif
+}
+
+const char *ltAppDataDir() {
+    if (lt_app_short_name == NULL || strlen(lt_app_short_name) == 0) {
+        ltLog("lt_app_short_name not set");
+        ltAbort();
+    }
+#ifdef LTLINUX
+    static char appdata_dir[1024];
+    static bool initialized = false;
+    if (!initialized) {
+        snprintf(appdata_dir, 1024, "%s/.%s", ltHomeDir(), lt_app_short_name);
+        ltMkDir(appdata_dir);
+        initialized = true;
+    }
+    return appdata_dir;
+#elif LTMINGW
+    static char win_appdata_dir[MAX_PATH];
+    static char appdata_dir[MAX_PATH];
+    static bool initialized = false;
+    if (!initialized) {
+        if (SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, win_appdata_dir) != S_OK) {
+            ltLog("Unable to get appdata directory");
+            ltAbort();
+        }
+        snprintf(appdata_dir, MAX_PATH, "%s/%s", win_appdata_dir, lt_app_short_name);
+        ltMkDir(appdata_dir);
+        initialized = true;
+    }
+    return appdata_dir;
+#else
+    ltLog("ltAppDataDir NYI");
+    ltAbort();
+#endif
 }
 
 void ltMkDir(const char* dir) {
     if (!ltFileExists(dir)) {
+#ifdef LTMINGW
+        int r = mkdir(dir);
+#else
         int r = mkdir(dir, S_IRWXU | S_IRWXG);
+#endif
         if (r < 0) {
             ltLog("Error creating directory %s: %s.  Aborting.", dir, strerror(errno));
         }

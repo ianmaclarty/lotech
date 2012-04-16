@@ -1,25 +1,19 @@
 #include "lt.h"
 
 static const char* pickle_file_name(const char *key) {
-    const char *homedir = ltHomeDir();
-    if (lt_app_short_name == NULL) {
-        ltLog("ERROR: lt_app_short_name not set.");
-        ltAbort();
-    }
     if (key == NULL || strlen(key) == 0) {
         ltLog("pickle_file_name: key null or empty");
         ltAbort();
     }
+    const char *appdata_dir = ltAppDataDir();
     char path[1024];
-    snprintf(path, 1024, "%s/.%s", homedir, lt_app_short_name);
-    ltMkDir(path);
-    snprintf(path, 1024, "%s/.%s/%s", homedir, lt_app_short_name, key);
+    snprintf(path, 1024, "%s/%s", appdata_dir, key);
     char *filename = new char[strlen(path)];
     strcpy(filename, path);
     return filename;
 }
 
-void ltLinuxStorePickledData(const char *key, LTPickler *pickler) {
+void ltStorePickledDataFile(const char *key, LTPickler *pickler) {
     const char *filename = pickle_file_name(key);
     FILE *f = fopen(filename, "wb");
     if (f == NULL) {
@@ -33,7 +27,7 @@ void ltLinuxStorePickledData(const char *key, LTPickler *pickler) {
     fclose(f);
 }
 
-LTUnpickler *ltLinuxRetrievePickledData(const char *key) {
+LTUnpickler *ltRetrievePickledDataFile(const char *key) {
     const char *filename = pickle_file_name(key);
     FILE *f = fopen(filename, "rb");
     if (f == NULL) {
