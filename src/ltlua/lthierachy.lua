@@ -11,6 +11,7 @@ lt.classes = {
         super = "Object",
         methods = {
             Draw                        = lt.DrawSceneNode,
+            Advance                     = lt.AdvanceSceneNode,
             OnPointerUp                 = lt.AddOnPointerUpHandler,
             OnPointerDown               = lt.AddOnPointerDownHandler,
             OnPointerMove               = lt.AddOnPointerMoveHandler,
@@ -151,7 +152,6 @@ lt.classes = {
     ParticleSystem = {
         super = "SceneNode",
         methods = {
-            Advance = lt.ParticleSystemAdvance,
             FixtureFilter = lt.ParticleSystemFixtureFilter,
         }
     },

@@ -2,8 +2,12 @@
 
 #include "lt.h"
 
+int lt_curr_advance_step = 0;
+
 LTSceneNode::LTSceneNode(LTType type) : LTObject(type) {
     event_handlers = NULL;
+    actions = NULL;
+    last_advance_step = -1;
 }
 
 LTSceneNode::~LTSceneNode() {
@@ -13,6 +17,37 @@ LTSceneNode::~LTSceneNode() {
             delete *it;
         }
         delete event_handlers;
+    }
+    if (actions != NULL) {
+        std::list<LTAction*>::iterator it;
+        for (it = actions->begin(); it != actions->end(); it++) {
+            delete *it;
+        }
+        delete actions;
+    }
+}
+
+void LTSceneNode::advance(LTfloat dt) {
+    if (!executeActions(dt)) return;
+}
+
+bool LTSceneNode::executeActions(LTfloat dt) {
+    if (last_advance_step != lt_curr_advance_step) {
+        if (actions != NULL) {
+            std::list<LTAction*>::iterator it = actions->begin();
+            while (it != actions->end()) {
+                if ((*it)->doAction(dt)) {
+                    delete *it;
+                    it = actions->erase(it);
+                } else {
+                    it++;
+                }
+            }
+        }
+        last_advance_step = lt_curr_advance_step;
+        return true;
+    } else {
+        return false;
     }
 }
 
@@ -50,6 +85,11 @@ LTWrapNode::LTWrapNode(LTSceneNode *child, LTType type) : LTSceneNode(type) {
 
 void LTWrapNode::draw() {
     child->draw();
+}
+
+void LTWrapNode::advance(LTfloat dt) {
+    if (!executeActions(dt)) return;
+    child->advance(dt);
 }
 
 bool LTWrapNode::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
@@ -139,6 +179,14 @@ void LTLayer::draw() {
         ltPushMatrix();
         (*it)->draw();
         ltPopMatrix();
+    }
+}
+
+void LTLayer::advance(LTfloat dt) {
+    if (!executeActions(dt)) return;
+    std::list<LTSceneNode*>::iterator it;
+    for (it = node_list.begin(); it != node_list.end(); it++) {
+        (*it)->advance(dt);
     }
 }
 

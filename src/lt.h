@@ -4,7 +4,9 @@
 #include <errno.h>
 #include <cfloat>
 #include <list>
+#include <set>
 #include <map>
+#include <vector>
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -100,7 +102,9 @@ extern "C" {
 #include "ltobject.h"
 #include "ltopengl.h"
 #include "ltevent.h"
+#include "ltaction.h"
 #include "ltscene.h"
+#include "ltscheduler.h"
 #include "ltimage.h"
 #include "ltgraphics.h"
 #include "ltpickle.h"

@@ -14,6 +14,7 @@ static bool g_suspended = false;
 static bool g_initialized = false;
 static bool g_gamecenter_initialized = false;
 
+
 /************************* Functions for calling lua **************************/
 
 // Check lua_pcall return status.
@@ -873,14 +874,6 @@ static int lt_ParticleSystem(lua_State *L) {
     push_wrap(L, particles);
     add_ref(L, -1, 1); // Add reference from particles to image.
     return 1;
-}
-
-static int lt_ParticleSystemAdvance(lua_State *L) {
-    check_nargs(L, 2);
-    LTParticleSystem *particles = (LTParticleSystem *)get_object(L, 1, LT_TYPE_PARTICLESYSTEM);
-    LTfloat dt = luaL_checknumber(L, 2);
-    particles->advance(dt);
-    return 0;
 }
 
 static int lt_ParticleSystemFixtureFilter(lua_State *L) {
@@ -2932,6 +2925,81 @@ static int lt_OpenURL(lua_State *L) {
     return 0;
 }
 
+/********************* Actions ****************************/
+
+struct LTLuaAction;
+
+static int g_pending_action_table_ref = LUA_NOREF;
+static std::vector<LTLuaAction*> *g_pending_actions = NULL;
+static int g_num_pending_actions = 0;
+
+/*
+ * Lua actions can potentially mutate the scene tree, so we delay them
+ * until after we've finished traversing the tree.
+ */
+
+struct LTLuaAction : LTAction {
+    int lua_func_ref;
+    bool finished;
+
+    LTLuaAction(int lua_func_ref) {
+        LTLuaAction::lua_func_ref = lua_func_ref;
+        finished = false;
+    }
+
+    virtual bool doAction(LTfloat dt) {
+        if (!finished) {
+            g_pending_actions->push_back(this);
+            g_num_pending_actions++;
+            // Keep a reference to the action lua function
+            // in a non-weak table so it isn't gc'd.
+            lua_rawgeti(g_L, LUA_REGISTRYINDEX, g_pending_action_table_ref);
+            get_weak_ref(g_L, lua_func_ref);
+            lua_rawseti(g_L, -2, g_num_pending_actions);
+            lua_pop(g_L, 1); // Pop action table.
+        }
+        return finished;
+    }
+};
+
+static int lt_AdvanceSceneNode(lua_State *L) {
+    check_nargs(L, 2);
+    LTSceneNode *node = (LTSceneNode*)get_object(L, 1, LT_TYPE_SCENENODE);
+    LTfloat dt = (LTfloat)luaL_checknumber(L, 2);
+
+    lua_newtable(L);
+    g_pending_action_table_ref = luaL_ref(L, LUA_REGISTRYINDEX);
+
+    g_pending_actions = new std::vector<LTLuaAction*>();
+    g_num_pending_actions = 0;
+
+    node->advance(dt);
+    lt_curr_advance_step++;
+
+    // We must make local references to these globals, because
+    // they may be modified by one of the lua actions we're about
+    // to execute.
+    int action_table = g_pending_action_table_ref;
+    std::vector<LTLuaAction*> *actions = g_pending_actions;
+    int n = g_num_pending_actions;
+
+    lua_rawgeti(L, LUA_REGISTRYINDEX, action_table);
+    for (int i = 0; i < n; i++) {
+        LTLuaAction *action = (*actions)[i];
+        lua_rawgeti(L, -1, i + 1);
+        lua_pushnumber(L, dt);
+        lua_call(L, 2, 1);
+        action->finished = lua_toboolean(L, -1);
+        lua_pop(L, 1);
+    }
+    lua_pop(L, 1); // Pop action_table.
+
+    delete actions;
+    luaL_unref(L, LUA_REGISTRYINDEX, action_table);
+
+    return 0;
+}
+
 /************************* Random numbers **************************/
 
 static int lt_Random(lua_State *L) {
@@ -3134,6 +3202,7 @@ static const luaL_Reg ltlib[] = {
     {"Wrap",                            lt_Wrap},
 
     {"DrawSceneNode",                   lt_DrawSceneNode},
+    {"AdvanceSceneNode",                lt_AdvanceSceneNode},
     {"AddOnPointerUpHandler",           lt_AddOnPointerUpHandler},
     {"AddOnPointerDownHandler",         lt_AddOnPointerDownHandler},
     {"AddOnPointerMoveHandler",         lt_AddOnPointerMoveHandler},
@@ -3158,7 +3227,6 @@ static const luaL_Reg ltlib[] = {
     {"DrawVector",                      lt_DrawVector},
 
     {"ParticleSystem",                  lt_ParticleSystem},
-    {"ParticleSystemAdvance",           lt_ParticleSystemAdvance},
     {"ParticleSystemFixtureFilter",     lt_ParticleSystemFixtureFilter},
 
     {"RenderTarget",                    lt_RenderTarget},

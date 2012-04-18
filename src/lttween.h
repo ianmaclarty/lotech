@@ -2,12 +2,6 @@
 
 typedef LTfloat(*LTEaseFunc)(LTfloat);
 
-// Use for generated hash table mapping strings to easing funcs.
-struct LTEaseFuncInfo {
-    const char *name;
-    LTEaseFunc func;
-};
-
 struct LTTween {
     LTObject *owner;
     LTfloat *field_ptr;

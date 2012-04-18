@@ -199,6 +199,8 @@ void LTParticleSystem::add_particle() {
 }
 
 void LTParticleSystem::advance(LTfloat dt) {
+    if (!executeActions(dt)) return;
+
     if (active && emission_rate > 0.0f) {
         LTfloat rate = 1.0f / emission_rate;
         emit_counter += dt;

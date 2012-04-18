@@ -82,7 +82,7 @@ struct LTParticleSystem : LTSceneNode {
     void stop();
     void reset();
     void add_particle();
-    void advance(LTfloat dt);
+    virtual void advance(LTfloat dt);
     virtual void draw();
 
     virtual LTFieldDescriptor* fields();

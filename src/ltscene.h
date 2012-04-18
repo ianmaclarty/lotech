@@ -1,12 +1,26 @@
 /* Copyright (C) 2010 Ian MacLarty */
 
+// This is updated each time lt.AdvanceSceneNode is called
+// (not each time lt.Advance is called).
+extern int lt_curr_advance_step;
+
 struct LTSceneNode : LTObject {
     std::list<LTPointerEventHandler *> *event_handlers;
+    std::list<LTAction *> *actions;
+    int last_advance_step;
 
     LTSceneNode(LTType type);
     virtual ~LTSceneNode();
 
     virtual void draw() = 0;
+
+    // Executes this, and all descendent node's actions.
+    virtual void advance(LTfloat dt);
+
+    // Executes only this node's actions and marks them as being executed.
+    // Returns false if the actions have already been executed for the
+    // current step.
+    bool executeActions(LTfloat dt);
 
     // Call all the event handles for this node only, returning true iff at least one
     // of the event handlers returns true.
@@ -51,6 +65,7 @@ struct LTLayer : LTSceneNode {
     int size();
 
     virtual void draw();
+    virtual void advance(LTfloat dt);
     virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
 };
 
@@ -61,6 +76,7 @@ struct LTWrapNode : LTSceneNode {
     LTWrapNode(LTSceneNode *child, LTType type);
     
     virtual void draw();
+    virtual void advance(LTfloat dt);
     virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
 };
 
