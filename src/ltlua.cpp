@@ -3133,7 +3133,7 @@ static int lt_SetAppShortName(lua_State *L) {
         if (lt_app_short_name == NULL) {
             delete[] lt_app_short_name;
         }
-        char *tmp = new char[strlen(short_name)];
+        char *tmp = new char[strlen(short_name) + 1];
         strcpy(tmp, short_name);
         lt_app_short_name = tmp;
     } else {

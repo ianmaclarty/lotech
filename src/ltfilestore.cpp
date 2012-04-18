@@ -8,7 +8,7 @@ static const char* pickle_file_name(const char *key) {
     const char *appdata_dir = ltAppDataDir();
     char path[1024];
     snprintf(path, 1024, "%s/%s", appdata_dir, key);
-    char *filename = new char[strlen(path)];
+    char *filename = new char[strlen(path) + 1];
     strcpy(filename, path);
     return filename;
 }
