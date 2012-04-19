@@ -2,5 +2,5 @@ struct LTSceneNode;
 
 struct LTAction {
     // Should return true when finished.
-    virtual bool doAction(LTfloat dt) = 0;
+    virtual bool doAction(LTfloat dt, LTSceneNode *node) = 0;
 };

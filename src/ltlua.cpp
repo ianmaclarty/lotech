@@ -2929,9 +2929,14 @@ static int lt_OpenURL(lua_State *L) {
 
 struct LTLuaAction;
 
-static int g_pending_action_table_ref = LUA_NOREF;
-static std::vector<LTLuaAction*> *g_pending_actions = NULL;
-static int g_num_pending_actions = 0;
+struct PendingAction {
+    LTLuaAction *action;
+    int scene_node_ref;
+};
+
+static std::vector<PendingAction> g_pending_actions;
+static int g_pending_actions_start = 0;
+static int g_pending_actions_end = 0;
 
 /*
  * Lua actions can potentially mutate the scene tree, so we delay them
@@ -2947,16 +2952,15 @@ struct LTLuaAction : LTAction {
         finished = false;
     }
 
-    virtual bool doAction(LTfloat dt) {
+    virtual bool doAction(LTfloat dt, LTSceneNode *node) {
         if (!finished) {
-            g_pending_actions->push_back(this);
-            g_num_pending_actions++;
-            // Keep a reference to the action lua function
-            // in a non-weak table so it isn't gc'd.
-            lua_rawgeti(g_L, LUA_REGISTRYINDEX, g_pending_action_table_ref);
-            get_weak_ref(g_L, lua_func_ref);
-            lua_rawseti(g_L, -2, g_num_pending_actions);
-            lua_pop(g_L, 1); // Pop action table.
+            PendingAction pa;
+            pa.action = this;
+            // Make non-weak reference to scene node so it isn't gc'd.
+            push_wrap(g_L, node);
+            pa.scene_node_ref = luaL_ref(g_L, LUA_REGISTRYINDEX);
+            g_pending_actions.push_back(pa);
+            g_pending_actions_end++;
         }
         return finished;
     }
@@ -2967,35 +2971,28 @@ static int lt_AdvanceSceneNode(lua_State *L) {
     LTSceneNode *node = (LTSceneNode*)get_object(L, 1, LT_TYPE_SCENENODE);
     LTfloat dt = (LTfloat)luaL_checknumber(L, 2);
 
-    lua_newtable(L);
-    g_pending_action_table_ref = luaL_ref(L, LUA_REGISTRYINDEX);
-
-    g_pending_actions = new std::vector<LTLuaAction*>();
-    g_num_pending_actions = 0;
+    int start = g_pending_actions_start;
 
     node->advance(dt);
     lt_curr_advance_step++;
 
-    // We must make local references to these globals, because
-    // they may be modified by one of the lua actions we're about
-    // to execute.
-    int action_table = g_pending_action_table_ref;
-    std::vector<LTLuaAction*> *actions = g_pending_actions;
-    int n = g_num_pending_actions;
+    int end = g_pending_actions_end;
 
-    lua_rawgeti(L, LUA_REGISTRYINDEX, action_table);
-    for (int i = 0; i < n; i++) {
-        LTLuaAction *action = (*actions)[i];
-        lua_rawgeti(L, -1, i + 1);
+    g_pending_actions_start = end;
+
+    for (int i = start; i < end; i++) {
+        PendingAction pa = g_pending_actions[i];
+        lua_rawgeti(L, LUA_REGISTRYINDEX, pa.action->lua_func_ref);
         lua_pushnumber(L, dt);
+        lua_rawgeti(L, LUA_REGISTRYINDEX, pa.scene_node_ref);
         lua_call(L, 2, 1);
-        action->finished = lua_toboolean(L, -1);
-        lua_pop(L, 1);
+        pa.action->finished = lua_toboolean(L, -1);
+        luaL_unref(L, LUA_REGISTRYINDEX, pa.scene_node_ref);
     }
-    lua_pop(L, 1); // Pop action_table.
 
-    delete actions;
-    luaL_unref(L, LUA_REGISTRYINDEX, action_table);
+    g_pending_actions.resize(start);
+    g_pending_actions_start = start;
+    g_pending_actions_end = start;
 
     return 0;
 }

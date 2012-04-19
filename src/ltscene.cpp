@@ -36,7 +36,7 @@ bool LTSceneNode::executeActions(LTfloat dt) {
         if (actions != NULL) {
             std::list<LTAction*>::iterator it = actions->begin();
             while (it != actions->end()) {
-                if ((*it)->doAction(dt)) {
+                if ((*it)->doAction(dt, this)) {
                     delete *it;
                     it = actions->erase(it);
                 } else {
