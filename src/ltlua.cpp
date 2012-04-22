@@ -1328,7 +1328,7 @@ static bool call_pointer_event_handler(lua_State *L, int func, LTfloat x, LTfloa
         lua_call(L, 3, 1);
         bool consumed;
         if (lua_isnil(L, -1)) {
-            consumed = true; // callback didn't return anything, so don't propogate by default.
+            consumed = false;
         } else {
             consumed = lua_toboolean(L, -1);
         }
@@ -3467,6 +3467,7 @@ void ltLuaTeardown() {
 }
 
 void ltLuaReset() {
+    ltSaveState();
     ltLuaTeardown();
     g_suspended = false;
     g_initialized = false;
