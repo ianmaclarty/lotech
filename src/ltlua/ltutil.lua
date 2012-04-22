@@ -81,7 +81,8 @@ function lt.FixGlobals()
     setmetatable(_G, mt)
 end
 
-function lt.SceneNodeContainsPoint(node, x, y)
+function lt.SceneNodeContainsPoint(node, x, y, buf)
+    buf = buf or 0
     local t, b, l, r = node.top, node.bottom, node.left, node.right
-    return x <= r and x >= l and y <= t and y >= b
+    return x <= r + buf and x >= l - buf and y <= t + buf and y >= b - buf
 end
