@@ -138,6 +138,7 @@ const char *ltAppDataDir() {
 #else
     ltLog("ltAppDataDir NYI");
     ltAbort();
+    return NULL;
 #endif
 }
 
