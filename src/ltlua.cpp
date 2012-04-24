@@ -100,6 +100,13 @@ static void get_weak_ref(lua_State *L, int ref) {
     lua_remove(L, -2); // remove wrefs.
 }
 
+// Remove a weak reference.
+static void del_weak_ref(lua_State *L, int ref) {
+    lua_rawgeti(L, LUA_REGISTRYINDEX, g_wrefs_ref);
+    luaL_unref(L, -1, ref);
+    lua_pop(L, 1); // pop wrefs
+}
+
 /************************* Wrapping/unwrapping of c++ objects ******/
 
 // Extract LTObject from wrapper table at the given index.
@@ -134,17 +141,17 @@ static int lt_SetObjectField(lua_State *L) {
     LTFieldDescriptor *field = obj->field(fname);
     if (field != NULL) {
         if (field->type < LT_FIELD_TYPE_START_VAL) {
-            // Remove reference to old val.
             LTObject *oldval = obj->getObjField(field);
+            LTObject *val = get_object(L, 3, (LTType)field->type);
+            obj->setObjField(field, val);
+            // Add reference from obj to new val.
+            add_ref(L, 1, 3);
+            // Remove reference to old val.
             if (oldval != NULL) {
                 push_wrap(L, oldval);
                 del_ref(L, 1, -1);
                 lua_pop(L, 1);
             }
-            LTObject *val = get_object(L, 3, (LTType)field->type);
-            obj->setObjField(field, val);
-            // Add reference from obj to new val.
-            add_ref(L, 1, 3);
         } else {
             switch (field->type) {
                 case LT_FIELD_TYPE_FLOAT: {
@@ -160,6 +167,23 @@ static int lt_SetObjectField(lua_State *L) {
                 case LT_FIELD_TYPE_BOOL: {
                     LTbool val = (LTbool)lua_toboolean(L, 3);
                     obj->setBoolField(field, val);
+                    break;
+                }
+                case LT_FIELD_TYPE_LUA_REF: {
+                    LTint oldref = obj->getIntField(field);
+                    LTint ref = make_weak_ref(L, 3);
+                    obj->setIntField(field, ref);
+                    // Add reference from object to lua value,
+                    // so the lua value isn't gc'd as long as the object
+                    // is live.
+                    add_ref(L, 1, 3);
+                    // Remove reference from object to old lua ref.
+                    if (oldref != LUA_NOREF) {
+                        get_weak_ref(L, oldref);
+                        del_ref(L, 1, -1);
+                        lua_pop(L, 1);
+                        del_weak_ref(L, oldref);
+                    }
                     break;
                 }
             }
@@ -188,6 +212,11 @@ static int lt_GetObjectField(lua_State *L) {
                 }
                 case LT_FIELD_TYPE_BOOL: {
                     lua_pushboolean(L, obj->getBoolField(field));
+                    break;
+                }
+                case LT_FIELD_TYPE_LUA_REF: {
+                    int ref = obj->getIntField(field);
+                    get_weak_ref(L, ref);
                     break;
                 }
             }
@@ -328,6 +357,10 @@ static void set_object_fields_from_table(lua_State *L, LTObject *obj, int table)
                         }
                         case LT_FIELD_TYPE_BOOL: {
                             obj->setBoolField(field, lua_toboolean(L, -1));
+                            break;
+                        }
+                        case LT_FIELD_TYPE_LUA_REF: {
+                            ltLog("WARNING: ignoring lua ref field '%s'", key);
                             break;
                         }
                     }

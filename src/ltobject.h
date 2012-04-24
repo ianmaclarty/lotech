@@ -45,7 +45,7 @@ enum LTType {
 
 const char* ltTypeName(LTType type);
 
-#define LT_FIELD_TYPE_START_VAL 8128
+#define LT_FIELD_TYPE_START_VAL 10000
 
 /*
  * Values below LT_FIELD_TYPE_START_VAL correspond to a LTType type.
@@ -54,6 +54,7 @@ enum LTFieldType {
     LT_FIELD_TYPE_FLOAT = LT_FIELD_TYPE_START_VAL,
     LT_FIELD_TYPE_INT,
     LT_FIELD_TYPE_BOOL,
+    LT_FIELD_TYPE_LUA_REF,
 };
 
 enum LTFieldAccess {
