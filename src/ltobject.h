@@ -45,8 +45,13 @@ enum LTType {
 
 const char* ltTypeName(LTType type);
 
+#define LT_FIELD_TYPE_START_VAL 8128
+
+/*
+ * Values below LT_FIELD_TYPE_START_VAL correspond to a LTType type.
+ */
 enum LTFieldType {
-    LT_FIELD_TYPE_FLOAT,
+    LT_FIELD_TYPE_FLOAT = LT_FIELD_TYPE_START_VAL,
     LT_FIELD_TYPE_INT,
     LT_FIELD_TYPE_BOOL,
 };
@@ -58,7 +63,7 @@ enum LTFieldAccess {
 
 struct LTFieldDescriptor {
     const char *name;
-    LTFieldType type;
+    int type; // Either a LTType or a LTFieldType.
     int offset;
     void* getter;
     void* setter; 
@@ -70,12 +75,14 @@ struct LTFieldDescriptor {
 
 struct LTObject;
 
-typedef LTfloat (*LTFloatGetter)(LTObject*);
-typedef void    (*LTFloatSetter)(LTObject*, LTfloat);
-typedef LTint   (*LTIntGetter)(LTObject*);
-typedef void    (*LTIntSetter)(LTObject*, LTint);
-typedef LTbool  (*LTBoolGetter)(LTObject*);
-typedef void    (*LTBoolSetter)(LTObject*, LTbool);
+typedef LTfloat     (*LTFloatGetter)(LTObject*);
+typedef void        (*LTFloatSetter)(LTObject*, LTfloat);
+typedef LTint       (*LTIntGetter)(LTObject*);
+typedef void        (*LTIntSetter)(LTObject*, LTint);
+typedef LTbool      (*LTBoolGetter)(LTObject*);
+typedef void        (*LTBoolSetter)(LTObject*, LTbool);
+typedef LTObject*   (*LTObjGetter)(LTObject*);
+typedef void        (*LTObjSetter)(LTObject*, LTObject*);
 
 struct LTObject {
     int lua_wrap; // Reference to Lua wrapper table.
@@ -143,6 +150,26 @@ struct LTObject {
                 *((LTbool*)((char*)this + field->offset)) = val;
             } else {
                 LTBoolSetter setter = (LTBoolSetter)field->setter;
+                setter(this, val);
+            }
+        }
+    }
+
+    inline LTObject *getObjField(LTFieldDescriptor *field) {
+        if (field->offset >= 0) {
+            return *((LTObject**)((char*)this + field->offset));
+        } else {
+            LTObjGetter getter = (LTObjGetter)field->getter;
+            return getter(this);
+        }
+    }
+
+    inline void setObjField(LTFieldDescriptor *field, LTObject *val) {
+        if (field->access == LT_ACCESS_FULL) {
+            if (field->offset >= 0) {
+                *((LTObject**)((char*)this + field->offset)) = val;
+            } else {
+                LTObjSetter setter = (LTObjSetter)field->setter;
                 setter(this, val);
             }
         }

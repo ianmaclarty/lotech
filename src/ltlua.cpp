@@ -15,6 +15,12 @@ static bool g_initialized = false;
 static bool g_gamecenter_initialized = false;
 
 
+/************************* Prototypes **************************/
+
+static void push_wrap(lua_State *L, LTObject *obj);
+static void del_ref(lua_State *L, int wrap_index, int ref_index);
+static void add_ref(lua_State *L, int wrap_index, int ref_index);
+
 /************************* Functions for calling lua **************************/
 
 // Check lua_pcall return status.
@@ -127,21 +133,35 @@ static int lt_SetObjectField(lua_State *L) {
     fname = luaL_checkstring(L, 2);
     LTFieldDescriptor *field = obj->field(fname);
     if (field != NULL) {
-        switch (field->type) {
-            case LT_FIELD_TYPE_FLOAT: {
-                LTfloat val = (LTfloat)luaL_checknumber(L, 3);
-                obj->setFloatField(field, val);
-                break;
+        if (field->type < LT_FIELD_TYPE_START_VAL) {
+            // Remove reference to old val.
+            LTObject *oldval = obj->getObjField(field);
+            if (oldval != NULL) {
+                push_wrap(L, oldval);
+                del_ref(L, 1, -1);
+                lua_pop(L, 1);
             }
-            case LT_FIELD_TYPE_INT: {
-                LTint val = (LTint)luaL_checkinteger(L, 3);
-                obj->setIntField(field, val);
-                break;
-            }
-            case LT_FIELD_TYPE_BOOL: {
-                LTbool val = (LTbool)lua_toboolean(L, 3);
-                obj->setBoolField(field, val);
-                break;
+            LTObject *val = get_object(L, 3, (LTType)field->type);
+            obj->setObjField(field, val);
+            // Add reference from obj to new val.
+            add_ref(L, 1, 3);
+        } else {
+            switch (field->type) {
+                case LT_FIELD_TYPE_FLOAT: {
+                    LTfloat val = (LTfloat)luaL_checknumber(L, 3);
+                    obj->setFloatField(field, val);
+                    break;
+                }
+                case LT_FIELD_TYPE_INT: {
+                    LTint val = (LTint)luaL_checkinteger(L, 3);
+                    obj->setIntField(field, val);
+                    break;
+                }
+                case LT_FIELD_TYPE_BOOL: {
+                    LTbool val = (LTbool)lua_toboolean(L, 3);
+                    obj->setBoolField(field, val);
+                    break;
+                }
             }
         }
     }
@@ -153,21 +173,26 @@ static int lt_GetObjectField(lua_State *L) {
     const char *fname = luaL_checkstring(L, 2);
     LTFieldDescriptor *field = obj->field(fname);
     if (field != NULL) {
-        switch (field->type) {
-            case LT_FIELD_TYPE_FLOAT: {
-                lua_pushnumber(L, obj->getFloatField(field));
-                break;
+        if (field->type < LT_FIELD_TYPE_START_VAL) {
+            push_wrap(L, obj->getObjField(field));
+            return 1;
+        } else {
+            switch (field->type) {
+                case LT_FIELD_TYPE_FLOAT: {
+                    lua_pushnumber(L, obj->getFloatField(field));
+                    break;
+                }
+                case LT_FIELD_TYPE_INT: {
+                    lua_pushinteger(L, obj->getIntField(field));
+                    break;
+                }
+                case LT_FIELD_TYPE_BOOL: {
+                    lua_pushboolean(L, obj->getBoolField(field));
+                    break;
+                }
             }
-            case LT_FIELD_TYPE_INT: {
-                lua_pushinteger(L, obj->getIntField(field));
-                break;
-            }
-            case LT_FIELD_TYPE_BOOL: {
-                lua_pushboolean(L, obj->getBoolField(field));
-                break;
-            }
+            return 1;
         }
-        return 1;
     } else {
         lua_pushnil(L);
         return 1;
@@ -289,18 +314,22 @@ static void set_object_fields_from_table(lua_State *L, LTObject *obj, int table)
             const char *key = lua_tostring(L, -2);
             LTFieldDescriptor *field = obj->field(key);
             if (field != NULL) {
-                switch (field->type) {
-                    case LT_FIELD_TYPE_FLOAT: {
-                        obj->setFloatField(field, lua_tonumber(L, -1));
-                        break;
-                    }
-                    case LT_FIELD_TYPE_INT: {
-                        obj->setIntField(field, lua_tointeger(L, -1));
-                        break;
-                    }
-                    case LT_FIELD_TYPE_BOOL: {
-                        obj->setBoolField(field, lua_toboolean(L, -1));
-                        break;
+                if (field->type < LT_FIELD_TYPE_START_VAL) {
+                    ltLog("WARNING: ignoring object field '%s'", key);
+                } else {
+                    switch (field->type) {
+                        case LT_FIELD_TYPE_FLOAT: {
+                            obj->setFloatField(field, lua_tonumber(L, -1));
+                            break;
+                        }
+                        case LT_FIELD_TYPE_INT: {
+                            obj->setIntField(field, lua_tointeger(L, -1));
+                            break;
+                        }
+                        case LT_FIELD_TYPE_BOOL: {
+                            obj->setBoolField(field, lua_toboolean(L, -1));
+                            break;
+                        }
                     }
                 }
             }
