@@ -2987,6 +2987,14 @@ static int lt_AdvanceSceneNode(lua_State *L) {
         lua_rawgeti(L, LUA_REGISTRYINDEX, pa.scene_node_ref);
         lua_call(L, 2, 1);
         pa.action->finished = lua_toboolean(L, -1);
+        // Remove ref from scene node to lua function if finished.
+        if (pa.action->finished) {
+            lua_rawgeti(L, LUA_REGISTRYINDEX, pa.scene_node_ref);
+            lua_rawgeti(L, LUA_REGISTRYINDEX, pa.action->lua_func_ref);
+            del_ref(L, -2, -1);
+            lua_pop(L, 2);
+        }
+        // Remove global ref to scene node to allow it to be GC'd.
         luaL_unref(L, LUA_REGISTRYINDEX, pa.scene_node_ref);
     }
 
