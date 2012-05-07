@@ -232,6 +232,12 @@ bool LTTranslateNode::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent
     }
 }
 
+LT_REGISTER_TYPE(LTTranslateNode, LTObject,
+    {"x", LT_FIELD_TYPE_FLOAT, offsetof(LTTranslateNode, x), NULL, NULL, LT_ACCESS_FULL},
+    {"y", LT_FIELD_TYPE_FLOAT, offsetof(LTTranslateNode, y), NULL, NULL, LT_ACCESS_FULL},
+    {"z", LT_FIELD_TYPE_FLOAT, offsetof(LTTranslateNode, z), NULL, NULL, LT_ACCESS_FULL},
+);
+
 LTFieldDescriptor* LTTranslateNode::fields() {
     static LTFieldDescriptor flds[] = {
         {"x", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(x), NULL, NULL, LT_ACCESS_FULL},

@@ -140,3 +140,32 @@ LTFieldDescriptor* LTObject::fields() {
     };
     return flds;
 }
+
+//--------------
+
+static const LTFieldDescriptor no_fields[] = {LT_END_FIELD_DESCRIPTOR_LIST};
+const LTTypeDef lt_typedef_int =        {"int",     NULL, no_fields};
+const LTTypeDef lt_typedef_float =      {"float",   NULL, no_fields};
+const LTTypeDef lt_typedef_bool =       {"bool",    NULL, no_fields};
+const LTTypeDef lt_typedef_lua_ref =    {"lua_ref", NULL, no_fields};
+const LTTypeDef lt_typedef_LTObject =   {"Object",  NULL, no_fields};
+
+//--------------
+
+static std::vector<const LTTypeDef*> *lt_type_registry;
+
+static void register_type(const LTTypeDef *type) {
+    lt_type_registry->push_back(type);
+}
+
+LTRegisterType::LTRegisterType(const LTTypeDef *type) {
+    if (lt_type_registry == NULL) {
+        lt_type_registry = new std::vector<const LTTypeDef*>();
+        register_type(&lt_typedef_int);
+        register_type(&lt_typedef_float);
+        register_type(&lt_typedef_bool);
+        register_type(&lt_typedef_lua_ref);
+        register_type(&lt_typedef_LTObject);
+    }
+    register_type(type);
+}
