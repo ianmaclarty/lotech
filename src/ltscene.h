@@ -85,6 +85,7 @@ struct LTTranslateNode : LTWrapNode {
     LTfloat y;
     LTfloat z;
 
+    LTTranslateNode();
     LTTranslateNode(LTfloat x, LTfloat y, LTfloat z, LTSceneNode *child);
 
     virtual void draw();

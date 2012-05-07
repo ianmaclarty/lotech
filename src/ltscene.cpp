@@ -204,6 +204,9 @@ bool LTLayer::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event)
     }
 }
 
+LTTranslateNode::LTTranslateNode() : LTWrapNode(NULL, LT_TYPE_TRANSLATE) {
+}
+
 LTTranslateNode::LTTranslateNode(LTfloat x, LTfloat y, LTfloat z, LTSceneNode *child)
     : LTWrapNode(child, LT_TYPE_TRANSLATE)
 {
@@ -232,7 +235,7 @@ bool LTTranslateNode::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent
     }
 }
 
-LT_REGISTER_TYPE(LTTranslateNode, LTObject,
+LT_REGISTER_TYPE(LTTranslateNode, Translate, Object,
     {"x", LT_FIELD_TYPE_FLOAT, offsetof(LTTranslateNode, x), NULL, NULL, LT_ACCESS_FULL},
     {"y", LT_FIELD_TYPE_FLOAT, offsetof(LTTranslateNode, y), NULL, NULL, LT_ACCESS_FULL},
     {"z", LT_FIELD_TYPE_FLOAT, offsetof(LTTranslateNode, z), NULL, NULL, LT_ACCESS_FULL},
