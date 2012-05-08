@@ -3496,7 +3496,6 @@ static void set_globals() {
 }
 
 void ltLuaSetup() {
-    ltInitObjectFieldCache();
     #ifndef LTANDROID
     ltAudioInit();
     #endif
@@ -3505,6 +3504,8 @@ void ltLuaSetup() {
         ltLog("Cannot create lua state: not enough memory.");
         ltAbort();
     }
+    setup_string_table_ref();
+    ltInitObjectFieldCache();
     lua_gc(g_L, LUA_GCSTOP, 0);  /* stop collector during library initialization */
     luaL_openlibs(g_L);
     lua_pushcfunction(g_L, import);
@@ -3518,7 +3519,6 @@ void ltLuaSetup() {
     setup_userdata_key_ref();
     setup_wref_ref();
     setup_ud_metatables_ref();
-    setup_string_table_ref();
     set_globals();
     run_lua_file("config");
     ltRestoreState();
