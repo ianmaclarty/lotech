@@ -1,6 +1,12 @@
 /* Copyright (C) 2010 Ian MacLarty */
 #include "lt.h"
 
+struct LTFieldCache;
+
+static inline LTFieldDescriptor *lookup_field(const char *name, LTFieldCache *cache);
+static void init_type_parent();
+static void init_field_cache_2();
+
 struct LTTypeInfo {
     const char *name;
     LTType super_type;
@@ -90,6 +96,8 @@ void ltInitObjectFieldCache() {
         }
         field_cache[i] = NULL;
     }
+    init_type_parent();
+    init_field_cache_2();
 }
 
 // This is just used to initialize field_cache the first time.
@@ -139,4 +147,152 @@ LTFieldDescriptor* LTObject::fields() {
         LT_END_FIELD_DESCRIPTOR_LIST
     };
     return flds;
+}
+
+//--------------
+
+static const LTFieldDescriptor no_fields[] = {LT_END_FIELD_DESCRIPTOR_LIST};
+const LTTypeDef lt_typedef_int =        {"int",     NULL, sizeof(LTint),    NULL, NULL, no_fields};
+const LTTypeDef lt_typedef_float =      {"float",   NULL, sizeof(LTfloat),  NULL, NULL, no_fields};
+const LTTypeDef lt_typedef_bool =       {"bool",    NULL, sizeof(LTbool),   NULL, NULL, no_fields};
+const LTTypeDef lt_typedef_lua_ref =    {"lua_ref", NULL, sizeof(int),      NULL, NULL, no_fields};
+const LTTypeDef lt_typedef_Object =     {"Object",  NULL, sizeof(LTObject), NULL, NULL, no_fields};
+
+//--------------
+
+static std::vector<const LTTypeDef*> *type_registry;
+
+static void register_type(const LTTypeDef *type) {
+    type_registry->push_back(type);
+    fprintf(stderr, "Registered type %s, parent = %s, size = %d\n", type->name, type->parent, type->size);
+}
+
+LTRegisterType::LTRegisterType(const LTTypeDef *type) {
+    if (type_registry == NULL) {
+        type_registry = new std::vector<const LTTypeDef*>();
+    }
+    register_type(type);
+}
+
+//--------------
+
+static std::vector<int> type_parent;
+
+static bool str_cmp(const char *a, const char *b) {
+    return strcmp(a, b) < 0;
+}
+
+static void init_type_parent() {
+    std::map<const char *, int, bool (*)(const char*, const char*)> type_by_name(&str_cmp);
+    int n = type_registry->size();
+    const char* name;
+    const char* parent;
+    type_parent.resize(n);
+    for (int i = 0; i < n; i++) {
+        name = (*type_registry)[i]->name;
+        if (type_by_name.find(name) != type_by_name.end()) {
+            ltLog("Error: Duplicate entries for type %s", name);
+            ltAbort();
+        }
+        type_by_name[name] = i;
+    }
+    std::map<const char *, int, bool (*)(const char*, const char*)>::iterator it;
+    for (int i = 0; i < n; i++) {
+        name = (*type_registry)[i]->name;
+        parent = (*type_registry)[i]->parent;
+        if (parent == NULL || (strcmp(parent, "Object") == 0)) {
+            type_parent[i] = -1;
+        } else {
+            it = type_by_name.find(parent);
+            if (it == type_by_name.end()) {
+                ltLog("Error: Parent %s for type %s not registered", parent, name);
+                ltAbort();
+            } else {
+                type_parent[i] = it->second;
+            }
+        }
+    }
+}
+
+//--------------
+
+struct LTFieldCache {
+    int num_fields;
+    const void* entries[]; // First num_fields entries are lua interned field name strings
+                           // Then a NULL sentinal.
+                           // Then next num_fields entries are pointers to the LTFieldDescriptors.
+};
+
+static std::vector<LTFieldCache *> field_cache_2;
+
+// Counts fields in type i and all its ancestors.  Duplicates
+// (i.e. fields with the same name) are not counted.
+static int count_fields(int i) {
+    std::set<const char *, bool (*)(const char*, const char*)> seen(str_cmp);
+    int num_fields = 0;
+    while (i >= 0) {
+        const LTTypeDef *type = (*type_registry)[i];
+        const LTFieldDescriptor *fields = type->fields;
+        const LTFieldDescriptor *ptr = fields;
+        while (ptr->name != NULL) {
+            if (seen.find(ptr->name) == seen.end()) {
+                num_fields++;
+                seen.insert(ptr->name);
+            }
+            ptr++;
+        }
+        i = type_parent[i];
+    }
+    return num_fields;
+}
+
+static void init_field_cache_2() {
+    int n = type_registry->size();
+    for (unsigned int i = 0; i < field_cache_2.size(); i++) {
+        if (field_cache_2[i] == NULL) {
+            ltLog("Internal error: field_cache_2[%d] == NULL", i);
+            ltAbort();
+        }
+        free(field_cache_2[i]);
+        field_cache_2[i] = NULL;
+    }
+    field_cache_2.resize(n);
+    for (int i = 0; i < n; i++) {
+        int m = count_fields(i);
+        LTFieldCache *cache = (LTFieldCache*)malloc(sizeof(LTFieldCache) + sizeof(void*) * (m + 1 + m));
+        cache->num_fields = m;
+        cache->entries[m] = NULL; // sentinal
+        std::set<const char *, bool (*)(const char*, const char*)> seen(str_cmp);
+        int k = 0;
+        int j = i;
+        while (j >= 0) {
+            const LTTypeDef *type = (*type_registry)[j];
+            const LTFieldDescriptor *fields = type->fields;
+            const LTFieldDescriptor *ptr = fields;
+            while (ptr->name != NULL) {
+                if (seen.find(ptr->name) == seen.end()) {
+                    seen.insert(ptr->name);
+                    const char *lstr = ltLuaCacheString(ptr->name);
+                    cache->entries[k] = lstr;
+                    cache->entries[k + m + 1] = ptr;
+                    k++;
+                }
+                ptr++;
+            }
+            j = type_parent[j];
+        }
+        field_cache_2[i] = cache;
+    }
+}
+
+static inline LTFieldDescriptor *lookup_field(const char *name, LTFieldCache *cache) {
+    const char **entry = (const char **)cache->entries;
+    while (*entry != NULL && *entry != name) {
+        entry++;
+    }
+    if (entry != NULL) {
+        return *((LTFieldDescriptor**)(entry + cache->num_fields + 1));
+    } else {
+        return NULL; // Field not found.
+    }
 }
