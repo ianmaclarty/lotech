@@ -2,7 +2,8 @@
 lt.classes = {
     Object = {
         methods = {
-            Tween = lt.Tween
+            Tween = lt.Tween,
+            CancelTween = lt.CancelTween,
         }
     },
 
