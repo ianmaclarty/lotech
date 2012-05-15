@@ -38,7 +38,7 @@
     #include <OpenGLES/ES1/gl.h>
     #include <OpenGLES/ES1/glext.h>
 #endif
-#ifdef LTOSX
+#if defined(LTOSX) && !defined(LTNOGL)
     //#include <OpenGL/GL.h>
     #define GLEW_STATIC 1
     #include <GL/glew.h>
