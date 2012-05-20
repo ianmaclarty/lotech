@@ -1166,6 +1166,8 @@ static int lt_DrawVector(lua_State *L) {
 
 /************************* Render targets ******************/
 
+static LTTextureFilter decode_texture_filter_arg(lua_State *L, int arg);
+
 static int lt_RenderTarget(lua_State *L) {
     int nargs = check_nargs(L, 2);
     int w = luaL_checkinteger(L, 1);
@@ -1184,7 +1186,12 @@ static int lt_RenderTarget(lua_State *L) {
     LTfloat wld_y1;
     LTfloat wld_x2;
     LTfloat wld_y2;
-    if (nargs == 6) {
+    if (nargs > 6) {
+        wld_x1 = luaL_checknumber(L, 7);
+        wld_y1 = luaL_checknumber(L, 8);
+        wld_x2 = luaL_checknumber(L, 9);
+        wld_y2 = luaL_checknumber(L, 10);
+    } else {
         LTfloat pix_w = ltGetPixelWidth();
         LTfloat pix_h = ltGetPixelHeight();
         LTfloat world_width = (LTfloat)w * pix_w;
@@ -1193,17 +1200,21 @@ static int lt_RenderTarget(lua_State *L) {
         wld_y1 = - world_height * 0.5f;
         wld_x2 = world_width * 0.5f;
         wld_y2 = world_height * 0.5f;
-    } else {
-        wld_x1 = luaL_checknumber(L, 7);
-        wld_y1 = luaL_checknumber(L, 8);
-        wld_x2 = luaL_checknumber(L, 9);
-        wld_y2 = luaL_checknumber(L, 10);
+    }
+
+    LTTextureFilter minfilter = LT_TEXTURE_FILTER_LINEAR;
+    LTTextureFilter magfilter = LT_TEXTURE_FILTER_LINEAR;
+    if (nargs > 10) {
+        minfilter = decode_texture_filter_arg(L, 11);
+    }
+    if (nargs > 11) {
+        magfilter = decode_texture_filter_arg(L, 12);
     }
 
     LTRenderTarget *render_target = new LTRenderTarget(w, h,
         vp_x1, vp_y1, vp_x2, vp_y2,
         wld_x1, wld_y1, wld_x2, wld_y2,
-        false, LT_TEXTURE_FILTER_LINEAR, LT_TEXTURE_FILTER_LINEAR);
+        false, minfilter, magfilter);
     push_wrap(L, render_target);
     return 1;
 }
@@ -1629,7 +1640,7 @@ static void pack_image(lua_State *L, LTImagePacker *packer, LTImageBuffer *buf,
     }
 }
 
-LTTextureFilter decode_texture_filter_arg(lua_State *L, int arg) {
+static LTTextureFilter decode_texture_filter_arg(lua_State *L, int arg) {
     const char *str = lua_tostring(L, arg);
     if (str == NULL) {
         luaL_error(L, "Expecting a string in argument %d", arg);
