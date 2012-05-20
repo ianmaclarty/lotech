@@ -4,14 +4,14 @@ struct LTRenderTarget : LTTexturedNode {
     LTframebuf      fbo;
     bool            depthbuf_enabled;
 
-    int             width;
-    int             height;
+    LTint             width;
+    LTint             height;
 
     // The target texture dimensions must be powers of 2, so may
     // be different from the specified width and height.
     // These are also used for the dimensions of the depth buffer.
-    int             tex_width;
-    int             tex_height;
+    LTint             tex_width;
+    LTint             tex_height;
 
     // Viewport
     LTfloat vp_x1;
@@ -37,6 +37,8 @@ struct LTRenderTarget : LTTexturedNode {
 
     virtual void preContextChange();
     virtual void postContextChange();
+
+    virtual LTFieldDescriptor *fields();
 
 private:
 

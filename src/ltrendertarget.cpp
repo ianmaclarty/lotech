@@ -60,6 +60,20 @@ void LTRenderTarget::postContextChange() {
     setup();
 }
 
+static void setup_texture_coords(LTRenderTarget *target) {
+    // Set up texture coords for drawing.
+    int texel_w = LT_MAX_TEX_COORD / target->tex_width;
+    int texel_h = LT_MAX_TEX_COORD / target->tex_height;
+    LTtexcoord tex_right = target->width * texel_w;
+    LTtexcoord tex_top = target->height * texel_h;
+    target->tex_coords[0] = 0;          target->tex_coords[1] = tex_top;
+    target->tex_coords[2] = tex_right;  target->tex_coords[3] = tex_top;
+    target->tex_coords[4] = tex_right;  target->tex_coords[5] = 0;
+    target->tex_coords[6] = 0;          target->tex_coords[7] = 0;
+    ltBindVertBuffer(target->texbuf);
+    ltStaticVertBufferData(sizeof(LTtexcoord) * 8, target->tex_coords);
+}
+
 void LTRenderTarget::setup() {
     // Generate frame buffer.
     fbo = ltGenFramebuffer();
@@ -72,18 +86,8 @@ void LTRenderTarget::setup() {
         ltAbort();
     }
 
-    // Set up texture coords for drawing.
-    int texel_w = LT_MAX_TEX_COORD / tex_width;
-    int texel_h = LT_MAX_TEX_COORD / tex_height;
-    LTtexcoord tex_right = width * texel_w;
-    LTtexcoord tex_top = height * texel_h;
-    tex_coords[0] = 0;          tex_coords[1] = tex_top;
-    tex_coords[2] = tex_right;  tex_coords[3] = tex_top;
-    tex_coords[4] = tex_right;  tex_coords[5] = 0;
-    tex_coords[6] = 0;          tex_coords[7] = 0;
     texbuf = ltGenVertBuffer();
-    ltBindVertBuffer(texbuf);
-    ltStaticVertBufferData(sizeof(LTtexcoord) * 8, tex_coords);
+    setup_texture_coords(this);
 
     // Set up world vertices for drawing.
     world_vertices[0] = wld_x1;  world_vertices[1] = wld_y2;
@@ -94,3 +98,33 @@ void LTRenderTarget::setup() {
     ltBindVertBuffer(vertbuf);
     ltStaticVertBufferData(sizeof(LTfloat) * 8, world_vertices);
 }
+
+static LTint get_pwidth(LTObject *obj) {
+    return ((LTRenderTarget*)obj)->width;
+}
+
+static LTint get_pheight(LTObject *obj) {
+    return ((LTRenderTarget*)obj)->height;
+}
+
+static void set_pwidth(LTObject *obj, LTint val) {
+    LTRenderTarget *target = (LTRenderTarget*)obj;
+    target->width = val;
+    setup_texture_coords(target);
+}
+
+static void set_pheight(LTObject *obj, LTint val) {
+    LTRenderTarget *target = (LTRenderTarget*)obj;
+    target->height = val;
+    setup_texture_coords(target);
+}
+
+LTFieldDescriptor* LTRenderTarget::fields() {
+    static LTFieldDescriptor flds[] = {
+        {"pwidth",  LT_FIELD_TYPE_INT, -1, (void*)get_pwidth, (void*)set_pwidth, LT_ACCESS_FULL},
+        {"pheight", LT_FIELD_TYPE_INT, -1, (void*)get_pheight, (void*)set_pheight, LT_ACCESS_FULL},
+        LT_END_FIELD_DESCRIPTOR_LIST
+    };
+    return flds;
+}
+

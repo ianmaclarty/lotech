@@ -1,56 +1,25 @@
 local
-function thread_func(f, tweens)
-    local cmd
-    while true do
-        repeat
-            cmd = coroutine.yield(0)
-        until cmd == "continue"
-        local success, res = pcall(f, tweens)
-        if success then
-            repeat
-                cmd = coroutine.yield("finished")
-            until cmd == "restart"
-        else
-            if res ~= "restart" then
-                error(res, 0)
-            end
-        end
-    end
-end
-
-local
 function animator_advance(animator, dt)
-    for i = 1, #(animator.threads) do
+    for i = 1, animator.num_threads do
         local thread = animator.threads[i]
-        local accum = animator.accums[i]
-        accum = accum - dt
-        while accum < 0 do
-            local success, res = coroutine.resume(thread, "continue")
-            if success then
-                if res == "finished" then
-                    accum = 10000000000
+        if thread then
+            local accum = animator.accums[i]
+            local done = false
+            accum = accum - dt
+            while accum < 0 and not done do
+                local t = thread(animator.tweens)
+                log(tostring(t))
+                if not t then
+                    done = true
+                    animator.threads[i] = nil
                 else
-                    accum = accum + res
+                    accum = accum + t
                 end
-            else
-                error(res, 0)
             end
+            animator.accums[i] = accum
         end
-        animator.accums[i] = accum
     end
     animator.tweens:Advance(dt)
-end
-
-local
-function animator_restart(animator)
-    for i, thread in ipairs(animator.threads) do
-        local success, res = coroutine.resume(thread, "restart")
-        if not success then
-            error(res, 0)
-        end
-        animator.accums[i] = 0
-    end
-    animator.tweens:Clear()
 end
 
 local lt_add_tween = lt.AddTween
@@ -88,28 +57,20 @@ function lt.Animator(...)
     local accums = {}
     for i = 1, n do
         local f = select(i, ...)
-        local thread = coroutine.create(thread_func)
-        coroutine.resume(thread, f, tweens)
+        local thread = coroutine.wrap(f)
+        accums[i] = thread(tweens)
         threads[i] = thread
-        accums[i] = 0
     end
     local animator = {
+        num_threads = n,
         tweens = tweens,
         threads = threads,
         accums = accums, -- amount of time to wait before resuming each thread
         Advance = animator_advance,
-        Restart = animator_restart,
     }
     return animator
 end
 
 function lt.Wait(t)
-    local cmd = coroutine.yield(t)
-    if cmd == "continue" then
-        return
-    elseif cmd == "restart" then
-        error("restart", 0)
-    else
-        error("unrecognised command: " .. cmd)
-    end
+    coroutine.yield(t)
 end
