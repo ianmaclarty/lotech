@@ -73,43 +73,6 @@ struct LTFieldDescriptor {
 #define LT_END_FIELD_DESCRIPTOR_LIST {NULL, LT_FIELD_TYPE_INT, 0, NULL, NULL, LT_ACCESS_READONLY}
 #define LT_OFFSETOF(f) ((int)((char*)&(f) - (char*)this))
 
-struct LTTypeDef {
-    const char *name;
-    const char *parent;
-    const int size;
-    void (*constructor)(void*);
-    void (*destructor)(void*);
-    const LTFieldDescriptor *fields;
-};
-
-extern const LTTypeDef lt_typedef_int;
-extern const LTTypeDef lt_typedef_bool;
-extern const LTTypeDef lt_typedef_float;
-extern const LTTypeDef lt_typedef_lua_ref;
-extern const LTTypeDef lt_typedef_Object;
-#define LT_TYPEDEF_INT &lt_typedef_int;
-#define LT_TYPEDEF_BOOL &lt_typedef_bool;
-#define LT_TYPEDEF_FLOAT &lt_typedef_float;
-#define LT_TYPEDEF_LUA_REF &lt_typedef_lua_ref;
-#define LT_TYPEDEF_OBJECT &lt_typedef_Object;
-
-#define LT_REGISTER_TYPE(type, name, parent, ...) \
-    static void lt_constructor_for_##name(void *cell) { \
-        new (cell) type(); \
-    } \
-    static void lt_destructor_for_##name(void *cell) { \
-        ((type*)cell)->~type(); \
-    } \
-    static const LTFieldDescriptor lt_fields_for_##name[] = {__VA_ARGS__ LT_END_FIELD_DESCRIPTOR_LIST}; \
-    const LTTypeDef lt_typedef_##name = {#name, #parent, \
-        sizeof(type), &lt_constructor_for_##name, &lt_destructor_for_##name, \
-        lt_fields_for_##name}; \
-    static LTRegisterType lt_register_type_##name(&lt_typedef_##name);
-
-struct LTRegisterType {
-    LTRegisterType(const LTTypeDef *type);
-};
-
 struct LTObject;
 
 typedef LTfloat     (*LTFloatGetter)(LTObject*);
