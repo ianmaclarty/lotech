@@ -30,7 +30,7 @@ static void set_state_str();
 #define LTGLCHECK
 #ifdef LTGLCHECK
 #define check_for_errors if (glGetError() != GL_NO_ERROR) \
-    {ltLog("OpenGL error at %s:%d %s", __FILE__, __LINE__, __func__); ltAbort();}
+    {ltLog("OpenGL error at %s:%d %s", __FILE__, __LINE__, __func__); }
 #else
 #define check_for_errors
 #endif
