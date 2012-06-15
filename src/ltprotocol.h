@@ -1,4 +1,6 @@
 /* Copyright (C) 2011 Ian MacLarty */
+LT_INIT_DECL(ltprotocol)
+
 #ifndef LTMINGW
 
 bool ltAmClient();

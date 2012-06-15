@@ -1,7 +1,9 @@
 /* Copyright (C) 2010 Ian MacLarty */
 #include "lt.h"
 
-LTTweenSet::LTTweenSet() : LTObject(LT_TYPE_TWEENSET) {
+LT_INIT_IMPL(lttween)
+
+LTTweenSet::LTTweenSet() {
     LTTweenSet::capacity = 4;
     LTTweenSet::occupants = 0;
     LTTweenSet::tweens = new LTTween[capacity];
@@ -11,7 +13,8 @@ LTTweenSet::~LTTweenSet() {
     delete[] tweens;
 }
 
-int LTTweenSet::add(LTObject *owner, LTfloat *field_ptr, LTfloat target_val, LTfloat time, LTfloat delay, LTEaseFunc ease, int slot) {
+int LTTweenSet::add(LTObject *owner, LTFloatGetter getter, LTFloatSetter setter,
+        LTfloat target_val, LTfloat time, LTfloat delay, LTEaseFunc ease, int slot) {
     if (slot < 0) {
         if (occupants == capacity) {
             int new_capacity = capacity * 2;
@@ -25,17 +28,18 @@ int LTTweenSet::add(LTObject *owner, LTfloat *field_ptr, LTfloat target_val, LTf
         occupants++;
     }
     LTTween *tween = &tweens[slot];
-    ltInitTween(tween, owner, field_ptr, target_val, time, delay, ease);
+    ltInitTween(tween, owner, getter, setter, target_val, time, delay, ease);
     return slot;
 }
 
-void ltInitTween(LTTween *tween, LTObject *owner, LTfloat *field_ptr,
+void ltInitTween(LTTween *tween, LTObject *owner, LTFloatGetter getter, LTFloatSetter setter,
     LTfloat v, LTfloat time, LTfloat delay, LTEaseFunc ease)
 {
     tween->owner = owner;
-    tween->field_ptr = field_ptr;
+    tween->getter = getter;
+    tween->setter = setter;
     tween->t = 0.0f;
-    tween->v0 = *field_ptr;
+    tween->v0 = getter(owner);
     tween->v = v;
     tween->time = time;
     tween->delay = delay;
@@ -52,10 +56,10 @@ bool ltAdvanceTween(LTTween *tween, LTfloat dt) {
         LTfloat v0 = tween->v0;
         LTfloat v = v0 + (tween->v - v0) * tween->ease(t);
         tween->t = t + dt / tween->time;
-        *(tween->field_ptr) = v;
+        tween->setter(tween->owner, v);
         return false;
     } else {
-        *(tween->field_ptr) = tween->v;
+        tween->setter(tween->owner, tween->v);
         return true;
     }
 }

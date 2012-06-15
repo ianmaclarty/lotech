@@ -1,4 +1,5 @@
 /* Copyright (C) 2010 Ian MacLarty */
+LT_INIT_DECL(ltgraphics)
 #define LT_MAX_TEX_COORD 8192
 
 struct LTPoint {
@@ -50,23 +51,23 @@ struct LTCompactColor {
 };
 
 struct LTColor {
-    LTfloat r;
-    LTfloat g;
-    LTfloat b;
-    LTfloat a;
+    LTfloat red;
+    LTfloat green;
+    LTfloat blue;
+    LTfloat alpha;
 
     LTColor(LTfloat r, LTfloat g, LTfloat b, LTfloat a) {
-        LTColor::r = r;
-        LTColor::g = g;
-        LTColor::b = b;
-        LTColor::a = a;
+        LTColor::red = r;
+        LTColor::green = g;
+        LTColor::blue = b;
+        LTColor::alpha = a;
     }
 
     LTColor() {
-        r = 1.0f;
-        g = 1.0f;
-        b = 1.0f;
-        a = 1.0f;
+        red = 1.0f;
+        green = 1.0f;
+        blue = 1.0f;
+        alpha = 1.0f;
     }
 };
 

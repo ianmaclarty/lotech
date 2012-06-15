@@ -1,5 +1,7 @@
 #include "lt.h"
 
+LT_INIT_IMPL(ltpickle)
+
 #define INITIAL_CAPACITY 1024
 
 LTPickler::LTPickler() {

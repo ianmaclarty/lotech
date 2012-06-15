@@ -1,5 +1,7 @@
 #include "lt.h"
 
+LT_INIT_IMPL(ltfilestore)
+
 static const char* pickle_file_name(const char *key) {
     if (key == NULL || strlen(key) == 0) {
         ltLog("pickle_file_name: key null or empty");

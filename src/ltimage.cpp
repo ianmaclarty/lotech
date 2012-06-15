@@ -1,6 +1,8 @@
 /* Copyright (C) 2010 Ian MacLarty */
 #include "lt.h"
 
+LT_INIT_IMPL(ltimage)
+
 #define BBCHUNK_KEY "LTBB"
 // w and h are the width and height of the original image.
 // l, b, r and t are the left, bottom, right and top dimensions of the bounding box.
@@ -655,11 +657,6 @@ LTImageBuffer *ltCreateEmptyImageBuffer(const char *name, int w, int h) {
 
 //-----------------------------------------------------------------
 
-LTTexturedNode::LTTexturedNode(LTType type) : LTSceneNode(type) {
-    vertbuf = 0;
-    texbuf = 0;
-};
-
 LTTexturedNode::~LTTexturedNode() {
     if (vertbuf != 0) {
         ltDeleteVertBuffer(vertbuf);
@@ -678,7 +675,42 @@ void LTTexturedNode::draw() {
     ltDrawArrays(LT_DRAWMODE_TRIANGLE_FAN, 0, 4);
 }
 
-LTImage::LTImage(LTAtlas *atls, int atlas_w, int atlas_h, LTImagePacker *packer) : LTTexturedNode(LT_TYPE_IMAGE) {
+static LTfloat get_wld_left(LTObject *obj) {
+    return ((LTTexturedNode*)obj)->world_vertices[0];
+}
+static LTfloat get_wld_bottom(LTObject *obj) {
+    return ((LTTexturedNode*)obj)->world_vertices[5];
+}
+static LTfloat get_wld_right(LTObject *obj) {
+    return ((LTTexturedNode*)obj)->world_vertices[2];
+}
+static LTfloat get_wld_top(LTObject *obj) {
+    return ((LTTexturedNode*)obj)->world_vertices[1];
+}
+static LTfloat get_tex_left(LTObject *obj) {
+    return ((LTTexturedNode*)obj)->tex_coords[0];
+}
+static LTfloat get_tex_bottom(LTObject *obj) {
+    return ((LTTexturedNode*)obj)->tex_coords[5];
+}
+static LTfloat get_tex_right(LTObject *obj) {
+    return ((LTTexturedNode*)obj)->tex_coords[2];
+}
+static LTfloat get_tex_top(LTObject *obj) {
+    return ((LTTexturedNode*)obj)->tex_coords[1];
+}
+
+LT_REGISTER_TYPE(LTTexturedNode, "lt.TexturedNode", "lt.SceneNode")
+LT_REGISTER_PROPERTY_FLOAT(LTTexturedNode, left,        &get_wld_left,      NULL);
+LT_REGISTER_PROPERTY_FLOAT(LTTexturedNode, bottom,      &get_wld_bottom,    NULL);
+LT_REGISTER_PROPERTY_FLOAT(LTTexturedNode, right,       &get_wld_right,     NULL);
+LT_REGISTER_PROPERTY_FLOAT(LTTexturedNode, top,         &get_wld_top,       NULL);
+LT_REGISTER_PROPERTY_FLOAT(LTTexturedNode, tex_left,    &get_tex_left,      NULL);
+LT_REGISTER_PROPERTY_FLOAT(LTTexturedNode, tex_bottom,  &get_tex_bottom,    NULL);
+LT_REGISTER_PROPERTY_FLOAT(LTTexturedNode, tex_right,   &get_tex_right,     NULL);
+LT_REGISTER_PROPERTY_FLOAT(LTTexturedNode, tex_top,     &get_tex_top,       NULL);
+
+LTImage::LTImage(LTAtlas *atls, int atlas_w, int atlas_h, LTImagePacker *packer) {
     if (packer->occupant == NULL) {
         ltLog("Packer occupant is NULL");
         ltAbort();
@@ -748,19 +780,14 @@ LTImage::~LTImage() {
     }
 }
 
-LTFieldDescriptor* LTImage::fields() {
-    static LTFieldDescriptor flds[] = {
-        {"width", LT_FIELD_TYPE_FLOAT,      LT_OFFSETOF(orig_width), NULL, NULL, LT_ACCESS_READONLY},
-        {"height", LT_FIELD_TYPE_FLOAT,     LT_OFFSETOF(orig_height), NULL, NULL, LT_ACCESS_READONLY},
-        {"left", LT_FIELD_TYPE_FLOAT,       LT_OFFSETOF(world_vertices[0]), NULL, NULL, LT_ACCESS_READONLY},
-        {"bottom", LT_FIELD_TYPE_FLOAT,     LT_OFFSETOF(world_vertices[5]), NULL, NULL, LT_ACCESS_READONLY},
-        {"right", LT_FIELD_TYPE_FLOAT,      LT_OFFSETOF(world_vertices[2]), NULL, NULL, LT_ACCESS_READONLY},
-        {"top", LT_FIELD_TYPE_FLOAT,        LT_OFFSETOF(world_vertices[1]), NULL, NULL, LT_ACCESS_READONLY},
-        {"tex_left", LT_FIELD_TYPE_FLOAT,   LT_OFFSETOF(tex_coords[0]), NULL, NULL, LT_ACCESS_READONLY},
-        {"tex_bottom", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(tex_coords[5]), NULL, NULL, LT_ACCESS_READONLY},
-        {"tex_right", LT_FIELD_TYPE_FLOAT,  LT_OFFSETOF(tex_coords[2]), NULL, NULL, LT_ACCESS_READONLY},
-        {"tex_top", LT_FIELD_TYPE_FLOAT,    LT_OFFSETOF(tex_coords[1]), NULL, NULL, LT_ACCESS_READONLY},
-        LT_END_FIELD_DESCRIPTOR_LIST
-    };
-    return flds;
+static LTfloat get_width(LTObject *obj) {
+    return ((LTImage*)obj)->orig_width;
 }
+
+static LTfloat get_height(LTObject *obj) {
+    return ((LTImage*)obj)->orig_height;
+}
+
+LT_REGISTER_TYPE(LTImage, "lt.Image", "lt.TexturedNode")
+LT_REGISTER_PROPERTY_FLOAT(LTImage, width, &get_width, NULL)
+LT_REGISTER_PROPERTY_FLOAT(LTImage, height, &get_height, NULL)

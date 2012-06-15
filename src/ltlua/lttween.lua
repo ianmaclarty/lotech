@@ -1,16 +1,16 @@
 -- Copyright 2011 Ian MacLarty
 local
 function cleanup_obj_tween_fields(obj)
-    rawset(obj, "_tweens", nil)
-    rawset(obj, "_tween_actions", nil)
-    rawset(obj, "_tween_index", nil)
-    rawset(obj, "_tweenset", nil)
+    obj._tweens = nil
+    obj._tween_actions = nil
+    obj._tween_index = nil
+    obj._tweenset = nil
 end
 
 function lt.RemoveTweens(obj)
-    local tweens = rawget(obj, _tweens)
+    local tweens = obj._tweens
     if tweens then
-        tweens[rawget(obj._tween_index)] = nil
+        tweens[obj._tween_index] = nil
         cleanup_obj_tween_fields(obj)
     end
 end
@@ -29,7 +29,7 @@ function lt.AdvanceTweens(tweens, dt)
     --local count = 0
     --local sample_field = "nothing"
     for obj_index, obj in pairs(tweens) do
-        local obj_tweens = rawget(obj, "_tweens")
+        local obj_tweens = obj._tweens
         for field, tween in pairs(obj_tweens) do
             --count = count + 1
             --sample_field = field
@@ -55,7 +55,7 @@ function lt.AdvanceTweens(tweens, dt)
                 end
             end
             if finished then
-                local tween_actions = rawget(obj, "_tween_actions")
+                local tween_actions = obj._tween_actions
                 if tween_actions then
                     local action = tween_actions[field]
                     if action then
@@ -85,15 +85,11 @@ local lt_get = lt.GetObjectField
 -- C field (and therefore a candidate for fast tweening).
 local
 function find_field_owner(obj, field)
-    local value = rawget(obj, field)
+    local value = obj[field]
     if value then
         return obj
     end
-    value = lt_get(obj, field)
-    if value then
-        return obj, true
-    end
-    local child = rawget(obj, "child")
+    local child = obj.child
     if child then
         return find_field_owner(child, field)
     else
@@ -105,15 +101,18 @@ local make_native_tween = lt.MakeNativeTween
 local ease_func_table
 
 function lt.AddTween(tweens, table, field, to, secs, delay, ease, action, called_from_tween_method)
-    local obj, c_field = find_field_owner(table, field)
-    if not obj then
+    --local obj = find_field_owner(table, field)
+    local obj = table
+    if not obj[field] then
         local level = called_from_tween_method and 3 or 2
         error("No such field: " .. field, level)
     end
     local tween
-    if c_field then
+    --[[
+    if type(obj) == "userdata" and obj.is then
         tween = make_native_tween(obj, field, delay, to, secs, ease)
     end
+    ]]
     if not tween then
         if ease == nil then
             ease = lt.LinearEase
@@ -134,29 +133,29 @@ function lt.AddTween(tweens, table, field, to, secs, delay, ease, action, called
             ease = ease,
         }
     end
-    local obj_tweens = rawget(obj, "_tweens")
+    local obj_tweens = obj._tweens
     if not obj_tweens then
         obj_tweens = {}
-        rawset(obj, "_tweens", obj_tweens)
+        obj._tweens = obj_tweens
     end
     obj_tweens[field] = tween
-    local obj_actions = rawget(obj, "_tween_actions")
+    local obj_actions = obj._tween_actions
     if action then
         if not obj_actions then
             obj_actions = {}
-            rawset(obj, "_tween_actions", obj_actions)
+            obj._tween_actions = obj_actions
         end
         obj_actions[field] = action
     elseif obj_actions then
         -- Remove any action that might have been there before
         obj_actions[field] = nil
     end
-    local obj_tweenset = rawget(obj, "_tweenset")
-    rawset(obj, "_tweenset", obj_tweenset)
-    local obj_index = rawget(obj, "_tween_index")
+    local obj_tweenset = obj._tweenset
+    obj._tweenset = obj_tweenset
+    local obj_index = obj._tween_index
     if not obj_index then
         obj_index = #tweens + 1
-        rawset(obj, "_tween_index", obj_index)
+        obj._tween_index = obj_index
     end
     tweens[obj_index] = obj
 end
@@ -299,6 +298,10 @@ function lt.ZoomOutEase(t)
     return 1 + s - s / (s + t)
 end
 
+function lt.RevolveEase(t)
+    return (math.sin(math.pi * (t - 0.5)) + 1) * 0.5
+end
+
 ease_func_table = {
     bounce = lt.BounceEase,
     elastic = lt.ElasticEase,
@@ -311,6 +314,7 @@ ease_func_table = {
     decel = lt.DeccelEase,
     zoomin = lt.ZoomInEase,
     zoomout = lt.ZoomOutEase,
+    revolve = lt.RevolveEase,
 }
 
 -------------------------------------------------------------
@@ -371,19 +375,19 @@ end
 
 function lt.CancelTween(obj, field)
     local owner = find_field_owner(obj, field)
-    local obj_tweens = rawget(owner, "_tweens")
+    local obj_tweens = owner._tweens
     if obj_tweens then
         obj_tweens[field] = nil
         if next(obj_tweens) == nil then
-            local tweenset = rawget(owner, "_tweenset")
-            local tween_index = rawget(owner, "_tween_index")
+            local tweenset = owner._tweenset
+            local tween_index = owner._tween_index
             tweenset[tween_index] = nil
-            rawset(owner, "_tweens", nil)
-            rawset(owner, "_tween_actions", nil)
-            rawset(owner, "_tween_index", nil)
-            rawset(owner, "_tweenset", nil)
+            owner._tweens = nil
+            owner._tween_actions = nil
+            owner._tween_index = nil
+            owner._tweenset = nil
         else
-            local obj_actions = rawget(owner, "_tween_actions")
+            local obj_actions = owner._tween_actions
             if obj_actions then
                 obj_actions[field] = nil
             end

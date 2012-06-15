@@ -1,7 +1,7 @@
-/* Copyright (C) 2012 Ian MacLarty */
-#define ASSERT_CONCAT_(a, b) a##b
-#define ASSERT_CONCAT(a, b) ASSERT_CONCAT_(a, b)
-#define ct_assert(e) enum { ASSERT_CONCAT(assert_line_, __LINE__) = 1/(!!(e)) }
+/* Copyright (C) 2012 Ian MacLactionarty */
+#define LT_CONCAT_(a, b) a##b
+#define LT_CONCAT(a, b) LT_CONCAT_(a, b)
+#define ct_assert(e) enum { LT_CONCAT(assert_line_, __LINE__) = 1/(!!(e)) }
 
 #define LT_PI 3.14159265358979323846f
 #define LT_RADIANS_PER_DEGREE (LT_PI / 180.0f)
@@ -9,6 +9,14 @@
 
 #define STR_EXPAND(tok) #tok
 #define STR(tok) STR_EXPAND(tok)
+
+#define LT_INIT_DECL(module) \
+    void module##_init();
+
+#define LT_INIT_IMPL(module) \
+    void module##_init() {}
+
+LT_INIT_DECL(ltcommon)
 
 typedef float           LTfloat;
 typedef double          LTdouble;

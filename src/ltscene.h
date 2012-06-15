@@ -1,4 +1,5 @@
 /* Copyright (C) 2010 Ian MacLarty */
+LT_INIT_DECL(ltscene)
 
 // This is updated each time lt.AdvanceSceneNode is called
 // (not each time lt.Advance is called).
@@ -9,10 +10,10 @@ struct LTSceneNode : LTObject {
     std::list<LTAction *> *actions;
     int last_advance_step;
 
-    LTSceneNode(LTType type);
+    LTSceneNode();
     virtual ~LTSceneNode();
 
-    virtual void draw() = 0;
+    virtual void draw() {};
 
     // Executes this, and all descendent node's actions.
     virtual void advance(LTfloat dt);
@@ -50,8 +51,6 @@ struct LTLayer : LTSceneNode {
     std::list<LTSceneNode*> node_list; // Nodes in draw order.
     std::multimap<LTSceneNode*, std::list<LTSceneNode*>::iterator> node_index;
 
-    LTLayer();
-
     void insert_front(LTSceneNode *node); // node drawn last
     void insert_back(LTSceneNode *node);  // node drawn first
 
@@ -72,9 +71,9 @@ struct LTLayer : LTSceneNode {
 struct LTWrapNode : LTSceneNode {
     LTSceneNode *child;
 
-    LTWrapNode(LTSceneNode *child);
-    LTWrapNode(LTSceneNode *child, LTType type);
+    LTWrapNode();
     
+    virtual void init(lua_State *L);
     virtual void draw();
     virtual void advance(LTfloat dt);
     virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
@@ -85,13 +84,8 @@ struct LTTranslateNode : LTWrapNode {
     LTfloat y;
     LTfloat z;
 
-    LTTranslateNode();
-    LTTranslateNode(LTfloat x, LTfloat y, LTfloat z, LTSceneNode *child);
-
     virtual void draw();
     virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
-
-    virtual LTFieldDescriptor *fields();
 };
 
 struct LTRotateNode : LTWrapNode {
@@ -100,108 +94,80 @@ struct LTRotateNode : LTWrapNode {
     LTfloat cx;
     LTfloat cy;
 
-    LTRotateNode(LTdegrees angle, LTfloat cx, LTfloat cy, LTSceneNode *child);
-
     virtual void draw();
     virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
-
-    virtual LTFieldDescriptor *fields();
 };
 
 struct LTScaleNode : LTWrapNode {
-    LTfloat sx;
-    LTfloat sy;
-    LTfloat sz;
-    LTfloat s;
+    LTfloat scale_x;
+    LTfloat scale_y;
+    LTfloat scale_z;
+    LTfloat scale;
 
-    LTScaleNode(LTfloat sx, LTfloat sy, LTfloat sz, LTfloat s, LTSceneNode *child);
+    LTScaleNode() {scale_x = 1; scale_y = 1; scale_z = 1; scale = 1;};
 
+    virtual void init(lua_State *L);
     virtual void draw();
     virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
-
-    virtual LTFieldDescriptor *fields();
 };
 
 struct LTTintNode : LTWrapNode {
-    LTfloat r;
-    LTfloat g;
-    LTfloat b;
-    LTfloat a;
+    LTfloat red;
+    LTfloat green;
+    LTfloat blue;
+    LTfloat alpha;
 
-    LTTintNode(LTfloat r, LTfloat g, LTfloat b, LTfloat a, LTSceneNode *child);
+    LTTintNode() {red = 1; green = 1; blue = 1; alpha = 1;};
 
     virtual void draw();
     virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
-
-    virtual LTFieldDescriptor *fields();
 };
 
 struct LTTextureModeNode : LTWrapNode {
     LTTextureMode mode;
 
-    LTTextureModeNode(LTTextureMode mode, LTSceneNode *child);
+    LTTextureModeNode() {};
 
     virtual void draw();
 };
 
 struct LTBlendModeNode : LTWrapNode {
-    LTBlendMode blend_mode;
+    LTBlendMode mode;
 
-    LTBlendModeNode(LTBlendMode mode, LTSceneNode *child);
+    LTBlendModeNode() {};
 
     virtual void draw();
-};
-
-struct LTLineNode : LTSceneNode {
-    LTfloat x1, y1, x2, y2;
-
-    LTLineNode(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2);
-    
-    virtual void draw();
-
-    virtual LTFieldDescriptor *fields();
-};
-
-struct LTTriangleNode : LTSceneNode {
-    LTfloat x1, y1, x2, y2, x3, y3;
-
-    LTTriangleNode(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2, LTfloat x3, LTfloat y3);
-    
-    virtual void draw();
-
-    virtual LTFieldDescriptor *fields();
 };
 
 struct LTRectNode : LTSceneNode {
     LTfloat x1, y1, x2, y2;
 
-    LTRectNode(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2);
+    LTRectNode() {};
     
     virtual void draw();
-
-    virtual LTFieldDescriptor *fields();
 };
 
 // Filters all pointer events.
 struct LTHitFilter : LTWrapNode {
     LTfloat left, bottom, right, top;
 
-    LTHitFilter(LTfloat left, LTfloat bottom, LTfloat right, LTfloat top, LTSceneNode *child);
+    LTHitFilter() {};
     
     virtual void draw();
     virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
-
-    virtual LTFieldDescriptor *fields();
 };
 
 // Filters only down events.
 struct LTDownFilter : LTWrapNode {
     LTfloat left, bottom, right, top;
 
-    LTDownFilter(LTfloat left, LTfloat bottom, LTfloat right, LTfloat top, LTSceneNode *child);
+    LTDownFilter() {};
     
     virtual void draw();
     virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
-
-    virtual LTFieldDescriptor *fields();
 };
+
+LTSceneNode *lt_expect_LTSceneNode(lua_State *L, int arg);
+LTLayer *lt_expect_LTLayer(lua_State *L, int arg);
+LTWrapNode *lt_expect_LTWrapNode(lua_State *L, int arg);
+bool lt_is_LTWrapNode(lua_State *L, int arg);

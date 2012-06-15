@@ -57,7 +57,7 @@ void ltOSXRender() {
     lock();
 
     if (context_changed) {
-        ltLuaPostContextChange();
+        //ltLuaPostContextChange();
         context_changed = false;
     }
 
@@ -164,7 +164,7 @@ void ltOSXKeyDown(NSEvent *event) {
 }
 
 void ltOSXPreContextChange() {
-    ltLuaPreContextChange();
+    //ltLuaPreContextChange();
     context_changed = true;
 }
 

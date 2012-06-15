@@ -1,4 +1,6 @@
 /* Copyright (C) 2010 Ian MacLarty */
+LT_INIT_DECL(ltimage)
+
 #define LT_PIXEL_VISIBLE(pxl)     (pxl & 0xFF000000)
 
 struct LTAtlas;
@@ -108,7 +110,6 @@ struct LTTexturedNode : LTSceneNode {
     // Bounding box dimensions in world coordinates.
     LTfloat   world_vertices[8];
 
-    LTTexturedNode(LTType type);
     virtual ~LTTexturedNode();
     virtual void draw();
 };
@@ -128,9 +129,14 @@ struct LTImage : LTTexturedNode {
     int       pixel_width;
     int       pixel_height;
 
+    LTImage() {
+        ltLog("Don't create an image directly. Use lt.LoadImages instead.");
+        ltAbort();
+    };
     // packer->occupant != NULL
     LTImage(LTAtlas *atlas, int atlas_w, int atlas_h, LTImagePacker *packer);
     virtual ~LTImage();
-
-    virtual LTFieldDescriptor* fields();
 };
+
+LTTexturedNode *lt_expect_LTTexturedNode(lua_State *L, int arg);
+void* lt_alloc_LTImage(lua_State *L);

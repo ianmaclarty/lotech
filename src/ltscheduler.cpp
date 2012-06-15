@@ -1,5 +1,7 @@
 #include "lt.h"
 
+LT_INIT_IMPL(ltscheduler)
+
 static std::set<LTSceneNode*> schedule;
 static std::set<LTSceneNode*> to_add;
 static std::set<LTSceneNode*> to_remove;

@@ -1,12 +1,14 @@
 #include "lt.h"
 
+LT_INIT_IMPL(ltutil)
+
 #ifdef LTMINGW
 #include <windows.h>
 #include <shlobj.h>
 #endif
 
-void ltAbort() {
-    ltLog("ABORTING.");
+void ltAbortImpl(const char *file, int line) {
+    ltLog("%s:%d: ABORTING", file, line);
     exit(1);
 }
 

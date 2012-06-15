@@ -1,6 +1,8 @@
 /* Copyright (C) 2010 Ian MacLarty */
 #include "lt.h"
 
+LT_INIT_IMPL(lttext)
+
 static bool transparent_column(LTImageBuffer *buf, int col) {
     int w = buf->bb_width();
     int h = buf->bb_height();

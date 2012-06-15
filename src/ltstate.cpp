@@ -1,5 +1,7 @@
 #include "lt.h"
 
+LT_INIT_IMPL(ltstate)
+
 void ltSaveState() {
     #ifndef LTANDROID
     LTPickler *pickler = ltLuaPickleState();

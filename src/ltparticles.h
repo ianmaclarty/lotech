@@ -1,4 +1,5 @@
 /* Copyright (C) 2010 Ian MacLarty */
+LT_INIT_DECL(ltparticles)
 
 // This is based on the Cocos2D particle system.
 
@@ -60,6 +61,8 @@ struct LTParticleSystem : LTSceneNode {
     LTfloat end_spin;
     LTfloat end_spin_variance;
     LTfloat emission_rate;
+    int max_particles_init;
+    LTImage *img;
 
     int max_particles;
     int num_particles;
@@ -73,10 +76,11 @@ struct LTParticleSystem : LTSceneNode {
     LTfloat img_bottom;
     LTfloat img_top;
 
-    LTFixture *fixture; // A fixture to restrict start positions.
+    //LTFixture *fixture; // A fixture to restrict start positions.
 
-    LTParticleSystem(LTTexturedNode *img, int max_particles);
+    LTParticleSystem();
     virtual ~LTParticleSystem();
+    virtual void init(lua_State *L);
 
     bool is_full();
     void stop();
@@ -84,6 +88,6 @@ struct LTParticleSystem : LTSceneNode {
     void add_particle();
     virtual void advance(LTfloat dt);
     virtual void draw();
-
-    virtual LTFieldDescriptor* fields();
 };
+
+LTParticleSystem *lt_expect_LTParticleSystem(lua_State *L, int arg);

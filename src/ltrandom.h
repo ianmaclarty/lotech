@@ -1,8 +1,11 @@
 /* Copyright (C) 2010 Ian MacLarty */
+LT_INIT_DECL(ltrandom)
+
 struct LTRandomGenerator : LTObject {
+    int seed;
     
-    LTRandomGenerator(int seed);
     virtual ~LTRandomGenerator();
+    virtual void init(lua_State *L);
 
     int nextInt(int n); // returns an int between 0 and n - 1.
     bool nextBool();

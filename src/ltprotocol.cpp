@@ -2,6 +2,8 @@
 #ifndef LTMINGW
 #include "lt.h"
 
+LT_INIT_IMPL(ltprotocol)
+
 #define MAX_BASENAME_LEN 512
 
 enum LTCommandOpcode {

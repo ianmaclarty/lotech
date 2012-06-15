@@ -2,49 +2,46 @@
 
 #include "lt.h"
 
+LT_INIT_IMPL(ltparticles)
+
 ct_assert(sizeof(LTPoint) == 8);
 ct_assert(sizeof(LTCompactColor) == 4);
 
-LTParticleSystem::LTParticleSystem(LTTexturedNode *img, int n)
-        : LTSceneNode(LT_TYPE_PARTICLESYSTEM) {
+LTParticleSystem::LTParticleSystem() {
     active = true;
     duration = -1.0f;
-    elapsed = 0.0f;
-    angle = 0.0f;
-    angle_variance = 0.0f;
     speed = 1.0f;
-    speed_variance = 0.0f;
-    tangential_accel = 0.0f;
-    tangential_accel_variance = 0.0f;
-    radial_accel = 0.0f;
-    radial_accel_variance = 0.0f;
     start_size = 1.0f;
-    start_size_variance = 0.0f;
     end_size = 1.0f;
-    end_size_variance = 0.0f;
     life = 1.0f;
-    life_variance = 0.0f;
-    start_color_variance.r = 0.0f;
-    start_color_variance.g = 0.0f;
-    start_color_variance.b = 0.0f;
-    start_color_variance.a = 0.0f;
-    end_color_variance.r = 0.0f;
-    end_color_variance.g = 0.0f;
-    end_color_variance.b = 0.0f;
-    end_color_variance.a = 0.0f;
-    start_spin = 0.0f;
-    start_spin_variance = 0.0f;
-    end_spin = 0.0f;
-    end_spin_variance = 0.0f;
-    
-    max_particles = n;
+    start_color_variance.red = 0.0f;
+    start_color_variance.green = 0.0f;
+    start_color_variance.blue = 0.0f;
+    start_color_variance.alpha = 0.0f;
+    end_color_variance.red = 0.0f;
+    end_color_variance.green = 0.0f;
+    end_color_variance.blue = 0.0f;
+    end_color_variance.alpha = 0.0f;
     emission_rate = -1.0f;
+    //fixture = NULL;
+}
 
+void LTParticleSystem::init(lua_State *L) {
+    max_particles = max_particles_init;
+    if (max_particles <= 0) {
+        luaL_error(L, "max_particles must be set to a positive value");
+    }
+    if (img == NULL) {
+        luaL_error(L, "img must be specified");
+    }
+    if (emission_rate < 0.0f) {
+        emission_rate = (LTfloat)max_particles / life;
+    }
     num_particles = 0;
     emit_counter = 0.0f;
 
+    int n = max_particles;
     particles = new LTParticle[n];
-    // We maintain a reference to the LTTexturedNode object in the Lua wrapper.
     texture_id = img->texture_id;
     img_left = img->world_vertices[0];
     img_right = img->world_vertices[2];
@@ -74,8 +71,6 @@ LTParticleSystem::LTParticleSystem(LTTexturedNode *img, int n)
         indices[i6+4] = (LTushort) i4+2;
         indices[i6+3] = (LTushort) i4+3;
     }
-
-    fixture = NULL;
 }
 
 LTParticleSystem::~LTParticleSystem() {
@@ -115,6 +110,7 @@ void LTParticleSystem::add_particle() {
             p->time_to_live = 0.001f; // Avoid division by zero.
         }
 
+        /*
         if (fixture != NULL) {
             b2Fixture *f = fixture->fixture;
             if (f == NULL) {
@@ -145,28 +141,30 @@ void LTParticleSystem::add_particle() {
             } while (!f->TestPoint(test_point) && num_tries > 0);
             p->pos.x = test_point.x * s;
             p->pos.y = test_point.y * s;
-        } else {
+        } else
+        */
+        {
             p->pos.x = source_position.x + source_position_variance.x * ltRandMinus1_1();
             p->pos.y = source_position.y + source_position_variance.y * ltRandMinus1_1();
         }
 
         LTColor start;
-        start.r = clamp(start_color.r + start_color_variance.r * ltRandMinus1_1());
-        start.g = clamp(start_color.g + start_color_variance.g * ltRandMinus1_1());
-        start.b = clamp(start_color.b + start_color_variance.b * ltRandMinus1_1());
-        start.a = clamp(start_color.a + start_color_variance.a * ltRandMinus1_1());
+        start.red = clamp(start_color.red + start_color_variance.red * ltRandMinus1_1());
+        start.green = clamp(start_color.green + start_color_variance.green * ltRandMinus1_1());
+        start.blue = clamp(start_color.blue + start_color_variance.blue * ltRandMinus1_1());
+        start.alpha = clamp(start_color.alpha + start_color_variance.alpha * ltRandMinus1_1());
 
         LTColor end;
-        end.r = clamp(end_color.r + end_color_variance.r * ltRandMinus1_1());
-        end.g = clamp(end_color.g + end_color_variance.g * ltRandMinus1_1());
-        end.b = clamp(end_color.b + end_color_variance.b * ltRandMinus1_1());
-        end.a = clamp(end_color.a + end_color_variance.a * ltRandMinus1_1());
+        end.red = clamp(end_color.red + end_color_variance.red * ltRandMinus1_1());
+        end.green = clamp(end_color.green + end_color_variance.green * ltRandMinus1_1());
+        end.blue = clamp(end_color.blue + end_color_variance.blue * ltRandMinus1_1());
+        end.alpha = clamp(end_color.alpha + end_color_variance.alpha * ltRandMinus1_1());
 
         p->color = start;
-        p->delta_color.r = (end.r - start.r) / p->time_to_live;
-        p->delta_color.g = (end.g - start.g) / p->time_to_live;
-        p->delta_color.b = (end.b - start.b) / p->time_to_live;
-        p->delta_color.a = (end.a - start.a) / p->time_to_live;
+        p->delta_color.red = (end.red - start.red) / p->time_to_live;
+        p->delta_color.green = (end.green - start.green) / p->time_to_live;
+        p->delta_color.blue = (end.blue - start.blue) / p->time_to_live;
+        p->delta_color.alpha = (end.alpha - start.alpha) / p->time_to_live;
 
         p->size = start_size + start_size_variance * ltRandMinus1_1();
         if (p->size < 0.0f) {
@@ -199,7 +197,7 @@ void LTParticleSystem::add_particle() {
 }
 
 void LTParticleSystem::advance(LTfloat dt) {
-    if (!executeActions(dt)) return;
+    //if (!executeActions(dt)) return;
 
     if (active && emission_rate > 0.0f) {
         LTfloat rate = 1.0f / emission_rate;
@@ -236,10 +234,10 @@ void LTParticleSystem::advance(LTfloat dt) {
             p->dir.y += (radial.y + tangential.y + gravity.y) * dt;
             p->pos.x += p->dir.x * dt;
             p->pos.y += p->dir.y * dt;
-            p->color.r += p->delta_color.r * dt;
-            p->color.g += p->delta_color.g * dt;
-            p->color.b += p->delta_color.b * dt;
-            p->color.a += p->delta_color.a * dt;
+            p->color.red += p->delta_color.red * dt;
+            p->color.green += p->delta_color.green * dt;
+            p->color.blue += p->delta_color.blue * dt;
+            p->color.alpha += p->delta_color.alpha * dt;
             p->size += p->delta_size * dt;
             if (p->size < 0.0f) {
                 p->size = 0.0f;
@@ -248,10 +246,10 @@ void LTParticleSystem::advance(LTfloat dt) {
             
             LTParticleQuad *quad = &quads[i];
             LTCompactColor color(
-                p->color.r * 255,
-                p->color.g * 255,
-                p->color.b * 255,
-                p->color.a * 255
+                p->color.red * 255,
+                p->color.green * 255,
+                p->color.blue * 255,
+                p->color.alpha * 255
             );
             quad->bottom_left.color = color;
             quad->bottom_right.color = color;
@@ -336,52 +334,57 @@ void LTParticleSystem::draw() {
     }
 }
 
-LTFieldDescriptor* LTParticleSystem::fields() {
-    static LTFieldDescriptor flds[] = {
-        {"duration", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(duration), NULL, NULL, LT_ACCESS_FULL},
-        {"elapsed", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(elapsed), NULL, NULL, LT_ACCESS_FULL},
-        {"life", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(life), NULL, NULL, LT_ACCESS_FULL},
-        {"life_variance", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(life_variance), NULL, NULL, LT_ACCESS_FULL},
-        {"emission_rate", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(emission_rate), NULL, NULL, LT_ACCESS_FULL},
-        {"source_position_x", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(source_position.x), NULL, NULL, LT_ACCESS_FULL},
-        {"source_position_y", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(source_position.y), NULL, NULL, LT_ACCESS_FULL},
-        {"source_position_variance_x", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(source_position_variance.x), NULL, NULL, LT_ACCESS_FULL},
-        {"source_position_variance_y", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(source_position_variance.y), NULL, NULL, LT_ACCESS_FULL},
-        {"angle", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(angle), NULL, NULL, LT_ACCESS_FULL},
-        {"angle_variance", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(angle_variance), NULL, NULL, LT_ACCESS_FULL},
-        {"gravity_x", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(gravity.x), NULL, NULL, LT_ACCESS_FULL},
-        {"gravity_y", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(gravity.y), NULL, NULL, LT_ACCESS_FULL},
-        {"speed", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(speed), NULL, NULL, LT_ACCESS_FULL},
-        {"speed_variance", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(speed_variance), NULL, NULL, LT_ACCESS_FULL},
-        {"tangential_accel", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(tangential_accel), NULL, NULL, LT_ACCESS_FULL},
-        {"tangential_accel_variance", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(tangential_accel_variance), NULL, NULL, LT_ACCESS_FULL},
-        {"radial_accel", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(radial_accel), NULL, NULL, LT_ACCESS_FULL},
-        {"radial_accel_variance", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(radial_accel_variance), NULL, NULL, LT_ACCESS_FULL},
-        {"start_size", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(start_size), NULL, NULL, LT_ACCESS_FULL},
-        {"start_size_variance", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(start_size_variance), NULL, NULL, LT_ACCESS_FULL},
-        {"end_size", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(end_size), NULL, NULL, LT_ACCESS_FULL},
-        {"end_size_variance", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(end_size_variance), NULL, NULL, LT_ACCESS_FULL},
-        {"start_color_red", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(start_color.r), NULL, NULL, LT_ACCESS_FULL},
-        {"start_color_green", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(start_color.g), NULL, NULL, LT_ACCESS_FULL},
-        {"start_color_blue", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(start_color.b), NULL, NULL, LT_ACCESS_FULL},
-        {"start_color_alpha", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(start_color.a), NULL, NULL, LT_ACCESS_FULL},
-        {"start_color_variance_red", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(start_color_variance.r), NULL, NULL, LT_ACCESS_FULL},
-        {"start_color_variance_green", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(start_color_variance.g), NULL, NULL, LT_ACCESS_FULL},
-        {"start_color_variance_blue", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(start_color_variance.b), NULL, NULL, LT_ACCESS_FULL},
-        {"start_color_variance_alpha", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(start_color_variance.a), NULL, NULL, LT_ACCESS_FULL},
-        {"end_color_red", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(end_color.r), NULL, NULL, LT_ACCESS_FULL},
-        {"end_color_green", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(end_color.g), NULL, NULL, LT_ACCESS_FULL},
-        {"end_color_blue", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(end_color.b), NULL, NULL, LT_ACCESS_FULL},
-        {"end_color_alpha", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(end_color.a), NULL, NULL, LT_ACCESS_FULL},
-        {"end_color_variance_red", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(end_color_variance.r), NULL, NULL, LT_ACCESS_FULL},
-        {"end_color_variance_green", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(end_color_variance.g), NULL, NULL, LT_ACCESS_FULL},
-        {"end_color_variance_blue", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(end_color_variance.b), NULL, NULL, LT_ACCESS_FULL},
-        {"end_color_variance_alpha", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(end_color_variance.a), NULL, NULL, LT_ACCESS_FULL},
-        {"start_spin", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(start_spin), NULL, NULL, LT_ACCESS_FULL},
-        {"start_spin_variance", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(start_spin_variance), NULL, NULL, LT_ACCESS_FULL},
-        {"end_spin", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(end_spin), NULL, NULL, LT_ACCESS_FULL},
-        {"end_spin_variance", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(end_spin_variance), NULL, NULL, LT_ACCESS_FULL},
-        LT_END_FIELD_DESCRIPTOR_LIST,
-    };
-    return flds;
+static int particles_advance(lua_State *L) {
+    ltLuaCheckNArgs(L, 2);
+    LTParticleSystem *particles = lt_expect_LTParticleSystem(L, 1);
+    LTfloat dt = luaL_checknumber(L, 2);
+    particles->advance(dt);
+    return 0;
 }
+
+LT_REGISTER_TYPE(LTParticleSystem, "lt.ParticleSystem", "lt.SceneNode")
+LT_REGISTER_METHOD(LTParticleSystem, Advance, particles_advance)
+LT_REGISTER_FIELD_OBJ(LTParticleSystem, img, LTImage)
+LT_REGISTER_FIELD_INT_AS(LTParticleSystem, max_particles_init, "max_particles")
+LT_REGISTER_FIELD_FLOAT(LTParticleSystem, duration)
+LT_REGISTER_FIELD_FLOAT(LTParticleSystem, life)
+LT_REGISTER_FIELD_FLOAT(LTParticleSystem, life_variance)
+LT_REGISTER_FIELD_FLOAT(LTParticleSystem, emission_rate)
+LT_REGISTER_FIELD_FLOAT_AS(LTParticleSystem, source_position.x, "source_position_x")
+LT_REGISTER_FIELD_FLOAT_AS(LTParticleSystem, source_position.y, "source_position_y")
+LT_REGISTER_FIELD_FLOAT_AS(LTParticleSystem, source_position_variance.x, "source_position_variance_x")
+LT_REGISTER_FIELD_FLOAT_AS(LTParticleSystem, source_position_variance.y, "source_position_variance_y")
+LT_REGISTER_FIELD_FLOAT(LTParticleSystem, angle)
+LT_REGISTER_FIELD_FLOAT(LTParticleSystem, angle_variance)
+LT_REGISTER_FIELD_FLOAT_AS(LTParticleSystem, gravity.x, "gravity_x")
+LT_REGISTER_FIELD_FLOAT_AS(LTParticleSystem, gravity.y, "gravity_y")
+LT_REGISTER_FIELD_FLOAT(LTParticleSystem, speed)
+LT_REGISTER_FIELD_FLOAT(LTParticleSystem, speed_variance)
+LT_REGISTER_FIELD_FLOAT(LTParticleSystem, tangential_accel)
+LT_REGISTER_FIELD_FLOAT(LTParticleSystem, tangential_accel_variance)
+LT_REGISTER_FIELD_FLOAT(LTParticleSystem, radial_accel)
+LT_REGISTER_FIELD_FLOAT(LTParticleSystem, radial_accel_variance)
+LT_REGISTER_FIELD_FLOAT(LTParticleSystem, start_size)
+LT_REGISTER_FIELD_FLOAT(LTParticleSystem, start_size_variance)
+LT_REGISTER_FIELD_FLOAT(LTParticleSystem, end_size)
+LT_REGISTER_FIELD_FLOAT(LTParticleSystem, end_size_variance)
+LT_REGISTER_FIELD_FLOAT_AS(LTParticleSystem, start_color.red, "start_color_red")
+LT_REGISTER_FIELD_FLOAT_AS(LTParticleSystem, start_color.green, "start_color_green")
+LT_REGISTER_FIELD_FLOAT_AS(LTParticleSystem, start_color.blue, "start_color_blue")
+LT_REGISTER_FIELD_FLOAT_AS(LTParticleSystem, start_color.alpha, "start_color_alpha")
+LT_REGISTER_FIELD_FLOAT_AS(LTParticleSystem, start_color_variance.red, "start_color_variance_red")
+LT_REGISTER_FIELD_FLOAT_AS(LTParticleSystem, start_color_variance.green, "start_color_variance_green")
+LT_REGISTER_FIELD_FLOAT_AS(LTParticleSystem, start_color_variance.blue, "start_color_variance_blue")
+LT_REGISTER_FIELD_FLOAT_AS(LTParticleSystem, start_color_variance.alpha, "start_color_variance_alpha")
+LT_REGISTER_FIELD_FLOAT_AS(LTParticleSystem, end_color.red, "end_color_red")
+LT_REGISTER_FIELD_FLOAT_AS(LTParticleSystem, end_color.green, "end_color_green")
+LT_REGISTER_FIELD_FLOAT_AS(LTParticleSystem, end_color.blue, "end_color_blue")
+LT_REGISTER_FIELD_FLOAT_AS(LTParticleSystem, end_color.alpha, "end_color_alpha")
+LT_REGISTER_FIELD_FLOAT_AS(LTParticleSystem, end_color_variance.red, "end_color_variance_red")
+LT_REGISTER_FIELD_FLOAT_AS(LTParticleSystem, end_color_variance.green, "end_color_variance_green")
+LT_REGISTER_FIELD_FLOAT_AS(LTParticleSystem, end_color_variance.blue, "end_color_variance_blue")
+LT_REGISTER_FIELD_FLOAT_AS(LTParticleSystem, end_color_variance.alpha, "end_color_variance_alpha")
+LT_REGISTER_FIELD_FLOAT(LTParticleSystem, start_spin)
+LT_REGISTER_FIELD_FLOAT(LTParticleSystem, start_spin_variance)
+LT_REGISTER_FIELD_FLOAT(LTParticleSystem, end_spin)
+LT_REGISTER_FIELD_FLOAT(LTParticleSystem, end_spin_variance)

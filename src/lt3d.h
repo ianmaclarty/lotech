@@ -1,5 +1,7 @@
 /* Copyright (C) 2011 Ian MacLarty */
 
+LT_INIT_DECL(lt3d)
+
 struct LTPerspective : LTWrapNode {
     LTfloat near;
     LTfloat origin;
@@ -7,24 +9,22 @@ struct LTPerspective : LTWrapNode {
     LTfloat vanish_x;
     LTfloat vanish_y;
 
-    LTPerspective(LTfloat near, LTfloat origin, LTfloat far, LTfloat vanish_x, LTfloat vanish_y,
-        LTSceneNode *child);
+    LTPerspective() {near = 1; origin = 2; far = 10;};
     
     virtual void draw();
     bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
-    virtual LTFieldDescriptor* fields();
 };
 
 struct LTDepthTest : LTWrapNode {
     bool on;
-    LTDepthTest(bool on, LTSceneNode *child);
+    LTDepthTest() {on = true;}
     virtual void draw();
     bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
 };
 
 struct LTDepthMask : LTWrapNode {
     bool on;
-    LTDepthMask(bool on, LTSceneNode *child);
+    LTDepthMask() {on = true;}
     virtual void draw();
     bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
 };
@@ -32,21 +32,15 @@ struct LTDepthMask : LTWrapNode {
 struct LTPitch : LTWrapNode {
     LTfloat pitch;
 
-    LTPitch(LTfloat pitch, LTSceneNode *child);
-
     virtual void draw();
     bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
-    virtual LTFieldDescriptor* fields();
 };
 
 struct LTFog : LTWrapNode {
     LTfloat start;
     LTfloat end;
-    LTColor color;
-
-    LTFog(LTfloat start, LTfloat end, LTColor color, LTSceneNode *child);
+    LTfloat red, green, blue;
 
     virtual void draw();
     bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
-    virtual LTFieldDescriptor* fields();
 };

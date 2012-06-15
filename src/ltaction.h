@@ -1,3 +1,5 @@
+LT_INIT_DECL(ltaction)
+
 struct LTSceneNode;
 
 struct LTAction {

@@ -1,5 +1,7 @@
 #include "lt.h"
 
+LT_INIT_IMPL(ltresource)
+
 #ifdef LTANDROID
 
 static AAssetManager *asset_mgr = NULL;

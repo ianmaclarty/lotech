@@ -1,21 +1,36 @@
 #include "lt.h"
 
-LTRenderTarget::LTRenderTarget(int w, int h, 
-        LTfloat vp_x1, LTfloat vp_y1, LTfloat vp_x2, LTfloat vp_y2,
-        LTfloat wld_x1, LTfloat wld_y1, LTfloat wld_x2, LTfloat wld_y2,
-        bool depthbuf, LTTextureFilter minfilter, LTTextureFilter magfilter)
-        : LTTexturedNode(LT_TYPE_RENDERTARGET) {
-    LTRenderTarget::width = w;
-    LTRenderTarget::height = h;
-    LTRenderTarget::depthbuf_enabled = depthbuf;
-    LTRenderTarget::vp_x1 = vp_x1;
-    LTRenderTarget::vp_y1 = vp_y1;
-    LTRenderTarget::vp_x2 = vp_x2;
-    LTRenderTarget::vp_y2 = vp_y2;
-    LTRenderTarget::wld_x1 = wld_x1;
-    LTRenderTarget::wld_y1 = wld_y1;
-    LTRenderTarget::wld_x2 = wld_x2;
-    LTRenderTarget::wld_y2 = wld_y2;
+LT_INIT_IMPL(ltrendertarget)
+
+LTRenderTarget::LTRenderTarget() {
+    minfilter = LT_TEXTURE_FILTER_LINEAR;
+    magfilter = LT_TEXTURE_FILTER_LINEAR;
+    depthbuf_enabled = false;
+    initialized = false;
+}
+
+void LTRenderTarget::init(lua_State *L) {
+    LTTexturedNode::init(L);
+    if (vp_x1 == 0.0f && vp_x2 == 0.0f) {
+        vp_x1 = -1.0f;
+        vp_x2 = 1.0f;
+    }
+    if (vp_y1 == 0.0f && vp_y2 == 0.0f) {
+        vp_y1 = -1.0f;
+        vp_y2 = 1.0f;
+    }
+    if (wld_x1 == 0.0f && wld_x2 == 0.0f) {
+        LTfloat pix_w = ltGetPixelWidth();
+        LTfloat world_width = (LTfloat)width * pix_w;
+        wld_x1 = - world_width * 0.5f;
+        wld_x2 = world_width * 0.5f;
+    }
+    if (wld_y1 == 0.0f && wld_y2 == 0.0f) {
+        LTfloat pix_h = ltGetPixelHeight();
+        LTfloat world_height = (LTfloat)height * pix_h;
+        wld_y1 = - world_height * 0.5f;
+        wld_y2 = world_height * 0.5f;
+    }
 
     // Compute dimensions of target texture (must be powers of 2).
     tex_width = 64;
@@ -31,6 +46,8 @@ LTRenderTarget::LTRenderTarget(int w, int h,
     ltTexImage(tex_width, tex_height, NULL);
 
     setup();
+
+    initialized = true;
 }
 
 LTRenderTarget::~LTRenderTarget() {
@@ -110,21 +127,33 @@ static LTint get_pheight(LTObject *obj) {
 static void set_pwidth(LTObject *obj, LTint val) {
     LTRenderTarget *target = (LTRenderTarget*)obj;
     target->width = val;
-    setup_texture_coords(target);
+    if (target->initialized) {
+        setup_texture_coords(target);
+    }
 }
 
 static void set_pheight(LTObject *obj, LTint val) {
     LTRenderTarget *target = (LTRenderTarget*)obj;
     target->height = val;
-    setup_texture_coords(target);
+    if (target->initialized) {
+        setup_texture_coords(target);
+    }
 }
 
-LTFieldDescriptor* LTRenderTarget::fields() {
-    static LTFieldDescriptor flds[] = {
-        {"pwidth",  LT_FIELD_TYPE_INT, -1, (void*)get_pwidth, (void*)set_pwidth, LT_ACCESS_FULL},
-        {"pheight", LT_FIELD_TYPE_INT, -1, (void*)get_pheight, (void*)set_pheight, LT_ACCESS_FULL},
-        LT_END_FIELD_DESCRIPTOR_LIST
-    };
-    return flds;
-}
-
+LT_REGISTER_TYPE(LTRenderTarget, "lt.RenderTarget", "lt.TexturedNode")
+LT_REGISTER_PROPERTY_INT(LTRenderTarget, pwidth, &get_pwidth, &set_pwidth);
+LT_REGISTER_PROPERTY_INT(LTRenderTarget, pheight, &get_pheight, &set_pheight);
+LT_REGISTER_FIELD_FLOAT(LTRenderTarget, vp_x1)
+LT_REGISTER_FIELD_FLOAT(LTRenderTarget, vp_y1)
+LT_REGISTER_FIELD_FLOAT(LTRenderTarget, vp_x2)
+LT_REGISTER_FIELD_FLOAT(LTRenderTarget, vp_y2)
+LT_REGISTER_FIELD_FLOAT(LTRenderTarget, wld_x1)
+LT_REGISTER_FIELD_FLOAT(LTRenderTarget, wld_y1)
+LT_REGISTER_FIELD_FLOAT(LTRenderTarget, wld_x2)
+LT_REGISTER_FIELD_FLOAT(LTRenderTarget, wld_y2)
+static const LTEnumConstant RenderTarget_filter_enum_vals[] = {
+    {"linear", LT_TEXTURE_FILTER_LINEAR},
+    {"nearest", LT_TEXTURE_FILTER_NEAREST},
+    {NULL, 0}};
+LT_REGISTER_FIELD_ENUM(LTRenderTarget, minfilter, LTTextureFilter, RenderTarget_filter_enum_vals)
+LT_REGISTER_FIELD_ENUM(LTRenderTarget, magfilter, LTTextureFilter, RenderTarget_filter_enum_vals)

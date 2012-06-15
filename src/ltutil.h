@@ -1,8 +1,10 @@
 /* Copyright (C) 2010-2011 Ian MacLarty */
+LT_INIT_DECL(ltutil)
 
 #define LT_TRACE ltLog("%s:%d %s", __FILE__, __LINE__, __PRETTY_FUNCTION__)
 
-void ltAbort(); // Use only for internal errors.
+#define ltAbort() ltAbortImpl(__FILE__, __LINE__)
+void ltAbortImpl(const char *file, int line);
 extern void ltLog(const char *fmt, ...);
 bool ltFileExists(const char *file);
 void ltMkDir(const char* dir);

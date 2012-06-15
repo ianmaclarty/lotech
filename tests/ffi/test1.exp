@@ -1,0 +1,50 @@
+init:int_field = 99
+test.TestStruct1
+nil
+99
+52
+2.2000000476837
+-3.1400001049042
+val3
+===
+init:int_field = 99
+test.TestStruct2
+true
+true
+true
+nil
+true
+false
+99
+54
+2.2000000476837
+19.10000038147
+nil
+52
+===
+init:int_field = 111
+false
+111
+2.2000000476837
+54
+52
+112
+===
+init:int_field = 1
+1
+2.5
+false
+val1
+112
+54
+52
+3
+0
+===
+123
+888
+1
+===
+init:int_field = 12
+12
+13

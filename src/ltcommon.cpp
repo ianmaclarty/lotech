@@ -1,6 +1,8 @@
 /* Copyright (C) 2010 Ian MacLarty */
 #include "ltcommon.h"
 
+LT_INIT_IMPL(ltcommon)
+
 ct_assert(sizeof(int) == 4);
 ct_assert(sizeof(LTint) == 4);
 ct_assert(sizeof(LTint32) == 4);

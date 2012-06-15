@@ -1,5 +1,7 @@
 #include "lt.h"
 
+LT_INIT_IMPL(ltopengl)
+
 #ifdef LTGLES1
 #define GLEXT(f) f##OES
 #define GL_EXT(f) f##_OES

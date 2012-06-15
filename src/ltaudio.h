@@ -1,4 +1,5 @@
 /* Copyright (C) 2010-2011 Ian MacLarty */
+LT_INIT_DECL(ltaudio)
 void ltAudioInit();
 void ltAudioTeardown();
 void ltAudioSuspend();
@@ -8,6 +9,10 @@ struct LTAudioSample : LTObject {
     ALuint buffer_id;
     char *name;
 
+    LTAudioSample() {
+        ltLog("Don't create a sample directly. Use lt.LoadSamples instead.");
+        ltAbort();
+    };
     // name is copied.
     LTAudioSample(ALuint buffer_id, const char *name);
     virtual ~LTAudioSample();
@@ -40,12 +45,13 @@ struct LTTrack : LTObject {
     int  numProcessedSamples();
     int  numPendingSamples(); // numSamples() - numProcessedSamples()
     void dequeueProcessedSamples(int n);
-
-    virtual LTFieldDescriptor* fields();
 };
 
 // name is copied.
-LTAudioSample *ltReadAudioSample(const char *path, const char *name);
+LTAudioSample *ltReadAudioSample(lua_State *L, const char *path, const char *name);
 
 // Collect temporary sources created for oneoff buffer playing.
 void ltAudioGC();
+
+LTAudioSample *lt_expect_LTAudioSample(lua_State *L, int arg);
+LTTrack *lt_expect_LTTrack(lua_State *L, int arg);

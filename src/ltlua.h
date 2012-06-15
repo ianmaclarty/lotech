@@ -1,4 +1,6 @@
 /* Copyright (C) 2010 Ian MacLarty */
+LT_INIT_DECL(ltlua)
+
 void ltLuaSetup();
 void ltLuaTeardown();
 void ltLuaReset();
@@ -26,8 +28,6 @@ void ltLuaSetResourcePrefix(const char *prefix);
 // The caller should free the pickler with delete.
 LTPickler *ltLuaPickleState();
 void ltLuaUnpickleState(LTUnpickler *unpickler);
-
-const char *ltLuaCacheString(const char *str);
 
 void ltLuaPreContextChange();
 void ltLuaPostContextChange();

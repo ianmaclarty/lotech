@@ -1,6 +1,8 @@
 /* Copyright (C) 2010 Ian MacLarty */
 #include "lt.h"
 
+LT_INIT_IMPL(ltgraphics)
+
 static LTframebuf main_framebuffer = 0;
 
 // Actual screen dimensions in pixels.
@@ -106,7 +108,7 @@ void ltPrepareForRendering(
     ltDepthFunc(LT_DEPTH_FUNC_LEQUAL);
     if (clear_color != NULL || clear_depthbuf) {
         if (clear_color) {
-            ltClearColor(clear_color->r, clear_color->g, clear_color->b, clear_color->a);
+            ltClearColor(clear_color->red, clear_color->green, clear_color->blue, clear_color->alpha);
         }
         ltClear(clear_color != NULL, clear_depthbuf);
     }
@@ -416,13 +418,13 @@ void ltPushTint(LTfloat r, LTfloat g, LTfloat b, LTfloat a) {
     LTColor new_top(r, g, b, a);
     if (!tint_stack.empty()) {
         LTColor *top = &tint_stack.front();
-        new_top.r *= top->r;
-        new_top.g *= top->g;
-        new_top.b *= top->b;
-        new_top.a *= top->a;
+        new_top.red *= top->red;
+        new_top.green *= top->green;
+        new_top.blue *= top->blue;
+        new_top.alpha *= top->alpha;
     }
     tint_stack.push_front(new_top);
-    ltColor(new_top.r, new_top.g, new_top.b, new_top.a);
+    ltColor(new_top.red, new_top.green, new_top.blue, new_top.alpha);
 }
 
 void ltPopTint() {
@@ -430,7 +432,7 @@ void ltPopTint() {
         tint_stack.pop_front();
         if (!tint_stack.empty()) {
             LTColor *top = &tint_stack.front();
-            ltColor(top->r, top->g, top->b, top->a);
+            ltColor(top->red, top->green, top->blue, top->alpha);
         } else {
             ltColor(1.0f, 1.0f, 1.0f, 1.0f);
         }
@@ -441,10 +443,10 @@ void ltPeekTint(LTColor *color) {
     if (!tint_stack.empty()) {
         *color = tint_stack.front();
     } else {
-        color->r = 1.0f;
-        color->g = 1.0f;
-        color->b = 1.0f;
-        color->a = 1.0f;
+        color->red = 1.0f;
+        color->green = 1.0f;
+        color->blue = 1.0f;
+        color->alpha = 1.0f;
     }
 }
 
@@ -453,7 +455,7 @@ void ltRestoreTint() {
     if (!tint_stack.empty()) {
         c = tint_stack.front();
     }
-    ltColor(c.r, c.g, c.b, c.a);
+    ltColor(c.red, c.green, c.blue, c.alpha);
 }
 
 void ltPushBlendMode(LTBlendMode mode) {

@@ -1,4 +1,5 @@
 /* Copyright (C) 2010 Ian MacLarty */
+LT_INIT_DECL(ltpickle)
 
 struct LTPickler {
     int size;

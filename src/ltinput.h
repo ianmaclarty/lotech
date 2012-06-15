@@ -1,4 +1,5 @@
 /* Copyright (C) 2010 Ian MacLarty */
+LT_INIT_DECL(ltinput)
 enum LTKey {
     LT_KEY_0,
     LT_KEY_1,

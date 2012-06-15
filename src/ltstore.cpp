@@ -1,5 +1,7 @@
 #include "lt.h"
 
+LT_INIT_IMPL(ltstore)
+
 void ltStorePickledData(const char *key, LTPickler *pickler) {
     #ifdef LTIOS
         ltIOSStorePickledData(key, pickler);

@@ -1,10 +1,12 @@
 /* Copyright (C) 2010 Ian MacLarty */
+LT_INIT_DECL(lttween)
 
 typedef LTfloat(*LTEaseFunc)(LTfloat);
 
 struct LTTween {
     LTObject *owner;
-    LTfloat *field_ptr;
+    LTFloatGetter getter;
+    LTFloatSetter setter;
     LTfloat t;
     LTfloat v0;
     LTfloat v;
@@ -23,14 +25,15 @@ struct LTTweenSet : LTObject {
 
     // If slot == -1, a new tween is added, otherwise the tween in the given slot is replaced.
     // Returns the slot used for the tween.
-    int add(LTObject *owner, LTfloat *field_ptr, LTfloat target_val, LTfloat time, LTfloat delay, LTEaseFunc ease, int slot);
+    int add(LTObject *owner, LTFloatGetter getter, LTFloatSetter setter,
+        LTfloat target_val, LTfloat time, LTfloat delay, LTEaseFunc ease, int slot);
 };
 
 // Returns true if finished.
 bool ltAdvanceTween(LTTween *tween, LTfloat dt);
 
-void ltInitTween(LTTween *tween, LTObject *owner, LTfloat *field_ptr, LTfloat v, LTfloat time,
-    LTfloat delay, LTEaseFunc ease);
+void ltInitTween(LTTween *tween, LTObject *owner, LTFloatGetter getter, LTFloatSetter setter,
+    LTfloat v, LTfloat time, LTfloat delay, LTEaseFunc ease);
 
 LTfloat ltEase_linear   (LTfloat t);
 LTfloat ltEase_in       (LTfloat t);

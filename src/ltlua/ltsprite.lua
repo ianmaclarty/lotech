@@ -13,7 +13,7 @@ local global_sprites = lt.SpriteSet()
 
 local
 function sprite_reset(sprite)
-    sprite:Replace(sprite.frames[1])
+    sprite.child = sprite.frames[1]
     sprite.t_accum = 0
     sprite.curr_frame = 1
 end
@@ -65,7 +65,7 @@ function lt.AdvanceSprites(spriteset, step)
             sprite.t_accum = t_accum
             if prev_frame ~= curr_frame then
                 sprite.curr_frame = curr_frame
-                sprite:Replace(frames[curr_frame])
+                sprite.child = frames[curr_frame]
             end
         end
     end

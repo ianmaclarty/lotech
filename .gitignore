@@ -18,3 +18,6 @@ osx/
 ios/
 android/
 mingw/
+*.out
+*.res
+ffitest

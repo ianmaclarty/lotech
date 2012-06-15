@@ -1,3 +1,5 @@
+LT_INIT_DECL(ltopengl)
+
 typedef GLuint          LTvertbuf;
 typedef GLuint          LTframebuf;
 typedef GLuint          LTtexid;

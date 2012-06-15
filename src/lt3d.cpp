@@ -1,17 +1,9 @@
 #include "lt.h"
 
+LT_INIT_IMPL(lt3d)
+
 static bool depth_test_on = false;
 static bool depth_mask_on = true;
-
-LTPerspective::LTPerspective(LTfloat near, LTfloat origin, LTfloat far,
-        LTfloat vanish_x, LTfloat vanish_y, LTSceneNode *child) : LTWrapNode(child, LT_TYPE_PERSPECTIVE)
-{
-    LTPerspective::near = near;
-    LTPerspective::origin = origin;
-    LTPerspective::far = far;
-    LTPerspective::vanish_x = vanish_x;
-    LTPerspective::vanish_y = vanish_y;
-}
 
 void LTPerspective::draw() {
     ltPushPerspective(near, origin, far, vanish_x, vanish_y);
@@ -23,22 +15,12 @@ bool LTPerspective::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *
     return false;
 }
 
-LTFieldDescriptor* LTPerspective::fields() {
-    static LTFieldDescriptor flds[] = {
-        {"near", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(near), NULL, NULL, LT_ACCESS_FULL},
-        {"origin", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(origin), NULL, NULL, LT_ACCESS_FULL},
-        {"far", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(far), NULL, NULL, LT_ACCESS_FULL},
-        {"vanish_x", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(vanish_x), NULL, NULL, LT_ACCESS_FULL},
-        {"vanish_y", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(vanish_y), NULL, NULL, LT_ACCESS_FULL},
-        LT_END_FIELD_DESCRIPTOR_LIST
-    };
-    return flds;
-}
-
-LTDepthTest::LTDepthTest(bool on, LTSceneNode *child) : LTWrapNode(child, LT_TYPE_DEPTHTEST)
-{
-    LTDepthTest::on = on;
-}
+LT_REGISTER_TYPE(LTPerspective, "lt.Perspective", "lt.Wrap")
+LT_REGISTER_FIELD_FLOAT(LTPerspective, near);
+LT_REGISTER_FIELD_FLOAT(LTPerspective, origin);
+LT_REGISTER_FIELD_FLOAT(LTPerspective, far);
+LT_REGISTER_FIELD_FLOAT(LTPerspective, vanish_x);
+LT_REGISTER_FIELD_FLOAT(LTPerspective, vanish_y);
 
 void LTDepthTest::draw() {
     bool prev_depth_test = depth_test_on;
@@ -64,10 +46,8 @@ bool LTDepthTest::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *ev
     return child->propogatePointerEvent(x, y, event);
 }
 
-LTDepthMask::LTDepthMask(bool on, LTSceneNode *child) : LTWrapNode(child, LT_TYPE_DEPTHMASK)
-{
-    LTDepthMask::on = on;
-}
+LT_REGISTER_TYPE(LTDepthTest, "lt.DepthTest", "lt.Wrap")
+LT_REGISTER_FIELD_BOOL(LTDepthTest, on)
 
 void LTDepthMask::draw() {
     bool prev_depth_mask = depth_mask_on;
@@ -93,9 +73,8 @@ bool LTDepthMask::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *ev
     return child->propogatePointerEvent(x, y, event);
 }
 
-LTPitch::LTPitch(LTfloat pitch, LTSceneNode *child) : LTWrapNode(child, LT_TYPE_PITCH) {
-    LTPitch::pitch = pitch;
-}
+LT_REGISTER_TYPE(LTDepthMask, "lt.DepthMask", "lt.Wrap")
+LT_REGISTER_FIELD_BOOL(LTDepthMask, on)
 
 void LTPitch::draw() {
     ltRotate(pitch, 1, 0, 0);
@@ -106,25 +85,12 @@ bool LTPitch::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event)
     return false;
 }
 
-LTFieldDescriptor* LTPitch::fields() {
-    static LTFieldDescriptor flds[] = {
-        {"pitch", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(pitch), NULL, NULL, LT_ACCESS_FULL},
-        LT_END_FIELD_DESCRIPTOR_LIST
-    };
-    return flds;
-}
-
-LTFog::LTFog(LTfloat start, LTfloat end, LTColor color, LTSceneNode *child)
-    : LTWrapNode(child, LT_TYPE_FOG)
-{
-    LTFog::start = start;
-    LTFog::end = end;
-    LTFog::color = color;
-}
+LT_REGISTER_TYPE(LTPitch, "lt.Pitch", "lt.Wrap")
+LT_REGISTER_FIELD_FLOAT(LTPitch, pitch)
 
 void LTFog::draw() {
     ltEnableFog();
-    ltFogColor(color.r, color.g, color.b);
+    ltFogColor(red, green, blue);
     ltFogStart(start);
     ltFogEnd(end);
     child->draw();
@@ -135,14 +101,9 @@ bool LTFog::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
     return child->propogatePointerEvent(x, y, event);
 }
 
-LTFieldDescriptor* LTFog::fields() {
-    static LTFieldDescriptor flds[] = {
-        {"start", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(start), NULL, NULL, LT_ACCESS_FULL},
-        {"end", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(end), NULL, NULL, LT_ACCESS_FULL},
-        {"red", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(color.r), NULL, NULL, LT_ACCESS_FULL},
-        {"green", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(color.g), NULL, NULL, LT_ACCESS_FULL},
-        {"blue", LT_FIELD_TYPE_FLOAT, LT_OFFSETOF(color.b), NULL, NULL, LT_ACCESS_FULL},
-        LT_END_FIELD_DESCRIPTOR_LIST
-    };
-    return flds;
-}
+LT_REGISTER_TYPE(LTFog, "lt.Fog", "lt.Wrap")
+LT_REGISTER_FIELD_FLOAT(LTFog, start)
+LT_REGISTER_FIELD_FLOAT(LTFog, end)
+LT_REGISTER_FIELD_FLOAT(LTFog, red)
+LT_REGISTER_FIELD_FLOAT(LTFog, green)
+LT_REGISTER_FIELD_FLOAT(LTFog, blue)

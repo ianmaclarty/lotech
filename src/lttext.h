@@ -1,5 +1,7 @@
 /* Copyright (C) 2010 Ian MacLarty */
 
+LT_INIT_DECL(lttext)
+
 // 1 byte = 1 glyph
 #define LT_MAX_GLYPHS 256
 

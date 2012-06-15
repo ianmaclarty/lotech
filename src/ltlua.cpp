@@ -2,24 +2,13 @@
 
 #include "lt.h"
 
-#define LT_USERDATA_MT "ltud"
-#define LT_USERDATA_KEY "_ud"
+LT_INIT_IMPL(ltlua)
 
 static lua_State *g_L = NULL;
-static int g_userdata_key_ref = LUA_NOREF;
 static int g_wrefs_ref = LUA_NOREF;
-static int g_string_table_ref = LUA_NOREF;
-static int g_ud_metatables_ref = LUA_NOREF;
 static bool g_suspended = false;
 static bool g_initialized = false;
 static bool g_gamecenter_initialized = false;
-
-
-/************************* Prototypes **************************/
-
-static void push_wrap(lua_State *L, LTObject *obj);
-static void del_ref(lua_State *L, int wrap_index, int ref_index);
-static void add_ref(lua_State *L, int wrap_index, int ref_index);
 
 /************************* Functions for calling lua **************************/
 
@@ -101,298 +90,13 @@ static void get_weak_ref(lua_State *L, int ref) {
 }
 
 // Remove a weak reference.
+/*
 static void del_weak_ref(lua_State *L, int ref) {
     lua_rawgeti(L, LUA_REGISTRYINDEX, g_wrefs_ref);
     luaL_unref(L, -1, ref);
     lua_pop(L, 1); // pop wrefs
 }
-
-/************************* Wrapping/unwrapping of c++ objects ******/
-
-// Extract LTObject from wrapper table at the given index.
-// Does not modify stack.
-static LTObject* get_object(lua_State *L, int index, LTType type) {
-    if (!lua_istable(L, index)) {
-        luaL_error(L, "Expecting a table in argument %d.", index);
-    }
-    lua_rawgeti(L, LUA_REGISTRYINDEX, g_userdata_key_ref);
-    if (index < 0) index--;
-    lua_rawget(L, index);
-    LTObject **ud = (LTObject**)luaL_checkudata(L, -1, LT_USERDATA_MT);
-    lua_pop(L, 1);
-    if (index < 0) index++;
-    if (ud == NULL) {
-        luaL_error(L, "ud == NULL.");
-    }
-    LTObject *o = *ud;
-    if (o == NULL) {
-        luaL_error(L, "o == NULL.");
-    }
-    if (!o->hasType(type)) {
-        luaL_typerror(L, index, ltTypeName(type));
-    }
-    return o;
-}
-
-static int lt_SetObjectField(lua_State *L) {
-    const char *fname;
-    LTObject *obj = get_object(L, 1, LT_TYPE_OBJECT);
-    fname = luaL_checkstring(L, 2);
-    LTFieldDescriptor *field = obj->field(fname);
-    if (field != NULL) {
-        if (field->type < LT_FIELD_TYPE_START_VAL) {
-            LTObject *oldval = obj->getObjField(field);
-            LTObject *val = get_object(L, 3, (LTType)field->type);
-            obj->setObjField(field, val);
-            // Add reference from obj to new val.
-            add_ref(L, 1, 3);
-            // Remove reference to old val.
-            if (oldval != NULL) {
-                push_wrap(L, oldval);
-                del_ref(L, 1, -1);
-                lua_pop(L, 1);
-            }
-        } else {
-            switch (field->type) {
-                case LT_FIELD_TYPE_FLOAT: {
-                    LTfloat val = (LTfloat)luaL_checknumber(L, 3);
-                    obj->setFloatField(field, val);
-                    break;
-                }
-                case LT_FIELD_TYPE_INT: {
-                    LTint val = (LTint)luaL_checkinteger(L, 3);
-                    obj->setIntField(field, val);
-                    break;
-                }
-                case LT_FIELD_TYPE_BOOL: {
-                    LTbool val = (LTbool)lua_toboolean(L, 3);
-                    obj->setBoolField(field, val);
-                    break;
-                }
-                case LT_FIELD_TYPE_LUA_REF: {
-                    LTint oldref = obj->getIntField(field);
-                    LTint ref = make_weak_ref(L, 3);
-                    obj->setIntField(field, ref);
-                    // Add reference from object to lua value,
-                    // so the lua value isn't gc'd as long as the object
-                    // is live.
-                    add_ref(L, 1, 3);
-                    // Remove reference from object to old lua ref.
-                    if (oldref != LUA_NOREF) {
-                        get_weak_ref(L, oldref);
-                        del_ref(L, 1, -1);
-                        lua_pop(L, 1);
-                        del_weak_ref(L, oldref);
-                    }
-                    break;
-                }
-            }
-        }
-    }
-    return 0;
-}
-    
-static int lt_GetObjectField(lua_State *L) {
-    LTObject *obj = get_object(L, 1, LT_TYPE_OBJECT);
-    const char *fname = luaL_checkstring(L, 2);
-    LTFieldDescriptor *field = obj->field(fname);
-    if (field != NULL) {
-        if (field->type < LT_FIELD_TYPE_START_VAL) {
-            push_wrap(L, obj->getObjField(field));
-            return 1;
-        } else {
-            switch (field->type) {
-                case LT_FIELD_TYPE_FLOAT: {
-                    lua_pushnumber(L, obj->getFloatField(field));
-                    break;
-                }
-                case LT_FIELD_TYPE_INT: {
-                    lua_pushinteger(L, obj->getIntField(field));
-                    break;
-                }
-                case LT_FIELD_TYPE_BOOL: {
-                    lua_pushboolean(L, obj->getBoolField(field));
-                    break;
-                }
-                case LT_FIELD_TYPE_LUA_REF: {
-                    int ref = obj->getIntField(field);
-                    get_weak_ref(L, ref);
-                    break;
-                }
-            }
-            return 1;
-        }
-    } else {
-        lua_pushnil(L);
-        return 1;
-    }
-}
-
-static int delete_object(lua_State *L) {
-    LTObject **ud = (LTObject**)lua_touserdata(L, 1);
-    delete (*ud);
-    *ud = NULL;
-    return 0;
-}
-
-// Pushes the wrapper table for the given object.
-// If the object has no wrapper table yet, then a new table
-// is created.
-static void push_wrap(lua_State *L, LTObject *obj) {
-    if (obj->lua_wrap != LUA_NOREF) {
-        // The object already has a wrapper, so push it and return.
-        get_weak_ref(L, obj->lua_wrap);
-        return;
-    }
-    lua_newtable(L);
-    lua_rawgeti(L, LUA_REGISTRYINDEX, g_ud_metatables_ref);
-    lua_getfield(L, -1, ltTypeName(obj->type));
-    lua_setmetatable(L, -3);
-    lua_pop(L, 1); // pop metatables. wrapper table now on top.
-    // Push wrapper table field that will point to the C++ object.
-    lua_rawgeti(L, LUA_REGISTRYINDEX, g_userdata_key_ref);
-    // Push user data for C++ obj.
-    LTObject **ud = (LTObject **)lua_newuserdata(L, sizeof(LTObject *));
-    *ud = obj;
-    // Add metatable for userdata with gc finalizer.
-    if (luaL_newmetatable(L, LT_USERDATA_MT)) {
-        lua_pushcfunction(L, delete_object);
-        lua_setfield(L, -2, "__gc");
-    }
-    lua_setmetatable(L, -2);
-    lua_rawset(L, -3);
-    // Wrapper table should now be on the top of the stack.
-    obj->lua_wrap = make_weak_ref(L, -1);
-}
-
-// Inserts the object at the given index into the wrapper
-// table at the given index so that the GC can trace it.
-// If the object is already in the table, its reference count is
-// incremented.
-static void add_ref(lua_State *L, int wrap_index, int ref_index) {
-    lua_pushvalue(L, ref_index);
-    if (wrap_index > 0) {
-        lua_rawget(L, wrap_index);
-    } else {
-        lua_rawget(L, wrap_index - 1);
-    }
-    int val = 1;
-    if (!lua_isnil(L, -1)) {
-        val = lua_tointeger(L, -1) + 1;
-    }
-    lua_pop(L, 1);
-    lua_pushvalue(L, ref_index);
-    lua_pushinteger(L, val);
-    if (wrap_index > 0) {
-        lua_rawset(L, wrap_index);
-    } else {
-        lua_rawset(L, wrap_index - 2);
-    }
-}
-
-// Removes the object at the given index from the wrapper
-// table if its reference count is 1, otherwise decrements
-// the reference count.
-static void del_ref(lua_State *L, int wrap_index, int ref_index) {
-    lua_pushvalue(L, ref_index);
-    if (wrap_index > 0) {
-        lua_rawget(L, wrap_index);
-    } else {
-        lua_rawget(L, wrap_index - 1);
-    }
-    if (lua_isnil(L, -1)) {
-        lua_pop(L, 1);
-        return;
-    }
-    int val = lua_tointeger(L, -1) - 1;
-    lua_pop(L, 1);
-    lua_pushvalue(L, ref_index);
-    if (val <= 0) {
-        lua_pushnil(L);
-    } else {
-        lua_pushinteger(L, val);
-    }
-    if (wrap_index > 0) {
-        lua_rawset(L, wrap_index);
-    } else {
-        lua_rawset(L, wrap_index - 2);
-    }
-}
-
-// Set a field of a wrapper table to point to a reference.
-// Sometimes we use this instead of add_ref,
-// so the other object can be more easily accessed from lua code.
-static void set_ref_field(lua_State *L, int wrap_index, const char *field, int ref_index) {
-    lua_pushstring(L, field);
-    lua_pushvalue(L, ref_index);
-    if (wrap_index > 0) {
-        lua_rawset(L, wrap_index);
-    } else {
-        lua_rawset(L, wrap_index - 2);
-    }
-}
-
-static void set_object_fields_from_table(lua_State *L, LTObject *obj, int table) {
-    lua_pushnil(L);
-    if (table < 0) {
-        table--;
-    }
-    while (lua_next(L, table) != 0) {
-        int key_type = lua_type(L, -2);
-        if (key_type == LUA_TSTRING) {
-            const char *key = lua_tostring(L, -2);
-            LTFieldDescriptor *field = obj->field(key);
-            if (field != NULL) {
-                if (field->type < LT_FIELD_TYPE_START_VAL) {
-                    ltLog("WARNING: ignoring object field '%s'", key);
-                } else {
-                    switch (field->type) {
-                        case LT_FIELD_TYPE_FLOAT: {
-                            obj->setFloatField(field, lua_tonumber(L, -1));
-                            break;
-                        }
-                        case LT_FIELD_TYPE_INT: {
-                            obj->setIntField(field, lua_tointeger(L, -1));
-                            break;
-                        }
-                        case LT_FIELD_TYPE_BOOL: {
-                            obj->setBoolField(field, lua_toboolean(L, -1));
-                            break;
-                        }
-                        case LT_FIELD_TYPE_LUA_REF: {
-                            ltLog("WARNING: ignoring lua ref field '%s'", key);
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-        lua_pop(L, 1);
-    }
-}
-
-/************************** General utility functions ************/
-
-static int check_nargs(lua_State *L, int exp_args) {
-    int n = lua_gettop(L);
-    if (n < exp_args) {
-        return luaL_error(L, "Expecting at least %d args, got %d.", exp_args, n);
-    } else {
-        return n;
-    }
-}
-
-static int max_atlas_size() {
-    #ifdef LTIOS
-        if (ltIsIPad() || ltIsRetinaIPhone()) {
-            return 2048;
-        } else {
-            return 1024;
-        }
-    #else
-        return 2048;
-    #endif
-}
+*/
 
 /************************** Resolve paths ****************/
 
@@ -441,7 +145,7 @@ static const char *sound_path(const char *name) {
 /************************* Graphics **************************/
 
 static int lt_SetViewPort(lua_State *L) {
-    check_nargs(L, 4);
+    ltLuaCheckNArgs(L, 4);
     LTfloat viewport_x1 = (LTfloat)luaL_checknumber(L, 1);
     LTfloat viewport_y1 = (LTfloat)luaL_checknumber(L, 2);
     LTfloat viewport_x2 = (LTfloat)luaL_checknumber(L, 3);
@@ -451,7 +155,7 @@ static int lt_SetViewPort(lua_State *L) {
 }
 
 static int lt_SetDesignScreenSize(lua_State *L) {
-    check_nargs(L, 2);
+    ltLuaCheckNArgs(L, 2);
     LTfloat w = (LTfloat)luaL_checknumber(L, 1);
     LTfloat h = (LTfloat)luaL_checknumber(L, 2);
     ltSetDesignScreenSize(w, h);
@@ -459,7 +163,7 @@ static int lt_SetDesignScreenSize(lua_State *L) {
 }
 
 static int lt_SetOrientation(lua_State *L) {
-    check_nargs(L, 1);
+    ltLuaCheckNArgs(L, 1);
     const char *orientation_str = lua_tostring(L, 1);
     LTDisplayOrientation orientation;
     if (strcmp(orientation_str, "portrait") == 0) {
@@ -474,7 +178,7 @@ static int lt_SetOrientation(lua_State *L) {
 }
 
 static int lt_PushTint(lua_State *L) {
-    int num_args = check_nargs(L, 3);
+    int num_args = ltLuaCheckNArgs(L, 3);
     LTfloat r = (LTfloat)luaL_checknumber(L, 1);
     LTfloat g = (LTfloat)luaL_checknumber(L, 2);
     LTfloat b = (LTfloat)luaL_checknumber(L, 3);
@@ -514,7 +218,7 @@ static int lt_DrawUnitCircle(lua_State *L) {
 }
 
 static int lt_DrawRect(lua_State *L) {
-    check_nargs(L, 4);
+    ltLuaCheckNArgs(L, 4);
     LTfloat x1 = (LTfloat)luaL_checknumber(L, 1);
     LTfloat y1 = (LTfloat)luaL_checknumber(L, 2);
     LTfloat x2 = (LTfloat)luaL_checknumber(L, 3);
@@ -524,7 +228,7 @@ static int lt_DrawRect(lua_State *L) {
 }
 
 static int lt_DrawEllipse(lua_State *L) {
-    check_nargs(L, 4);
+    ltLuaCheckNArgs(L, 4);
     LTfloat x = (LTfloat)luaL_checknumber(L, 1);
     LTfloat y = (LTfloat)luaL_checknumber(L, 2);
     LTfloat rx = (LTfloat)luaL_checknumber(L, 3);
@@ -534,24 +238,24 @@ static int lt_DrawEllipse(lua_State *L) {
 }
 
 static int lt_DrawSceneNode(lua_State *L) {
-    int nargs = check_nargs(L, 1);
-    LTSceneNode *node = (LTSceneNode*)get_object(L, 1, LT_TYPE_SCENENODE);
+    int nargs = ltLuaCheckNArgs(L, 1);
+    LTSceneNode *node = lt_expect_LTSceneNode(L, 1);
     if (nargs > 1) {
-        LTRenderTarget *target = (LTRenderTarget *)get_object(L, 2, LT_TYPE_RENDERTARGET);
+        LTRenderTarget *target = lt_expect_LTRenderTarget(L, 2);
         LTColor clear_color(0.0f, 0.0f, 0.0f, 0.0f);
         bool do_clear = false;
         if (nargs > 2) {
             do_clear = true;
-            clear_color.r = luaL_checknumber(L, 3);
+            clear_color.red = luaL_checknumber(L, 3);
         }
         if (nargs > 3) {
-            clear_color.g = luaL_checknumber(L, 4);
+            clear_color.green = luaL_checknumber(L, 4);
         }
         if (nargs > 4) {
-            clear_color.b = luaL_checknumber(L, 5);
+            clear_color.blue = luaL_checknumber(L, 5);
         }
         if (nargs > 5) {
-            clear_color.a = luaL_checknumber(L, 6);
+            clear_color.alpha = luaL_checknumber(L, 6);
         }
         target->renderNode(node, do_clear ? &clear_color : NULL);
     } else {
@@ -561,401 +265,77 @@ static int lt_DrawSceneNode(lua_State *L) {
 }
 
 static int lt_InsertLayerFront(lua_State *L) {
-    int num_args = check_nargs(L, 2);
-    LTLayer *layer = (LTLayer*)get_object(L, 1, LT_TYPE_LAYER);
-    LTSceneNode *node = (LTSceneNode*)get_object(L, 2, LT_TYPE_SCENENODE);
+    int num_args = ltLuaCheckNArgs(L, 2);
+    LTLayer *layer = lt_expect_LTLayer(L, 1);
+    LTSceneNode *node = lt_expect_LTSceneNode(L, 2);
     if (num_args > 2) {
         luaL_error(L, "Only two arguments expected");
     }
     layer->insert_front(node);
-    add_ref(L, 1, 2);
+    ltLuaAddRef(L, 1, 2);
     return 0;
 }
 
 static int lt_InsertLayerBack(lua_State *L) {
-    int num_args = check_nargs(L, 2);
-    LTLayer *layer = (LTLayer*)get_object(L, 1, LT_TYPE_LAYER);
-    LTSceneNode *node = (LTSceneNode*)get_object(L, 2, LT_TYPE_SCENENODE);
+    int num_args = ltLuaCheckNArgs(L, 2);
+    LTLayer *layer = lt_expect_LTLayer(L, 1);
+    LTSceneNode *node = lt_expect_LTSceneNode(L, 2);
     if (num_args > 2) {
         luaL_error(L, "Only two arguments expected");
     }
     layer->insert_back(node);
-    add_ref(L, 1, 2);
+    ltLuaAddRef(L, 1, 2);
     return 0;
 }
 
 static int lt_InsertLayerAbove(lua_State *L) {
-    int num_args = check_nargs(L, 3);
-    LTLayer *layer = (LTLayer*)get_object(L, 1, LT_TYPE_LAYER);
-    LTSceneNode *existing_node = (LTSceneNode*)get_object(L, 2, LT_TYPE_SCENENODE);
-    LTSceneNode *new_node = (LTSceneNode*)get_object(L, 3, LT_TYPE_SCENENODE);
+    int num_args = ltLuaCheckNArgs(L, 3);
+    LTLayer *layer = lt_expect_LTLayer(L, 1);
+    LTSceneNode *existing_node = lt_expect_LTSceneNode(L, 2);
+    LTSceneNode *new_node = lt_expect_LTSceneNode(L, 3);
     if (num_args > 3) {
         luaL_error(L, "Only three arguments expected");
     }
     if (layer->insert_above(existing_node, new_node)) {
-        add_ref(L, 1, 3);
+        ltLuaAddRef(L, 1, 3);
     }
     return 0;
 }
 
 static int lt_InsertLayerBelow(lua_State *L) {
-    int num_args = check_nargs(L, 3);
-    LTLayer *layer = (LTLayer*)get_object(L, 1, LT_TYPE_LAYER);
-    LTSceneNode *existing_node = (LTSceneNode*)get_object(L, 2, LT_TYPE_SCENENODE);
-    LTSceneNode *new_node = (LTSceneNode*)get_object(L, 3, LT_TYPE_SCENENODE);
+    int num_args = ltLuaCheckNArgs(L, 3);
+    LTLayer *layer = lt_expect_LTLayer(L, 1);
+    LTSceneNode *existing_node = lt_expect_LTSceneNode(L, 2);
+    LTSceneNode *new_node = lt_expect_LTSceneNode(L, 3);
     if (num_args > 3) {
         luaL_error(L, "Only three arguments expected");
     }
     if (layer->insert_below(existing_node, new_node)) {
-        add_ref(L, 1, 3);
+        ltLuaAddRef(L, 1, 3);
     }
     return 0;
 }
 
 static int lt_LayerSize(lua_State *L) {
-    check_nargs(L, 1);
-    LTLayer *layer = (LTLayer*)get_object(L, 1, LT_TYPE_LAYER);
+    ltLuaCheckNArgs(L, 1);
+    LTLayer *layer = lt_expect_LTLayer(L, 1);
     lua_pushinteger(L, layer->size());
     return 1;
 }
 
 static int lt_RemoveFromLayer(lua_State *L) {
-    check_nargs(L, 2);
-    LTLayer *layer = (LTLayer*)get_object(L, 1, LT_TYPE_LAYER);
-    LTSceneNode *node = (LTSceneNode*)get_object(L, 2, LT_TYPE_SCENENODE);
+    ltLuaCheckNArgs(L, 2);
+    LTLayer *layer = lt_expect_LTLayer(L, 1);
+    LTSceneNode *node = lt_expect_LTSceneNode(L, 2);
     layer->remove(node);
-    del_ref(L, 1, 2);
-    return 0;
-}
-
-static int lt_Layer(lua_State *L) {
-    int num_args = check_nargs(L, 0);
-    LTLayer *layer = new LTLayer();
-    push_wrap(L, layer);
-    // Add arguments as child nodes.
-    // First arguments are drawn in front of last arguments.
-    for (int arg = 1; arg <= num_args; arg++) {
-        LTSceneNode *child = (LTSceneNode*)get_object(L, arg, LT_TYPE_SCENENODE);
-        layer->insert_back(child);
-        add_ref(L, -1, arg); // Add reference from layer node to child node.
-    }
-    return 1;
-}
-
-static int lt_Translate(lua_State *L) {
-    int num_args = check_nargs(L, 3);
-    LTSceneNode *child = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
-    LTfloat x = (LTfloat)luaL_checknumber(L, 2);
-    LTfloat y = (LTfloat)luaL_checknumber(L, 3);
-    LTfloat z = 0.0f;
-    if (num_args > 3) {
-        z = (LTfloat)luaL_checknumber(L, 4);
-    }
-    LTTranslateNode *node = new LTTranslateNode(x, y, z, child);
-    push_wrap(L, node);
-    set_ref_field(L, -1, "child", 1); // Add reference from new node to child.
-    return 1;
-}
-
-static int lt_Rotate(lua_State *L) {
-    int nargs = check_nargs(L, 2);
-    LTSceneNode *child = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
-    LTdegrees angle = (LTfloat)luaL_checknumber(L, 2);
-    LTfloat cx = 0.0f;
-    LTfloat cy = 0.0f;
-    if (nargs > 2) {
-        cx = luaL_checknumber(L, 3);
-    }
-    if (nargs > 3) {
-        cy = luaL_checknumber(L, 4);
-    }
-    LTRotateNode *node = new LTRotateNode(angle, cx, cy, child);
-    push_wrap(L, node);
-    set_ref_field(L, -1, "child", 1); // Add reference from new node to child.
-    return 1;
-}
-
-static int lt_Scale(lua_State *L) {
-    int num_args = check_nargs(L, 2);
-    LTSceneNode *child = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
-    LTfloat sx = 1.0f;
-    LTfloat sy = 1.0f;
-    LTfloat sz = 1.0f;
-    LTfloat s = 1.0f;
-    if (num_args == 2) {
-        s = luaL_checknumber(L, 2);
-    } else {
-        sx = luaL_checknumber(L, 2);
-        sy = luaL_checknumber(L, 3);
-    }
-    if (num_args > 3) {
-        sz = luaL_checknumber(L, 4);
-    }
-    LTScaleNode *node = new LTScaleNode(sx, sy, sz, s, child);
-    push_wrap(L, node);
-    set_ref_field(L, -1, "child", 1); // Add reference from new node to child.
-    return 1;
-}
-
-static int lt_Perspective(lua_State *L) {
-    int nargs = check_nargs(L, 4);
-    LTSceneNode *child = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
-    LTfloat near = luaL_checknumber(L, 2);
-    LTfloat origin = luaL_checknumber(L, 3);
-    LTfloat far = luaL_checknumber(L, 4);
-    LTfloat vanish_x = 0.0f;
-    LTfloat vanish_y = 0.0f;
-    if (nargs > 4) {
-        vanish_x = luaL_checknumber(L, 5);
-    }
-    if (nargs > 5) {
-        vanish_y = luaL_checknumber(L, 6);
-    }
-    LTPerspective *node = new LTPerspective(near, origin, far, vanish_x, vanish_y, child);
-    push_wrap(L, node);
-    set_ref_field(L, -1, "child", 1); // Add reference from new node to child.
-    return 1;
-}
-
-static int lt_Pitch(lua_State *L) {
-    check_nargs(L, 2);
-    LTSceneNode *child = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
-    LTfloat pitch = (LTfloat)luaL_checknumber(L, 2);
-    LTPitch *node = new LTPitch(pitch, child);
-    push_wrap(L, node);
-    set_ref_field(L, -1, "child", 1); // Add reference from new node to child.
-    return 1;
-}
-
-static int lt_Fog(lua_State *L) {
-    check_nargs(L, 6);
-    LTSceneNode *child = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
-    LTfloat start = (LTfloat)luaL_checknumber(L, 2);
-    LTfloat end = (LTfloat)luaL_checknumber(L, 3);
-    LTfloat red = (LTfloat)luaL_checknumber(L, 4);
-    LTfloat green = (LTfloat)luaL_checknumber(L, 5);
-    LTfloat blue = (LTfloat)luaL_checknumber(L, 6);
-    LTColor color(red, green, blue, 1.0f); // Alpha ignored for fog.
-    LTFog *fog = new LTFog(start, end, color, child);
-    push_wrap(L, fog);
-    set_ref_field(L, -1, "child", 1); // Add ref from new node to child.
-    return 1;
-}
-
-static int lt_DepthTest(lua_State *L) {
-    int nargs = check_nargs(L, 1);
-    LTSceneNode *child = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
-    bool on = true;
-    if (nargs > 1) {
-        on = lua_toboolean(L, 2);
-    }
-    push_wrap(L, new LTDepthTest(on, child));
-    set_ref_field(L, -1, "child", 1); // Add ref from new node to child.
-    return 1;
-}
-
-static int lt_DepthMask(lua_State *L) {
-    int nargs = check_nargs(L, 1);
-    LTSceneNode *child = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
-    bool on = true;
-    if (nargs > 1) {
-        on = lua_toboolean(L, 2);
-    }
-    push_wrap(L, new LTDepthMask(on, child));
-    set_ref_field(L, -1, "child", 1); // Add ref from new node to child.
-    return 1;
-}
-
-static int lt_Tint(lua_State *L) {
-    int num_args = check_nargs(L, 4);
-    LTSceneNode *child = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
-    LTfloat r = (LTfloat)luaL_checknumber(L, 2);
-    LTfloat g = (LTfloat)luaL_checknumber(L, 3);
-    LTfloat b = (LTfloat)luaL_checknumber(L, 4);
-    LTfloat a = 1.0f;
-    if (num_args > 4) {
-        a = (LTfloat)luaL_checknumber(L, 5);
-    }
-    LTTintNode *tinter = new LTTintNode(r, g, b, a, child);
-    push_wrap(L, tinter);
-    set_ref_field(L, -1, "child", 1); // Add reference from new node to child.
-    return 1;
-}
-
-static int lt_BlendMode(lua_State *L) {
-    check_nargs(L, 2);
-    LTSceneNode *child = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
-    const char *modestr = lua_tostring(L, 2);
-    if (modestr == NULL) {
-        return luaL_error(L, "Expecting a string in argument 2");
-    }
-    LTBlendMode mode;
-    if (strcmp(modestr, "add") == 0) {
-        mode = LT_BLEND_MODE_ADD;
-    } else if (strcmp(modestr, "subtract") == 0) {
-        mode = LT_BLEND_MODE_SUBTRACT;
-    //} else if (strcmp(modestr, "diff") == 0) {
-    //    mode = LT_BLEND_MODE_DIFF;
-    } else if (strcmp(modestr, "color") == 0) {
-        mode = LT_BLEND_MODE_COLOR;
-    } else if (strcmp(modestr, "multiply") == 0) {
-        mode = LT_BLEND_MODE_MULTIPLY;
-    } else if (strcmp(modestr, "normal") == 0) {
-        mode = LT_BLEND_MODE_NORMAL;
-    } else if (strcmp(modestr, "off") == 0) {
-        mode = LT_BLEND_MODE_OFF;
-    } else {
-        return luaL_error(L, "Invalid blend mode: %s", modestr);
-    }
-    LTBlendModeNode *blend = new LTBlendModeNode(mode, child);
-    push_wrap(L, blend);
-    set_ref_field(L, -1, "child", 1); // Add reference from new node to child.
-    return 1;
-}
-
-static int lt_TextureMode(lua_State *L) {
-    check_nargs(L, 2);
-    LTSceneNode *child = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
-    const char *modestr = lua_tostring(L, 2);
-    if (modestr == NULL) {
-        return luaL_error(L, "Expecting a string in argument 2");
-    }
-    LTTextureMode mode;
-    if (strcmp(modestr, "add") == 0) {
-        mode = LT_TEXTURE_MODE_ADD;
-    } else if (strcmp(modestr, "decal") == 0) {
-        mode = LT_TEXTURE_MODE_DECAL;
-    } else if (strcmp(modestr, "blend") == 0) {
-        mode = LT_TEXTURE_MODE_BLEND;
-    } else if (strcmp(modestr, "replace") == 0) {
-        mode = LT_TEXTURE_MODE_REPLACE;
-    } else if (strcmp(modestr, "modulate") == 0) {
-        mode = LT_TEXTURE_MODE_MODULATE;
-    } else {
-        return luaL_error(L, "Invalid texture mode: %s", modestr);
-    }
-    LTTextureModeNode *node = new LTTextureModeNode(mode, child);
-    push_wrap(L, node);
-    set_ref_field(L, -1, "child", 1); // Add reference from new node to child.
-    return 1;
-}
-
-static int lt_Line(lua_State *L) {
-    check_nargs(L, 4);
-    LTfloat x1 = (LTfloat)luaL_checknumber(L, 1);
-    LTfloat y1 = (LTfloat)luaL_checknumber(L, 2);
-    LTfloat x2 = (LTfloat)luaL_checknumber(L, 3);
-    LTfloat y2 = (LTfloat)luaL_checknumber(L, 4);
-    LTLineNode *line = new LTLineNode(x1, y1, x2, y2);
-    push_wrap(L, line);
-    return 1;
-}
-
-static int lt_Triangle(lua_State *L) {
-    check_nargs(L, 6);
-    LTfloat x1 = (LTfloat)luaL_checknumber(L, 1);
-    LTfloat y1 = (LTfloat)luaL_checknumber(L, 2);
-    LTfloat x2 = (LTfloat)luaL_checknumber(L, 3);
-    LTfloat y2 = (LTfloat)luaL_checknumber(L, 4);
-    LTfloat x3 = (LTfloat)luaL_checknumber(L, 5);
-    LTfloat y3 = (LTfloat)luaL_checknumber(L, 6);
-    LTTriangleNode *triangle = new LTTriangleNode(x1, y1, x2, y2, x3, y3);
-    push_wrap(L, triangle);
-    return 1;
-}
-
-static int lt_Rect(lua_State *L) {
-    check_nargs(L, 4);
-    LTfloat x1 = (LTfloat)luaL_checknumber(L, 1);
-    LTfloat y1 = (LTfloat)luaL_checknumber(L, 2);
-    LTfloat x2 = (LTfloat)luaL_checknumber(L, 3);
-    LTfloat y2 = (LTfloat)luaL_checknumber(L, 4);
-    LTRectNode *node = new LTRectNode(x1, y1, x2, y2);
-    push_wrap(L, node);
-    return 1;
-}
-
-static int lt_HitFilter(lua_State *L) {
-    check_nargs(L, 5);
-    LTSceneNode *child = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
-    LTfloat left = (LTfloat)luaL_checknumber(L, 2);
-    LTfloat bottom = (LTfloat)luaL_checknumber(L, 3);
-    LTfloat right = (LTfloat)luaL_checknumber(L, 4);
-    LTfloat top = (LTfloat)luaL_checknumber(L, 5);
-    LTHitFilter *filter = new LTHitFilter(left, bottom, right, top, child);
-    push_wrap(L, filter);
-    set_ref_field(L, -1, "child", 1); // Add reference from new node to child.
-    return 1;
-}
-
-static int lt_DownFilter(lua_State *L) {
-    check_nargs(L, 5);
-    LTSceneNode *child = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
-    LTfloat left = (LTfloat)luaL_checknumber(L, 2);
-    LTfloat bottom = (LTfloat)luaL_checknumber(L, 3);
-    LTfloat right = (LTfloat)luaL_checknumber(L, 4);
-    LTfloat top = (LTfloat)luaL_checknumber(L, 5);
-    LTDownFilter *filter = new LTDownFilter(left, bottom, right, top, child);
-    push_wrap(L, filter);
-    set_ref_field(L, -1, "child", 1); // Add reference from new node to child.
-    return 1;
-}
-
-static int lt_Wrap(lua_State *L) {
-    check_nargs(L, 1);
-    LTSceneNode *child = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
-    LTWrapNode *wrap = new LTWrapNode(child);
-    push_wrap(L, wrap);
-    set_ref_field(L, -1, "child", 1); // Add reference from wrapper to child.
-    return 1;
-}
-
-static int lt_ReplaceWrappedChild(lua_State *L) {
-    check_nargs(L, 2);
-    LTWrapNode *wrap = (LTWrapNode *)get_object(L, 1, LT_TYPE_WRAP);
-    LTSceneNode *new_child = (LTSceneNode *)get_object(L, 2, LT_TYPE_SCENENODE);
-    wrap->child = new_child;
-    set_ref_field(L, 1, "child", 2); // Replace the child field with the new child.
-    return 1;
-}
-
-/************************* Particle System ******************/
-
-static int lt_ParticleSystem(lua_State *L) {
-    check_nargs(L, 3);
-    LTImage *img = (LTImage *)get_object(L, 1, LT_TYPE_IMAGE);
-    int n = luaL_checkinteger(L, 2);
-    LTParticleSystem *particles = new LTParticleSystem(img, n);
-    if (!lua_istable(L, 3)) {
-        return luaL_error(L, "Expecting a table in argument 3");
-    }
-    set_object_fields_from_table(L, particles, 3);
-    if (particles->emission_rate < 0.0f) {
-        particles->emission_rate = (LTfloat)particles->max_particles / particles->life;
-    }
-    push_wrap(L, particles);
-    add_ref(L, -1, 1); // Add reference from particles to image.
-    return 1;
-}
-
-static int lt_ParticleSystemFixtureFilter(lua_State *L) {
-    check_nargs(L, 2);
-    LTParticleSystem *particles = (LTParticleSystem *)get_object(L, 1, LT_TYPE_PARTICLESYSTEM);
-    LTFixture *fixture = (LTFixture *)get_object(L, 2, LT_TYPE_FIXTURE);
-    if (particles->fixture != NULL) {
-        push_wrap(L, particles->fixture);
-        del_ref(L, 1, -1); // Delete existing reference.
-        lua_pop(L, 1);
-    }
-    particles->fixture = fixture;
-    add_ref(L, 1, 2); // Add reference from particle system to fixture.
+    ltLuaDelRef(L, 1, 2);
     return 0;
 }
 
 /************************* Vectors **************************/
 
 static int lt_Vector(lua_State *L) {
-    int num_args = check_nargs(L, 1);
+    int num_args = ltLuaCheckNArgs(L, 1);
     int capacity;
     int stride;
     LTVector *vec;
@@ -976,7 +356,7 @@ static int lt_Vector(lua_State *L) {
         } else {
             stride = 0;
         }
-        vec = new LTVector(capacity, stride);
+        vec = new (lt_alloc_LTVector(L)) LTVector(capacity, stride);
         for (int i = 1; i <= capacity; i++) {
             lua_rawgeti(L, 1, i);
             for (int j = 1; j <= stride; j++) {
@@ -993,28 +373,18 @@ static int lt_Vector(lua_State *L) {
     } else if (num_args == 2) {
         int capacity = luaL_checkinteger(L, 1);
         int stride = luaL_checkinteger(L, 2);
-        vec = new LTVector(capacity, stride);
+        vec = new (lt_alloc_LTVector(L)) LTVector(capacity, stride);
         vec->size = capacity;
     } else {
         return luaL_error(L, "Invalid arguments");
     }
-    push_wrap(L, vec);
-
-    /*
-    for (int i = 0; i < capacity; i++) {
-        for (int j = 0; j < stride; j++) {
-            fprintf(stderr, "%10f ", vec->data[i * stride + j]);
-        }
-        fprintf(stderr, "\n");
-    }
-    */
 
     return 1;
 }
 
 static int lt_GenerateVectorColumn(lua_State *L) {
-    int num_args = check_nargs(L, 3);
-    LTVector *v = (LTVector *)get_object(L, 1, LT_TYPE_VECTOR);
+    int num_args = ltLuaCheckNArgs(L, 3);
+    LTVector *v = lt_expect_LTVector(L, 1);
     int col = luaL_checkinteger(L, 2);
     int stride = v->stride;
     LTfloat lo = luaL_checknumber(L, 3);
@@ -1042,11 +412,11 @@ static int lt_GenerateVectorColumn(lua_State *L) {
 }
 
 static int lt_FillVectorColumnsWithImageQuads(lua_State *L) {
-    check_nargs(L, 5);
-    LTVector *vector = (LTVector *)get_object(L, 1, LT_TYPE_VECTOR);
+    ltLuaCheckNArgs(L, 5);
+    LTVector *vector = lt_expect_LTVector(L, 1);
     int col = luaL_checkinteger(L, 2) - 1;
-    LTTexturedNode *img = (LTTexturedNode *)get_object(L, 3, LT_TYPE_TEXTUREDNODE);
-    LTVector *offsets = (LTVector *)get_object(L, 4, LT_TYPE_VECTOR);
+    LTTexturedNode *img = lt_expect_LTTexturedNode(L, 3);
+    LTVector *offsets = lt_expect_LTVector(L, 4);
     int offsets_col = luaL_checkinteger(L, 5) - 1;
     if (vector->size < 4) {
         return luaL_error(L, "Vector size must be at least 4");
@@ -1093,147 +463,17 @@ static int lt_FillVectorColumnsWithImageQuads(lua_State *L) {
     return 0;
 }
 
-static int lt_DrawQuads(lua_State *L) {
-    int num_args = check_nargs(L, 2);
-    LTVector *vector = (LTVector *)get_object(L, 1, LT_TYPE_VECTOR);
-    LTTexturedNode *img = (LTTexturedNode *)get_object(L, 2, LT_TYPE_TEXTUREDNODE);
-    int col = 0;
-    if (num_args > 2) {
-        col = luaL_checkinteger(L, 3) - 1;
-    }
-    if (vector->stride - col < 4) {
-        return luaL_error(L, "Not enough columns (need 4)");
-    }
-    LTDrawTexturedQuads *draw_quads = new LTDrawTexturedQuads(vector, col, img);
-    push_wrap(L, draw_quads);
-    add_ref(L, -1, 1); // Add reference from node to vector.
-    add_ref(L, -1, 2); // Add reference from node to image.
-    return 1;
-}
-
-static int lt_DrawVector(lua_State *L) {
-    int num_args = check_nargs(L, 3);
-    LTVector *vector = (LTVector *)get_object(L, 1, LT_TYPE_VECTOR);
-    const char *mode_str = lua_tostring(L, 2);
-    int dims = lua_tointeger(L, 3);
-    if (dims != 2 && dims != 3) {
-        return luaL_error(L, "Dimensions must be 2 or 3");
-    }
-    int color_os = -1;
-    if (num_args > 3) {
-        color_os = lua_tointeger(L, 4) - 1;
-        if (color_os != -1 && color_os > (vector->stride - 4)) {
-            return luaL_error(L, "Invalid color offset");
-        }
-    }
-    int tex_os = -1;
-    LTTexturedNode *img = NULL;
-    if (num_args > 4) {
-        tex_os = lua_tointeger(L, 5) - 1;
-        if (tex_os != -1 && tex_os > (vector->stride - 2)) {
-            return luaL_error(L, "Invalid texture offset");
-        }
-        // If there is a texture offset, an image should also be provided.
-        if (tex_os != -1 && num_args < 6) {
-            return luaL_error(L, "An image must be provided if a texture offset is given.");
-        }
-        img = (LTTexturedNode *)get_object(L, 6, LT_TYPE_TEXTUREDNODE);
-    }
-    LTDrawMode mode;
-    if (strcmp(mode_str, "triangle_strip") == 0) {
-        mode = LT_DRAWMODE_TRIANGLE_STRIP;
-    } else if (strcmp(mode_str, "triangle_fan") == 0) {
-        mode = LT_DRAWMODE_TRIANGLE_FAN;
-    } else if (strcmp(mode_str, "triangles") == 0) {
-        mode = LT_DRAWMODE_TRIANGLES;
-    } else if (strcmp(mode_str, "lines") == 0) {
-        mode = LT_DRAWMODE_LINES;
-    } else if (strcmp(mode_str, "points") == 0) {
-        mode = LT_DRAWMODE_POINTS;
-    } else {
-        return luaL_error(L, "Invalid draw mode");
-    }
-
-    LTDrawVector *draw_vec = new LTDrawVector(mode, vector, dims, 0, color_os, tex_os, img);
-    push_wrap(L, draw_vec);
-    add_ref(L, -1, 1); // Add reference from node to vector.
-    if (img != NULL) {
-        add_ref(L, -1, 5); // Add reference from node to image.
-    }
-
-    return 1;
-}
-
-/************************* Render targets ******************/
-
-static LTTextureFilter decode_texture_filter_arg(lua_State *L, int arg);
-
-static int lt_RenderTarget(lua_State *L) {
-    int nargs = check_nargs(L, 2);
-    int w = luaL_checkinteger(L, 1);
-    int h = luaL_checkinteger(L, 2);
-    LTfloat vp_x1 = -1.0f;
-    LTfloat vp_y1 = -1.0f;
-    LTfloat vp_x2 = 1.0f;
-    LTfloat vp_y2 = 1.0f;
-    if (nargs > 2) {
-        vp_x1 = luaL_checknumber(L, 3);
-        vp_y1 = luaL_checknumber(L, 4);
-        vp_x2 = luaL_checknumber(L, 5);
-        vp_y2 = luaL_checknumber(L, 6);
-    }
-    LTfloat wld_x1;
-    LTfloat wld_y1;
-    LTfloat wld_x2;
-    LTfloat wld_y2;
-    if (nargs > 6) {
-        wld_x1 = luaL_checknumber(L, 7);
-        wld_y1 = luaL_checknumber(L, 8);
-        wld_x2 = luaL_checknumber(L, 9);
-        wld_y2 = luaL_checknumber(L, 10);
-    } else {
-        LTfloat pix_w = ltGetPixelWidth();
-        LTfloat pix_h = ltGetPixelHeight();
-        LTfloat world_width = (LTfloat)w * pix_w;
-        LTfloat world_height = (LTfloat)h * pix_h;
-        wld_x1 = - world_width * 0.5f;
-        wld_y1 = - world_height * 0.5f;
-        wld_x2 = world_width * 0.5f;
-        wld_y2 = world_height * 0.5f;
-    }
-
-    LTTextureFilter minfilter = LT_TEXTURE_FILTER_LINEAR;
-    LTTextureFilter magfilter = LT_TEXTURE_FILTER_LINEAR;
-    if (nargs > 10) {
-        minfilter = decode_texture_filter_arg(L, 11);
-    }
-    if (nargs > 11) {
-        magfilter = decode_texture_filter_arg(L, 12);
-    }
-
-    LTRenderTarget *render_target = new LTRenderTarget(w, h,
-        vp_x1, vp_y1, vp_x2, vp_y2,
-        wld_x1, wld_y1, wld_x2, wld_y2,
-        false, minfilter, magfilter);
-    push_wrap(L, render_target);
-    return 1;
-}
-
 /************************* Tweens **************************/
 
 static int lt_MakeNativeTween(lua_State *L) {
-    LTObject *obj = get_object(L, 1, LT_TYPE_OBJECT);
-    const char *fname = lua_tostring(L, 2);
-    if (fname == NULL) {
+    LTObject *obj = lt_expect_LTObject(L, 1);
+    LTFloatGetter getter;
+    LTFloatSetter setter;
+    ltLuaGetFloatGetterAndSetter(L, 1, 2, &getter, &setter);
+    if (getter == NULL || setter == NULL) {
         lua_pushnil(L);
         return 1;
     }
-    LTFieldDescriptor *field = obj->field(fname);
-    if (field == NULL || field->offset < 0 || field->type != LT_FIELD_TYPE_FLOAT || field->access == LT_ACCESS_READONLY) {
-        lua_pushnil(L);
-        return 1;
-    }
-    LTfloat *fptr = (LTfloat*)((char*)obj + field->offset);
     LTfloat delay = luaL_checknumber(L, 3);
     LTfloat value = luaL_checknumber(L, 4);
     LTfloat time = luaL_checknumber(L, 5);
@@ -1278,7 +518,7 @@ static int lt_MakeNativeTween(lua_State *L) {
         }
     }
     LTTween *tween = (LTTween*)lua_newuserdata(L, sizeof(LTTween));
-    ltInitTween(tween, obj, fptr, value, time, delay, ease_func);
+    ltInitTween(tween, obj, getter, setter, value, time, delay, ease_func);
     return 1;
 }
 
@@ -1288,107 +528,6 @@ static int lt_AdvanceNativeTween(lua_State *L) {
     lua_pushboolean(L, ltAdvanceTween(tween, dt) ? 1 : 0);
     return 1;
 }
-
-/*
-static int lt_TweenSet(lua_State *L) {
-    push_wrap(L, new LTTweenSet());
-    return 1;
-}
-
-static int lt_AdvanceTweens(lua_State *L) {
-    check_nargs(L, 2);
-    LTTweenSet *tweens = (LTTweenSet*)get_object(L, 1, LT_TYPE_TWEENSET);
-    LTfloat dt = luaL_checknumber(L, 2);
-
-    int i = 0;
-    while (i < tweens->occupants) {
-        LTTween *tween = &tweens->tweens[i];
-        if (ltAdvanceTween(tween, dt)) {
-            // Tween finished, so remove it.
-            lua_pushlightuserdata(L, tween->field_ptr);
-            lua_pushnil(L);
-            lua_rawset(L, 1);
-            push_wrap(L, tween->owner);
-            del_ref(L, 1, -1);
-            lua_pop(L, 1);
-            if (i != tweens->occupants - 1) {
-                tweens->tweens[i] = tweens->tweens[tweens->occupants - 1];
-                // Update slot of tween that has taken the place of the deleted tween.
-                lua_pushlightuserdata(L, tweens->tweens[i].field_ptr);
-                lua_pushinteger(L, i);
-                lua_rawset(L, 1);
-            }
-            tweens->occupants--;
-        } else {
-            i++;
-        }
-    }
-
-    return 0;
-}
-
-static int lt_AddTween(lua_State *L) {
-    check_nargs(L, 7);
-    LTTweenSet *tweens = (LTTweenSet*)get_object(L, 1, LT_TYPE_TWEENSET);
-    LTObject *obj = get_object(L, 2, LT_TYPE_OBJECT);
-    const char *field = lua_tostring(L, 3);
-    if (field == NULL) {
-        return luaL_error(L, "Expecting a string in argument 3");
-    }
-    LTfloat *field_ptr = obj->field_ptr(field);
-    if (field_ptr == NULL) {
-        lua_pushboolean(L, 0);
-        return 1;
-    }
-    LTfloat target_val = luaL_checknumber(L, 4);
-    LTfloat time = luaL_checknumber(L, 5);
-    LTfloat delay = luaL_checknumber(L, 6);
-    size_t len;
-    const char *ease_func_str = lua_tolstring(L, 7, &len);
-    if (ease_func_str == NULL) {
-        return luaL_error(L, "Expecting a string in argument 6");
-    }
-    LTEaseFuncInfo *ease_func_info = LTEaseFunc_lookup(ease_func_str, len);
-    if (ease_func_info == NULL) {
-        return luaL_error(L, "Invalid easing function: ", ease_func_str);
-    }
-    LTEaseFunc ease_func = ease_func_info->func;
-    int slot = -1;
-    lua_pushlightuserdata(L, field_ptr);
-    lua_rawget(L, 1);
-    if (!lua_isnil(L, -1)) {
-        slot = lua_tonumber(L, -1);
-    }
-    lua_pop(L, 1);
-    if (slot < 0) {
-        slot = tweens->add(obj, field_ptr, target_val, time, delay, ease_func, slot);
-        lua_pushlightuserdata(L, field_ptr);
-        lua_pushinteger(L, slot);
-        lua_rawset(L, 1); // Record the slot number of the field_ptr in the wrapper table.
-    } else {
-        tweens->add(obj, field_ptr, target_val, time, delay, ease_func, slot);
-    }
-    add_ref(L, 1, 2); // Add a reference to the field owner.
-    lua_pushboolean(L, 1);
-    return 1;
-}
-
-static int lt_ClearTweens(lua_State *L) {
-    check_nargs(L, 1);
-    LTTweenSet *tweens = (LTTweenSet*)get_object(L, 1, LT_TYPE_TWEENSET);
-    for (int i = 0; i < tweens->occupants; i++) {
-        LTTween *tween = &tweens->tweens[i];
-        push_wrap(L, tween->owner);
-        del_ref(L, 1, -1);
-        lua_pop(L, 1);
-        lua_pushlightuserdata(L, tween->field_ptr);
-        lua_pushnil(L);
-        lua_rawset(L, 1);
-    }
-    tweens->occupants = 0;
-    return 0;
-}
-*/
 
 /************************* Events **************************/
 
@@ -1412,26 +551,6 @@ static bool call_pointer_event_handler(lua_State *L, int func, LTfloat x, LTfloa
         return false;
     }
 }
-
-struct LTLPointerDownInEventHandler : LTPointerEventHandler {
-    int lua_func_ref;
-
-    LTLPointerDownInEventHandler(int func_index) {
-        lua_func_ref = make_weak_ref(g_L, func_index);
-    }
-
-    virtual bool consume(LTfloat x, LTfloat y, LTSceneNode *node, LTPointerEvent *event) {
-        if (event->type == LT_EVENT_POINTER_DOWN) {
-            if (node->containsPoint(x, y)) {
-                return call_pointer_event_handler(g_L, lua_func_ref, x, y, event->input_id);
-            } else {
-                return false;
-            }
-        } else {
-            return false;
-        }
-    }
-};
 
 struct LTLPointerUpEventHandler : LTPointerEventHandler {
     int lua_func_ref;
@@ -1522,45 +641,45 @@ struct LTLPointerOverEventHandler : LTPointerEventHandler {
 };
 
 static int lt_AddOnPointerUpHandler(lua_State *L) {
-    check_nargs(L, 2);
-    LTSceneNode *node = (LTSceneNode*)get_object(L, 1, LT_TYPE_SCENENODE);
+    ltLuaCheckNArgs(L, 2);
+    LTSceneNode *node = lt_expect_LTSceneNode(L, 1);
     LTLPointerUpEventHandler *handler = new LTLPointerUpEventHandler(2);
     node->addHandler(handler);
-    add_ref(L, 1, 2);
+    ltLuaAddRef(L, 1, 2);
     return 0;
 }
 
 static int lt_AddOnPointerDownHandler(lua_State *L) {
-    check_nargs(L, 2);
-    LTSceneNode *node = (LTSceneNode*)get_object(L, 1, LT_TYPE_SCENENODE);
+    ltLuaCheckNArgs(L, 2);
+    LTSceneNode *node = lt_expect_LTSceneNode(L, 1);
     LTLPointerDownEventHandler *handler = new LTLPointerDownEventHandler(2);
     node->addHandler(handler);
-    add_ref(L, 1, 2);
+    ltLuaAddRef(L, 1, 2);
     return 0;
 }
 
 static int lt_AddOnPointerMoveHandler(lua_State *L) {
-    check_nargs(L, 2);
-    LTSceneNode *node = (LTSceneNode*)get_object(L, 1, LT_TYPE_SCENENODE);
+    ltLuaCheckNArgs(L, 2);
+    LTSceneNode *node = lt_expect_LTSceneNode(L, 1);
     LTLPointerMoveEventHandler *handler = new LTLPointerMoveEventHandler(2);
     node->addHandler(handler);
-    add_ref(L, 1, 2);
+    ltLuaAddRef(L, 1, 2);
     return 0;
 }
 
 static int lt_AddOnPointerOverHandler(lua_State *L) {
-    check_nargs(L, 3);
-    LTSceneNode *node = (LTSceneNode*)get_object(L, 1, LT_TYPE_SCENENODE);
+    ltLuaCheckNArgs(L, 3);
+    LTSceneNode *node = lt_expect_LTSceneNode(L, 1);
     LTLPointerOverEventHandler *handler = new LTLPointerOverEventHandler(2, 3);
     node->addHandler(handler);
-    add_ref(L, 1, 2);
-    add_ref(L, 1, 3);
+    ltLuaAddRef(L, 1, 2);
+    ltLuaAddRef(L, 1, 3);
     return 0;
 }
 
 static int lt_PropogatePointerUpEvent(lua_State *L) {
-    check_nargs(L, 4);
-    LTSceneNode *node = (LTSceneNode*)get_object(L, 1, LT_TYPE_SCENENODE);
+    ltLuaCheckNArgs(L, 4);
+    LTSceneNode *node = lt_expect_LTSceneNode(L, 1);
     int input_id = luaL_checkinteger(L, 2);
     LTfloat x = luaL_checknumber(L, 3);
     LTfloat y = luaL_checknumber(L, 4);
@@ -1570,8 +689,8 @@ static int lt_PropogatePointerUpEvent(lua_State *L) {
 }
 
 static int lt_PropogatePointerDownEvent(lua_State *L) {
-    check_nargs(L, 4);
-    LTSceneNode *node = (LTSceneNode*)get_object(L, 1, LT_TYPE_SCENENODE);
+    ltLuaCheckNArgs(L, 4);
+    LTSceneNode *node = lt_expect_LTSceneNode(L, 1);
     int input_id = luaL_checkinteger(L, 2);
     LTfloat x = luaL_checknumber(L, 3);
     LTfloat y = luaL_checknumber(L, 4);
@@ -1581,8 +700,8 @@ static int lt_PropogatePointerDownEvent(lua_State *L) {
 }
 
 static int lt_PropogatePointerMoveEvent(lua_State *L) {
-    check_nargs(L, 4);
-    LTSceneNode *node = (LTSceneNode*)get_object(L, 1, LT_TYPE_SCENENODE);
+    ltLuaCheckNArgs(L, 4);
+    LTSceneNode *node = lt_expect_LTSceneNode(L, 1);
     int input_id = luaL_checkinteger(L, 2);
     LTfloat x = luaL_checknumber(L, 3);
     LTfloat y = luaL_checknumber(L, 4);
@@ -1593,13 +712,24 @@ static int lt_PropogatePointerMoveEvent(lua_State *L) {
 
 /************************* Images **************************/
 
+static int max_atlas_size() {
+    #ifdef LTIOS
+        if (ltIsIPad() || ltIsRetinaIPhone()) {
+            return 2048;
+        } else {
+            return 1024;
+        }
+    #else
+        return 2048;
+    #endif
+}
+
 static void add_packer_images_to_lua_table(lua_State *L, int w, int h, LTImagePacker *packer, LTAtlas *atlas) {
     const char *name;
     if (packer->occupant != NULL) {
-        LTImage *img = new LTImage(atlas, w, h, packer);
         name = packer->occupant->name;
         if (!packer->occupant->is_glyph) {
-            push_wrap(L, img);
+            new (lt_alloc_LTImage(L)) LTImage(atlas, w, h, packer);
             lua_setfield(L, -2, name);
         } else {
             lua_getfield(L, -1, name);
@@ -1613,7 +743,7 @@ static void add_packer_images_to_lua_table(lua_State *L, int w, int h, LTImagePa
             char glyph_name[2];
             glyph_name[0] = packer->occupant->glyph_char;
             glyph_name[1] = '\0';
-            push_wrap(L, img);
+            new (lt_alloc_LTImage(L)) LTImage(atlas, w, h, packer);
             lua_setfield(L, -2, glyph_name);
             lua_pop(L, 1); // Pop font table.
         }
@@ -1656,12 +786,12 @@ static LTTextureFilter decode_texture_filter_arg(lua_State *L, int arg) {
 }
 
 static int lt_LoadImages(lua_State *L) {
-    // Load images in 1st argument (an array) and return a table
+    // Load images named in 1st argument (an array) and return a table
     // indexed by image name.
     // The second and third arguments are the minimize and magnify
     // texture filters to use.
     // If an entry in the array is a table, then process it as a font.
-    int num_args = check_nargs(L, 1);
+    int num_args = ltLuaCheckNArgs(L, 1);
     LTTextureFilter minfilter = LT_TEXTURE_FILTER_LINEAR;
     LTTextureFilter magfilter = LT_TEXTURE_FILTER_LINEAR;
     if (num_args > 1) {
@@ -1746,7 +876,7 @@ static int lt_LoadImages(lua_State *L) {
 static int lt_LoadSamples(lua_State *L) {
     // Load sounds in 1st argument (an array) and return a table
     // indexed by sound name.
-    check_nargs(L, 1);
+    ltLuaCheckNArgs(L, 1);
     lua_newtable(L); // The table to be returned.
     int i = 1;
     while (true) {
@@ -1765,11 +895,10 @@ static int lt_LoadSamples(lua_State *L) {
             return luaL_error(L, "Expecting an array of strings.");
         }
         const char *path = sound_path(name); 
-        LTAudioSample *sample = ltReadAudioSample(path, name);
+        LTAudioSample *sample = ltReadAudioSample(L, path, name);
         delete[] path;
         if (sample != NULL) {
             // If sample is NULL ltReadAudioSample would have already logged an error.
-            push_wrap(L, sample);
             lua_setfield(L, -2, name);
         }
         i++;
@@ -1778,7 +907,7 @@ static int lt_LoadSamples(lua_State *L) {
 }
 
 static int lt_PlaySampleOnce(lua_State *L) {
-    int num_args = check_nargs(L, 1);
+    int num_args = ltLuaCheckNArgs(L, 1);
     LTfloat pitch = 1.0f;
     LTfloat gain = 1.0f;
     if (num_args > 1) {
@@ -1787,43 +916,43 @@ static int lt_PlaySampleOnce(lua_State *L) {
     if (num_args > 2) {
         gain = luaL_checknumber(L, 3);
     }
-    LTAudioSample *sample = (LTAudioSample*)get_object(L, 1, LT_TYPE_AUDIOSAMPLE);
+    LTAudioSample *sample = lt_expect_LTAudioSample(L, 1);
     sample->play(pitch, gain);
     return 0;
 }
 
 static int lt_PlayTrack(lua_State *L) {
-    check_nargs(L, 1);
-    LTTrack *track = (LTTrack*)get_object(L, 1, LT_TYPE_TRACK);
+    ltLuaCheckNArgs(L, 1);
+    LTTrack *track = lt_expect_LTTrack(L, 1);
     track->play();
     return 0;
 }
 
 static int lt_PauseTrack(lua_State *L) {
-    check_nargs(L, 1);
-    LTTrack *track = (LTTrack*)get_object(L, 1, LT_TYPE_TRACK);
+    ltLuaCheckNArgs(L, 1);
+    LTTrack *track = lt_expect_LTTrack(L, 1);
     track->pause();
     return 0;
 }
 
 static int lt_StopTrack(lua_State *L) {
-    check_nargs(L, 1);
-    LTTrack *track = (LTTrack*)get_object(L, 1, LT_TYPE_TRACK);
+    ltLuaCheckNArgs(L, 1);
+    LTTrack *track = lt_expect_LTTrack(L, 1);
     track->stop();
     return 0;
 }
 
 static int lt_RewindTrack(lua_State *L) {
-    check_nargs(L, 1);
-    LTTrack *track = (LTTrack*)get_object(L, 1, LT_TYPE_TRACK);
+    ltLuaCheckNArgs(L, 1);
+    LTTrack *track = lt_expect_LTTrack(L, 1);
     track->rewind();
     return 0;
 }
 
 static int lt_QueueSampleInTrack(lua_State *L) {
-    int num_args = check_nargs(L, 2);
-    LTTrack *track = (LTTrack*)get_object(L, 1, LT_TYPE_TRACK);
-    LTAudioSample *sample = (LTAudioSample*)get_object(L, 2, LT_TYPE_AUDIOSAMPLE);
+    int num_args = ltLuaCheckNArgs(L, 2);
+    LTTrack *track = lt_expect_LTTrack(L, 1);
+    LTAudioSample *sample = lt_expect_LTAudioSample(L, 2);
     int n = 1;
     if (num_args > 2) {
         n = luaL_checkinteger(L, 3);
@@ -1831,50 +960,43 @@ static int lt_QueueSampleInTrack(lua_State *L) {
     for (int i = 0; i < n; i++) {
         track->queueSample(sample);
     }
-    // XXX We should probably add a separate reference to each added
-    //     sample, so we can remove each reference in lt_TrackDequeuePlayed.
-    add_ref(L, 1, 2); // Add ref from track to sample.
+    // XXX This is a leak.  See XXX in lt_TrackDequeuePlayed.
+    ltLuaAddRef(L, 1, 2); // Add ref from track to sample.
     return 0;
 }
 
-static int lt_Track(lua_State *L) {
-    LTTrack *track = new LTTrack();
-    push_wrap(L, track);
-    return 1;
-}
-
 static int lt_SetTrackLoop(lua_State *L) {
-    check_nargs(L, 2);
-    LTTrack *track = (LTTrack*)get_object(L, 1, LT_TYPE_TRACK);
+    ltLuaCheckNArgs(L, 2);
+    LTTrack *track = lt_expect_LTTrack(L, 1);
     bool loop = lua_toboolean(L, 2);
     track->setLoop(loop);
     return 0;
 }
 
 static int lt_TrackQueueSize(lua_State *L) {
-    check_nargs(L, 1);
-    LTTrack *track = (LTTrack*)get_object(L, 1, LT_TYPE_TRACK);
+    ltLuaCheckNArgs(L, 1);
+    LTTrack *track = lt_expect_LTTrack(L, 1);
     lua_pushinteger(L, track->numSamples());
     return 1;
 }
 
 static int lt_TrackNumPlayed(lua_State *L) {
-    check_nargs(L, 1);
-    LTTrack *track = (LTTrack*)get_object(L, 1, LT_TYPE_TRACK);
+    ltLuaCheckNArgs(L, 1);
+    LTTrack *track = lt_expect_LTTrack(L, 1);
     lua_pushinteger(L, track->numProcessedSamples());
     return 1;
 }
 
 static int lt_TrackNumPending(lua_State *L) {
-    check_nargs(L, 1);
-    LTTrack *track = (LTTrack*)get_object(L, 1, LT_TYPE_TRACK);
+    ltLuaCheckNArgs(L, 1);
+    LTTrack *track = lt_expect_LTTrack(L, 1);
     lua_pushinteger(L, track->numPendingSamples());
     return 1;
 }
 
 static int lt_TrackDequeuePlayed(lua_State *L) {
-    check_nargs(L, 2);
-    LTTrack *track = (LTTrack*)get_object(L, 1, LT_TYPE_TRACK);
+    ltLuaCheckNArgs(L, 2);
+    LTTrack *track = lt_expect_LTTrack(L, 1);
     int n = (int)luaL_checkinteger(L, 2);
     track->dequeueProcessedSamples(n);
     // XXX We have to remove the reference to the sample.
@@ -1882,31 +1004,32 @@ static int lt_TrackDequeuePlayed(lua_State *L) {
 }
 
 static int lt_SampleNumDataPoints(lua_State *L) {
-    check_nargs(L, 1);
-    LTAudioSample *sample = (LTAudioSample*)get_object(L, 1, LT_TYPE_AUDIOSAMPLE);
+    ltLuaCheckNArgs(L, 1);
+    LTAudioSample *sample = lt_expect_LTAudioSample(L, 1);
     lua_pushinteger(L, sample->numDataPoints());
     return 1;
 }
 
 static int lt_SampleFrequency(lua_State *L) {
-    check_nargs(L, 1);
-    LTAudioSample *sample = (LTAudioSample*)get_object(L, 1, LT_TYPE_AUDIOSAMPLE);
+    ltLuaCheckNArgs(L, 1);
+    LTAudioSample *sample = lt_expect_LTAudioSample(L, 1);
     lua_pushinteger(L, sample->dataPointsPerSec());
     return 1;
 }
 
 static int lt_SampleLength(lua_State *L) {
-    check_nargs(L, 1);
-    LTAudioSample *sample = (LTAudioSample*)get_object(L, 1, LT_TYPE_AUDIOSAMPLE);
+    ltLuaCheckNArgs(L, 1);
+    LTAudioSample *sample = lt_expect_LTAudioSample(L, 1);
     lua_pushnumber(L, sample->length());
     return 1;
 }
 
 /************************* Box2D **************************/
 
+/*
 static int lt_FixtureContainsPoint(lua_State *L) {
-    check_nargs(L, 3); 
-    LTFixture *fixture = (LTFixture*)get_object(L, 1, LT_TYPE_FIXTURE);
+    ltLuaCheckNArgs(L, 3); 
+    LTFixture *fixture = lt_expect_LTFixture(L, 1);
     LTfloat x = luaL_checknumber(L, 2);
     LTfloat y = luaL_checknumber(L, 3);
     if (fixture->fixture != NULL) {
@@ -1918,29 +1041,30 @@ static int lt_FixtureContainsPoint(lua_State *L) {
 }
 
 static int lt_DestroyFixture(lua_State *L) {
-    check_nargs(L, 1); 
-    LTFixture *fixture = (LTFixture*)get_object(L, 1, LT_TYPE_FIXTURE);
+    ltLuaCheckNArgs(L, 1); 
+    LTFixture *fixture = lt_expect_LTFixture(L, 1);
     fixture->destroy();
     LTBody *body = fixture->body;
     if (body != NULL) {
-        get_weak_ref(L, fixture->lua_wrap);
-        get_weak_ref(L, body->lua_wrap);
-        del_ref(L, -1, -2); // Remove reference from body to fixture.
-        del_ref(L, -2, -1); // Remove reference from fixture to body.
+        lt_pushfield_LTFixture
+        lt_unset_LTFixture_body(L, 1); // Remove reference from fixture to body.
+        ltLuaPushRef(L, 1, body);
+        ltLuaDelRef(L, -1, 1); // Remove reference from body to fixture.
+        ltLuaDelRef(L, 1, -1); 
         lua_pop(L, 2);
     }
     return 0;
 }
 
 static int lt_FixtureIsDestroyed(lua_State *L) {
-    check_nargs(L, 1); 
+    ltLuaCheckNArgs(L, 1); 
     LTFixture *fixture = (LTFixture*)get_object(L, 1, LT_TYPE_FIXTURE);
     lua_pushboolean(L, fixture->fixture == NULL);
     return 1;
 }
 
 static int lt_DoWorldStep(lua_State *L) {
-    int num_args = check_nargs(L, 2); 
+    int num_args = ltLuaCheckNArgs(L, 2); 
     LTWorld *world = (LTWorld*)get_object(L, 1, LT_TYPE_WORLD);
     LTfloat time_step = luaL_checknumber(L, 2);
     int velocity_iterations = 8;
@@ -1956,7 +1080,7 @@ static int lt_DoWorldStep(lua_State *L) {
 }
 
 static int lt_SetWorldGravity(lua_State *L) {
-    check_nargs(L, 3);
+    ltLuaCheckNArgs(L, 3);
     LTWorld *world = (LTWorld*)get_object(L, 1, LT_TYPE_WORLD);
     LTfloat x = (LTfloat)luaL_checknumber(L, 2);
     LTfloat y = (LTfloat)luaL_checknumber(L, 3);
@@ -1965,7 +1089,7 @@ static int lt_SetWorldGravity(lua_State *L) {
 }
 
 static int lt_SetWorldAutoClearForces(lua_State *L) {
-    check_nargs(L, 2);
+    ltLuaCheckNArgs(L, 2);
     LTWorld *world = (LTWorld*)get_object(L, 1, LT_TYPE_WORLD);
     bool clear = lua_toboolean(L, 2);
     world->world->SetAutoClearForces(clear);
@@ -1991,7 +1115,7 @@ struct AABBQueryCallBack : b2QueryCallback {
 };
 
 static int lt_WorldQueryBox(lua_State *L) {
-    check_nargs(L, 5);
+    ltLuaCheckNArgs(L, 5);
     LTWorld *world = (LTWorld*)get_object(L, 1, LT_TYPE_WORLD);
     LTfloat x1 = (LTfloat)luaL_checknumber(L, 2);
     LTfloat y1 = (LTfloat)luaL_checknumber(L, 3);
@@ -2019,7 +1143,7 @@ static int lt_WorldQueryBox(lua_State *L) {
 }
 
 static int lt_DestroyBody(lua_State *L) {
-    check_nargs(L, 1);
+    ltLuaCheckNArgs(L, 1);
     LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
     body->destroy();
     b2Body *b = body->body;
@@ -2029,29 +1153,29 @@ static int lt_DestroyBody(lua_State *L) {
         while (f != NULL) {
             LTFixture *ud = (LTFixture*)f->GetUserData();
             get_weak_ref(L, ud->lua_wrap);
-            del_ref(L, 1, -1); // Remove reference from body to fixture.
-            del_ref(L, -1, 1); // Remove reference from fixture to body.
+            ltLuaDelRef(L, 1, -1); // Remove reference from body to fixture.
+            ltLuaDelRef(L, -1, 1); // Remove reference from fixture to body.
             lua_pop(L, 1);
             f = f->GetNext();
         }
     }
     LTWorld *world = body->world;
     get_weak_ref(L, world->lua_wrap);
-    del_ref(L, -1, 1); // Remove reference from world to body.
-    del_ref(L, 1, -1); // Remove reference from body to world.
+    ltLuaDelRef(L, -1, 1); // Remove reference from world to body.
+    ltLuaDelRef(L, 1, -1); // Remove reference from body to world.
     lua_pop(L, 1);
     return 0;
 }
 
 static int lt_BodyIsDestroyed(lua_State *L) {
-    check_nargs(L, 1);
+    ltLuaCheckNArgs(L, 1);
     LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
     lua_pushboolean(L, body->body == NULL);
     return 1;
 }
 
 static int lt_ApplyForceToBody(lua_State *L) {
-    int num_args = check_nargs(L, 3);
+    int num_args = ltLuaCheckNArgs(L, 3);
     LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
     if (body->body != NULL) {
         b2Vec2 force;
@@ -2070,7 +1194,7 @@ static int lt_ApplyForceToBody(lua_State *L) {
 }
 
 static int lt_ApplyTorqueToBody(lua_State *L) {
-    check_nargs(L, 2);
+    ltLuaCheckNArgs(L, 2);
     LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
     if (body->body != NULL) {
         body->body->ApplyTorque(luaL_checknumber(L, 2));
@@ -2079,7 +1203,7 @@ static int lt_ApplyTorqueToBody(lua_State *L) {
 }
 
 static int lt_ApplyImpulseToBody(lua_State *L) {
-    int num_args = check_nargs(L, 3);
+    int num_args = ltLuaCheckNArgs(L, 3);
     LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
     if (body->body != NULL) {
         b2Vec2 force;
@@ -2098,7 +1222,7 @@ static int lt_ApplyImpulseToBody(lua_State *L) {
 }
 
 static int lt_ApplyAngularImpulseToBody(lua_State *L) {
-    check_nargs(L, 2);
+    ltLuaCheckNArgs(L, 2);
     LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
     if (body->body != NULL) {
         body->body->ApplyAngularImpulse(luaL_checknumber(L, 2));
@@ -2106,21 +1230,21 @@ static int lt_ApplyAngularImpulseToBody(lua_State *L) {
     return 0;
 }
 
-/*
- * m_forces and m_torque are private members.
-static int lt_ClearBodyForces(lua_State *L) {
-    check_nargs(L, 1);
-    LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
-    if (body->body != NULL) {
-        body->body->m_force.SetZero();
-        body->body->m_torque = 0.0f;
-    }
-    return 0;
-}
-*/
+//
+// * m_forces and m_torque are private members.
+//static int lt_ClearBodyForces(lua_State *L) {
+//    ltLuaCheckNArgs(L, 1);
+//    LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
+//    if (body->body != NULL) {
+//        body->body->m_force.SetZero();
+//        body->body->m_torque = 0.0f;
+//    }
+//    return 0;
+//}
+//
 
 static int lt_GetBodyAngle(lua_State *L) {
-    check_nargs(L, 1);
+    ltLuaCheckNArgs(L, 1);
     LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
     if (body->body != NULL) {
         lua_pushnumber(L, body->body->GetAngle() * LT_DEGREES_PER_RADIAN);
@@ -2131,7 +1255,7 @@ static int lt_GetBodyAngle(lua_State *L) {
 }
 
 static int lt_SetBodyAngle(lua_State *L) {
-    check_nargs(L, 2);
+    ltLuaCheckNArgs(L, 2);
     LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
     if (body->body != NULL) {
         body->body->SetTransform(body->body->GetPosition(), luaL_checknumber(L, 2) * LT_RADIANS_PER_DEGREE);
@@ -2142,7 +1266,7 @@ static int lt_SetBodyAngle(lua_State *L) {
 }
 
 static int lt_GetBodyPosition(lua_State *L) {
-    check_nargs(L, 1);
+    ltLuaCheckNArgs(L, 1);
     LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
     if (body->body != NULL) {
         b2Vec2 pos = body->body->GetPosition();
@@ -2154,7 +1278,7 @@ static int lt_GetBodyPosition(lua_State *L) {
 }
 
 static int lt_GetBodyVelocity(lua_State *L) {
-    check_nargs(L, 1);
+    ltLuaCheckNArgs(L, 1);
     LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
     if (body->body != NULL) {
         b2Vec2 pos = body->body->GetLinearVelocity();
@@ -2166,7 +1290,7 @@ static int lt_GetBodyVelocity(lua_State *L) {
 }
 
 static int lt_SetBodyVelocity(lua_State *L) {
-    check_nargs(L, 3);
+    ltLuaCheckNArgs(L, 3);
     LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
     if (body->body != NULL) {
         b2Vec2 v = b2Vec2(luaL_checknumber(L, 2), luaL_checknumber(L, 3));
@@ -2176,7 +1300,7 @@ static int lt_SetBodyVelocity(lua_State *L) {
 }
 
 static int lt_SetBodyPosition(lua_State *L) {
-    check_nargs(L, 3);
+    ltLuaCheckNArgs(L, 3);
     LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
     LTfloat x = luaL_checknumber(L, 2);
     LTfloat y = luaL_checknumber(L, 3);
@@ -2187,7 +1311,7 @@ static int lt_SetBodyPosition(lua_State *L) {
 }
 
 static int lt_SetBodyAngularVelocity(lua_State *L) {
-    check_nargs(L, 2);
+    ltLuaCheckNArgs(L, 2);
     LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
     if (body->body != NULL) {
         body->body->SetAngularVelocity(luaL_checknumber(L, 2) * LT_RADIANS_PER_DEGREE);
@@ -2196,7 +1320,7 @@ static int lt_SetBodyAngularVelocity(lua_State *L) {
 }
 
 static int lt_SetBodyGravityScale(lua_State *L) {
-    check_nargs(L, 2);
+    ltLuaCheckNArgs(L, 2);
     LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
     if (body->body != NULL) {
         body->body->SetGravityScale(luaL_checknumber(L, 2));
@@ -2205,7 +1329,7 @@ static int lt_SetBodyGravityScale(lua_State *L) {
 }
 
 static int lt_AddRectToBody(lua_State *L) {
-    int num_args = check_nargs(L, 5);
+    int num_args = ltLuaCheckNArgs(L, 5);
     LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
     if (body->body != NULL) {
         LTfloat x1 = (LTfloat)luaL_checknumber(L, 2);
@@ -2232,8 +1356,8 @@ static int lt_AddRectToBody(lua_State *L) {
         fixtureDef.shape = &poly;
         LTFixture *fixture = new LTFixture(body, &fixtureDef);
         push_wrap(L, fixture);
-        add_ref(L, 1, -1); // Add reference from body to new fixture.
-        add_ref(L, -1, 1); // Add reference from fixture to body.
+        ltLuaAddRef(L, 1, -1); // Add reference from body to new fixture.
+        ltLuaAddRef(L, -1, 1); // Add reference from fixture to body.
     } else {
         lua_pushnil(L);
     }
@@ -2241,7 +1365,7 @@ static int lt_AddRectToBody(lua_State *L) {
 }
 
 static int lt_AddTriangleToBody(lua_State *L) {
-    int num_args = check_nargs(L, 7);
+    int num_args = ltLuaCheckNArgs(L, 7);
     LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
     if (body->body != NULL) {
         LTfloat x1 = (LTfloat)luaL_checknumber(L, 2);
@@ -2273,8 +1397,8 @@ static int lt_AddTriangleToBody(lua_State *L) {
         fixtureDef.shape = &poly;
         LTFixture *fixture = new LTFixture(body, &fixtureDef);
         push_wrap(L, fixture);
-        add_ref(L, 1, -1); // Add reference from body to new fixture.
-        add_ref(L, -1, 1); // Add reference from fixture to body.
+        ltLuaAddRef(L, 1, -1); // Add reference from body to new fixture.
+        ltLuaAddRef(L, -1, 1); // Add reference from fixture to body.
     } else {
         lua_pushnil(L);
     }
@@ -2323,7 +1447,7 @@ static void read_fixture_attributes(lua_State *L, int table, b2FixtureDef *fixtu
 }
 
 static int lt_AddPolygonToBody(lua_State *L) {
-    check_nargs(L, 3);
+    ltLuaCheckNArgs(L, 3);
     LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
     if (body->body != NULL) {
         // Second argument is array of polygon vertices.
@@ -2373,7 +1497,7 @@ static int lt_AddPolygonToBody(lua_State *L) {
         fixture_def.shape = &poly;
         LTFixture *fixture = new LTFixture(body, &fixture_def);
         push_wrap(L, fixture);
-        add_ref(L, 1, -1); // Add reference from body to new fixture.
+        ltLuaAddRef(L, 1, -1); // Add reference from body to new fixture.
         set_ref_field(L, -1, "body", 1); // Add reference from fixture to body.
     } else {
         lua_pushnil(L);
@@ -2382,7 +1506,7 @@ static int lt_AddPolygonToBody(lua_State *L) {
 }
 
 static int lt_AddCircleToBody(lua_State *L) {
-    check_nargs(L, 5);
+    ltLuaCheckNArgs(L, 5);
     LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
     if (body->body != NULL) {
         LTfloat radius = luaL_checknumber(L, 2);
@@ -2397,7 +1521,7 @@ static int lt_AddCircleToBody(lua_State *L) {
         fixture_def.shape = &circle;
         LTFixture *fixture = new LTFixture(body, &fixture_def);
         push_wrap(L, fixture);
-        add_ref(L, 1, -1); // Add reference from body to new fixture.
+        ltLuaAddRef(L, 1, -1); // Add reference from body to new fixture.
         set_ref_field(L, -1, "body", 1); // Add reference from fixture to body.
     } else {
         lua_pushnil(L);
@@ -2406,7 +1530,7 @@ static int lt_AddCircleToBody(lua_State *L) {
 }
 
 static int lt_GetFixtureBody(lua_State *L) {
-    check_nargs(L, 1);
+    ltLuaCheckNArgs(L, 1);
     LTFixture *fixture = (LTFixture*)get_object(L, 1, LT_TYPE_FIXTURE);
     if (fixture->fixture != NULL && fixture->body != NULL) {
         push_wrap(L, fixture->body);
@@ -2417,7 +1541,7 @@ static int lt_GetFixtureBody(lua_State *L) {
 }
 
 static int lt_GetBodyFixtures(lua_State *L) {
-    check_nargs(L, 1);
+    ltLuaCheckNArgs(L, 1);
     LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
     lua_newtable(L);
     b2Body *b = body->body;
@@ -2435,7 +1559,7 @@ static int lt_GetBodyFixtures(lua_State *L) {
 }
 
 static int lt_FixtureBoundingBox(lua_State *L) {
-    check_nargs(L, 1);
+    ltLuaCheckNArgs(L, 1);
     LTFixture *fixture = (LTFixture*)get_object(L, 1, LT_TYPE_FIXTURE);
     b2Fixture *f = fixture->fixture;
     if (f) {
@@ -2451,19 +1575,19 @@ static int lt_FixtureBoundingBox(lua_State *L) {
 }
 
 static int lt_AddStaticBodyToWorld(lua_State *L) {
-    check_nargs(L, 1);
+    ltLuaCheckNArgs(L, 1);
     LTWorld *world = (LTWorld*)get_object(L, 1, LT_TYPE_WORLD);
     b2BodyDef def;
     def.type = b2_staticBody;
     LTBody *body = new LTBody(world, &def);
     push_wrap(L, body);
-    add_ref(L, 1, -1); // Add reference from world to body.
-    add_ref(L, -1, 1); // Add reference from body to world.
+    ltLuaAddRef(L, 1, -1); // Add reference from world to body.
+    ltLuaAddRef(L, -1, 1); // Add reference from body to world.
     return 1;
 }
 
 static int lt_AddDynamicBodyToWorld(lua_State *L) {
-    int num_args = check_nargs(L, 3);
+    int num_args = ltLuaCheckNArgs(L, 3);
     LTWorld *world = (LTWorld*)get_object(L, 1, LT_TYPE_WORLD);
     LTfloat x = (LTfloat)luaL_checknumber(L, 2);
     LTfloat y = (LTfloat)luaL_checknumber(L, 3);
@@ -2477,13 +1601,13 @@ static int lt_AddDynamicBodyToWorld(lua_State *L) {
     def.angle = angle;
     LTBody *body = new LTBody(world, &def);
     push_wrap(L, body);
-    add_ref(L, 1, -1); // Add reference from world to body.
-    add_ref(L, -1, 1); // Add reference from body to world.
+    ltLuaAddRef(L, 1, -1); // Add reference from world to body.
+    ltLuaAddRef(L, -1, 1); // Add reference from body to world.
     return 1;
 }
 
 static int lt_AddBodyToWorld(lua_State *L) {
-    check_nargs(L, 2);
+    ltLuaCheckNArgs(L, 2);
     LTWorld *world = (LTWorld*)get_object(L, 1, LT_TYPE_WORLD);
     // Second argument is a table of body properties.
     b2BodyDef body_def;
@@ -2591,8 +1715,8 @@ static int lt_AddBodyToWorld(lua_State *L) {
 
     LTBody *body = new LTBody(world, &body_def);
     push_wrap(L, body);
-    add_ref(L, 1, -1); // Add reference from world to body.
-    add_ref(L, -1, 1); // Add reference from body to world.
+    ltLuaAddRef(L, 1, -1); // Add reference from world to body.
+    ltLuaAddRef(L, -1, 1); // Add reference from body to world.
     return 1;
 }
 
@@ -2756,7 +1880,7 @@ static void read_distance_joint_def_from_table(lua_State *L, int table, b2Distan
 
 static int lt_AddJointToWorld(lua_State *L) {
     // First argument is world, second is joint definition (a table).
-    check_nargs(L, 2);
+    ltLuaCheckNArgs(L, 2);
     LTWorld *world = (LTWorld*)get_object(L, 1, LT_TYPE_WORLD);
     lua_getfield(L, 2, "type");
     const char *joint_type_str = lua_tostring(L, -1);
@@ -2778,8 +1902,8 @@ static int lt_AddJointToWorld(lua_State *L) {
     }
     LTJoint *joint = new LTJoint(world, def);
     push_wrap(L, joint);
-    add_ref(L, 1, -1); // Add reference from world to joint.
-    add_ref(L, -1, 1); // Add reference from joint to world.
+    ltLuaAddRef(L, 1, -1); // Add reference from world to joint.
+    ltLuaAddRef(L, -1, 1); // Add reference from joint to world.
     return 1;
 }
 
@@ -2798,7 +1922,7 @@ static void get_body_and_fixture(lua_State *L, int arg, b2Body **body, b2Fixture
 }
 
 static int lt_BodyOrFixtureTouching(lua_State *L) {
-    int nargs = check_nargs(L, 1);
+    int nargs = ltLuaCheckNArgs(L, 1);
     b2Body *b1 = NULL;
     b2Body *b2 = NULL;
     b2Fixture *f1 = NULL;
@@ -2863,7 +1987,7 @@ struct RayCastCallback : public b2RayCastCallback {
 };
 
 static int lt_WorldRayCast(lua_State *L) {
-    check_nargs(L, 5);
+    ltLuaCheckNArgs(L, 5);
     LTWorld *world = (LTWorld*)get_object(L, 1, LT_TYPE_WORLD);
     LTfloat x1 = luaL_checknumber(L, 2);
     LTfloat y1 = luaL_checknumber(L, 3);
@@ -2897,7 +2021,7 @@ static int lt_WorldRayCast(lua_State *L) {
 }
 
 static int lt_World(lua_State *L) {
-    int nargs = check_nargs(L, 0);
+    int nargs = ltLuaCheckNArgs(L, 0);
     LTfloat scaling = 1.0f;
     if (nargs > 0) {
         scaling = luaL_checknumber(L, 1);
@@ -2908,7 +2032,7 @@ static int lt_World(lua_State *L) {
 }
 
 static int lt_BodyTracker(lua_State *L) {
-    int nargs = check_nargs(L, 2);
+    int nargs = ltLuaCheckNArgs(L, 2);
     LTSceneNode *child = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
     LTBody *body = (LTBody *)get_object(L, 2, LT_TYPE_BODY);
     bool viewport_mode = false;
@@ -2946,6 +2070,7 @@ static int lt_BodyTracker(lua_State *L) {
     set_ref_field(L, -1, "body", 2);  // Add reference from new node to body.
     return 1;
 }
+*/
 
 /********************* Game Center *****************************/
 
@@ -2959,7 +2084,7 @@ static int lt_GameCenterAvailable(lua_State *L) {
 }
 
 static int lt_SubmitScore(lua_State *L) {
-    check_nargs(L, 2);
+    ltLuaCheckNArgs(L, 2);
     const char *leaderboard = lua_tostring(L, 1);
     if (leaderboard != NULL) {
         #ifdef LTGAMECENTER
@@ -2971,7 +2096,7 @@ static int lt_SubmitScore(lua_State *L) {
 }
 
 static int lt_ShowLeaderboard(lua_State *L) {
-    check_nargs(L, 1);
+    ltLuaCheckNArgs(L, 1);
     const char *leaderboard = lua_tostring(L, 1);
     if (leaderboard != NULL) {
         #ifdef LTGAMECENTER
@@ -2986,7 +2111,7 @@ static int lt_ShowLeaderboard(lua_State *L) {
 /********************* URL launcher *****************************/
 
 static int lt_OpenURL(lua_State *L) {
-    check_nargs(L, 1);
+    ltLuaCheckNArgs(L, 1);
     const char *url = lua_tostring(L, 1);
     if (url != NULL) {
         #ifdef LTIOS
@@ -3000,131 +2125,131 @@ static int lt_OpenURL(lua_State *L) {
 
 /********************* Actions ****************************/
 
-struct LTLuaAction;
-
-struct PendingAction {
-    LTLuaAction *action;
-    int scene_node_ref;
-};
-
-static std::vector<PendingAction> g_pending_actions;
-static int g_pending_actions_start = 0;
-static int g_pending_actions_end = 0;
-
-/*
- * Lua actions can potentially mutate the scene tree, so we delay them
- * until after we've finished traversing the tree.
- */
-
-struct LTLuaAction : LTAction {
-    int lua_func_ref;
-    bool finished;
-
-    LTLuaAction(int lua_func_ref) {
-        LTLuaAction::lua_func_ref = lua_func_ref;
-        finished = false;
-    }
-
-    virtual bool doAction(LTfloat dt, LTSceneNode *node) {
-        if (!finished) {
-            PendingAction pa;
-            pa.action = this;
-            // Make non-weak reference to scene node so it isn't gc'd.
-            push_wrap(g_L, node);
-            pa.scene_node_ref = luaL_ref(g_L, LUA_REGISTRYINDEX);
-            g_pending_actions.push_back(pa);
-            g_pending_actions_end++;
-        }
-        return finished;
-    }
-};
-
-static int lt_AdvanceSceneNode(lua_State *L) {
-    check_nargs(L, 2);
-    LTSceneNode *node = (LTSceneNode*)get_object(L, 1, LT_TYPE_SCENENODE);
-    LTfloat dt = (LTfloat)luaL_checknumber(L, 2);
-
-    int start = g_pending_actions_start;
-
-    node->advance(dt);
-    lt_curr_advance_step++;
-
-    int end = g_pending_actions_end;
-
-    g_pending_actions_start = end;
-
-    for (int i = start; i < end; i++) {
-        PendingAction pa = g_pending_actions[i];
-        lua_rawgeti(L, LUA_REGISTRYINDEX, pa.action->lua_func_ref);
-        lua_pushnumber(L, dt);
-        lua_rawgeti(L, LUA_REGISTRYINDEX, pa.scene_node_ref);
-        lua_call(L, 2, 1);
-        pa.action->finished = lua_toboolean(L, -1);
-        // Remove ref from scene node to lua function if finished.
-        if (pa.action->finished) {
-            lua_rawgeti(L, LUA_REGISTRYINDEX, pa.scene_node_ref);
-            lua_rawgeti(L, LUA_REGISTRYINDEX, pa.action->lua_func_ref);
-            del_ref(L, -2, -1);
-            lua_pop(L, 2);
-        }
-        // Remove global ref to scene node to allow it to be GC'd.
-        luaL_unref(L, LUA_REGISTRYINDEX, pa.scene_node_ref);
-    }
-
-    g_pending_actions.resize(start);
-    g_pending_actions_start = start;
-    g_pending_actions_end = start;
-
-    return 0;
-}
+//struct LTLuaAction;
+//
+//struct PendingAction {
+//    LTLuaAction *action;
+//    int scene_node_ref;
+//};
+//
+//static std::vector<PendingAction> g_pending_actions;
+//static int g_pending_actions_start = 0;
+//static int g_pending_actions_end = 0;
+//
+///*
+// * Lua actions can potentially mutate the scene tree, so we delay them
+// * until after we've finished traversing the tree.
+// */
+//
+//struct LTLuaAction : LTAction {
+//    int lua_func_ref;
+//    bool finished;
+//
+//    LTLuaAction(int lua_func_ref) {
+//        LTLuaAction::lua_func_ref = lua_func_ref;
+//        finished = false;
+//    }
+//
+//    virtual bool doAction(LTfloat dt, LTSceneNode *node) {
+//        if (!finished) {
+//            PendingAction pa;
+//            pa.action = this;
+//            // Make non-weak reference to scene node so it isn't gc'd.
+//            push_wrap(g_L, node);
+//            pa.scene_node_ref = luaL_ref(g_L, LUA_REGISTRYINDEX);
+//            g_pending_actions.push_back(pa);
+//            g_pending_actions_end++;
+//        }
+//        return finished;
+//    }
+//};
+//
+//static int lt_AdvanceSceneNode(lua_State *L) {
+//    ltLuaCheckNArgs(L, 2);
+//    LTSceneNode *node = (LTSceneNode*)get_object(L, 1, LT_TYPE_SCENENODE);
+//    LTfloat dt = (LTfloat)luaL_checknumber(L, 2);
+//
+//    int start = g_pending_actions_start;
+//
+//    node->advance(dt);
+//    lt_curr_advance_step++;
+//
+//    int end = g_pending_actions_end;
+//
+//    g_pending_actions_start = end;
+//
+//    for (int i = start; i < end; i++) {
+//        PendingAction pa = g_pending_actions[i];
+//        lua_rawgeti(L, LUA_REGISTRYINDEX, pa.action->lua_func_ref);
+//        lua_pushnumber(L, dt);
+//        lua_rawgeti(L, LUA_REGISTRYINDEX, pa.scene_node_ref);
+//        lua_call(L, 2, 1);
+//        pa.action->finished = lua_toboolean(L, -1);
+//        // Remove ref from scene node to lua function if finished.
+//        if (pa.action->finished) {
+//            lua_rawgeti(L, LUA_REGISTRYINDEX, pa.scene_node_ref);
+//            lua_rawgeti(L, LUA_REGISTRYINDEX, pa.action->lua_func_ref);
+//            ltLuaDelRef(L, -2, -1);
+//            lua_pop(L, 2);
+//        }
+//        // Remove global ref to scene node to allow it to be GC'd.
+//        luaL_unref(L, LUA_REGISTRYINDEX, pa.scene_node_ref);
+//    }
+//
+//    g_pending_actions.resize(start);
+//    g_pending_actions_start = start;
+//    g_pending_actions_end = start;
+//
+//    return 0;
+//}
 
 /************************* Random numbers **************************/
 
-static int lt_Random(lua_State *L) {
-    check_nargs(L, 1);
-    int seed = luaL_checkinteger(L, 1);
-    LTRandomGenerator *r = new LTRandomGenerator(seed);
-    push_wrap(L, r);
-    return 1;
-}
-
-static int lt_NextRandomInt(lua_State *L) {
-    int nargs = check_nargs(L, 2);
-    LTRandomGenerator *r = (LTRandomGenerator*)get_object(L, 1, LT_TYPE_RANDOMGENERATOR);
-    if (nargs > 2) {
-        int min = luaL_checkinteger(L, 2);
-        int max = luaL_checkinteger(L, 3);
-        lua_pushinteger(L, r->nextInt(max - min + 1) + min);
-    } else {
-        int max = luaL_checkinteger(L, 2);
-        lua_pushinteger(L, r->nextInt(max) + 1);
-    }
-    return 1;
-}
-
-static int lt_NextRandomNumber(lua_State *L) {
-    int nargs = check_nargs(L, 1);
-    LTRandomGenerator *r = (LTRandomGenerator*)get_object(L, 1, LT_TYPE_RANDOMGENERATOR);
-    if (nargs == 1) {
-        lua_pushnumber(L, r->nextDouble());
-    }
-    if (nargs == 2) {
-        LTdouble scale = luaL_checknumber(L, 2);
-        lua_pushnumber(L, r->nextDouble() * scale);
-    } else {
-        LTdouble min = luaL_checknumber(L, 2);
-        LTdouble max = luaL_checknumber(L, 3);
-        lua_pushnumber(L, min + (max - min) * r->nextDouble());
-    }
-    return 1;
-}
-
-static int lt_NextRandomBool(lua_State *L) {
-    check_nargs(L, 1);
-    LTRandomGenerator *r = (LTRandomGenerator*)get_object(L, 1, LT_TYPE_RANDOMGENERATOR);
-    lua_pushboolean(L, r->nextBool());
-    return 1;
-}
+//static int lt_Random(lua_State *L) {
+//    ltLuaCheckNArgs(L, 1);
+//    int seed = luaL_checkinteger(L, 1);
+//    LTRandomGenerator *r = new LTRandomGenerator(seed);
+//    push_wrap(L, r);
+//    return 1;
+//}
+//
+//static int lt_NextRandomInt(lua_State *L) {
+//    int nargs = ltLuaCheckNArgs(L, 2);
+//    LTRandomGenerator *r = (LTRandomGenerator*)get_object(L, 1, LT_TYPE_RANDOMGENERATOR);
+//    if (nargs > 2) {
+//        int min = luaL_checkinteger(L, 2);
+//        int max = luaL_checkinteger(L, 3);
+//        lua_pushinteger(L, r->nextInt(max - min + 1) + min);
+//    } else {
+//        int max = luaL_checkinteger(L, 2);
+//        lua_pushinteger(L, r->nextInt(max) + 1);
+//    }
+//    return 1;
+//}
+//
+//static int lt_NextRandomNumber(lua_State *L) {
+//    int nargs = ltLuaCheckNArgs(L, 1);
+//    LTRandomGenerator *r = (LTRandomGenerator*)get_object(L, 1, LT_TYPE_RANDOMGENERATOR);
+//    if (nargs == 1) {
+//        lua_pushnumber(L, r->nextDouble());
+//    }
+//    if (nargs == 2) {
+//        LTdouble scale = luaL_checknumber(L, 2);
+//        lua_pushnumber(L, r->nextDouble() * scale);
+//    } else {
+//        LTdouble min = luaL_checknumber(L, 2);
+//        LTdouble max = luaL_checknumber(L, 3);
+//        lua_pushnumber(L, min + (max - min) * r->nextDouble());
+//    }
+//    return 1;
+//}
+//
+//static int lt_NextRandomBool(lua_State *L) {
+//    ltLuaCheckNArgs(L, 1);
+//    LTRandomGenerator *r = (LTRandomGenerator*)get_object(L, 1, LT_TYPE_RANDOMGENERATOR);
+//    lua_pushboolean(L, r->nextBool());
+//    return 1;
+//}
 
 /********************* Loading *****************************/
 
@@ -3175,7 +2300,7 @@ static int loadfile (lua_State *L, LTResource *rsc) {
 
 static int import(lua_State *L) {
     int top = lua_gettop(L);
-    int nargs = check_nargs(L, 1);
+    int nargs = ltLuaCheckNArgs(L, 1);
     const char *module = lua_tostring(L, 1);
     if (module == NULL) {
         return luaL_error(L, "The import function requires a string argument.");
@@ -3205,7 +2330,7 @@ static int import(lua_State *L) {
 /************************ Configuration *****************************/
 
 static int lt_SetAppShortName(lua_State *L) {
-    check_nargs(L, 1);
+    ltLuaCheckNArgs(L, 1);
     const char *short_name = lua_tostring(L, 1);
     if (short_name != NULL) {
         if (lt_app_short_name == NULL) {
@@ -3223,7 +2348,7 @@ static int lt_SetAppShortName(lua_State *L) {
 /************************ Logging *****************************/
 
 static int log(lua_State *L) {
-    check_nargs(L, 1);
+    ltLuaCheckNArgs(L, 1);
     lua_Debug ar;
     lua_getstack(L, 1, &ar);
     lua_getinfo(L, "nSl", &ar);
@@ -3245,9 +2370,6 @@ static int log(lua_State *L) {
 /************************************************************/
 
 static const luaL_Reg ltlib[] = {
-    {"GetObjectField",                  lt_GetObjectField},
-    {"SetObjectField",                  lt_SetObjectField},
-
     {"SetViewPort",                     lt_SetViewPort},
     {"SetDesignScreenSize",             lt_SetDesignScreenSize},
     {"SetOrientation",                  lt_SetOrientation},
@@ -3260,27 +2382,8 @@ static const luaL_Reg ltlib[] = {
     {"DrawRect",                        lt_DrawRect},
     {"DrawEllipse",                     lt_DrawEllipse},
 
-    {"Layer",                           lt_Layer},
-    {"Line",                            lt_Line},
-    {"Triangle",                        lt_Triangle},
-    {"Rect",                            lt_Rect},
-    {"Tint",                            lt_Tint},
-    {"BlendMode",                       lt_BlendMode},
-    {"TextureMode",                     lt_TextureMode},
-    {"Scale",                           lt_Scale},
-    {"Perspective",                     lt_Perspective},
-    {"Pitch",                           lt_Pitch},
-    {"Fog",                             lt_Fog},
-    {"DepthTest",                       lt_DepthTest},
-    {"DepthMask",                       lt_DepthMask},
-    {"Translate",                       lt_Translate},
-    {"Rotate",                          lt_Rotate},
-    {"HitFilter",                       lt_HitFilter},
-    {"DownFilter",                      lt_DownFilter},
-    {"Wrap",                            lt_Wrap},
-
     {"DrawSceneNode",                   lt_DrawSceneNode},
-    {"AdvanceSceneNode",                lt_AdvanceSceneNode},
+    //{"AdvanceSceneNode",                lt_AdvanceSceneNode},
     {"AddOnPointerUpHandler",           lt_AddOnPointerUpHandler},
     {"AddOnPointerDownHandler",         lt_AddOnPointerDownHandler},
     {"AddOnPointerMoveHandler",         lt_AddOnPointerMoveHandler},
@@ -3294,20 +2397,15 @@ static const luaL_Reg ltlib[] = {
     {"InsertLayerBelow",                lt_InsertLayerBelow},
     {"RemoveFromLayer",                 lt_RemoveFromLayer},
     {"LayerSize",                       lt_LayerSize},
-    {"ReplaceWrappedChild",             lt_ReplaceWrappedChild},
 
     {"LoadImages",                      lt_LoadImages},
 
     {"Vector",                          lt_Vector},
     {"GenerateVectorColumn",            lt_GenerateVectorColumn},
     {"FillVectorColumnsWithImageQuads", lt_FillVectorColumnsWithImageQuads},
-    {"DrawQuads",                       lt_DrawQuads},
-    {"DrawVector",                      lt_DrawVector},
+    //{"DrawQuads",                       lt_DrawQuads},
 
-    {"ParticleSystem",                  lt_ParticleSystem},
-    {"ParticleSystemFixtureFilter",     lt_ParticleSystemFixtureFilter},
-
-    {"RenderTarget",                    lt_RenderTarget},
+    //{"ParticleSystemFixtureFilter",     lt_ParticleSystemFixtureFilter},
 
     {"MakeNativeTween",                 lt_MakeNativeTween},
     {"AdvanceNativeTween",              lt_AdvanceNativeTween},
@@ -3317,7 +2415,6 @@ static const luaL_Reg ltlib[] = {
     //{"ClearTweens",                     lt_ClearTweens},
 
     {"LoadSamples",                     lt_LoadSamples},
-    {"Track",                           lt_Track},
     {"PlaySampleOnce",                  lt_PlaySampleOnce},
     {"PlayTrack",                       lt_PlayTrack},
     {"PauseTrack",                      lt_PauseTrack},
@@ -3338,43 +2435,43 @@ static const luaL_Reg ltlib[] = {
     {"Retrieve",                        lt_Retrieve},
     */
 
-    {"World",                           lt_World},
-    {"FixtureContainsPoint",            lt_FixtureContainsPoint},
-    {"DestroyFixture",                  lt_DestroyFixture},
-    {"FixtureIsDestroyed",              lt_FixtureIsDestroyed},
-    {"DoWorldStep",                     lt_DoWorldStep},
-    {"SetWorldGravity",                 lt_SetWorldGravity},
-    {"SetWorldAutoClearForces",         lt_SetWorldAutoClearForces},
-    {"WorldQueryBox",                   lt_WorldQueryBox},
-    {"DestroyBody",                     lt_DestroyBody},
-    {"BodyIsDestroyed",                 lt_BodyIsDestroyed},
-    {"ApplyForceToBody",                lt_ApplyForceToBody},
-    {"ApplyTorqueToBody",               lt_ApplyTorqueToBody},
-    {"ApplyImpulseToBody",              lt_ApplyImpulseToBody},
-    {"ApplyAngularImpulseToBody",       lt_ApplyAngularImpulseToBody},
-    //{"ClearBodyForces",                 lt_ClearBodyForces},
-    {"GetBodyAngle",                    lt_GetBodyAngle},
-    {"SetBodyAngle",                    lt_SetBodyAngle},
-    {"GetBodyPosition" ,                lt_GetBodyPosition},
-    {"SetBodyPosition" ,                lt_SetBodyPosition},
-    {"GetBodyVelocity" ,                lt_GetBodyVelocity},
-    {"SetBodyVelocity" ,                lt_SetBodyVelocity},
-    {"SetBodyAngularVelocity",          lt_SetBodyAngularVelocity},
-    {"SetBodyGravityScale",             lt_SetBodyGravityScale},
-    {"AddRectToBody",                   lt_AddRectToBody},
-    {"AddTriangleToBody",               lt_AddTriangleToBody},
-    {"AddPolygonToBody",                lt_AddPolygonToBody},
-    {"AddCircleToBody",                 lt_AddCircleToBody},
-    {"GetFixtureBody",                  lt_GetFixtureBody},
-    {"GetBodyFixtures",                 lt_GetBodyFixtures},
-    {"FixtureBoundingBox",              lt_FixtureBoundingBox},
-    {"AddStaticBodyToWorld",            lt_AddStaticBodyToWorld},
-    {"AddDynamicBodyToWorld",           lt_AddDynamicBodyToWorld},
-    {"AddBodyToWorld",                  lt_AddBodyToWorld},
-    {"AddJointToWorld",                 lt_AddJointToWorld},
-    {"BodyOrFixtureTouching",           lt_BodyOrFixtureTouching},
-    {"BodyTracker",                     lt_BodyTracker},
-    {"WorldRayCast",                    lt_WorldRayCast},
+//    {"World",                           lt_World},
+//    {"FixtureContainsPoint",            lt_FixtureContainsPoint},
+//    {"DestroyFixture",                  lt_DestroyFixture},
+//    {"FixtureIsDestroyed",              lt_FixtureIsDestroyed},
+//    {"DoWorldStep",                     lt_DoWorldStep},
+//    {"SetWorldGravity",                 lt_SetWorldGravity},
+//    {"SetWorldAutoClearForces",         lt_SetWorldAutoClearForces},
+//    {"WorldQueryBox",                   lt_WorldQueryBox},
+//    {"DestroyBody",                     lt_DestroyBody},
+//    {"BodyIsDestroyed",                 lt_BodyIsDestroyed},
+//    {"ApplyForceToBody",                lt_ApplyForceToBody},
+//    {"ApplyTorqueToBody",               lt_ApplyTorqueToBody},
+//    {"ApplyImpulseToBody",              lt_ApplyImpulseToBody},
+//    {"ApplyAngularImpulseToBody",       lt_ApplyAngularImpulseToBody},
+//    //{"ClearBodyForces",                 lt_ClearBodyForces},
+//    {"GetBodyAngle",                    lt_GetBodyAngle},
+//    {"SetBodyAngle",                    lt_SetBodyAngle},
+//    {"GetBodyPosition" ,                lt_GetBodyPosition},
+//    {"SetBodyPosition" ,                lt_SetBodyPosition},
+//    {"GetBodyVelocity" ,                lt_GetBodyVelocity},
+//    {"SetBodyVelocity" ,                lt_SetBodyVelocity},
+//    {"SetBodyAngularVelocity",          lt_SetBodyAngularVelocity},
+//    {"SetBodyGravityScale",             lt_SetBodyGravityScale},
+//    {"AddRectToBody",                   lt_AddRectToBody},
+//    {"AddTriangleToBody",               lt_AddTriangleToBody},
+//    {"AddPolygonToBody",                lt_AddPolygonToBody},
+//    {"AddCircleToBody",                 lt_AddCircleToBody},
+//    {"GetFixtureBody",                  lt_GetFixtureBody},
+//    {"GetBodyFixtures",                 lt_GetBodyFixtures},
+//    {"FixtureBoundingBox",              lt_FixtureBoundingBox},
+//    {"AddStaticBodyToWorld",            lt_AddStaticBodyToWorld},
+//    {"AddDynamicBodyToWorld",           lt_AddDynamicBodyToWorld},
+//    {"AddBodyToWorld",                  lt_AddBodyToWorld},
+//    {"AddJointToWorld",                 lt_AddJointToWorld},
+//    {"BodyOrFixtureTouching",           lt_BodyOrFixtureTouching},
+//    {"BodyTracker",                     lt_BodyTracker},
+//    {"WorldRayCast",                    lt_WorldRayCast},
 
     {"GameCenterAvailable",             lt_GameCenterAvailable},
     {"SubmitScore",                     lt_SubmitScore},
@@ -3382,10 +2479,10 @@ static const luaL_Reg ltlib[] = {
 
     {"OpenURL",                         lt_OpenURL},
 
-    {"Random",                          lt_Random},
-    {"NextRandomInt",                   lt_NextRandomInt},
-    {"NextRandomNumber",                lt_NextRandomNumber},
-    {"NextRandomBool",                  lt_NextRandomBool},
+//    {"Random",                          lt_Random},
+//    {"NextRandomInt",                   lt_NextRandomInt},
+//    {"NextRandomNumber",                lt_NextRandomNumber},
+//    {"NextRandomBool",                  lt_NextRandomBool},
 
     {"SetAppShortName",                 lt_SetAppShortName},
 
@@ -3432,27 +2529,10 @@ static void run_lua_file(const char *file) {
     }
 }
 
-static void setup_userdata_key_ref() {
-    lua_pushstring(g_L, LT_USERDATA_KEY);
-    g_userdata_key_ref = luaL_ref(g_L, LUA_REGISTRYINDEX);
-}
-
 static void setup_wref_ref() {
     lua_getglobal(g_L, "lt");
     lua_getfield(g_L, -1, "wrefs");
     g_wrefs_ref = luaL_ref(g_L, LUA_REGISTRYINDEX);
-    lua_pop(g_L, 1); // pop lt.
-}
-
-static void setup_string_table_ref() {
-    lua_newtable(g_L);
-    g_string_table_ref = luaL_ref(g_L, LUA_REGISTRYINDEX);
-}
-
-static void setup_ud_metatables_ref() {
-    lua_getglobal(g_L, "lt");
-    lua_getfield(g_L, -1, "metatables");
-    g_ud_metatables_ref = luaL_ref(g_L, LUA_REGISTRYINDEX);
     lua_pop(g_L, 1); // pop lt.
 }
 
@@ -3515,21 +2595,16 @@ void ltLuaSetup() {
         ltLog("Cannot create lua state: not enough memory.");
         ltAbort();
     }
-    setup_string_table_ref();
-    ltInitObjectFieldCache();
-    lua_gc(g_L, LUA_GCSTOP, 0);  /* stop collector during library initialization */
+    ltLuaInitFFI(g_L);
     luaL_openlibs(g_L);
     lua_pushcfunction(g_L, import);
     lua_setglobal(g_L, "import");
     lua_pushcfunction(g_L, log);
     lua_setglobal(g_L, "log");
     luaL_register(g_L, "lt", ltlib);
-    luaL_register(g_L, "lt", ltlib);
-    lua_gc(g_L, LUA_GCRESTART, 0);
+    lua_pop(g_L, 1); // pop lt
     run_lua_file("lt");
-    setup_userdata_key_ref();
     setup_wref_ref();
-    setup_ud_metatables_ref();
     set_globals();
     run_lua_file("config");
     ltRestoreState();
@@ -3873,74 +2948,56 @@ void ltLuaUnpickleState(LTUnpickler *unpickler) {
 
 /************************************************************/
 
-const char *ltLuaCacheString(const char *str) {
-    if (g_L != NULL) {
-        lua_rawgeti(g_L, LUA_REGISTRYINDEX, g_string_table_ref);
-        lua_pushstring(g_L, str);
-        const char *lstr = lua_tostring(g_L, -1);
-        lua_pushboolean(g_L, 1);
-        lua_rawset(g_L, -3);
-        lua_pop(g_L, 1); // pop string table.
-        return lstr;
-    } else {
-        ltLog("Unable to cache string '%s', because the Lua engine has not been initialized.", str);
-        ltAbort();
-        return NULL;
-    }
-}
-
-/************************************************************/
-
-void ltLuaPreContextChange() {
-    if (g_L == NULL) {
-        return;
-    }
-    lua_State *L = g_L;
-    // Traverse weak refs table, calling preContextChange method on 
-    // all scene nodes.
-    lua_rawgeti(L, LUA_REGISTRYINDEX, g_wrefs_ref);
-    lua_pushnil(L);
-    while (lua_next(L, -2) != 0) {
-        if (lua_istable(g_L, -1)) {
-            lua_rawgeti(L, LUA_REGISTRYINDEX, g_userdata_key_ref);
-            void *ud = lua_touserdata(L, -1);
-            if (ud != NULL) {
-                LTObject *obj = (LTObject*)ud;
-                if (obj->hasType(LT_TYPE_SCENENODE)) {
-                    LTSceneNode *node = (LTSceneNode*)obj;
-                    node->preContextChange();
-                }
-            }
-            lua_pop(L, 1); // pop userdata
-        }
-        lua_pop(L, 1); // pop value (key now on top of stack).
-    }
-    lua_pop(L, 1); // pop wrefs table.
-}
-
-void ltLuaPostContextChange() {
-    if (g_L == NULL) {
-        return;
-    }
-    lua_State *L = g_L;
-    // Traverse weak refs table, calling preContextChange method on 
-    // all scene nodes.
-    lua_rawgeti(L, LUA_REGISTRYINDEX, g_wrefs_ref);
-    lua_pushnil(L);
-    while (lua_next(L, -2) != 0) {
-        if (lua_istable(g_L, -1)) {
-            lua_rawgeti(L, LUA_REGISTRYINDEX, g_userdata_key_ref);
-            void *ud = lua_touserdata(L, -1);
-            if (ud != NULL) {
-                LTObject *obj = (LTObject*)ud;
-                if (obj->hasType(LT_TYPE_SCENENODE)) {
-                    LTSceneNode *node = (LTSceneNode*)obj;
-                    node->postContextChange();
-                }
-            }
-            lua_pop(L, 1); // pop userdata
-        }
-        lua_pop(L, 1); // pop value (key now on top of stack).
-    }
-    lua_pop(L, 1); // pop wrefs table.
-}
+//void ltLuaPreContextChange() {
+//    if (g_L == NULL) {
+//        return;
+//    }
+//    lua_State *L = g_L;
+//    // Traverse weak refs table, calling preContextChange method on 
+//    // all scene nodes.
+//    lua_rawgeti(L, LUA_REGISTRYINDEX, g_wrefs_ref);
+//    lua_pushnil(L);
+//    while (lua_next(L, -2) != 0) {
+//        if (lua_istable(g_L, -1)) {
+//            lua_rawgeti(L, LUA_REGISTRYINDEX, g_userdata_key_ref);
+//            void *ud = lua_touserdata(L, -1);
+//            if (ud != NULL) {
+//                LTObject *obj = (LTObject*)ud;
+//                if (obj->hasType(LT_TYPE_SCENENODE)) {
+//                    LTSceneNode *node = (LTSceneNode*)obj;
+//                    node->preContextChange();
+//                }
+//            }
+//            lua_pop(L, 1); // pop userdata
+//        }
+//        lua_pop(L, 1); // pop value (key now on top of stack).
+//    }
+//    lua_pop(L, 1); // pop wrefs table.
+//}
+//
+//void ltLuaPostContextChange() {
+//    if (g_L == NULL) {
+//        return;
+//    }
+//    lua_State *L = g_L;
+//    // Traverse weak refs table, calling preContextChange method on 
+//    // all scene nodes.
+//    lua_rawgeti(L, LUA_REGISTRYINDEX, g_wrefs_ref);
+//    lua_pushnil(L);
+//    while (lua_next(L, -2) != 0) {
+//        if (lua_istable(g_L, -1)) {
+//            lua_rawgeti(L, LUA_REGISTRYINDEX, g_userdata_key_ref);
+//            void *ud = lua_touserdata(L, -1);
+//            if (ud != NULL) {
+//                LTObject *obj = (LTObject*)ud;
+//                if (obj->hasType(LT_TYPE_SCENENODE)) {
+//                    LTSceneNode *node = (LTSceneNode*)obj;
+//                    node->postContextChange();
+//                }
+//            }
+//            lua_pop(L, 1); // pop userdata
+//        }
+//        lua_pop(L, 1); // pop value (key now on top of stack).
+//    }
+//    lua_pop(L, 1); // pop wrefs table.
+//}

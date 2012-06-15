@@ -1,4 +1,5 @@
 /* Copyright (C) 2011 Ian MacLarty */
+LT_INIT_DECL(ltnet)
 #ifndef LTMINGW
 
 enum LTServerState {

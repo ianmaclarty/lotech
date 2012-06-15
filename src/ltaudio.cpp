@@ -1,6 +1,8 @@
 /* Copyright (C) 2010-2011 Ian MacLarty */
 #include "lt.h"
 
+LT_INIT_IMPL(ltaudio)
+
 static ALCcontext* audio_context = NULL;
 static ALCdevice* audio_device = NULL;
 
@@ -49,7 +51,7 @@ void ltAudioTeardown() {
     }
 }
 
-LTAudioSample::LTAudioSample(ALuint buf_id, const char *name) : LTObject(LT_TYPE_AUDIOSAMPLE) {
+LTAudioSample::LTAudioSample(ALuint buf_id, const char *name) {
     LTAudioSample::name = new char[strlen(name) + 1];
     strcpy(LTAudioSample::name, name);
     LTAudioSample::buffer_id = buf_id;
@@ -103,7 +105,9 @@ LTdouble LTAudioSample::length() {
     return (LTdouble)numDataPoints() / (LTdouble)dataPointsPerSec();
 }
 
-LTTrack::LTTrack() : LTObject(LT_TYPE_TRACK) {
+LT_REGISTER_TYPE(LTAudioSample, "lt.Sample", "lt.Object")
+
+LTTrack::LTTrack() {
     alGenSources(1, &source_id);
     alSourcef(source_id, AL_PITCH, 1.0f);
     alSourcef(source_id, AL_GAIN, 1.0f);
@@ -181,14 +185,9 @@ static void set_pitch(LTObject *obj, LTfloat val) {
     alSourcef(((LTTrack*)(obj))->source_id, AL_PITCH, val);
 }
 
-LTFieldDescriptor* LTTrack::fields() {
-    static LTFieldDescriptor flds[] = {
-        {"gain", LT_FIELD_TYPE_FLOAT, -1, (void*)get_gain, (void*)set_gain, LT_ACCESS_FULL},
-        {"pitch", LT_FIELD_TYPE_FLOAT, -1, (void*)get_pitch, (void*)set_pitch, LT_ACCESS_FULL},
-        LT_END_FIELD_DESCRIPTOR_LIST
-    };
-    return flds;
-}
+LT_REGISTER_TYPE(LTTrack, "lt.Track", "lt.Object")
+LT_REGISTER_PROPERTY_FLOAT(LTTrack, gain, &get_gain, &set_gain)
+LT_REGISTER_PROPERTY_FLOAT(LTTrack, pitch, &get_pitch, &set_pitch)
 
 void ltAudioSuspend() {
     if (!audio_is_suspended) {
@@ -266,7 +265,7 @@ static int read_2_byte_little_endian_int(LTResource *rsc) {
     return val;
 }
 
-LTAudioSample *ltReadAudioSample(const char *path, const char *name) {
+LTAudioSample *ltReadAudioSample(lua_State *L, const char *path, const char *name) {
     char chunkid[5];
     memset(chunkid, 0, 5);
 
@@ -387,6 +386,6 @@ LTAudioSample *ltReadAudioSample(const char *path, const char *name) {
         return NULL;
     }
     
-    LTAudioSample *buf = new LTAudioSample(buf_id, name);
+    LTAudioSample *buf = new (lt_alloc_LTAudioSample(L)) LTAudioSample(buf_id, name);
     return buf;
 }

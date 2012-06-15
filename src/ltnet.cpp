@@ -2,6 +2,8 @@
 #ifndef LTMINGW
 #include "lt.h"
 
+LT_INIT_IMPL(ltnet)
+
 #define PORT 14091
 #define MAGIC_WORD "lotech"
 #define MAXBUFLEN 64

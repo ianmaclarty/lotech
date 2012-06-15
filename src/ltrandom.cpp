@@ -1,5 +1,7 @@
 #include "lt.h"
 
+LT_INIT_IMPL(ltrandom)
+
 // This code is based on Knuth's program available at:
 // http://www-cs-staff.stanford.edu/~uno/programs/rng.c.
 
@@ -14,7 +16,7 @@ ct_assert(sizeof(int) == 4);
 #define ran_arr_next() (*ran_arr_ptr>=0? *ran_arr_ptr++: ran_arr_cycle())
 int ran_arr_started = -1;
 
-LTRandomGenerator::LTRandomGenerator(int seed) : LTObject(LT_TYPE_RANDOMGENERATOR) {
+void LTRandomGenerator::init(lua_State *L) {
     ran_x = new int[KK + QUALITY];
     ran_arr_buf = &ran_x[KK];
     ran_start(seed);
@@ -51,6 +53,9 @@ LTdouble LTRandomGenerator::nextDouble() {
 LTfloat LTRandomGenerator::nextFloat() {
     return (LTfloat)ran_arr_next() / (LTfloat)MM;
 }
+
+LT_REGISTER_TYPE(LTRandomGenerator, "lt.Random", "lt.Object")
+LT_REGISTER_FIELD_INT(LTRandomGenerator, seed)
 
 void LTRandomGenerator::ran_array(int *aa, int n) {
   register int i,j;
@@ -98,7 +103,9 @@ int LTRandomGenerator::ran_arr_cycle() {
 }
 
 bool ltRandomQuickCheck() {
-  LTRandomGenerator r(310952);
+  LTRandomGenerator r;
+  r.seed = 310952;
+  r.init(NULL);
   int m; int a[2009]; 
   for (m=0;m<=2009;m++) r.ran_array(a,1009);
   if (a[0] != 995235265) return false;
