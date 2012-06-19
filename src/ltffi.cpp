@@ -658,6 +658,8 @@ static void init_constructors(lua_State *L) {
     }
 }
 
+ct_assert(sizeof(long int) == sizeof(void*));
+
 void ltLuaAddRef(lua_State *L, int from, int to) {
     lua_getfenv(L, from);
     char* ptr = (char*)lua_touserdata(L, to);
