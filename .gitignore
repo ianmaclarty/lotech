@@ -21,3 +21,5 @@ mingw/
 *.out
 *.res
 ffitest
+target
+D*

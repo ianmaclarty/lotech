@@ -1,8 +1,15 @@
 LT_INIT_DECL(ltaction)
 
-struct LTSceneNode;
-
 struct LTAction {
+    std::list<LTAction*>::iterator position; // position in schedule.
+
+    LTAction();
+
+    void schedule();
+    void unschedule();
+
     // Should return true when finished.
-    virtual bool doAction(LTfloat dt, LTSceneNode *node) = 0;
+    virtual bool doAction(LTfloat dt) = 0;
 };
+
+void ltExecuteActions(LTfloat dt);

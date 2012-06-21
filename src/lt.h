@@ -106,7 +106,6 @@ extern "C" {
 #include "ltevent.h"
 #include "ltaction.h"
 #include "ltscene.h"
-#include "ltscheduler.h"
 #include "ltimage.h"
 #include "ltgraphics.h"
 #include "ltpickle.h"

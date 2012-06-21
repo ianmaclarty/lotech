@@ -6,6 +6,7 @@ LT_INIT_IMPL(ltffi)
 static void init_core_modules() {
     // These are only to ensure the static initializers in each translation unit are run.
     lt3d_init();
+    ltaction_init();
     ltaudio_init();
     ltcommon_init();
     ltconfig_init();
@@ -26,7 +27,6 @@ static void init_core_modules() {
     ltrendertarget_init();
     ltresource_init();
     ltscene_init();
-    ltscheduler_init();
     ltstate_init();
     ltstore_init();
     lttext_init();

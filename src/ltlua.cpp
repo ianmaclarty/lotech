@@ -2642,6 +2642,7 @@ void ltLuaResume() {
 }
 
 void ltLuaAdvance(LTdouble secs) {
+    ltExecuteActions((LTfloat)secs);
     if (g_L != NULL && !g_suspended && push_lt_func("Advance")) {
         lua_pushnumber(g_L, secs);
         docall(g_L, 1);

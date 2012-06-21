@@ -56,6 +56,12 @@ LT_INIT_DECL(ltffi)
             NULL, __LINE__}; \
     static LTRegisterField LT_CONCAT(lt_register_field_, __LINE__)(LT_CONCAT(&lt_field_def_, __LINE__));
 
+#define LT_REGISTER_PROPERTY_BOOL(cpp_type, field_name, getter, setter) \
+    static LTFieldDef LT_CONCAT(lt_field_def_, __LINE__) = \
+        {#cpp_type, #field_name, LT_FIELD_KIND_BOOL, NULL, \
+            (void*)getter, (void*)setter, NULL, __LINE__}; \
+    static LTRegisterField LT_CONCAT(lt_register_field_, __LINE__)(LT_CONCAT(&lt_field_def_, __LINE__));
+
 #define LT_REGISTER_FIELD_INT(cpp_type, field_name) \
     static LTint LT_CONCAT(lt_field_getter_, __LINE__)(LTObject *obj) { \
         return ((cpp_type*)obj)->field_name; \
@@ -144,6 +150,12 @@ LT_INIT_DECL(ltffi)
         {#cpp_type, #field_name, LT_FIELD_KIND_OBJECT, #value_type, \
             (void*)LT_CONCAT(&lt_field_getter_, __LINE__), (void*)LT_CONCAT(&lt_field_setter_, __LINE__), \
             NULL, __LINE__}; \
+    static LTRegisterField LT_CONCAT(lt_register_field_, __LINE__)(LT_CONCAT(&lt_field_def_, __LINE__));
+
+#define LT_REGISTER_PROPERTY_OBJ(cpp_type, field_name, value_type, getter, setter) \
+    static LTFieldDef LT_CONCAT(lt_field_def_, __LINE__) = \
+        {#cpp_type, #field_name, LT_FIELD_KIND_OBJECT, #value_type, \
+            (void*)getter, (void*)setter, NULL, __LINE__}; \
     static LTRegisterField LT_CONCAT(lt_register_field_, __LINE__)(LT_CONCAT(&lt_field_def_, __LINE__));
 
 #define LT_REGISTER_METHOD(cpp_type, field_name, function) \
