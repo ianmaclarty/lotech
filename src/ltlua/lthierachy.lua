@@ -47,6 +47,7 @@ mt_add("lt.SceneNode", "Fog", lt.Fog)
 mt_add("lt.SceneNode", "DepthTest", lt.DepthTest)
 mt_add("lt.SceneNode", "DepthMask", lt.DepthMask)
 mt_add("lt.SceneNode", "ContainsPoint", lt.SceneNodeContainsPoint)
+mt_add("lt.SceneNode", "Action", lt.AddAction)
 
 mt_add("lt.Layer", "Insert", lt.InsertLayerFront)
 mt_add("lt.Layer", "InsertBack", lt.InsertLayerBack)

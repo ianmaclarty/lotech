@@ -2,8 +2,10 @@ LT_INIT_DECL(ltaction)
 
 struct LTAction {
     std::list<LTAction*>::iterator position; // position in schedule.
+    LTSceneNode *node;
 
-    LTAction();
+    LTAction(LTSceneNode *node);
+    virtual ~LTAction();
 
     void schedule();
     void unschedule();

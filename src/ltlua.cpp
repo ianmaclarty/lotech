@@ -52,16 +52,16 @@ static int traceback(lua_State *L) {
 #endif
 
 // Copied from lua source and modified.
-static void docall(lua_State *L, int nargs) {
+static void docall(lua_State *L, int nargs, int nresults) {
   int status;
 #ifdef LTDEVMODE
   int base = lua_gettop(L) - nargs;  /* function index */
   lua_pushcfunction(L, traceback);  /* push traceback function */
   lua_insert(L, base);  /* put it under chunk and args */
-  status = lua_pcall(L, nargs, 0, base);
+  status = lua_pcall(L, nargs, nresults, base);
   lua_remove(L, base);  /* remove traceback function */
 #else
-  status = lua_pcall(L, nargs, 0, 0);
+  status = lua_pcall(L, nargs, nresults, 0);
 #endif
   check_status(status);
 }
@@ -2125,83 +2125,35 @@ static int lt_OpenURL(lua_State *L) {
 
 /********************* Actions ****************************/
 
-//struct LTLuaAction;
-//
-//struct PendingAction {
-//    LTLuaAction *action;
-//    int scene_node_ref;
-//};
-//
-//static std::vector<PendingAction> g_pending_actions;
-//static int g_pending_actions_start = 0;
-//static int g_pending_actions_end = 0;
-//
-///*
-// * Lua actions can potentially mutate the scene tree, so we delay them
-// * until after we've finished traversing the tree.
-// */
-//
-//struct LTLuaAction : LTAction {
-//    int lua_func_ref;
-//    bool finished;
-//
-//    LTLuaAction(int lua_func_ref) {
-//        LTLuaAction::lua_func_ref = lua_func_ref;
-//        finished = false;
-//    }
-//
-//    virtual bool doAction(LTfloat dt, LTSceneNode *node) {
-//        if (!finished) {
-//            PendingAction pa;
-//            pa.action = this;
-//            // Make non-weak reference to scene node so it isn't gc'd.
-//            push_wrap(g_L, node);
-//            pa.scene_node_ref = luaL_ref(g_L, LUA_REGISTRYINDEX);
-//            g_pending_actions.push_back(pa);
-//            g_pending_actions_end++;
-//        }
-//        return finished;
-//    }
-//};
-//
-//static int lt_AdvanceSceneNode(lua_State *L) {
-//    ltLuaCheckNArgs(L, 2);
-//    LTSceneNode *node = (LTSceneNode*)get_object(L, 1, LT_TYPE_SCENENODE);
-//    LTfloat dt = (LTfloat)luaL_checknumber(L, 2);
-//
-//    int start = g_pending_actions_start;
-//
-//    node->advance(dt);
-//    lt_curr_advance_step++;
-//
-//    int end = g_pending_actions_end;
-//
-//    g_pending_actions_start = end;
-//
-//    for (int i = start; i < end; i++) {
-//        PendingAction pa = g_pending_actions[i];
-//        lua_rawgeti(L, LUA_REGISTRYINDEX, pa.action->lua_func_ref);
-//        lua_pushnumber(L, dt);
-//        lua_rawgeti(L, LUA_REGISTRYINDEX, pa.scene_node_ref);
-//        lua_call(L, 2, 1);
-//        pa.action->finished = lua_toboolean(L, -1);
-//        // Remove ref from scene node to lua function if finished.
-//        if (pa.action->finished) {
-//            lua_rawgeti(L, LUA_REGISTRYINDEX, pa.scene_node_ref);
-//            lua_rawgeti(L, LUA_REGISTRYINDEX, pa.action->lua_func_ref);
-//            ltLuaDelRef(L, -2, -1);
-//            lua_pop(L, 2);
-//        }
-//        // Remove global ref to scene node to allow it to be GC'd.
-//        luaL_unref(L, LUA_REGISTRYINDEX, pa.scene_node_ref);
-//    }
-//
-//    g_pending_actions.resize(start);
-//    g_pending_actions_start = start;
-//    g_pending_actions_end = start;
-//
-//    return 0;
-//}
+struct LTLuaAction : LTAction {
+    int lua_func_ref;
+
+    LTLuaAction(LTSceneNode *node, int lua_func_ref) : LTAction(node) {
+        LTLuaAction::lua_func_ref = lua_func_ref;
+    }
+
+    virtual bool doAction(LTfloat dt) {
+        get_weak_ref(g_L, lua_func_ref);
+        lua_pushnumber(g_L, dt);
+        docall(g_L, 1, 1);
+        bool res = lua_toboolean(g_L, -1);
+        lua_pop(g_L, 1); // pop res
+        return res;
+    }
+};
+
+static int lt_AddAction(lua_State *L) {
+    ltLuaCheckNArgs(L, 2);
+    LTSceneNode *node = lt_expect_LTSceneNode(L, 1);
+    if (!lua_isfunction(L, 2)) {
+        return luaL_error(L, "argument not a function");
+    }
+    int f = make_weak_ref(L, 2);
+    LTAction *action = new LTLuaAction(node, f);
+    node->add_action(action);
+    ltLuaAddRef(L, 1, 2); // Keep reference from node to action.
+    return 0;
+}
 
 /************************* Random numbers **************************/
 
@@ -2414,6 +2366,8 @@ static const luaL_Reg ltlib[] = {
     //{"AdvanceTweens",                   lt_AdvanceTweens},
     //{"ClearTweens",                     lt_ClearTweens},
 
+    {"AddAction",                       lt_AddAction},
+
     {"LoadSamples",                     lt_LoadSamples},
     {"PlaySampleOnce",                  lt_PlaySampleOnce},
     {"PlayTrack",                       lt_PlayTrack},
@@ -2510,7 +2464,7 @@ static bool push_lt_func(const char *func) {
 
 static void call_lt_func(const char *func) {
     if (push_lt_func(func)) {
-        docall(g_L, 0);
+        docall(g_L, 0, 0);
     }
 }
 
@@ -2520,7 +2474,7 @@ static void run_lua_file(const char *file) {
         LTResource *r = ltOpenResource(f);
         if (r != NULL) {
             check_status(loadfile(g_L, r));
-            docall(g_L, 0);
+            docall(g_L, 0, 0);
             ltCloseResource(r);
         } else {
             ltLog("File %s does not exist", f);
@@ -2645,7 +2599,7 @@ void ltLuaAdvance(LTdouble secs) {
     ltExecuteActions((LTfloat)secs);
     if (g_L != NULL && !g_suspended && push_lt_func("Advance")) {
         lua_pushnumber(g_L, secs);
-        docall(g_L, 1);
+        docall(g_L, 1, 0);
     }
     ltAudioGC();
 }
@@ -2740,7 +2694,7 @@ void ltLuaKeyDown(LTKey key) {
     if (g_L != NULL && !g_suspended && push_lt_func("KeyDown")) {
         const char *str = lt_key_str(key);
         lua_pushstring(g_L, str);
-        docall(g_L, 1);
+        docall(g_L, 1, 0);
     }
 }
 
@@ -2748,7 +2702,7 @@ void ltLuaKeyUp(LTKey key) {
     if (g_L != NULL && !g_suspended && push_lt_func("KeyUp")) {
         const char *str = lt_key_str(key);
         lua_pushstring(g_L, str);
-        docall(g_L, 1);
+        docall(g_L, 1, 0);
     }
 }
 
@@ -2757,7 +2711,7 @@ void ltLuaPointerDown(int input_id, LTfloat x, LTfloat y) {
         lua_pushinteger(g_L, input_id);
         lua_pushnumber(g_L, ltGetViewPortX(x));
         lua_pushnumber(g_L, ltGetViewPortY(y));
-        docall(g_L, 3);
+        docall(g_L, 3, 0);
     }
 }
 
@@ -2766,7 +2720,7 @@ void ltLuaPointerUp(int input_id, LTfloat x, LTfloat y) {
         lua_pushinteger(g_L, input_id);
         lua_pushnumber(g_L, ltGetViewPortX(x));
         lua_pushnumber(g_L, ltGetViewPortY(y));
-        docall(g_L, 3);
+        docall(g_L, 3, 0);
     }
 }
 
@@ -2775,7 +2729,7 @@ void ltLuaPointerMove(int input_id, LTfloat x, LTfloat y) {
         lua_pushinteger(g_L, input_id);
         lua_pushnumber(g_L, ltGetViewPortX(x));
         lua_pushnumber(g_L, ltGetViewPortY(y));
-        docall(g_L, 3);
+        docall(g_L, 3, 0);
     }
 }
 
@@ -2793,7 +2747,7 @@ void ltLuaGameCenterBecameAvailable() {
         g_L != NULL && !g_suspended &&
         push_lt_func("GameCenterBecameAvailable"))
     {
-        docall(g_L, 0);
+        docall(g_L, 0, 0);
         g_gamecenter_initialized = true;
     }
 }

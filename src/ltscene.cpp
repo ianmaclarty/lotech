@@ -10,10 +10,6 @@ LTSceneNode::LTSceneNode() {
 }
 
 LTSceneNode::~LTSceneNode() {
-    if (active) {
-        ltLog("~LTSceneNode: deleting active node!");
-        ltAbort();
-    }
     if (event_handlers != NULL) {
         std::list<LTPointerEventHandler*>::iterator it;
         for (it = event_handlers->begin(); it != event_handlers->end(); it++) {
@@ -100,6 +96,16 @@ void LTSceneNode::exit(LTSceneNode *parent) {
     }
 }
 
+void LTSceneNode::add_action(LTAction *action) {
+    if (actions == NULL) {
+        actions = new std::list<LTAction*>();
+    }
+    actions->push_back(action);
+    if (active) {
+        action->schedule();
+    }
+}
+
 LT_REGISTER_TYPE(LTSceneNode, "lt.SceneNode", "lt.Object");
 
 static void push_scene_roots_table(lua_State *L) {
@@ -121,7 +127,8 @@ static int activate_scene_node(lua_State *L) {
     push_scene_roots_table(L);
     lua_pushvalue(L, 1);
     lua_rawget(L, -2);
-    if (lua_isnil(L, 1)) {
+    if (lua_isnil(L, -1)) {
+        lua_pop(L, 1); // pop nil
         lua_pushvalue(L, 1);
         lua_pushboolean(L, 1);
         lua_rawset(L, -3);
@@ -138,7 +145,8 @@ static int deactivate_scene_node(lua_State *L) {
     push_scene_roots_table(L);
     lua_pushvalue(L, 1);
     lua_rawget(L, -2);
-    if (!lua_isnil(L, 1)) {
+    if (!lua_isnil(L, -1)) {
+        lua_pop(L, 1);
         lua_pushvalue(L, 1);
         lua_pushnil(L);
         lua_rawset(L, -3);

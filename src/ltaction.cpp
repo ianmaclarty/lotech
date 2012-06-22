@@ -5,8 +5,15 @@ LT_INIT_IMPL(ltaction)
 static std::list<LTAction*> action_list;
 static std::list<LTAction*>::iterator next_action = action_list.end();
 
-LTAction::LTAction() {
+LTAction::LTAction(LTSceneNode *node) {
     position = action_list.end();
+    LTAction::node = node;
+}
+
+LTAction::~LTAction() {
+    if (position != action_list.end()) {
+        unschedule();
+    }
 }
 
 void LTAction::schedule() {
@@ -28,6 +35,7 @@ void LTAction::unschedule() {
     } else {
         action_list.erase(position);
     }
+    position = action_list.end();
 } 
 
 void ltExecuteActions(LTfloat dt) {
@@ -35,6 +43,9 @@ void ltExecuteActions(LTfloat dt) {
     while (next_action != action_list.end()) {
         LTAction *action = *next_action;
         next_action++;
-        action->doAction(dt);
+        bool finished = action->doAction(dt);
+        if (finished) {
+            action->unschedule();
+        }
     }
 }
