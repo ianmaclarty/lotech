@@ -45,21 +45,29 @@ struct LTSceneNode : LTObject {
     //virtual void postContextChange() {};
 };
 
+struct LTLayerNodeRefPair {
+    LTSceneNode *node;
+    int ref;
+    LTLayerNodeRefPair(LTSceneNode *n, int r) {
+        node = n;
+        ref = r;
+    }
+};
+
 // Layers group nodes together.
 struct LTLayer : LTSceneNode {
-    std::list<LTSceneNode*> node_list; // Nodes in draw order.
-    std::multimap<LTSceneNode*, std::list<LTSceneNode*>::iterator> node_index;
+    std::list<LTLayerNodeRefPair> node_list; // Nodes in draw order.
+    std::multimap<LTSceneNode*, std::list<LTLayerNodeRefPair>::iterator> node_index;
 
-    void insert_front(LTSceneNode *node); // node drawn last
-    void insert_back(LTSceneNode *node);  // node drawn first
+    void insert_front(LTSceneNode *node, int ref); // node drawn last
+    void insert_back(LTSceneNode *node, int ref);  // node drawn first
 
     // Returns whether the existing node was found.
     // If the existing not was not found the new one is not inserted.
-    bool insert_above(LTSceneNode *existing_node, LTSceneNode *new_node);
-    bool insert_below(LTSceneNode *existing_node, LTSceneNode *new_node);
+    bool insert_above(LTSceneNode *existing_node, LTSceneNode *new_node, int ref);
+    bool insert_below(LTSceneNode *existing_node, LTSceneNode *new_node, int ref);
 
-    void remove(LTSceneNode *node);
-    void clear();
+    void remove(lua_State *L, int layer_index, LTSceneNode *node);
     int size();
 
     virtual void draw();

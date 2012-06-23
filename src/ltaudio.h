@@ -31,11 +31,12 @@ struct LTAudioSample : LTObject {
 
 struct LTTrack : LTObject {
     ALuint source_id;
+    std::list<std::pair<LTAudioSample*, int> > queued_samples;
 
     LTTrack();
     virtual ~LTTrack();
 
-    void queueSample(LTAudioSample *sample);
+    void queueSample(LTAudioSample *sample, int ref);
     void setLoop(bool loop);
     void play();
     void pause();
@@ -44,7 +45,7 @@ struct LTTrack : LTObject {
     int  numSamples();
     int  numProcessedSamples();
     int  numPendingSamples(); // numSamples() - numProcessedSamples()
-    void dequeueProcessedSamples(int n);
+    void dequeueSamples(lua_State *L, int track_index, int n);
 };
 
 // name is copied.

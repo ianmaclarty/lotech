@@ -216,9 +216,9 @@ typedef LTObject*   (*LTObjGetter)(LTObject*);
 typedef void        (*LTObjSetter)(LTObject*, LTObject*);
 
 void ltLuaInitFFI(lua_State *L);
-void ltLuaAddRef(lua_State *L, int from, int to);
-void ltLuaDelRef(lua_State *L, int from, int to);
-void ltLuaPushRef(lua_State *L, int owner_index, LTObject *obj);
+int ltLuaAddRef(lua_State *L, int obj, int val);
+void ltLuaDelRef(lua_State *L, int obj, int ref);
+void ltLuaGetRef(lua_State *L, int obj, int ref);
 int ltLuaCheckNArgs(lua_State *L, int n);
 void* ltLuaAllocUserData(lua_State *L, LTTypeDef *type);
 void ltLuaGetFloatGetterAndSetter(lua_State *L, int obj_index, int field_index, LTFloatGetter *getter, LTFloatSetter *setter);

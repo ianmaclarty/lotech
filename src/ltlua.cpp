@@ -263,53 +263,43 @@ static int lt_DrawSceneNode(lua_State *L) {
 }
 
 static int lt_InsertLayerFront(lua_State *L) {
-    int num_args = ltLuaCheckNArgs(L, 2);
+    ltLuaCheckNArgs(L, 2);
     LTLayer *layer = lt_expect_LTLayer(L, 1);
     LTSceneNode *node = lt_expect_LTSceneNode(L, 2);
-    if (num_args > 2) {
-        luaL_error(L, "Only two arguments expected");
-    }
-    layer->insert_front(node);
-    ltLuaAddRef(L, 1, 2);
+    int ref = ltLuaAddRef(L, 1, 2);
+    layer->insert_front(node, ref);
     return 0;
 }
 
 static int lt_InsertLayerBack(lua_State *L) {
-    int num_args = ltLuaCheckNArgs(L, 2);
+    ltLuaCheckNArgs(L, 2);
     LTLayer *layer = lt_expect_LTLayer(L, 1);
     LTSceneNode *node = lt_expect_LTSceneNode(L, 2);
-    if (num_args > 2) {
-        luaL_error(L, "Only two arguments expected");
-    }
-    layer->insert_back(node);
-    ltLuaAddRef(L, 1, 2);
+    int ref = ltLuaAddRef(L, 1, 2);
+    layer->insert_back(node, ref);
     return 0;
 }
 
 static int lt_InsertLayerAbove(lua_State *L) {
-    int num_args = ltLuaCheckNArgs(L, 3);
+    ltLuaCheckNArgs(L, 3);
     LTLayer *layer = lt_expect_LTLayer(L, 1);
     LTSceneNode *existing_node = lt_expect_LTSceneNode(L, 2);
     LTSceneNode *new_node = lt_expect_LTSceneNode(L, 3);
-    if (num_args > 3) {
-        luaL_error(L, "Only three arguments expected");
-    }
-    if (layer->insert_above(existing_node, new_node)) {
-        ltLuaAddRef(L, 1, 3);
+    int ref = ltLuaAddRef(L, 1, 3);
+    if (!layer->insert_above(existing_node, new_node, ref)) {
+        return luaL_error(L, "existing node not in layer");
     }
     return 0;
 }
 
 static int lt_InsertLayerBelow(lua_State *L) {
-    int num_args = ltLuaCheckNArgs(L, 3);
+    ltLuaCheckNArgs(L, 3);
     LTLayer *layer = lt_expect_LTLayer(L, 1);
     LTSceneNode *existing_node = lt_expect_LTSceneNode(L, 2);
     LTSceneNode *new_node = lt_expect_LTSceneNode(L, 3);
-    if (num_args > 3) {
-        luaL_error(L, "Only three arguments expected");
-    }
-    if (layer->insert_below(existing_node, new_node)) {
-        ltLuaAddRef(L, 1, 3);
+    int ref = ltLuaAddRef(L, 1, 3);
+    if (!layer->insert_below(existing_node, new_node, ref)) {
+        return luaL_error(L, "existing node not in layer");
     }
     return 0;
 }
@@ -325,8 +315,7 @@ static int lt_RemoveFromLayer(lua_State *L) {
     ltLuaCheckNArgs(L, 2);
     LTLayer *layer = lt_expect_LTLayer(L, 1);
     LTSceneNode *node = lt_expect_LTSceneNode(L, 2);
-    layer->remove(node);
-    ltLuaDelRef(L, 1, 2);
+    layer->remove(L, 1, node);
     return 0;
 }
 
@@ -643,7 +632,7 @@ static int lt_AddOnPointerUpHandler(lua_State *L) {
     LTSceneNode *node = lt_expect_LTSceneNode(L, 1);
     LTLPointerUpEventHandler *handler = new LTLPointerUpEventHandler(2);
     node->addHandler(handler);
-    ltLuaAddRef(L, 1, 2);
+    ltLuaAddRef(L, 1, 2); // XXX ref never deleted.
     return 0;
 }
 
@@ -652,7 +641,7 @@ static int lt_AddOnPointerDownHandler(lua_State *L) {
     LTSceneNode *node = lt_expect_LTSceneNode(L, 1);
     LTLPointerDownEventHandler *handler = new LTLPointerDownEventHandler(2);
     node->addHandler(handler);
-    ltLuaAddRef(L, 1, 2);
+    ltLuaAddRef(L, 1, 2); // XXX ref never deleted.
     return 0;
 }
 
@@ -661,7 +650,7 @@ static int lt_AddOnPointerMoveHandler(lua_State *L) {
     LTSceneNode *node = lt_expect_LTSceneNode(L, 1);
     LTLPointerMoveEventHandler *handler = new LTLPointerMoveEventHandler(2);
     node->addHandler(handler);
-    ltLuaAddRef(L, 1, 2);
+    ltLuaAddRef(L, 1, 2); // XXX ref never deleted.
     return 0;
 }
 
@@ -670,8 +659,8 @@ static int lt_AddOnPointerOverHandler(lua_State *L) {
     LTSceneNode *node = lt_expect_LTSceneNode(L, 1);
     LTLPointerOverEventHandler *handler = new LTLPointerOverEventHandler(2, 3);
     node->addHandler(handler);
-    ltLuaAddRef(L, 1, 2);
-    ltLuaAddRef(L, 1, 3);
+    ltLuaAddRef(L, 1, 2); // XXX ref never deleted.
+    ltLuaAddRef(L, 1, 3); // XXX ref never deleted.
     return 0;
 }
 
@@ -956,10 +945,9 @@ static int lt_QueueSampleInTrack(lua_State *L) {
         n = luaL_checkinteger(L, 3);
     }
     for (int i = 0; i < n; i++) {
-        track->queueSample(sample);
+        int ref = ltLuaAddRef(L, 1, 2); // Add ref from track to sample.
+        track->queueSample(sample, ref);
     }
-    // XXX This is a leak.  See XXX in lt_TrackDequeuePlayed.
-    ltLuaAddRef(L, 1, 2); // Add ref from track to sample.
     return 0;
 }
 
@@ -996,8 +984,11 @@ static int lt_TrackDequeuePlayed(lua_State *L) {
     ltLuaCheckNArgs(L, 2);
     LTTrack *track = lt_expect_LTTrack(L, 1);
     int n = (int)luaL_checkinteger(L, 2);
-    track->dequeueProcessedSamples(n);
-    // XXX We have to remove the reference to the sample.
+    int processed = track->numProcessedSamples();
+    if (n > processed) {
+        n = processed;
+    }
+    track->dequeueSamples(L, 1, n);
     return 0;
 }
 
@@ -2124,22 +2115,30 @@ static int lt_OpenURL(lua_State *L) {
 /********************* Actions ****************************/
 
 struct LTLuaAction : LTAction {
+    int node_ref;
     int lua_func_ref;
 
-    LTLuaAction(LTSceneNode *node, int lua_func_ref) : LTAction(node) {
+    LTLuaAction(int node_ref, int lua_func_ref) {
+        LTLuaAction::node_ref = node_ref;
         LTLuaAction::lua_func_ref = lua_func_ref;
     }
 
     virtual ~LTLuaAction() {
-        del_weak_ref(g_L, lua_func_ref);
+        get_weak_ref(g_L, node_ref);
+        if (!lua_isnil(g_L, -1)) {
+            ltLuaDelRef(g_L, -1, lua_func_ref);
+            del_weak_ref(g_L, node_ref);
+        }
+        lua_pop(g_L, 1);
     }
 
     virtual bool doAction(LTfloat dt) {
-        get_weak_ref(g_L, lua_func_ref);
+        get_weak_ref(g_L, node_ref);
+        ltLuaGetRef(g_L, -1, lua_func_ref);
         lua_pushnumber(g_L, dt);
         lua_call(g_L, 1, 1);
         bool res = lua_toboolean(g_L, -1);
-        lua_pop(g_L, 1); // pop res
+        lua_pop(g_L, 2); // pop res + node
         return res;
     }
 };
@@ -2150,10 +2149,10 @@ static int lt_AddAction(lua_State *L) {
     if (!lua_isfunction(L, 2)) {
         return luaL_error(L, "argument not a function");
     }
-    int f = make_weak_ref(L, 2);
-    LTAction *action = new LTLuaAction(node, f);
+    int fref = ltLuaAddRef(L, 1, 2); // Add reference from node to action func.
+    int nref = make_weak_ref(L, 1);
+    LTAction *action = new LTLuaAction(nref, fref);
     node->add_action(action);
-    ltLuaAddRef(L, 1, 2); // Keep reference from node to action.
     return 0;
 }
 

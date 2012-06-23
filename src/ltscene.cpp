@@ -101,6 +101,7 @@ void LTSceneNode::add_action(LTAction *action) {
         actions = new std::list<LTAction*>();
     }
     actions->push_back(action);
+    action->node = this;
     if (active) {
         action->schedule();
     }
@@ -206,27 +207,27 @@ LT_REGISTER_PROPERTY_OBJ(LTWrapNode, child, LTSceneNode, get_child, set_child);
 
 #define NODEINDEX std::list<LTSceneNode*>::iterator
 
-void LTLayer::insert_front(LTSceneNode *node) {
-    node_list.push_back(node);
-    node_index.insert(std::pair<LTSceneNode*, std::list<LTSceneNode*>::iterator>(node, --node_list.end()));
+void LTLayer::insert_front(LTSceneNode *node, int ref) {
+    node_list.push_back(LTLayerNodeRefPair(node, ref));
+    node_index.insert(std::pair<LTSceneNode*, std::list<LTLayerNodeRefPair>::iterator>(node, --node_list.end()));
     node->enter(this);
 }
 
-void LTLayer::insert_back(LTSceneNode *node) {
-    node_list.push_front(node);
-    node_index.insert(std::pair<LTSceneNode*, std::list<LTSceneNode*>::iterator>(node, node_list.begin()));
+void LTLayer::insert_back(LTSceneNode *node, int ref) {
+    node_list.push_front(LTLayerNodeRefPair(node, ref));
+    node_index.insert(std::pair<LTSceneNode*, std::list<LTLayerNodeRefPair>::iterator>(node, node_list.begin()));
     node->enter(this);
 }
 
-bool LTLayer::insert_above(LTSceneNode *existing_node, LTSceneNode *new_node) {
-    std::pair<std::multimap<LTSceneNode*, std::list<LTSceneNode*>::iterator>::iterator,
-              std::multimap<LTSceneNode*, std::list<LTSceneNode*>::iterator>::iterator> range;
-    std::multimap<LTSceneNode*, std::list<LTSceneNode*>::iterator>::iterator it;
+bool LTLayer::insert_above(LTSceneNode *existing_node, LTSceneNode *new_node, int ref) {
+    std::pair<std::multimap<LTSceneNode*, std::list<LTLayerNodeRefPair>::iterator>::iterator,
+              std::multimap<LTSceneNode*, std::list<LTLayerNodeRefPair>::iterator>::iterator> range;
+    std::multimap<LTSceneNode*, std::list<LTLayerNodeRefPair>::iterator>::iterator it;
     range = node_index.equal_range(existing_node);
     if (range.first != range.second) {
-        std::list<LTSceneNode*>::iterator existing_it = (range.first)->second;
-        std::list<LTSceneNode*>::iterator new_it = node_list.insert(++existing_it, new_node);
-        node_index.insert(std::pair<LTSceneNode*, std::list<LTSceneNode*>::iterator>(new_node, new_it));
+        std::list<LTLayerNodeRefPair>::iterator existing_it = (range.first)->second;
+        std::list<LTLayerNodeRefPair>::iterator new_it = node_list.insert(++existing_it, LTLayerNodeRefPair(new_node, ref));
+        node_index.insert(std::pair<LTSceneNode*, std::list<LTLayerNodeRefPair>::iterator>(new_node, new_it));
         new_node->enter(this);
         return true;
     } else {
@@ -234,15 +235,15 @@ bool LTLayer::insert_above(LTSceneNode *existing_node, LTSceneNode *new_node) {
     }
 }
 
-bool LTLayer::insert_below(LTSceneNode *existing_node, LTSceneNode *new_node) {
-    std::pair<std::multimap<LTSceneNode*, std::list<LTSceneNode*>::iterator>::iterator,
-              std::multimap<LTSceneNode*, std::list<LTSceneNode*>::iterator>::iterator> range;
-    std::multimap<LTSceneNode*, std::list<LTSceneNode*>::iterator>::iterator it;
+bool LTLayer::insert_below(LTSceneNode *existing_node, LTSceneNode *new_node, int ref) {
+    std::pair<std::multimap<LTSceneNode*, std::list<LTLayerNodeRefPair>::iterator>::iterator,
+              std::multimap<LTSceneNode*, std::list<LTLayerNodeRefPair>::iterator>::iterator> range;
+    std::multimap<LTSceneNode*, std::list<LTLayerNodeRefPair>::iterator>::iterator it;
     range = node_index.equal_range(existing_node);
     if (range.first != range.second) {
-        std::list<LTSceneNode*>::iterator existing_it = (range.first)->second;
-        std::list<LTSceneNode*>::iterator new_it = node_list.insert(existing_it, new_node);
-        node_index.insert(std::pair<LTSceneNode*, std::list<LTSceneNode*>::iterator>(new_node, new_it));
+        std::list<LTLayerNodeRefPair>::iterator existing_it = (range.first)->second;
+        std::list<LTLayerNodeRefPair>::iterator new_it = node_list.insert(existing_it, LTLayerNodeRefPair(new_node, ref));
+        node_index.insert(std::pair<LTSceneNode*, std::list<LTLayerNodeRefPair>::iterator>(new_node, new_it));
         new_node->enter(this);
         return true;
     } else {
@@ -254,21 +255,17 @@ int LTLayer::size() {
     return node_list.size();
 }
 
-void LTLayer::remove(LTSceneNode *node) {
-    std::pair<std::multimap<LTSceneNode*, std::list<LTSceneNode*>::iterator>::iterator,
-              std::multimap<LTSceneNode*, std::list<LTSceneNode*>::iterator>::iterator> range;
-    std::multimap<LTSceneNode*, std::list<LTSceneNode*>::iterator>::iterator it;
+void LTLayer::remove(lua_State *L, int layer_index, LTSceneNode *node) {
+    std::pair<std::multimap<LTSceneNode*, std::list<LTLayerNodeRefPair>::iterator>::iterator,
+              std::multimap<LTSceneNode*, std::list<LTLayerNodeRefPair>::iterator>::iterator> range;
+    std::multimap<LTSceneNode*, std::list<LTLayerNodeRefPair>::iterator>::iterator it;
     range = node_index.equal_range(node);
     for (it = range.first; it != range.second; it++) {
+        ltLuaDelRef(L, layer_index, it->second->ref);
         node_list.erase(it->second);
-        (it->first)->exit(this);
+        it->first->exit(this);
     }
     node_index.erase(range.first, range.second);
-}
-
-void LTLayer::clear() {
-    node_list.clear();
-    node_index.clear();
 }
 
 void LTLayer::draw() {
@@ -277,29 +274,29 @@ void LTLayer::draw() {
         return;
     }
     if (n == 1) {
-        (*node_list.begin())->draw();
+        (*node_list.begin()).node->draw();
         return;
     }
-    std::list<LTSceneNode*>::iterator it;
+    std::list<LTLayerNodeRefPair>::iterator it;
     for (it = node_list.begin(); it != node_list.end(); it++) {
         ltPushMatrix();
-        (*it)->draw();
+        (*it).node->draw();
         ltPopMatrix();
     }
 }
 
 void LTLayer::visitChildren(LTSceneNodeVisitor *v) {
-    std::list<LTSceneNode*>::iterator it;
+    std::list<LTLayerNodeRefPair>::iterator it;
     for (it = node_list.begin(); it != node_list.end(); it++) {
-        v->visit(*it);
+        v->visit((*it).node);
     }
 }
 
 bool LTLayer::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
     if (!consumePointerEvent(x, y, event)) {
-        std::list<LTSceneNode*>::reverse_iterator it;
+        std::list<LTLayerNodeRefPair>::reverse_iterator it;
         for (it = node_list.rbegin(); it != node_list.rend(); it++) {
-            if ((*it)->propogatePointerEvent(x, y, event)) {
+            if ((*it).node->propogatePointerEvent(x, y, event)) {
                 return true;
             }
         }
@@ -318,8 +315,8 @@ static int new_Layer(lua_State *L) {
     // First arguments are drawn in front of last arguments.
     for (int arg = 1; arg <= num_args; arg++) {
         LTSceneNode *child = lt_expect_LTSceneNode(L, arg);
-        layer->insert_back(child);
-        ltLuaAddRef(L, -1, arg); // Add reference from layer node to child node.
+        int ref = ltLuaAddRef(L, -1, arg); // Add reference from layer node to child node.
+        layer->insert_back(child, ref);
     }
     return 1;
 }

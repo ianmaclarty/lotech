@@ -120,8 +120,9 @@ LTTrack::~LTTrack() {
     active_tracks.erase(this);
 }
 
-void LTTrack::queueSample(LTAudioSample *sample) {
+void LTTrack::queueSample(LTAudioSample *sample, int ref) {
     alSourceQueueBuffers(source_id, 1, &sample->buffer_id);
+    queued_samples.push_front(std::pair<LTAudioSample*, int>(sample, ref));
 }
 
 void LTTrack::play() {
@@ -161,8 +162,13 @@ int LTTrack::numPendingSamples() {
     return numSamples() - numProcessedSamples();
 }
 
-void LTTrack::dequeueProcessedSamples(int n) {
+void LTTrack::dequeueSamples(lua_State *L, int track_index, int n) {
     alSourceUnqueueBuffers(source_id, n, NULL);
+    std::list<std::pair<LTAudioSample*, int> >::iterator it = queued_samples.begin();
+    for (int i = 0; (i < n && !queued_samples.empty()); i++) {
+        ltLuaDelRef(L, track_index, queued_samples.front().second);
+        queued_samples.pop_front();
+    }
 }
 
 static LTfloat get_gain(LTObject *obj) {

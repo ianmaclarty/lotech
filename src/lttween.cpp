@@ -3,6 +3,50 @@
 
 LT_INIT_IMPL(lttween)
 
+LTTweenAction::LTTweenAction(
+    LTFloatGetter getter, LTFloatSetter setter,
+    LTfloat target_val, LTfloat time,
+    LTfloat delay, LTEaseFunc ease,
+    LTAction *on_done)
+{
+    LTTweenAction::getter = getter;
+    LTTweenAction::setter = setter;
+    LTTweenAction::t = 0.0f;
+    LTTweenAction::initial_val = getter(node);
+    LTTweenAction::target_val = target_val;
+    LTTweenAction::time = time;
+    LTTweenAction::delay = delay;
+    LTTweenAction::ease = ease;
+    LTTweenAction::on_done = on_done;
+    LTTweenAction::distance = target_val - initial_val;
+}
+
+LTTweenAction::~LTTweenAction() {
+    if (on_done != NULL) {
+        delete on_done;
+    }
+}
+
+bool LTTweenAction::doAction(LTfloat dt) {
+    if (delay > 0) {
+        delay -= dt;
+        return false;
+    }
+    if (t < 1.0f) {
+        LTfloat v = initial_val + distance * ease(t);
+        t += dt / time;
+        setter(node, v);
+        return false;
+    } else {
+        setter(node, target_val);
+        if (on_done != NULL) {
+            node->add_action(on_done);
+            on_done = NULL; // so on_done is not deleted when this action is deleted.
+        }
+        return true;
+    }
+}
+
 LTTweenSet::LTTweenSet() {
     LTTweenSet::capacity = 4;
     LTTweenSet::occupants = 0;

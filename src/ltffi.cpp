@@ -660,53 +660,24 @@ static void init_constructors(lua_State *L) {
 
 ct_assert(sizeof(long int) == sizeof(void*));
 
-void ltLuaAddRef(lua_State *L, int from, int to) {
-    lua_getfenv(L, from);
-    char* ptr = (char*)lua_touserdata(L, to);
-    char* cnt_ptr = ptr + 1; // Reference counts are stored at ptr + 1.
-    lua_pushlightuserdata(L, cnt_ptr);
-    lua_rawget(L, -2);
-    long int count = (long int)lua_touserdata(L, -1);
-    lua_pop(L, 1);
-    lua_pushlightuserdata(L, cnt_ptr);
-    lua_pushlightuserdata(L, (void*)(count + 1));
-    lua_rawset(L, -3);
-    if (count == 0) {
-        lua_pushlightuserdata(L, ptr);
-        lua_pushvalue(L, to);
-        lua_rawset(L, -3);
-    }
+int ltLuaAddRef(lua_State *L, int obj, int val) {
+    lua_getfenv(L, obj);
+    lua_pushvalue(L, val);
+    int ref = luaL_ref(L, -2);
+    lua_pop(L, 1); // pop env table
+    return ref;
+}
+
+void ltLuaDelRef(lua_State *L, int obj, int ref) {
+    lua_getfenv(L, obj);
+    luaL_unref(L, -1, ref);
     lua_pop(L, 1); // pop env table
 }
 
-void ltLuaDelRef(lua_State *L, int from, int to) {
-    lua_getfenv(L, from);
-    char* ptr = (char*)lua_touserdata(L, to);
-    char* cnt_ptr = ptr + 1; // Reference counts are stored at ptr + 1.
-    lua_pushlightuserdata(L, cnt_ptr);
-    lua_rawget(L, -2);
-    long int count = (long int)lua_touserdata(L, -1);
-    lua_pop(L, 1);
-    lua_pushlightuserdata(L, cnt_ptr);
-    if (count > 1) {
-        lua_pushlightuserdata(L, (void*)(count - 1));
-        lua_rawset(L, -3);
-    } else {
-        // Count down to zero, delete reference.
-        lua_pushnil(L);
-        lua_rawset(L, -3);
-        lua_pushlightuserdata(L, ptr);
-        lua_pushnil(L);
-        lua_rawset(L, -3);
-    }
-    lua_pop(L, 1); // pop env table
-}
-
-void ltLuaPushRef(lua_State *L, int owner_index, LTObject *obj) {
-    lua_getfenv(L, owner_index);
-    lua_pushlightuserdata(L, obj);
-    lua_rawget(L, -2);
-    lua_remove(L, -2); // remove env table.
+void ltLuaGetRef(lua_State *L, int obj, int ref) {
+    lua_getfenv(L, obj);
+    lua_rawgeti(L, -1, ref);
+    lua_remove(L, -2); // remove env table, leaving referenced value.
 }
 
 int ltLuaCheckNArgs(lua_State *L, int exp_args) {

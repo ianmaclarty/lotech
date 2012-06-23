@@ -4,7 +4,7 @@ struct LTAction {
     std::list<LTAction*>::iterator position; // position in schedule.
     LTSceneNode *node;
 
-    LTAction(LTSceneNode *node);
+    LTAction();
     virtual ~LTAction();
 
     void schedule();

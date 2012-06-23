@@ -5,9 +5,9 @@ LT_INIT_IMPL(ltaction)
 static std::list<LTAction*> action_list;
 static std::list<LTAction*>::iterator next_action = action_list.end();
 
-LTAction::LTAction(LTSceneNode *node) {
+LTAction::LTAction() {
     position = action_list.end();
-    LTAction::node = node;
+    node = NULL;
 }
 
 LTAction::~LTAction() {
