@@ -46,6 +46,8 @@ void ltExecuteActions(LTfloat dt) {
         bool finished = action->doAction(dt);
         if (finished) {
             action->unschedule();
+            action->node->actions->remove(action);
+            delete action;
         }
     }
 }

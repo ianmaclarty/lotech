@@ -90,13 +90,11 @@ static void get_weak_ref(lua_State *L, int ref) {
 }
 
 // Remove a weak reference.
-/*
 static void del_weak_ref(lua_State *L, int ref) {
     lua_rawgeti(L, LUA_REGISTRYINDEX, g_wrefs_ref);
     luaL_unref(L, -1, ref);
     lua_pop(L, 1); // pop wrefs
 }
-*/
 
 /************************** Resolve paths ****************/
 
@@ -2130,6 +2128,10 @@ struct LTLuaAction : LTAction {
 
     LTLuaAction(LTSceneNode *node, int lua_func_ref) : LTAction(node) {
         LTLuaAction::lua_func_ref = lua_func_ref;
+    }
+
+    virtual ~LTLuaAction() {
+        del_weak_ref(g_L, lua_func_ref);
     }
 
     virtual bool doAction(LTfloat dt) {
