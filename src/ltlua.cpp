@@ -2135,7 +2135,7 @@ struct LTLuaAction : LTAction {
     virtual bool doAction(LTfloat dt) {
         get_weak_ref(g_L, lua_func_ref);
         lua_pushnumber(g_L, dt);
-        docall(g_L, 1, 1);
+        lua_call(g_L, 1, 1);
         bool res = lua_toboolean(g_L, -1);
         lua_pop(g_L, 1); // pop res
         return res;
@@ -2152,6 +2152,12 @@ static int lt_AddAction(lua_State *L) {
     LTAction *action = new LTLuaAction(node, f);
     node->add_action(action);
     ltLuaAddRef(L, 1, 2); // Keep reference from node to action.
+    return 0;
+}
+
+static int lt_ExecuteActions(lua_State *L) {
+    ltLuaCheckNArgs(L, 1);
+    ltExecuteActions((LTfloat)luaL_checknumber(L, 1));
     return 0;
 }
 
@@ -2367,6 +2373,7 @@ static const luaL_Reg ltlib[] = {
     //{"ClearTweens",                     lt_ClearTweens},
 
     {"AddAction",                       lt_AddAction},
+    {"ExecuteActions",                  lt_ExecuteActions},
 
     {"LoadSamples",                     lt_LoadSamples},
     {"PlaySampleOnce",                  lt_PlaySampleOnce},
@@ -2596,7 +2603,6 @@ void ltLuaResume() {
 }
 
 void ltLuaAdvance(LTdouble secs) {
-    ltExecuteActions((LTfloat)secs);
     if (g_L != NULL && !g_suspended && push_lt_func("Advance")) {
         lua_pushnumber(g_L, secs);
         docall(g_L, 1, 0);
