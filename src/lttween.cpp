@@ -19,7 +19,7 @@ LTTweenAction::LTTweenAction(LTSceneNode *node,
     LTTweenAction::ease = ease;
     LTTweenAction::on_done = on_done;
     LTTweenAction::distance = target_val - initial_val;
-    LTTweenAction::id = (void*)getter;
+    LTTweenAction::action_id = (void*)getter;
     LTTweenAction::no_dups = true;
 }
 

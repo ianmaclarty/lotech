@@ -9,7 +9,7 @@ static std::list<LTAction*> cancelled_actions;
 LTAction::LTAction(LTSceneNode *n) {
     position = action_list.end();
     node = n;
-    id = NULL;
+    action_id = NULL;
     no_dups = false;
     cancelled = false;
 }

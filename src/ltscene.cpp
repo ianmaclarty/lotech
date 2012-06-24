@@ -107,7 +107,7 @@ void LTSceneNode::add_action(LTAction *action) {
     if (action->no_dups) {
         std::list<LTAction*>::iterator it;
         for (it = actions->begin(); it != actions->end(); it++) {
-            if ((*it)->id == action->id) {
+            if ((*it)->action_id == action->action_id) {
                 (*it)->cancel();
             }
         }
