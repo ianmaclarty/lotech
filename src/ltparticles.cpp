@@ -12,7 +12,7 @@ struct LTParticleSystemAction : LTAction {
     virtual bool doAction(LTfloat dt) {
         LTParticleSystem *particles = (LTParticleSystem*)node;
         particles->advance(dt);
-        return !particles->active;
+        return false;
     }
 };
 
@@ -201,6 +201,7 @@ void LTParticleSystem::add_particle() {
 
         p->radial_accel = radial_accel + radial_accel_variance * ltRandMinus1_1();
         p->tangential_accel = tangential_accel + tangential_accel_variance * ltRandMinus1_1();
+        p->damping = damping + damping_variance * ltRandMinus1_1();
 
         num_particles++;
     }
@@ -242,6 +243,8 @@ void LTParticleSystem::advance(LTfloat dt) {
             tangential.y *= p->tangential_accel;
             p->dir.x += (radial.x + tangential.x + gravity.x) * dt;
             p->dir.y += (radial.y + tangential.y + gravity.y) * dt;
+            p->dir.x *= 1.0f - dt * p->damping;
+            p->dir.y *= 1.0f - dt * p->damping;
             p->pos.x += p->dir.x * dt;
             p->pos.y += p->dir.y * dt;
             p->color.red += p->delta_color.red * dt;
@@ -374,6 +377,8 @@ LT_REGISTER_FIELD_FLOAT(LTParticleSystem, tangential_accel)
 LT_REGISTER_FIELD_FLOAT(LTParticleSystem, tangential_accel_variance)
 LT_REGISTER_FIELD_FLOAT(LTParticleSystem, radial_accel)
 LT_REGISTER_FIELD_FLOAT(LTParticleSystem, radial_accel_variance)
+LT_REGISTER_FIELD_FLOAT(LTParticleSystem, damping)
+LT_REGISTER_FIELD_FLOAT(LTParticleSystem, damping_variance)
 LT_REGISTER_FIELD_FLOAT(LTParticleSystem, start_size)
 LT_REGISTER_FIELD_FLOAT(LTParticleSystem, start_size_variance)
 LT_REGISTER_FIELD_FLOAT(LTParticleSystem, end_size)
