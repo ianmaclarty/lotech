@@ -100,8 +100,19 @@ void LTSceneNode::add_action(LTAction *action) {
     if (actions == NULL) {
         actions = new std::list<LTAction*>();
     }
+    if (action->node != this) {
+        ltLog("LTSceneNode::add_action: invalid node");
+        ltAbort();
+    }
+    if (action->no_dups) {
+        std::list<LTAction*>::iterator it;
+        for (it = actions->begin(); it != actions->end(); it++) {
+            if ((*it)->id == action->id) {
+                (*it)->cancel();
+            }
+        }
+    }
     actions->push_back(action);
-    action->node = this;
     if (active) {
         action->schedule();
     }

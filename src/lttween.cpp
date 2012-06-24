@@ -3,11 +3,11 @@
 
 LT_INIT_IMPL(lttween)
 
-LTTweenAction::LTTweenAction(
+LTTweenAction::LTTweenAction(LTSceneNode *node,
     LTFloatGetter getter, LTFloatSetter setter,
     LTfloat target_val, LTfloat time,
     LTfloat delay, LTEaseFunc ease,
-    LTAction *on_done)
+    LTTweenOnDone *on_done) : LTAction(node)
 {
     LTTweenAction::getter = getter;
     LTTweenAction::setter = setter;
@@ -19,6 +19,8 @@ LTTweenAction::LTTweenAction(
     LTTweenAction::ease = ease;
     LTTweenAction::on_done = on_done;
     LTTweenAction::distance = target_val - initial_val;
+    LTTweenAction::id = (void*)getter;
+    LTTweenAction::no_dups = true;
 }
 
 LTTweenAction::~LTTweenAction() {
@@ -40,8 +42,7 @@ bool LTTweenAction::doAction(LTfloat dt) {
     } else {
         setter(node, target_val);
         if (on_done != NULL) {
-            node->add_action(on_done);
-            on_done = NULL; // so on_done is not deleted when this action is deleted.
+            on_done->done();
         }
         return true;
     }

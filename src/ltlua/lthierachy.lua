@@ -17,9 +17,8 @@ function mt_add(name, field, val)
     end
 end
 
-mt_add("lt.Object", "Tween", lt.Tween)
-mt_add("lt.Object", "CancelTween", lt.CancelTween)
-
+mt_add("lt.SceneNode", "Tween", lt.Tween)
+mt_add("lt.SceneNode", "CancelTween", lt.CancelTween)
 mt_add("lt.SceneNode", "Draw", lt.DrawSceneNode)
 --mt_add("lt.SceneNode", "Advance", lt.AdvanceSceneNode)
 mt_add("lt.SceneNode", "OnPointerUp", lt.AddOnPointerUpHandler)

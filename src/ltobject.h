@@ -3,7 +3,8 @@
 LT_INIT_DECL(ltobject)
 
 struct LTObject {
-    virtual ~LTObject() {};
+    LTObject();
+    virtual ~LTObject();
 
     // This is called after a new object is constructed using
     // the default constructor function.
@@ -11,3 +12,5 @@ struct LTObject {
 };
 
 LTObject *lt_expect_LTObject(lua_State *L, int arg);
+
+int ltNumLiveObjects();

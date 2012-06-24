@@ -3,6 +3,14 @@
 
 LT_INIT_IMPL(ltffi)
 
+static inline int absidx(lua_State *L, int index) {
+    if (index < 0) {
+        return lua_gettop(L) + index + 1;
+    } else {
+        return index;
+    }
+}
+
 static void init_core_modules() {
     // These are only to ensure the static initializers in each translation unit are run.
     lt3d_init();
@@ -661,6 +669,8 @@ static void init_constructors(lua_State *L) {
 ct_assert(sizeof(long int) == sizeof(void*));
 
 int ltLuaAddRef(lua_State *L, int obj, int val) {
+    obj = absidx(L, obj);
+    val = absidx(L, val);
     lua_getfenv(L, obj);
     lua_pushvalue(L, val);
     int ref = luaL_ref(L, -2);
@@ -701,6 +711,8 @@ void* ltLuaAllocUserData(lua_State *L, LTTypeDef *type) {
 }
 
 void ltLuaGetFloatGetterAndSetter(lua_State *L, int obj_index, int field_index, LTFloatGetter *getter, LTFloatSetter *setter) {
+    obj_index = absidx(L, obj_index);
+    field_index = absidx(L, field_index);
     lua_getmetatable(L, obj_index);
     lua_pushvalue(L, field_index);
     lua_rawget(L, -2);
@@ -712,5 +724,37 @@ void ltLuaGetFloatGetterAndSetter(lua_State *L, int obj_index, int field_index, 
     } else {
         *getter = NULL;
         *setter = NULL;
+    }
+}
+
+void ltLuaFindFieldOwner(lua_State *L, int obj_index, int field_index) {
+    if (!lt_is_LTSceneNode(L, obj_index)) {
+        lua_pushnil(L);
+        return;
+    }
+    obj_index = absidx(L, obj_index);
+    field_index = absidx(L, field_index);
+    lua_pushvalue(L, obj_index);
+    while (true) {
+        lua_getmetatable(L, -1);
+        lua_pushvalue(L, field_index);
+        lua_rawget(L, -2);
+        if (lua_isuserdata(L, -1)) {
+            lua_pop(L, 2); // pop userdata, metatable (obj now on top of stack).
+            return;
+        }
+        lua_pop(L, 2); // pop field val, metatable.
+        if (lt_is_LTWrapNode(L, -1)) {
+            lua_getfenv(L, -1); // push env table
+            lua_pushstring(L, "child");
+            lua_rawget(L, -2); // push child
+            lua_remove(L, -2); // remove env table
+            lua_remove(L, -2); // remove previous obj
+        } else {
+            // Not a wrap node, give up search.
+            lua_pop(L, 1); // pop obj.
+            lua_pushnil(L);
+            return;
+        }
     }
 }

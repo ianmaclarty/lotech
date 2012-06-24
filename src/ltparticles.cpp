@@ -8,6 +8,7 @@ ct_assert(sizeof(LTPoint) == 8);
 ct_assert(sizeof(LTCompactColor) == 4);
 
 struct LTParticleSystemAction : LTAction {
+    LTParticleSystemAction(LTSceneNode *node) : LTAction(node) {};
     virtual bool doAction(LTfloat dt) {
         LTParticleSystem *particles = (LTParticleSystem*)node;
         particles->advance(dt);
@@ -32,7 +33,7 @@ LTParticleSystem::LTParticleSystem() {
     end_color_variance.alpha = 0.0f;
     emission_rate = -1.0f;
     //fixture = NULL;
-    add_action(new LTParticleSystemAction());
+    add_action(new LTParticleSystemAction(this));
 }
 
 void LTParticleSystem::init(lua_State *L) {

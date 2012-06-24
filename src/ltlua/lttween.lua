@@ -1,163 +1,35 @@
--- Copyright 2011 Ian MacLarty
-local
-function cleanup_obj_tween_fields(obj)
-    obj._tweens = nil
-    obj._tween_actions = nil
-    obj._tween_index = nil
-    obj._tweenset = nil
+function lt.Tween(node, tween_info)
+    local fields = {}
+    local time = 0
+    local delay = 0
+    local easing = nil
+    local action = nil
+    for field, value in pairs(tween_info) do
+        if field == "time" then
+            time = value
+        elseif field == "easing" then
+            easing = value
+        elseif field == "action" then
+            action = value
+        elseif field == "delay" then
+            delay = value
+        else
+            fields[field] = value
+        end
+    end
+    for field, value in pairs(fields) do
+        lt.AddTween(node, field, value, time, delay, easing, action)
+        action = nil -- only attach action to one field
+    end
+    return node
+end
+
+function lt.CancelTween(obj, field)
+    error("NYI")
 end
 
 function lt.RemoveTweens(obj)
-    local tweens = obj._tweens
-    if tweens then
-        tweens[obj._tween_index] = nil
-        cleanup_obj_tween_fields(obj)
-    end
-end
-
-function lt.ClearTweenSet(tweens)
-    for index, obj in pairs(tweens) do
-        cleanup_obj_tween_fields(obj)
-        tweens[index] = nil
-    end
-end
-
-local lt_advance_native_tween = lt.AdvanceNativeTween
-
-function lt.AdvanceTweens(tweens, dt)
-    local actions = {}
-    --local count = 0
-    --local sample_field = "nothing"
-    for obj_index, obj in pairs(tweens) do
-        local obj_tweens = obj._tweens
-        for field, tween in pairs(obj_tweens) do
-            --count = count + 1
-            --sample_field = field
-            local finished = false
-            if type(tween) == "userdata" then
-                -- native tween
-                finished = lt_advance_native_tween(tween, dt)
-            else
-                local delay = tween.delay
-                if delay > 0 then
-                    tween.delay = delay - dt
-                else 
-                    local t = tween.t
-                    if t < 1 then
-                        local v0 = tween.v0
-                        local v = v0 + (tween.v - v0) * tween.ease(t)
-                        tween.t = t + dt / tween.period
-                        obj[field] = v
-                    else
-                        obj[field] = tween.v
-                        finished = true
-                    end
-                end
-            end
-            if finished then
-                local tween_actions = obj._tween_actions
-                if tween_actions then
-                    local action = tween_actions[field]
-                    if action then
-                        table.insert(actions, action)
-                        tween_actions[field] = nil
-                    end
-                end
-                obj_tweens[field] = nil
-            end
-        end
-        if next(obj_tweens) == nil then
-            -- No more tweens on object, so remove from tween set and clean up.
-            cleanup_obj_tween_fields(obj)
-            tweens[obj_index] = nil
-        end
-    end
-    for _, action in ipairs(actions) do
-        action()
-    end
-    --log("tween count = " .. count .. " field = " .. sample_field)
-end
-
-local lt_get = lt.GetObjectField
--- Finds the owner of the field in the obj or its
--- descendents.  Returns the owner or nil if the field
--- doesn't exist.  Also returns true if the field is a
--- C field (and therefore a candidate for fast tweening).
-local
-function find_field_owner(obj, field)
-    local value = obj[field]
-    if value then
-        return obj
-    end
-    local child = obj.child
-    if child then
-        return find_field_owner(child, field)
-    else
-        return nil
-    end
-end
-
-local make_native_tween = lt.MakeNativeTween
-local ease_func_table
-
-function lt.AddTween(tweens, table, field, to, secs, delay, ease, action, called_from_tween_method)
-    --local obj = find_field_owner(table, field)
-    local obj = table
-    if not obj[field] then
-        local level = called_from_tween_method and 3 or 2
-        error("No such field: " .. field, level)
-    end
-    local tween
-    --[[
-    if type(obj) == "userdata" and obj.is then
-        tween = make_native_tween(obj, field, delay, to, secs, ease)
-    end
-    ]]
-    if not tween then
-        if ease == nil then
-            ease = lt.LinearEase
-        elseif type(ease) == "string" then
-            local func = ease_func_table[ease]
-            if not func then
-                local level = called_from_tween_method and 3 or 2
-                error("Unsupported easing function: " .. ease, level)
-            end
-            ease = func
-        end
-        tween = {
-            v0 = obj[field],
-            v = to,
-            t = 0,
-            period = secs,
-            delay = delay,
-            ease = ease,
-        }
-    end
-    local obj_tweens = obj._tweens
-    if not obj_tweens then
-        obj_tweens = {}
-        obj._tweens = obj_tweens
-    end
-    obj_tweens[field] = tween
-    local obj_actions = obj._tween_actions
-    if action then
-        if not obj_actions then
-            obj_actions = {}
-            obj._tween_actions = obj_actions
-        end
-        obj_actions[field] = action
-    elseif obj_actions then
-        -- Remove any action that might have been there before
-        obj_actions[field] = nil
-    end
-    local obj_tweenset = obj._tweenset
-    obj._tweenset = obj_tweenset
-    local obj_index = obj._tween_index
-    if not obj_index then
-        obj_index = #tweens + 1
-        obj._tween_index = obj_index
-    end
-    tweens[obj_index] = obj
+    error("NYI")
 end
 
 -------------------------------------------------------------
@@ -317,88 +189,3 @@ ease_func_table = {
     revolve = lt.RevolveEase,
 }
 
--------------------------------------------------------------
-local tweens_mt = {
-    __mode = "v",
-    __index = {
-        Add = function(tweenset, obj, spec) lt.Tween(obj, spec, tweenset) end,
-        Advance = lt.AdvanceTweens,
-        Clear = lt.ClearTweenSet,
-    },
-}
-
-function lt.TweenSet()
-    local tweens = {}
-    setmetatable(tweens, tweens_mt)
-    return tweens
-end
-
--------------------------------------------------------------
-
-local global_tweens = lt.TweenSet()
-
--- node:Tween{x = 5, y = 6, time = 2.5, easing = "linear", tweens = my_tween_set, action = function() log("done!") end}
-function lt.Tween(node, tween_info, tweenset)
-    local tweens = tweenset or global_tweens
-    local fields = {}
-    local time = 0
-    local delay = 0
-    local easing = nil
-    local action = nil
-    local reverse = false
-    for field, value in pairs(tween_info) do
-        if field == "time" then
-            time = value
-        elseif field == "easing" then
-            easing = value
-        elseif field == "action" then
-            action = value
-        elseif field == "tweens" then
-            tweens = value
-        elseif field == "delay" then
-            delay = value
-        elseif field == "reverse" then
-            reverse = value
-        else
-            fields[field] = value
-        end
-    end
-    for field, value in pairs(fields) do
-        if reverse then
-            node[field], value = value, node[field]
-        end
-        lt.AddTween(tweens, node, field, value, time, delay, easing, action, true)
-        action = nil -- only attach action to one field
-    end
-    return node
-end
-
-function lt.CancelTween(obj, field)
-    local owner = find_field_owner(obj, field)
-    local obj_tweens = owner._tweens
-    if obj_tweens then
-        obj_tweens[field] = nil
-        if next(obj_tweens) == nil then
-            local tweenset = owner._tweenset
-            local tween_index = owner._tween_index
-            tweenset[tween_index] = nil
-            owner._tweens = nil
-            owner._tween_actions = nil
-            owner._tween_index = nil
-            owner._tweenset = nil
-        else
-            local obj_actions = owner._tween_actions
-            if obj_actions then
-                obj_actions[field] = nil
-            end
-        end
-    end
-end
-
-function lt.AdvanceGlobalTweens(dt)
-    lt.AdvanceTweens(global_tweens, dt or lt.secs_per_frame)
-end
-
-function lt.ClearGlobalTweens(dt)
-    global_tweens:Clear();
-end

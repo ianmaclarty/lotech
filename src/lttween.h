@@ -3,6 +3,11 @@ LT_INIT_DECL(lttween)
 
 typedef LTfloat(*LTEaseFunc)(LTfloat);
 
+struct LTTweenOnDone {
+    virtual ~LTTweenOnDone() {};
+    virtual void done() = 0;
+};
+
 struct LTTweenAction : LTAction {
     LTFloatGetter getter;
     LTFloatSetter setter;
@@ -13,11 +18,12 @@ struct LTTweenAction : LTAction {
     LTfloat time;
     LTfloat delay;
     LTEaseFunc ease;
-    LTAction *on_done;
+    LTTweenOnDone *on_done;
 
-    LTTweenAction(LTFloatGetter getter, LTFloatSetter setter,
+    LTTweenAction(LTSceneNode *node, 
+        LTFloatGetter getter, LTFloatSetter setter,
         LTfloat target_val, LTfloat time, LTfloat delay, LTEaseFunc ease,
-        LTAction *on_done);
+        LTTweenOnDone *on_done);
     virtual ~LTTweenAction();
 
     virtual bool doAction(LTfloat dt);

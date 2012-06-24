@@ -4,6 +4,14 @@
 
 LT_INIT_IMPL(ltlua)
 
+static inline int absidx(lua_State *L, int index) {
+    if (index < 0) {
+        return lua_gettop(L) + index + 1;
+    } else {
+        return index;
+    }
+}
+
 static lua_State *g_L = NULL;
 static int g_wrefs_ref = LUA_NOREF;
 static bool g_suspended = false;
@@ -71,12 +79,9 @@ static void docall(lua_State *L, int nargs, int nresults) {
 // Returns a weak reference to the value at the given index.  Does not
 // modify the stack.
 static int make_weak_ref(lua_State *L, int index) {
+    index = absidx(L, index);
     lua_rawgeti(L, LUA_REGISTRYINDEX, g_wrefs_ref);
-    if (index > 0) {
-        lua_pushvalue(L, index);
-    } else {
-        lua_pushvalue(L, index - 2);
-    }
+    lua_pushvalue(L, index);
     int ref = luaL_ref(L, -2);
     lua_pop(L, 1); // pop wrefs.
     return ref;
@@ -448,72 +453,6 @@ static int lt_FillVectorColumnsWithImageQuads(lua_State *L) {
         os_data += offsets->stride;
     }
     return 0;
-}
-
-/************************* Tweens **************************/
-
-static int lt_MakeNativeTween(lua_State *L) {
-    LTObject *obj = lt_expect_LTObject(L, 1);
-    LTFloatGetter getter;
-    LTFloatSetter setter;
-    ltLuaGetFloatGetterAndSetter(L, 1, 2, &getter, &setter);
-    if (getter == NULL || setter == NULL) {
-        lua_pushnil(L);
-        return 1;
-    }
-    LTfloat delay = luaL_checknumber(L, 3);
-    LTfloat value = luaL_checknumber(L, 4);
-    LTfloat time = luaL_checknumber(L, 5);
-    LTEaseFunc ease_func = NULL;
-    if (lua_isnil(L, 6)) {
-        ease_func = ltEase_linear;
-    } else {
-        size_t len;
-        const char *ease_func_str = lua_tolstring(L, 6, &len);
-        if (ease_func_str == NULL) {
-            lua_pushnil(L);
-            return 1;
-        }
-        if (strcmp(ease_func_str, "in") == 0) {
-            ease_func = ltEase_in;
-        } else if (strcmp(ease_func_str, "out") == 0) {
-            ease_func = ltEase_out;
-        } else if (strcmp(ease_func_str, "inout") == 0) {
-            ease_func = ltEase_inout;
-        } else if (strcmp(ease_func_str, "zoomin") == 0) {
-            ease_func = ltEase_zoomin;
-        } else if (strcmp(ease_func_str, "zoomout") == 0) {
-            ease_func = ltEase_zoomout;
-        } else if (strcmp(ease_func_str, "accel") == 0) {
-            ease_func = ltEase_accel;
-        } else if (strcmp(ease_func_str, "decel") == 0) {
-            ease_func = ltEase_decel;
-        } else if (strcmp(ease_func_str, "bounce") == 0) {
-            ease_func = ltEase_bounce;
-        } else if (strcmp(ease_func_str, "revolve") == 0) {
-            ease_func = ltEase_revolve;
-        } else if (strcmp(ease_func_str, "backin") == 0) {
-            ease_func = ltEase_backin;
-        } else if (strcmp(ease_func_str, "backout") == 0) {
-            ease_func = ltEase_backout;
-        } else if (strcmp(ease_func_str, "linear") == 0) {
-            ease_func = ltEase_linear;
-        } else if (strcmp(ease_func_str, "elastic") == 0) {
-            ease_func = ltEase_elastic;
-        } else {
-            return luaL_error(L, "Invalid easing function: ", ease_func_str);
-        }
-    }
-    LTTween *tween = (LTTween*)lua_newuserdata(L, sizeof(LTTween));
-    ltInitTween(tween, obj, getter, setter, value, time, delay, ease_func);
-    return 1;
-}
-
-static int lt_AdvanceNativeTween(lua_State *L) {
-    LTTween *tween = (LTTween*)lua_touserdata(L, 1);
-    LTfloat dt = luaL_checknumber(L, 2);
-    lua_pushboolean(L, ltAdvanceTween(tween, dt) ? 1 : 0);
-    return 1;
 }
 
 /************************* Events **************************/
@@ -2118,7 +2057,7 @@ struct LTLuaAction : LTAction {
     int node_ref;
     int lua_func_ref;
 
-    LTLuaAction(int node_ref, int lua_func_ref) {
+    LTLuaAction(LTSceneNode *node, int node_ref, int lua_func_ref) : LTAction(node) {
         LTLuaAction::node_ref = node_ref;
         LTLuaAction::lua_func_ref = lua_func_ref;
     }
@@ -2151,7 +2090,7 @@ static int lt_AddAction(lua_State *L) {
     }
     int fref = ltLuaAddRef(L, 1, 2); // Add reference from node to action func.
     int nref = make_weak_ref(L, 1);
-    LTAction *action = new LTLuaAction(nref, fref);
+    LTAction *action = new LTLuaAction(node, nref, fref);
     node->add_action(action);
     return 0;
 }
@@ -2161,6 +2100,165 @@ static int lt_ExecuteActions(lua_State *L) {
     ltExecuteActions((LTfloat)luaL_checknumber(L, 1));
     return 0;
 }
+
+/************************* Tweens **************************/
+
+struct LTLuaTweenOnDone : LTTweenOnDone {
+    int node_ref;
+    int func_ref;
+    LTLuaTweenOnDone(int nref, int fref) {
+        node_ref = nref;
+        func_ref = fref;
+    }
+    virtual ~LTLuaTweenOnDone() {
+        get_weak_ref(g_L, node_ref);
+        if (!lua_isnil(g_L, -1)) {
+            ltLuaDelRef(g_L, -1, func_ref);
+            del_weak_ref(g_L, node_ref);
+        }
+        lua_pop(g_L, 1);
+    }
+    virtual void done() {
+        get_weak_ref(g_L, node_ref);
+        ltLuaGetRef(g_L, -1, func_ref);
+        lua_call(g_L, 0, 0);
+        lua_pop(g_L, 1); // pop node
+    }
+};
+
+static int lt_AddTween(lua_State *L) {
+    ltLuaCheckNArgs(L, 7); // node, field, target_val, time, delay, easing, action
+    ltLuaFindFieldOwner(L, 1, 2);
+    if (lua_isnil(L, -1)) {
+        return luaL_error(L, "Field %s does not exist, or object not a scene node", lua_tostring(L, 2));
+    }
+    LTSceneNode *node = (LTSceneNode*)lua_touserdata(L, -1);
+    LTFloatGetter getter;
+    LTFloatSetter setter;
+    ltLuaGetFloatGetterAndSetter(L, -1, 2, &getter, &setter);
+    if (getter == NULL) {
+        return luaL_error(L, "Field %s is not a float", lua_tostring(L, 2));
+    }
+    if (setter == NULL) {
+        return luaL_error(L, "Field %s is read-only", lua_tostring(L, 2));
+    }
+    LTfloat target_val = luaL_checknumber(L, 3);
+    LTfloat time = luaL_checknumber(L, 4);
+    LTfloat delay = luaL_checknumber(L, 5);
+    if (!(lua_isnil(L, 6) || lua_isstring(L, 6))) {
+        return luaL_error(L, "Ease func argument (6) not nil or a string");
+    }
+    const char *ease_func_str = lua_tostring(L, 6);
+    LTEaseFunc ease_func;
+    if (ease_func_str == NULL) {
+        ease_func = ltEase_linear;
+    } else if (strcmp(ease_func_str, "in") == 0) {
+        ease_func = ltEase_in;
+    } else if (strcmp(ease_func_str, "out") == 0) {
+        ease_func = ltEase_out;
+    } else if (strcmp(ease_func_str, "inout") == 0) {
+        ease_func = ltEase_inout;
+    } else if (strcmp(ease_func_str, "zoomin") == 0) {
+        ease_func = ltEase_zoomin;
+    } else if (strcmp(ease_func_str, "zoomout") == 0) {
+        ease_func = ltEase_zoomout;
+    } else if (strcmp(ease_func_str, "accel") == 0) {
+        ease_func = ltEase_accel;
+    } else if (strcmp(ease_func_str, "decel") == 0) {
+        ease_func = ltEase_decel;
+    } else if (strcmp(ease_func_str, "bounce") == 0) {
+        ease_func = ltEase_bounce;
+    } else if (strcmp(ease_func_str, "revolve") == 0) {
+        ease_func = ltEase_revolve;
+    } else if (strcmp(ease_func_str, "backin") == 0) {
+        ease_func = ltEase_backin;
+    } else if (strcmp(ease_func_str, "backout") == 0) {
+        ease_func = ltEase_backout;
+    } else if (strcmp(ease_func_str, "linear") == 0) {
+        ease_func = ltEase_linear;
+    } else if (strcmp(ease_func_str, "elastic") == 0) {
+        ease_func = ltEase_elastic;
+    } else {
+        return luaL_error(L, "Invalid easing function: ", ease_func_str);
+    }
+    LTTweenOnDone *on_done = NULL;
+    if (lua_isfunction(L, 7)) {
+        int fref = ltLuaAddRef(L, -1, 7); // Add reference from node to action func.
+        int nref = make_weak_ref(L, -1);
+        on_done = new LTLuaTweenOnDone(nref, fref);
+    } else if (!lua_isnil(L, 7)) {
+        return luaL_error(L, "Argument 7 not a function or nil");
+    }
+    LTTweenAction *action = new LTTweenAction(node, getter, setter, target_val, time, delay, ease_func, on_done);
+    node->add_action(action);
+    return 0;
+}
+
+/*
+static int lt_MakeNativeTween(lua_State *L) {
+    LTObject *obj = lt_expect_LTObject(L, 1);
+    LTFloatGetter getter;
+    LTFloatSetter setter;
+    ltLuaGetFloatGetterAndSetter(L, 1, 2, &getter, &setter);
+    if (getter == NULL || setter == NULL) {
+        lua_pushnil(L);
+        return 1;
+    }
+    LTfloat delay = luaL_checknumber(L, 3);
+    LTfloat value = luaL_checknumber(L, 4);
+    LTfloat time = luaL_checknumber(L, 5);
+    LTEaseFunc ease_func = NULL;
+    if (lua_isnil(L, 6)) {
+        ease_func = ltEase_linear;
+    } else {
+        size_t len;
+        const char *ease_func_str = lua_tolstring(L, 6, &len);
+        if (ease_func_str == NULL) {
+            lua_pushnil(L);
+            return 1;
+        }
+        if (strcmp(ease_func_str, "in") == 0) {
+            ease_func = ltEase_in;
+        } else if (strcmp(ease_func_str, "out") == 0) {
+            ease_func = ltEase_out;
+        } else if (strcmp(ease_func_str, "inout") == 0) {
+            ease_func = ltEase_inout;
+        } else if (strcmp(ease_func_str, "zoomin") == 0) {
+            ease_func = ltEase_zoomin;
+        } else if (strcmp(ease_func_str, "zoomout") == 0) {
+            ease_func = ltEase_zoomout;
+        } else if (strcmp(ease_func_str, "accel") == 0) {
+            ease_func = ltEase_accel;
+        } else if (strcmp(ease_func_str, "decel") == 0) {
+            ease_func = ltEase_decel;
+        } else if (strcmp(ease_func_str, "bounce") == 0) {
+            ease_func = ltEase_bounce;
+        } else if (strcmp(ease_func_str, "revolve") == 0) {
+            ease_func = ltEase_revolve;
+        } else if (strcmp(ease_func_str, "backin") == 0) {
+            ease_func = ltEase_backin;
+        } else if (strcmp(ease_func_str, "backout") == 0) {
+            ease_func = ltEase_backout;
+        } else if (strcmp(ease_func_str, "linear") == 0) {
+            ease_func = ltEase_linear;
+        } else if (strcmp(ease_func_str, "elastic") == 0) {
+            ease_func = ltEase_elastic;
+        } else {
+            return luaL_error(L, "Invalid easing function: ", ease_func_str);
+        }
+    }
+    LTTween *tween = (LTTween*)lua_newuserdata(L, sizeof(LTTween));
+    ltInitTween(tween, obj, getter, setter, value, time, delay, ease_func);
+    return 1;
+}
+
+static int lt_AdvanceNativeTween(lua_State *L) {
+    LTTween *tween = (LTTween*)lua_touserdata(L, 1);
+    LTfloat dt = luaL_checknumber(L, 2);
+    lua_pushboolean(L, ltAdvanceTween(tween, dt) ? 1 : 0);
+    return 1;
+}
+*/
 
 /************************* Random numbers **************************/
 
@@ -2366,10 +2464,10 @@ static const luaL_Reg ltlib[] = {
 
     //{"ParticleSystemFixtureFilter",     lt_ParticleSystemFixtureFilter},
 
-    {"MakeNativeTween",                 lt_MakeNativeTween},
-    {"AdvanceNativeTween",              lt_AdvanceNativeTween},
+    {"AddTween",                        lt_AddTween},
+    //{"MakeNativeTween",                 lt_MakeNativeTween},
+    //{"AdvanceNativeTween",              lt_AdvanceNativeTween},
     //{"TweenSet",                        lt_TweenSet},
-    //{"AddTween",                        lt_AddTween},
     //{"AdvanceTweens",                   lt_AdvanceTweens},
     //{"ClearTweens",                     lt_ClearTweens},
 

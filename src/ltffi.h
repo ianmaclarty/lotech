@@ -222,3 +222,4 @@ void ltLuaGetRef(lua_State *L, int obj, int ref);
 int ltLuaCheckNArgs(lua_State *L, int n);
 void* ltLuaAllocUserData(lua_State *L, LTTypeDef *type);
 void ltLuaGetFloatGetterAndSetter(lua_State *L, int obj_index, int field_index, LTFloatGetter *getter, LTFloatSetter *setter);
+void ltLuaFindFieldOwner(lua_State *L, int obj_index, int field_index);

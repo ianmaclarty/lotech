@@ -3,15 +3,20 @@ LT_INIT_DECL(ltaction)
 struct LTAction {
     std::list<LTAction*>::iterator position; // position in schedule.
     LTSceneNode *node;
+    void *id;
+    bool no_dups;
+    bool cancelled;
 
-    LTAction();
+    LTAction(LTSceneNode *node);
     virtual ~LTAction();
 
     void schedule();
     void unschedule();
+    void cancel();
 
     // Should return true when finished.
     virtual bool doAction(LTfloat dt) = 0;
 };
 
 void ltExecuteActions(LTfloat dt);
+int ltNumScheduledActions();
