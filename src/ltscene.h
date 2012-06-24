@@ -37,6 +37,8 @@ struct LTSceneNode : LTObject {
 
     void enter(LTSceneNode *parent);
     void exit(LTSceneNode *parent);
+    virtual void on_activate() {};
+    virtual void on_deactivate() {};
 
     void add_action(LTAction *action);
     // Called before changing OpenGL context.

@@ -2056,10 +2056,12 @@ static int lt_OpenURL(lua_State *L) {
 struct LTLuaAction : LTAction {
     int node_ref;
     int lua_func_ref;
+    LTdouble t_accum;
 
     LTLuaAction(LTSceneNode *node, int node_ref, int lua_func_ref) : LTAction(node) {
         LTLuaAction::node_ref = node_ref;
         LTLuaAction::lua_func_ref = lua_func_ref;
+        t_accum = 0.0;
     }
 
     virtual ~LTLuaAction() {
@@ -2071,13 +2073,24 @@ struct LTLuaAction : LTAction {
         lua_pop(g_L, 1);
     }
 
-    virtual bool doAction(LTfloat dt) {
+    virtual bool doAction(LTfloat fdt) {
+        bool res = false;
+        LTdouble dt = (LTdouble)fdt;
+        t_accum += dt;
         get_weak_ref(g_L, node_ref);
-        ltLuaGetRef(g_L, -1, lua_func_ref);
-        lua_pushnumber(g_L, dt);
-        lua_call(g_L, 1, 1);
-        bool res = lua_toboolean(g_L, -1);
-        lua_pop(g_L, 2); // pop res + node
+        while (t_accum > 0.0) {
+            ltLuaGetRef(g_L, -1, lua_func_ref);
+            lua_pushnumber(g_L, dt);
+            lua_call(g_L, 1, 1);
+            if (lua_type(g_L, -1) == LUA_TNUMBER) {
+                t_accum -= lua_tonumber(g_L, -1);
+            } else {
+                res = lua_toboolean(g_L, -1);
+                t_accum = 0.0;
+            }
+            lua_pop(g_L, 1); // pop res
+        }
+        lua_pop(g_L, 1); // pop node
         return res;
     }
 };

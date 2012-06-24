@@ -62,9 +62,12 @@ struct EnterVisitor : LTSceneNodeVisitor {
 
 void LTSceneNode::enter(LTSceneNode *parent) {
     if (parent == NULL || parent->active) {
-        if (!active && actions != NULL) {
-            for (std::list<LTAction*>::iterator it = actions->begin(); it != actions->end(); it++) {
-                (*it)->schedule();
+        if (!active) {
+            on_activate();
+            if (actions != NULL) {
+                for (std::list<LTAction*>::iterator it = actions->begin(); it != actions->end(); it++) {
+                    (*it)->schedule();
+                }
             }
         }
         active++;
@@ -88,10 +91,13 @@ void LTSceneNode::exit(LTSceneNode *parent) {
         ExitVisitor v(this);
         visitChildren(&v);
         active--;
-        if (!active && actions != NULL) {
-            for (std::list<LTAction*>::iterator it = actions->begin(); it != actions->end(); it++) {
-                (*it)->unschedule();
+        if (!active) {
+            if (actions != NULL) {
+                for (std::list<LTAction*>::iterator it = actions->begin(); it != actions->end(); it++) {
+                    (*it)->unschedule();
+                }
             }
+            on_deactivate();
         }
     }
 }

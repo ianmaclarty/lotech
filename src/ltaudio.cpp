@@ -113,11 +113,24 @@ LTTrack::LTTrack() {
     alSourcef(source_id, AL_GAIN, 1.0f);
     alSourcei(source_id, AL_LOOPING, AL_FALSE);
     active_tracks[this] = false;
+    is_playing = false;
 }
 
 LTTrack::~LTTrack() {
     alDeleteSources(1, &source_id);
     active_tracks.erase(this);
+}
+
+void LTTrack::on_activate() {
+    if (is_playing) {
+        alSourcePlay(source_id);
+    }
+}
+
+void LTTrack::on_deactivate() {
+    if (is_playing) {
+        alSourcePause(source_id);
+    }
 }
 
 void LTTrack::queueSample(LTAudioSample *sample, int ref) {
@@ -126,19 +139,25 @@ void LTTrack::queueSample(LTAudioSample *sample, int ref) {
 }
 
 void LTTrack::play() {
-    alSourcePlay(source_id);
+    if (active) {
+        alSourcePlay(source_id);
+    }
+    is_playing = true;
 }
 
 void LTTrack::pause() {
     alSourcePause(source_id);
+    is_playing = false;
 }
 
 void LTTrack::stop() {
     alSourceStop(source_id);
+    is_playing = false;
 }
 
 void LTTrack::rewind() {
     alSourceRewind(source_id);
+    is_playing = false;
 }
 
 void LTTrack::setLoop(bool loop) {
@@ -191,7 +210,7 @@ static void set_pitch(LTObject *obj, LTfloat val) {
     alSourcef(((LTTrack*)(obj))->source_id, AL_PITCH, val);
 }
 
-LT_REGISTER_TYPE(LTTrack, "lt.Track", "lt.Object")
+LT_REGISTER_TYPE(LTTrack, "lt.Track", "lt.SceneNode")
 LT_REGISTER_PROPERTY_FLOAT(LTTrack, gain, &get_gain, &set_gain)
 LT_REGISTER_PROPERTY_FLOAT(LTTrack, pitch, &get_pitch, &set_pitch)
 
