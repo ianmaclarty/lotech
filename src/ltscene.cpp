@@ -10,6 +10,7 @@ LTSceneNode::LTSceneNode() {
 }
 
 LTSceneNode::~LTSceneNode() {
+    assert(!active);
     if (event_handlers != NULL) {
         std::list<LTPointerEventHandler*>::iterator it;
         for (it = event_handlers->begin(); it != event_handlers->end(); it++) {
@@ -20,6 +21,7 @@ LTSceneNode::~LTSceneNode() {
     if (actions != NULL) {
         std::list<LTAction*>::iterator it;
         for (it = actions->begin(); it != actions->end(); it++) {
+            assert(!(*it)->is_scheduled());
             delete *it;
         }
         delete actions;
@@ -177,6 +179,17 @@ static int deactivate_scene_node(lua_State *L) {
 
 LT_REGISTER_METHOD(LTSceneNode, Activate, activate_scene_node);
 LT_REGISTER_METHOD(LTSceneNode, Deactivate, deactivate_scene_node);
+
+void ltDeactivateAllScenes(lua_State *L) {
+    push_scene_roots_table(L);
+    lua_pushnil(L);
+    while (lua_next(L, -2) != 0) {
+        LTSceneNode *root = lt_expect_LTSceneNode(L, -2);
+        root->exit(NULL);
+        lua_pop(L, 1); 
+    }
+    lua_pop(L, 1); // pop scene roots.
+}
 
 LTWrapNode::LTWrapNode() {
     LTWrapNode::child = NULL;

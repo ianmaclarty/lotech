@@ -1,5 +1,6 @@
 /* Copyright (C) 2010-2011 Ian MacLarty */
 
+#include <assert.h>
 #include <string.h>
 #include <errno.h>
 #include <cfloat>

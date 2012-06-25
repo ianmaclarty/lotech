@@ -2071,10 +2071,9 @@ struct LTLuaAction : LTAction {
 
     virtual void on_cancel() {
         get_weak_ref(L, node_ref);
-        if (!lua_isnil(L, -1)) {
-            ltLuaDelRef(L, -1, lua_func_ref);
-            del_weak_ref(L, node_ref);
-        }
+        assert(lt_is_LTSceneNode(L, -1));
+        ltLuaDelRef(L, -1, lua_func_ref);
+        del_weak_ref(L, node_ref);
         lua_pop(L, 1);
     }
 
@@ -2085,6 +2084,7 @@ struct LTLuaAction : LTAction {
         get_weak_ref(L, node_ref);
         while (t_accum > 0.0) {
             ltLuaGetRef(L, -1, lua_func_ref);
+            assert(lua_isfunction(L, -1));
             lua_pushnumber(L, dt);
             lua_call(L, 1, 1);
             if (lua_type(L, -1) == LUA_TNUMBER) {
@@ -2122,13 +2122,15 @@ static int lt_ExecuteActions(lua_State *L) {
 /************************* Tweens **************************/
 
 struct LTLuaTweenOnDone : LTTweenOnDone {
+    LTSceneNode *node;
     int node_ref;
     int func_ref;
     lua_State *L;
     bool executed;
     bool cancelled;
 
-    LTLuaTweenOnDone(lua_State *L, int nref, int fref) {
+    LTLuaTweenOnDone(lua_State *L, LTSceneNode *node, int nref, int fref) {
+        LTLuaTweenOnDone::node = node;
         node_ref = nref;
         func_ref = fref;
         LTLuaTweenOnDone::L = L;
@@ -2136,28 +2138,25 @@ struct LTLuaTweenOnDone : LTTweenOnDone {
         cancelled = false;
     }
     virtual void on_cancel() {
-        if (!cancelled) {
-            get_weak_ref(L, node_ref);
-            if (!lua_isnil(L, -1)) {
-                ltLuaDelRef(L, -1, func_ref);
-                del_weak_ref(L, node_ref);
-            }
-            lua_pop(L, 1);
-            cancelled = true;
-        } else {
-            luaL_error(L, "LTLuaTweenOnDone::on_cancel already cancelled");
-        }
+        assert(!cancelled);
+        get_weak_ref(L, node_ref);
+        assert(lua_touserdata(L, -1) == node);
+        ltLuaDelRef(L, -1, func_ref);
+        del_weak_ref(L, node_ref);
+        lua_pop(L, 1);
+        cancelled = true;
     }
-    virtual void done() {
-        if (!executed) {
-            get_weak_ref(L, node_ref);
-            ltLuaGetRef(L, -1, func_ref);
-            lua_call(L, 0, 0);
-            lua_pop(L, 1); // pop node
-            executed = true;
-        } else {
-            luaL_error(L, "LTLuaTweenOnDone::done already executed");
-        }
+    virtual void done(LTTweenAction *action) {
+        assert(action->node == node);
+        assert(!executed);
+        assert(!cancelled);
+        get_weak_ref(L, node_ref);
+        assert(node == lua_touserdata(L, -1));
+        ltLuaGetRef(L, -1, func_ref);
+        assert(lua_isfunction(L, -1));
+        lua_call(L, 0, 0);
+        lua_pop(L, 1); // pop node
+        executed = true;
     }
 };
 
@@ -2216,11 +2215,11 @@ static int lt_AddTween(lua_State *L) {
     } else {
         return luaL_error(L, "Invalid easing function: ", ease_func_str);
     }
-    LTTweenOnDone *on_done = NULL;
+    LTLuaTweenOnDone *on_done = NULL;
     if (lua_isfunction(L, 7)) {
         int fref = ltLuaAddRef(L, -1, 7); // Add reference from node to action func.
         int nref = make_weak_ref(L, -1);
-        on_done = new LTLuaTweenOnDone(L, nref, fref);
+        on_done = new LTLuaTweenOnDone(L, node, nref, fref);
     } else if (!lua_isnil(L, 7)) {
         return luaL_error(L, "Argument 7 not a function or nil");
     }
@@ -2711,6 +2710,7 @@ void ltLuaSetResourcePrefix(const char *prefix) {
 
 void ltLuaTeardown() {
     if (g_L != NULL) {
+        ltDeactivateAllScenes(g_L);
         lua_close(g_L);
         g_L = NULL;
     }

@@ -3,6 +3,7 @@
 LT_INIT_DECL(ltobject)
 
 struct LTObject {
+    //lua_Debug debug;
     LTObject();
     virtual ~LTObject();
 

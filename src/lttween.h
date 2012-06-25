@@ -3,9 +3,11 @@ LT_INIT_DECL(lttween)
 
 typedef LTfloat(*LTEaseFunc)(LTfloat);
 
+struct LTTweenAction;
+
 struct LTTweenOnDone {
     virtual ~LTTweenOnDone() {};
-    virtual void done() = 0;
+    virtual void done(LTTweenAction *action) = 0;
     virtual void on_cancel() {};
 };
 

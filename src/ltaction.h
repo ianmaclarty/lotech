@@ -14,6 +14,7 @@ struct LTAction {
     void unschedule();
     void cancel();
     virtual void on_cancel() {};
+    bool is_scheduled();
 
     // Should return true when finished.
     virtual bool doAction(LTfloat dt) = 0;

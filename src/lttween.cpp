@@ -48,7 +48,7 @@ bool LTTweenAction::doAction(LTfloat dt) {
     } else {
         setter(node, target_val);
         if (on_done != NULL) {
-            on_done->done();
+            on_done->done(this);
         }
         return true;
     }

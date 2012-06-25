@@ -42,6 +42,10 @@ void LTAction::unschedule() {
     position = action_list.end();
 } 
 
+bool LTAction::is_scheduled() {
+    return position != action_list.end();
+}
+
 void LTAction::cancel() {
     if (!cancelled) {
         cancelled_actions.push_back(this);
@@ -55,9 +59,12 @@ void ltExecuteActions(LTfloat dt) {
     while (next_action != action_list.end()) {
         LTAction *action = *next_action;
         next_action++;
-        bool finished = action->doAction(dt);
-        if (finished) {
-            action->cancel();
+        assert(action->cancelled || action->node->active);
+        if (!action->cancelled) {
+            bool finished = action->doAction(dt);
+            if (finished) {
+                action->cancel();
+            }
         }
     }
     for (std::list<LTAction*>::iterator it = cancelled_actions.begin(); it != cancelled_actions.end(); it++) {

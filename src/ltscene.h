@@ -181,3 +181,5 @@ LTLayer *lt_expect_LTLayer(lua_State *L, int arg);
 LTWrapNode *lt_expect_LTWrapNode(lua_State *L, int arg);
 bool lt_is_LTWrapNode(lua_State *L, int arg);
 bool lt_is_LTSceneNode(lua_State *L, int arg);
+
+void ltDeactivateAllScenes(lua_State *L);
