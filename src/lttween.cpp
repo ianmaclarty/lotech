@@ -29,6 +29,12 @@ LTTweenAction::~LTTweenAction() {
     }
 }
 
+void LTTweenAction::on_cancel() {
+    if (on_done != NULL) {
+        on_done->on_cancel();
+    }
+}
+
 bool LTTweenAction::doAction(LTfloat dt) {
     if (delay > 0) {
         delay -= dt;

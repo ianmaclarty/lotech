@@ -46,6 +46,7 @@ void LTAction::cancel() {
     if (!cancelled) {
         cancelled_actions.push_back(this);
         cancelled = true;
+        on_cancel();
     }
 }
 

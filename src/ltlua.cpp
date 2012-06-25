@@ -2057,40 +2057,45 @@ struct LTLuaAction : LTAction {
     int node_ref;
     int lua_func_ref;
     LTdouble t_accum;
+    lua_State *L;
 
-    LTLuaAction(LTSceneNode *node, int node_ref, int lua_func_ref) : LTAction(node) {
+    LTLuaAction(lua_State *L, LTSceneNode *node, int node_ref, int lua_func_ref) : LTAction(node) {
         LTLuaAction::node_ref = node_ref;
         LTLuaAction::lua_func_ref = lua_func_ref;
+        LTLuaAction::L = L;
         t_accum = 0.0;
     }
 
     virtual ~LTLuaAction() {
-        get_weak_ref(g_L, node_ref);
-        if (!lua_isnil(g_L, -1)) {
-            ltLuaDelRef(g_L, -1, lua_func_ref);
-            del_weak_ref(g_L, node_ref);
+    }
+
+    virtual void on_cancel() {
+        get_weak_ref(L, node_ref);
+        if (!lua_isnil(L, -1)) {
+            ltLuaDelRef(L, -1, lua_func_ref);
+            del_weak_ref(L, node_ref);
         }
-        lua_pop(g_L, 1);
+        lua_pop(L, 1);
     }
 
     virtual bool doAction(LTfloat fdt) {
         bool res = false;
         LTdouble dt = (LTdouble)fdt;
         t_accum += dt;
-        get_weak_ref(g_L, node_ref);
+        get_weak_ref(L, node_ref);
         while (t_accum > 0.0) {
-            ltLuaGetRef(g_L, -1, lua_func_ref);
-            lua_pushnumber(g_L, dt);
-            lua_call(g_L, 1, 1);
-            if (lua_type(g_L, -1) == LUA_TNUMBER) {
-                t_accum -= lua_tonumber(g_L, -1);
+            ltLuaGetRef(L, -1, lua_func_ref);
+            lua_pushnumber(L, dt);
+            lua_call(L, 1, 1);
+            if (lua_type(L, -1) == LUA_TNUMBER) {
+                t_accum -= lua_tonumber(L, -1);
             } else {
-                res = lua_toboolean(g_L, -1);
+                res = lua_toboolean(L, -1);
                 t_accum = 0.0;
             }
-            lua_pop(g_L, 1); // pop res
+            lua_pop(L, 1); // pop res
         }
-        lua_pop(g_L, 1); // pop node
+        lua_pop(L, 1); // pop node
         return res;
     }
 };
@@ -2103,7 +2108,7 @@ static int lt_AddAction(lua_State *L) {
     }
     int fref = ltLuaAddRef(L, 1, 2); // Add reference from node to action func.
     int nref = make_weak_ref(L, 1);
-    LTAction *action = new LTLuaAction(node, nref, fref);
+    LTAction *action = new LTLuaAction(L, node, nref, fref);
     node->add_action(action);
     return 0;
 }
@@ -2119,23 +2124,40 @@ static int lt_ExecuteActions(lua_State *L) {
 struct LTLuaTweenOnDone : LTTweenOnDone {
     int node_ref;
     int func_ref;
-    LTLuaTweenOnDone(int nref, int fref) {
+    lua_State *L;
+    bool executed;
+    bool cancelled;
+
+    LTLuaTweenOnDone(lua_State *L, int nref, int fref) {
         node_ref = nref;
         func_ref = fref;
+        LTLuaTweenOnDone::L = L;
+        executed = false;
+        cancelled = false;
     }
-    virtual ~LTLuaTweenOnDone() {
-        get_weak_ref(g_L, node_ref);
-        if (!lua_isnil(g_L, -1)) {
-            ltLuaDelRef(g_L, -1, func_ref);
-            del_weak_ref(g_L, node_ref);
+    virtual void on_cancel() {
+        if (!cancelled) {
+            get_weak_ref(L, node_ref);
+            if (!lua_isnil(L, -1)) {
+                ltLuaDelRef(L, -1, func_ref);
+                del_weak_ref(L, node_ref);
+            }
+            lua_pop(L, 1);
+            cancelled = true;
+        } else {
+            luaL_error(L, "LTLuaTweenOnDone::on_cancel already cancelled");
         }
-        lua_pop(g_L, 1);
     }
     virtual void done() {
-        get_weak_ref(g_L, node_ref);
-        ltLuaGetRef(g_L, -1, func_ref);
-        lua_call(g_L, 0, 0);
-        lua_pop(g_L, 1); // pop node
+        if (!executed) {
+            get_weak_ref(L, node_ref);
+            ltLuaGetRef(L, -1, func_ref);
+            lua_call(L, 0, 0);
+            lua_pop(L, 1); // pop node
+            executed = true;
+        } else {
+            luaL_error(L, "LTLuaTweenOnDone::done already executed");
+        }
     }
 };
 
@@ -2198,7 +2220,7 @@ static int lt_AddTween(lua_State *L) {
     if (lua_isfunction(L, 7)) {
         int fref = ltLuaAddRef(L, -1, 7); // Add reference from node to action func.
         int nref = make_weak_ref(L, -1);
-        on_done = new LTLuaTweenOnDone(nref, fref);
+        on_done = new LTLuaTweenOnDone(L, nref, fref);
     } else if (!lua_isnil(L, 7)) {
         return luaL_error(L, "Argument 7 not a function or nil");
     }

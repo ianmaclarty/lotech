@@ -13,6 +13,7 @@ struct LTAction {
     void schedule();
     void unschedule();
     void cancel();
+    virtual void on_cancel() {};
 
     // Should return true when finished.
     virtual bool doAction(LTfloat dt) = 0;
