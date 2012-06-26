@@ -23,6 +23,7 @@ enum LTMatrixMode {
 enum LTVertDataType {
     LT_VERT_DATA_TYPE_FLOAT = GL_FLOAT,
     LT_VERT_DATA_TYPE_SHORT = GL_SHORT,
+    LT_VERT_DATA_TYPE_BYTE  = GL_BYTE,
     LT_VERT_DATA_TYPE_UBYTE = GL_UNSIGNED_BYTE,
 };
 
@@ -98,6 +99,9 @@ void ltDisableIndexArrays();
 void ltEnableColorArrays();
 void ltDisableColorArrays();
 
+void ltEnableNormalArrays();
+void ltDisableNormalArrays();
+
 void ltEnableFog();
 void ltDisableFog();
 void ltFogColor(LTfloat r, LTfloat g, LTfloat b);
@@ -132,6 +136,7 @@ void ltBindVertBuffer(LTvertbuf vb);
 void ltStaticVertBufferData(int size, const void *data);
 void ltVertexPointer(int size, LTVertDataType type, int stride, void *data);
 void ltColorPointer(int size, LTVertDataType type, int stride, void *data);
+void ltNormalPointer(LTVertDataType type, int stride, void *data);
 void ltTexCoordPointer(int size, LTVertDataType type, int stride, void *data);
 void ltDrawArrays(LTDrawMode mode, int start, int count);
 void ltDrawElements(LTDrawMode mode, int n, LTvertindex *indices);

@@ -42,6 +42,7 @@ static void init_core_modules() {
     lttween_init();
     ltutil_init();
     ltvector_init();
+    ltmesh_init();
 }
 
 struct LTFieldInfo {

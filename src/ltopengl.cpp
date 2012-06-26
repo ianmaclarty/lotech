@@ -50,6 +50,7 @@ static bool stencil_test;
 static bool vertex_arrays;
 static bool index_arrays;
 static bool color_arrays;
+static bool normal_arrays;
 static bool fog;
 static LTtexid bound_texture;
 static LTframebuf bound_framebuffer;
@@ -82,6 +83,8 @@ void ltInitGLState() {
     index_arrays = false;
     glDisableClientState(GL_COLOR_ARRAY);
     color_arrays = false;
+    glDisableClientState(GL_NORMAL_ARRAY);
+    normal_arrays = false;
     glDisable(GL_FOG);
     fog = false;
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -423,6 +426,26 @@ void ltDisableColorArrays() {
     gltrace
 }
 
+void ltEnableNormalArrays() {
+    gltrace
+    if (!normal_arrays) {
+        glEnableClientState(GL_NORMAL_ARRAY);
+        check_for_errors
+        normal_arrays = true;
+    }
+    gltrace
+}
+
+void ltDisableNormalArrays() {
+    gltrace
+    if (normal_arrays) {
+        glDisableClientState(GL_NORMAL_ARRAY);
+        check_for_errors
+        normal_arrays = false;
+    }
+    gltrace
+}
+
 void ltEnableFog() {
     gltrace
     if (!fog) {
@@ -637,6 +660,13 @@ void ltVertexPointer(int size, LTVertDataType type, int stride, void *data) {
 void ltColorPointer(int size, LTVertDataType type, int stride, void *data) {
     gltrace
     glColorPointer(size, type, stride, data);
+    check_for_errors
+    gltrace
+}
+
+void ltNormalPointer(LTVertDataType type, int stride, void *data) {
+    gltrace
+    glNormalPointer(type, stride, data);
     check_for_errors
     gltrace
 }

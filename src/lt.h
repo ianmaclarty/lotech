@@ -123,6 +123,7 @@ extern "C" {
 #include "lttween.h"
 #include "ltaudio.h"
 #include "ltvector.h"
+#include "ltmesh.h"
 #include "ltrendertarget.h"
 #include "ltparticles.h"
 #include "lttext.h"
