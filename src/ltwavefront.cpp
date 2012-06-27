@@ -1,30 +1,30 @@
 #include "lt.h"
 LT_INIT_IMPL(ltwavefront)
 
-struct vertex {
+struct t_vertex {
     LTfloat x;
     LTfloat y;
     LTfloat z;
 };
 
-struct texture_coord {
+struct t_texture_coord {
     LTfloat u;
     LTfloat v;
 };
 
-struct normal {
+struct t_normal {
     LTfloat nx;
     LTfloat ny;
     LTfloat nz;
 };
 
-struct face_component {
+struct t_face_component {
     long v;
     long t;
     long n;
 };
 
-typedef std::vector<face_component> face;
+typedef std::vector<t_face_component> t_face;
 
 char *skip_line(char *str) {
     while (*str != '\n' && *str != '\0') {
@@ -37,32 +37,30 @@ char *skip_line(char *str) {
     }
 }
 
-#define incr_ptr(ptr, n) {ptr = ((char*)ptr) + n;}
-
 bool ltReadWavefrontMesh(const char *filename, LTMesh *mesh) {
     char *str = ltReadTextFile(filename);
     if (str == NULL) {
         // ltReadTextFile would have already emitted an error.
         return false;
     }
-    std::vector<vertex> vertices;
-    std::vector<texture_coord> texture_coords;
-    std::vector<normal> normals;
-    std::vector<face> faces;
+    std::vector<t_vertex> vertices;
+    std::vector<t_texture_coord> texture_coords;
+    std::vector<t_normal> normals;
+    std::vector<t_face> faces;
 
     int line = 1;
     while (*str != '\0') {
         switch (*str) {
-            case '#': {
+            case '#':
+            case 's':
                 break;
-            }
             case 'v': {
                 str++;
                 switch (*str) {
                     case ' ': {
                         str++;
-                        // vertex
-                        vertex v;
+                        // t_vertex
+                        t_vertex v;
                         v.x = strtof(str, &str);
                         v.y = strtof(str, &str);
                         v.z = strtof(str, &str);
@@ -72,7 +70,7 @@ bool ltReadWavefrontMesh(const char *filename, LTMesh *mesh) {
                     case 't': {
                         str++;
                         // texture coord
-                        texture_coord t;
+                        t_texture_coord t;
                         t.u = strtof(str, &str);
                         t.v = strtof(str, &str); // XXX assuming v component is present
                         texture_coords.push_back(t);
@@ -80,12 +78,12 @@ bool ltReadWavefrontMesh(const char *filename, LTMesh *mesh) {
                     }
                     case 'n': {
                         str++;
-                        // normal
-                        normal n;
+                        // t_normal
+                        t_normal n;
                         n.nx = strtof(str, &str);
                         n.ny = strtof(str, &str);
                         n.nz = strtof(str, &str);
-                        normals.push_back(n); // XXX assuming normal is unit.
+                        normals.push_back(n); // XXX assuming t_normal is unit.
                         break;
                     }
                     case 'p': {
@@ -102,10 +100,10 @@ bool ltReadWavefrontMesh(const char *filename, LTMesh *mesh) {
             }
             case 'f': {
                 str++;
-                // face
-                face fa;
+                // t_face
+                t_face fa;
                 while (*str != '\n') {
-                    face_component fc;
+                    t_face_component fc;
                     fc.v = strtol(str, &str, 10);
                     if (*str == '/') {
                         str++;
@@ -127,10 +125,11 @@ bool ltReadWavefrontMesh(const char *filename, LTMesh *mesh) {
                     }
                 }
                 faces.push_back(fa);
+                break;
             }
             default: {
-                ltLog("%s:%d: Error: unrecognised definition", filename, line);
-                return false;
+                ltLog("%s:%d: Warning: unrecognised definition", filename, line);
+                break;
             }
         }
         str = skip_line(str);
@@ -139,14 +138,14 @@ bool ltReadWavefrontMesh(const char *filename, LTMesh *mesh) {
 
     int num_faces = faces.size();
     if (num_faces == 0) {
-        ltLog("%s: Error: no faces");
+        ltLog("%s: Error: no faces", filename);
         return false;
     }
 
     // Check all faces are triangles
     for (int i = 0; i < num_faces; i++) {
         if (faces[i].size() != 3) {
-            ltLog("%s: Sorry, only triangle faces are currently supported");
+            ltLog("%s: Sorry, only triangle faces are currently supported", filename);
             return false;
         }
     }
@@ -162,7 +161,7 @@ bool ltReadWavefrontMesh(const char *filename, LTMesh *mesh) {
     }
 
     void *data = malloc(stride * 3 * num_faces);
-    void *ptr;
+    void *ptr = data;
     for (int i = 0; i < num_faces; i++) {
         for (int j = 0; j < 3; j++) {
             int v = faces[i][j].v - 1;
@@ -172,12 +171,12 @@ bool ltReadWavefrontMesh(const char *filename, LTMesh *mesh) {
             }
             int n = faces[i][j].n - 1;
             if (has_normals && n < 0) {
-                ltLog("%s: Error: missing normal in face %d, vertex", filename, i, j);
+                ltLog("%s: Error: missing normal in face %d, t_vertex %d", filename, i, j);
                 return false;
             }
             int t = faces[i][j].t - 1;
             if (has_texture_coords && t < 0) {
-                ltLog("%s: Error: missing texture coords in face %d, vertex", filename, i, j);
+                ltLog("%s: Error: missing texture coords in face %d, vertex %d", filename, i, j);
                 return false;
             }
 
@@ -185,20 +184,20 @@ bool ltReadWavefrontMesh(const char *filename, LTMesh *mesh) {
             fptr[0] = vertices[v].x;
             fptr[1] = vertices[v].y;
             fptr[2] = vertices[v].z;
-            incr_ptr(ptr, 3 * 4);
-            if (n > 0) {
+            lt_incr_ptr(ptr, 3 * 4);
+            if (n >= 0) {
                 LTbyte *bptr = (LTbyte*)ptr;
                 bptr[0] = (LTbyte)(normals[n].nx * 127.0f);
                 bptr[1] = (LTbyte)(normals[n].ny * 127.0f);
                 bptr[2] = (LTbyte)(normals[n].nz * 127.0f);
                 bptr[3] = '\0';
-                incr_ptr(ptr, 4);
+                lt_incr_ptr(ptr, 4);
             }
-            if (t > 0) {
+            if (t >= 0) {
                 LTshort *sptr = (LTshort*)ptr;
                 sptr[0] = (LTshort)(texture_coords[t].u * (LTfloat)LT_MAX_TEX_COORD);
                 sptr[1] = (LTshort)(texture_coords[t].v * (LTfloat)LT_MAX_TEX_COORD);
-                incr_ptr(ptr, 4);
+                lt_incr_ptr(ptr, 4);
             }
         }
     }

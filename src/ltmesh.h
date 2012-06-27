@@ -24,6 +24,7 @@ struct LTMesh : LTSceneNode {
 
     void setup();
     void ensure_buffer_uptodate();
+    void print();
 };
 
 void *lt_alloc_LTMesh(lua_State *L);

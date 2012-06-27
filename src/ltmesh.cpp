@@ -11,7 +11,7 @@ LTMesh::LTMesh(int dims, bool has_col, bool has_norm, bool has_tex_coords, LTIma
     draw_mode = mode;
     data = dat;
     size = sz;
-    setup();
+    dirty = true;
 }
 
 LTMesh::~LTMesh() {
@@ -25,7 +25,6 @@ void LTMesh::setup() {
     stride += has_normals ? 4 : 0; // 1 byte per normal component + 1 extra to keep 4-byte alignment
     stride += has_texture_coords ? 4 : 0; // 2 bytes per texture coordinate (u + v) = 4 total
     vertbuf = ltGenVertBuffer();
-    dirty = true;
 }
 
 void LTMesh::draw() {
@@ -36,7 +35,7 @@ void LTMesh::draw() {
     offset += dimensions * 4;
     if (has_colors) {
         ltEnableColorArrays();
-        ltColorPointer(4, LT_VERT_DATA_TYPE_BYTE, stride, (void*)offset);
+        ltColorPointer(4, LT_VERT_DATA_TYPE_UBYTE, stride, (void*)offset);
         offset += 4;
     }
     if (has_normals) {
@@ -66,6 +65,42 @@ void LTMesh::ensure_buffer_uptodate() {
     if (dirty) {
         ltStaticVertBufferData(size * stride, data);
         dirty = false;
+    }
+}
+
+void LTMesh::print() {
+    printf("     X     Y     Z");
+    if (has_colors) {
+        printf("  R  G  B  A");
+    }
+    if (has_normals) {
+        printf("    NX    NY    NZ");
+    }
+    if (has_texture_coords) {
+        printf("     U     V");
+    }
+    printf("\n");
+    void *ptr = data;
+    for (int i = 0; i < size; i++) {
+        LTfloat *vptr = (LTfloat*)ptr;
+        printf(" %5.2f %5.2f %5.2f", (double)vptr[0], (double)vptr[1], (double)vptr[2]);
+        lt_incr_ptr(ptr, 3 * 4);
+        if (has_colors) {
+            LTubyte *cptr = (LTubyte*)ptr;
+            printf(" %2X %2X %2X %2X", cptr[0], cptr[1], cptr[2], cptr[3]);
+            lt_incr_ptr(ptr, 4);
+        }
+        if (has_normals) {
+            LTbyte *nptr = (LTbyte*)ptr;
+            printf(" %5.2f %5.2f %5.2f", ((double)nptr[0])/127.0f, ((double)nptr[1])/127.0f, ((double)nptr[2])/127.0f);
+            lt_incr_ptr(ptr, 4);
+        }
+        if (has_texture_coords) {
+            LTshort *tptr = (LTshort*)ptr;
+            printf(" %5.2f %5.2f", (double)tptr[0]/(double)LT_MAX_TEX_COORD, (double)tptr[1]/(double)LT_MAX_TEX_COORD);
+            lt_incr_ptr(ptr, 4);
+        }
+        printf("\n");
     }
 }
 
