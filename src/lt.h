@@ -129,6 +129,7 @@ extern "C" {
 #include "lttext.h"
 #include "ltstore.h"
 #include "ltfilestore.h"
+#include "ltwavefront.h"
 
 #include "ltgamecenter.h"
 #include "ltios.h"

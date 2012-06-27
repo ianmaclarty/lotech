@@ -43,6 +43,7 @@ static void init_core_modules() {
     ltutil_init();
     ltvector_init();
     ltmesh_init();
+    ltwavefront_init();
 }
 
 struct LTFieldInfo {
