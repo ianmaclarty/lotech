@@ -48,6 +48,22 @@ bool ltFileExists(const char *file) {
     return stat(file, &info) == 0;
 }
 
+char* ltReadTextFile(const char *file) {
+    FILE *f = fopen(file, "r");
+    if (f == NULL) {
+        ltLog("Error opening file %s: %s", file, strerror(errno));
+        return NULL;
+    }
+    fseek(f, 0, SEEK_END);
+    long len = ftell(f);
+    fseek(f, 0, SEEK_SET);
+    char *buf = new char[len + 1];
+    fread(buf, len, 1, f);
+    fclose(f);
+    buf[len] = '\0';
+    return buf;
+}
+
 char* ltGlob(const char **patterns) {
 #if !defined LTANDROID && !defined LTMINGW
     glob_t globbuf;

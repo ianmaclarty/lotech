@@ -2,9 +2,10 @@ LT_INIT_DECL(ltmesh);
 
 struct LTMesh : LTSceneNode {
     int dimensions;
-    bool has_color;
+    bool has_colors;
     bool has_normals;
-    LTImage *texture; // NULL if no texture
+    bool has_texture_coords;
+    LTImage *texture;
     LTDrawMode draw_mode;
 
     void *data;
@@ -17,7 +18,7 @@ struct LTMesh : LTSceneNode {
 
     LTMesh() { ltAbort(); };
     // dat should be malloc'd
-    LTMesh(int dims, bool has_col, bool has_norm, LTImage *tex, LTDrawMode mode, void* dat, int sz);
+    LTMesh(int dims, bool has_col, bool has_norm, bool has_tex_coords, LTImage *tex, LTDrawMode mode, void* dat, int sz);
     virtual ~LTMesh();
     virtual void draw();
 

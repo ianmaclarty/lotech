@@ -22,6 +22,8 @@ typedef float           LTfloat;
 typedef double          LTdouble;
 typedef int             LTint;
 typedef int             LTint32;
+typedef char            LTbyte;
+typedef short           LTshort;
 typedef bool            LTbool;
 typedef unsigned int    LTuint;
 typedef unsigned short  LTushort;
