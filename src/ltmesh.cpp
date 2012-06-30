@@ -16,7 +16,7 @@ LTMesh::LTMesh(int dims, bool has_col, bool has_norm, bool has_tex_coords, LTIma
 
 LTMesh::~LTMesh() {
     free(data);
-    //ltDeleteVertBuffer(vertbuf);
+    ltDeleteVertBuffer(vertbuf);
 }
 
 void LTMesh::setup() {
@@ -29,23 +29,23 @@ void LTMesh::setup() {
 
 void LTMesh::draw() {
     ensure_buffer_uptodate();
-    ltBindVertBuffer(0);
+    ltBindVertBuffer(vertbuf);
     int offset = 0;
-    ltVertexPointer(dimensions, LT_VERT_DATA_TYPE_FLOAT, stride, ((char*)(data)) + offset);
+    ltVertexPointer(dimensions, LT_VERT_DATA_TYPE_FLOAT, stride, (void*)offset);
     offset += dimensions * 4;
     if (has_colors) {
         ltEnableColorArrays();
-        ltColorPointer(4, LT_VERT_DATA_TYPE_UBYTE, stride, ((char*)(data)) + offset);
+        ltColorPointer(4, LT_VERT_DATA_TYPE_UBYTE, stride, (void*)offset);
         offset += 4;
     }
     if (has_normals) {
         ltEnableNormalArrays();
-        ltNormalPointer(LT_VERT_DATA_TYPE_BYTE, stride, ((char*)(data)) + offset);
+        ltNormalPointer(LT_VERT_DATA_TYPE_BYTE, stride, (void*)offset);
         offset += 4;
     }
     if (texture != NULL) {
         ltEnableTexture(texture->texture_id);
-        ltTexCoordPointer(2, LT_VERT_DATA_TYPE_SHORT, stride, ((char*)(data)) + offset);
+        ltTexCoordPointer(2, LT_VERT_DATA_TYPE_SHORT, stride, (void*)offset);
     } else {
         ltDisableTextures();
     }
@@ -63,7 +63,8 @@ void LTMesh::draw() {
 
 void LTMesh::ensure_buffer_uptodate() {
     if (dirty) {
-        //ltStaticVertBufferData(size * stride, data);
+        ltBindVertBuffer(vertbuf);
+        ltStaticVertBufferData(size * stride, data);
         dirty = false;
     }
 }
