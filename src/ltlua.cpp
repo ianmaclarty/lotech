@@ -145,6 +145,10 @@ static const char *sound_path(const char *name) {
     return resource_path(name, ".wav");
 }
 
+static const char *model_path(const char *name) {
+    return resource_path(name, ".obj");
+}
+
 /************************* Graphics **************************/
 
 static int lt_SetViewPort(lua_State *L) {
@@ -794,6 +798,42 @@ static int lt_LoadImages(lua_State *L) {
         
     delete packer;
 
+    return 1;
+}
+
+/************************* Models **************************/
+
+static int lt_LoadModels(lua_State *L) {
+    // Load wavefront models in 1st argument (an array) and return a table
+    // of meshes indexed by model name.
+    ltLuaCheckNArgs(L, 1);
+    lua_newtable(L); // The table to be returned.
+    int i = 1;
+    while (true) {
+        lua_pushinteger(L, i);
+        lua_gettable(L, 1);
+        // The top of the stack now contains the ith entry of the array argument.
+        if (lua_isnil(L, -1)) {
+            // We've reached the end of the array.
+            lua_pop(L, 1);
+            break;
+        }
+        const char* name = lua_tostring(L, -1);
+        lua_pop(L, 1);
+        // The top of the stack now contains the table to be returned.
+        if (name == NULL) {
+            return luaL_error(L, "Expecting an array of strings.");
+        }
+        const char *path = model_path(name); 
+        LTMesh *mesh = (LTMesh*)lt_alloc_LTMesh(L);
+        if (!ltReadWavefrontMesh(path, mesh)) {
+            return luaL_error(L, "Unable to read model at path %s", path);
+        }
+        mesh->setup();
+        delete[] path;
+        lua_setfield(L, -2, name);
+        i++;
+    }
     return 1;
 }
 
@@ -2495,6 +2535,8 @@ static const luaL_Reg ltlib[] = {
     {"GenerateVectorColumn",            lt_GenerateVectorColumn},
     {"FillVectorColumnsWithImageQuads", lt_FillVectorColumnsWithImageQuads},
     //{"DrawQuads",                       lt_DrawQuads},
+
+    {"LoadModels",                      lt_LoadModels},
 
     //{"ParticleSystemFixtureFilter",     lt_ParticleSystemFixtureFilter},
 

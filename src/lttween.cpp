@@ -40,9 +40,10 @@ bool LTTweenAction::doAction(LTfloat dt) {
         delay -= dt;
         return false;
     }
-    if (t < 1.0f) {
+    LTfloat inc = dt / time;
+    t += inc;
+    if (t < 1.0f - inc) {
         LTfloat v = initial_val + distance * ease(t);
-        t += dt / time;
         setter(node, v);
         return false;
     } else {

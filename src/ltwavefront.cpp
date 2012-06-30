@@ -38,7 +38,8 @@ char *skip_line(char *str) {
 }
 
 bool ltReadWavefrontMesh(const char *filename, LTMesh *mesh) {
-    char *str = ltReadTextFile(filename);
+    char *str0 = ltReadTextResource(filename);
+    char *str = str0;
     if (str == NULL) {
         // ltReadTextFile would have already emitted an error.
         return false;
@@ -135,6 +136,8 @@ bool ltReadWavefrontMesh(const char *filename, LTMesh *mesh) {
         str = skip_line(str);
         line++;
     }
+
+    free(str0);
 
     int num_faces = faces.size();
     if (num_faces == 0) {

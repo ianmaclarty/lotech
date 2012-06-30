@@ -13,5 +13,7 @@ int main(int argc, const char **argv) {
         return 1;
     }
     mesh->print();
+    free(mesh->data);
+    free(mesh);
     return 0;
 }

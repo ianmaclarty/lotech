@@ -52,6 +52,7 @@ static bool index_arrays;
 static bool color_arrays;
 static bool normal_arrays;
 static bool fog;
+static bool lighting;
 static LTtexid bound_texture;
 static LTframebuf bound_framebuffer;
 static LTvertbuf bound_vertbuffer;
@@ -87,6 +88,9 @@ void ltInitGLState() {
     normal_arrays = false;
     glDisable(GL_FOG);
     fog = false;
+    glDisable(GL_LIGHTING);
+    lighting = false;
+    glEnable(GL_NORMALIZE);
     glBindTexture(GL_TEXTURE_2D, 0);
     bound_texture = 0;
     GLEXT(glBindFramebuffer)(GL_EXT(GL_FRAMEBUFFER), 0);
@@ -524,6 +528,114 @@ void ltColor(LTfloat r, LTfloat g, LTfloat b, LTfloat a) {
     gltrace
     glColor4f(r, g, b, a);
     check_for_errors
+    gltrace
+}
+
+void ltEnableLighting() {
+    gltrace
+    if (!lighting) {
+        glEnable(GL_LIGHTING);
+        check_for_errors
+        lighting = true;
+    }
+    gltrace
+}
+
+void ltDisableLighting() {
+    gltrace
+    if (lighting) {
+        glDisable(GL_LIGHTING);
+        check_for_errors
+        lighting = false;
+    }
+    gltrace
+}
+
+void ltEnableLight(int light) {
+    gltrace
+    if (light < GL_MAX_LIGHTS) {
+        glEnable(GL_LIGHT0 + light);
+    } else {
+        ltLog("Warning: too many lights (max %d)", GL_MAX_LIGHTS);
+    }
+    gltrace
+}
+
+void ltDisableLight(int light) {
+    gltrace
+    if (light < GL_MAX_LIGHTS) {
+        glDisable(GL_LIGHT0 + light);
+    }
+    gltrace
+}
+
+void ltLightAmbient(int light, LTfloat r, LTfloat g, LTfloat b) {
+    gltrace
+    if (light < GL_MAX_LIGHTS) {
+        GLfloat color[] = {r, g, b, 1};
+        glLightfv(GL_LIGHT0 + light, GL_AMBIENT, color);
+    }
+    gltrace
+}
+
+void ltLightDiffuse(int light, LTfloat r, LTfloat g, LTfloat b) {
+    gltrace
+    if (light < GL_MAX_LIGHTS) {
+        GLfloat color[] = {r, g, b, 1};
+        glLightfv(GL_LIGHT0 + light, GL_DIFFUSE, color);
+    }
+    gltrace
+}
+
+void ltLightSpecular(int light, LTfloat r, LTfloat g, LTfloat b) {
+    gltrace
+    if (light < GL_MAX_LIGHTS) {
+        GLfloat color[] = {r, g, b, 1};
+        glLightfv(GL_LIGHT0 + light, GL_SPECULAR, color);
+    }
+    gltrace
+}
+
+void ltLightPosition(int light, LTfloat x, LTfloat y, LTfloat z, LTfloat w) {
+    gltrace
+    if (light < GL_MAX_LIGHTS) {
+        GLfloat pos[] = {x, y, z, w};
+        glLightfv(GL_LIGHT0 + light, GL_POSITION, pos);
+    }
+    gltrace
+}
+
+void ltMaterialShininess(LTfloat shininess) {
+    gltrace
+    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
+    gltrace
+}
+
+void ltMaterialAmbient(LTfloat r, LTfloat g, LTfloat b) {
+    gltrace
+    static GLfloat color[] = {r, g, b, 1};
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, color);
+    gltrace
+}
+
+void ltMaterialDiffuse(LTfloat r, LTfloat g, LTfloat b, LTfloat a) {
+    gltrace
+    static GLfloat color[] = {r, g, b, a};
+    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, color);
+    gltrace
+}
+
+void ltMaterialSpecular(LTfloat r, LTfloat g, LTfloat b) {
+    gltrace
+    static GLfloat color[] = {r, g, b, 1};
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, color);
+    gltrace
+}
+
+void ltMaterialEmission(LTfloat r, LTfloat g, LTfloat b) {
+    gltrace
+    static GLfloat color[] = {r, g, b, 1};
+    glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, color);
     gltrace
 }
 

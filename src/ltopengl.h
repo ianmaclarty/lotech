@@ -116,6 +116,22 @@ void ltClear(bool color, bool depthbuf);
 
 void ltColor(LTfloat r, LTfloat g, LTfloat b, LTfloat a);
 
+void ltEnableLighting();
+void ltDisableLighting();
+
+void ltEnableLight(int light);
+void ltDisableLight(int light);
+void ltLightAmbient(int light, LTfloat r, LTfloat g, LTfloat b);
+void ltLightDiffuse(int light, LTfloat r, LTfloat g, LTfloat b);
+void ltLightSpecular(int light, LTfloat r, LTfloat g, LTfloat b);
+void ltLightPosition(int light, LTfloat x, LTfloat y, LTfloat z, LTfloat w);
+
+void ltMaterialShininess(LTfloat shininess);
+void ltMaterialAmbient(LTfloat r, LTfloat g, LTfloat b);
+void ltMaterialDiffuse(LTfloat r, LTfloat g, LTfloat b, LTfloat a);
+void ltMaterialSpecular(LTfloat r, LTfloat g, LTfloat b);
+void ltMaterialEmission(LTfloat r, LTfloat g, LTfloat b);
+
 void ltMatrixMode(LTMatrixMode mode);
 void ltPushMatrix();
 void ltPopMatrix();

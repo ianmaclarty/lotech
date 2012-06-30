@@ -7,7 +7,6 @@ LT_INIT_DECL(ltutil)
 void ltAbortImpl(const char *file, int line);
 extern void ltLog(const char *fmt, ...);
 bool ltFileExists(const char *file);
-char* ltReadTextFile(const char *file);
 void ltMkDir(const char* dir);
 const char *ltHomeDir();
 const char *ltAppDataDir();

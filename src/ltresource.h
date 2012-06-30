@@ -21,3 +21,6 @@ LTResource *ltOpenResource(const char* filename);
 int ltReadResource(LTResource *rsc, void* buf, int count);
 
 void ltCloseResource(LTResource *rsc);
+
+// Free with free()
+char* ltReadTextResource(const char *filename);

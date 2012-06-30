@@ -130,6 +130,7 @@ extern "C" {
 #include "ltstore.h"
 #include "ltfilestore.h"
 #include "ltwavefront.h"
+#include "ltlighting.h"
 
 #include "ltgamecenter.h"
 #include "ltios.h"

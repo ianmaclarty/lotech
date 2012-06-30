@@ -64,3 +64,31 @@ void ltCloseResource(LTResource *rsc) {
 }
 
 #endif
+
+char* ltReadTextResource(const char *path) {
+    LTResource *rsc = ltOpenResource(path);
+    if (rsc == NULL) {
+        return NULL;
+    }
+    int capacity = 1024;
+    char *buf = (char*)malloc(capacity);
+    char *ptr = buf;
+    int total = 0;
+    while (true) {
+        int n = ltReadResource(rsc, ptr, capacity - total);
+        total += n;
+        if (n >= 0 && n < capacity - total) {
+            buf[total] = '\0';
+            ltCloseResource(rsc);
+            return buf;
+        } else if (n >= 0) {
+            capacity *= 2;
+            buf = (char*)realloc(buf, capacity);
+            ptr = buf + total;
+        } else {
+            // error
+            ltCloseResource(rsc);
+            return NULL;
+        }
+    }
+}
