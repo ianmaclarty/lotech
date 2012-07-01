@@ -65,10 +65,14 @@ void ltExecuteActions(LTfloat dt) {
     }
     for (std::list<LTAction*>::iterator it = cancelled_actions.begin(); it != cancelled_actions.end(); it++) {
         LTAction *action = *it;
+        assert(action->cancelled);
         if (action->scheduled) {
             action->unschedule();
         }
-        action->node->actions->remove(action);
+        // node == NULL implies the node has been deleted (see ltscene.cpp)
+        if (action->node != NULL) {
+            action->node->actions->remove(action);
+        }
         delete action;
     }
     cancelled_actions.clear();

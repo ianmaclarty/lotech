@@ -21,8 +21,16 @@ LTSceneNode::~LTSceneNode() {
     if (actions != NULL) {
         std::list<LTAction*>::iterator it;
         for (it = actions->begin(); it != actions->end(); it++) {
-            assert(!(*it)->scheduled);
-            delete *it;
+            LTAction *action = *it;
+            assert(!action->scheduled);
+            if (action->cancelled) {
+                // This means it is in the cancelled list and so will
+                // be deleted when that list is traversed
+                // (see ltExecuteActions in ltaction.cpp).
+                action->node = NULL;
+            } else {
+                delete *it;
+            }
         }
         delete actions;
     }
