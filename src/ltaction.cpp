@@ -12,25 +12,25 @@ LTAction::LTAction(LTSceneNode *n) {
     action_id = NULL;
     no_dups = false;
     cancelled = false;
+    scheduled = false;
 }
 
 LTAction::~LTAction() {
-    if (position != action_list.end()) {
-        unschedule();
-    }
+    assert(!scheduled);
 }
 
 void LTAction::schedule() {
-    if (position != action_list.end()) {
+    if (scheduled) {
         ltLog("LTAction::schedule: already scheduled");
         ltAbort();
     }
     action_list.push_front(this);
     position = action_list.begin();
+    scheduled = true;
 }
 
 void LTAction::unschedule() {
-    if (position == action_list.end()) {
+    if (!scheduled) {
         ltLog("LTAction::unschedule: not scheduled");
         ltAbort();
     }
@@ -39,12 +39,8 @@ void LTAction::unschedule() {
     } else {
         action_list.erase(position);
     }
-    position = action_list.end();
+    scheduled = false;
 } 
-
-bool LTAction::is_scheduled() {
-    return position != action_list.end();
-}
 
 void LTAction::cancel() {
     if (!cancelled) {
@@ -69,7 +65,7 @@ void ltExecuteActions(LTfloat dt) {
     }
     for (std::list<LTAction*>::iterator it = cancelled_actions.begin(); it != cancelled_actions.end(); it++) {
         LTAction *action = *it;
-        if (action->position != action_list.end()) {
+        if (action->scheduled) {
             action->unschedule();
         }
         action->node->actions->remove(action);

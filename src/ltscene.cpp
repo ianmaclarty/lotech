@@ -21,7 +21,7 @@ LTSceneNode::~LTSceneNode() {
     if (actions != NULL) {
         std::list<LTAction*>::iterator it;
         for (it = actions->begin(); it != actions->end(); it++) {
-            assert(!(*it)->is_scheduled());
+            assert(!(*it)->scheduled);
             delete *it;
         }
         delete actions;

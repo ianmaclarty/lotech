@@ -6,6 +6,7 @@ struct LTAction {
     void *action_id;
     bool no_dups;
     bool cancelled;
+    bool scheduled;
 
     LTAction(LTSceneNode *node);
     virtual ~LTAction();
@@ -14,7 +15,6 @@ struct LTAction {
     void unschedule();
     void cancel();
     virtual void on_cancel() {};
-    bool is_scheduled();
 
     // Should return true when finished.
     virtual bool doAction(LTfloat dt) = 0;
