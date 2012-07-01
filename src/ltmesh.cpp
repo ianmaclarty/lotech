@@ -15,8 +15,12 @@ LTMesh::LTMesh(int dims, bool has_col, bool has_norm, bool has_tex_coords, LTIma
 }
 
 LTMesh::~LTMesh() {
-    free(data);
-    ltDeleteVertBuffer(vertbuf);
+    if (data != NULL) {
+        free(data);
+    }
+    if (vertbuf != 0) {
+        ltDeleteVertBuffer(vertbuf);
+    }
 }
 
 void LTMesh::setup() {

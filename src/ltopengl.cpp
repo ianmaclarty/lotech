@@ -613,28 +613,28 @@ void ltMaterialShininess(LTfloat shininess) {
 
 void ltMaterialAmbient(LTfloat r, LTfloat g, LTfloat b) {
     gltrace
-    static GLfloat color[] = {r, g, b, 1};
+    GLfloat color[] = {r, g, b, 1};
     glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, color);
     gltrace
 }
 
 void ltMaterialDiffuse(LTfloat r, LTfloat g, LTfloat b, LTfloat a) {
     gltrace
-    static GLfloat color[] = {r, g, b, a};
+    GLfloat color[] = {r, g, b, a};
     glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, color);
     gltrace
 }
 
 void ltMaterialSpecular(LTfloat r, LTfloat g, LTfloat b) {
     gltrace
-    static GLfloat color[] = {r, g, b, 1};
+    GLfloat color[] = {r, g, b, 1};
     glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, color);
     gltrace
 }
 
 void ltMaterialEmission(LTfloat r, LTfloat g, LTfloat b) {
     gltrace
-    static GLfloat color[] = {r, g, b, 1};
+    GLfloat color[] = {r, g, b, 1};
     glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, color);
     gltrace
 }
