@@ -32,7 +32,7 @@ struct LTAudioSample : LTObject {
 struct LTTrack : LTSceneNode {
     ALuint source_id;
     std::list<std::pair<LTAudioSample*, int> > queued_samples;
-    bool is_playing;
+    bool was_playing;
 
     LTTrack();
     virtual ~LTTrack();
