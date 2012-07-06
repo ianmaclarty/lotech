@@ -55,6 +55,12 @@ struct Source {
 
 static std::vector<Source> sources;
 
+// On Mac OS X if you pause and then play a source in the same frame,
+// it will behave as if only alSourcePlay was called, which will restart
+// it from the beginning (maybe something to do with the state not being
+// updated immediately on pausing?). To work around this bug we track
+// which sources need to be paused here and make sure to only pause them
+// once per frame.
 static std::set<ALuint> to_pause;
 
 static ALuint get_source(bool is_temp);
