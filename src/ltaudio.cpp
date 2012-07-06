@@ -55,6 +55,8 @@ struct Source {
 
 static std::vector<Source> sources;
 
+static std::set<ALuint> to_pause;
+
 static ALuint get_source(bool is_temp);
 static void free_source(ALuint source_id);
 static void fixup_source_state(ALuint source_id);
@@ -226,7 +228,12 @@ static void fixup_source_state(ALuint source_id) {
 
 void LTTrack::on_activate() {
     if (was_playing) {
-        alSourcePlay(source_id);
+        std::set<ALuint>::iterator it = to_pause.find(source_id);
+        if (it == to_pause.end()) {
+            alSourcePlay(source_id);
+        } else {
+            to_pause.erase(it);
+        }
         check_for_errors
         was_playing = false;
     }
@@ -240,7 +247,7 @@ void LTTrack::on_deactivate() {
     if (state == AL_PLAYING) {
         was_playing = true;
     }
-    alSourcePause(source_id);
+    to_pause.insert(source_id);
     check_for_errors
 }
 
@@ -412,11 +419,17 @@ void ltAudioGC() {
         }
     }
     if (num_temp != prev_num_temp || num_used != prev_num_used) {
-        //fprintf(stderr, "Audio sources: slots: %d, used: %d, temp: %d\n", num_slots, num_used, num_temp);
+        fprintf(stderr, "Audio sources: slots: %d, used: %d, temp: %d\n", num_slots, num_used, num_temp);
         prev_num_used = num_used;
         prev_num_temp = num_temp;
         prev_num_slots = num_slots;
     }
+
+    std::set<ALuint>::iterator it;
+    for (it = to_pause.begin(); it != to_pause.end(); ++it) {
+        alSourcePause(*it);
+    }
+    to_pause.clear();
 }
 
 static int read_4_byte_little_endian_int(LTResource *rsc) {
