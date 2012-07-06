@@ -27,21 +27,35 @@ static ALCdevice* audio_device = NULL;
 
 struct Source {
     ALuint source_id;
-    bool free;
-    bool temp;
+    bool is_free;
+    bool is_temp;
     bool play_on_resume;
     Source() {
         alGenSources(1, &source_id);
         check_for_errors
-        free = true;
-        temp = false;
+        // XXX recycle if error.
+        is_free = true;
+        is_temp = false;
         play_on_resume = false;
+    }
+    void reset() {
+        ALint queued;
+        ALint processed;
+        alSourceStop(source_id);
+        alGetSourcei(source_id, AL_BUFFERS_QUEUED, &queued);
+        alGetSourcei(source_id, AL_BUFFERS_PROCESSED, &processed);
+        //ltLog("Source %d reset, queued = %d, processed = %d", source_id, queued, processed);
+        ALuint *buffers = (ALuint*)malloc(sizeof(ALuint) * queued);
+        //alSourceUnqueueBuffers(source_id, queued, buffers);
+        alSourcei(source_id, AL_BUFFER, 0);
+        check_for_errors
+        free(buffers);
     }
 };
 
 static std::vector<Source> sources;
 
-static ALuint get_source(bool temp);
+static ALuint get_source(bool is_temp);
 static void free_source(ALuint source_id);
 static void fixup_source_state(ALuint source_id);
 
@@ -67,9 +81,9 @@ void ltAudioInit() {
 void ltAudioTeardown() {
 #ifndef LTANDROID
     for (unsigned i = 0; i < sources.size(); i++) {
-        Source s = sources[i];
-        alSourcei(s.source_id, AL_BUFFER, 0);
-        alDeleteSources(1, &s.source_id);
+        Source* s = &sources[i];
+        s->reset();
+        alDeleteSources(1, &s->source_id);
     }
     sources.clear();
     if (audio_context != NULL) {
@@ -98,6 +112,7 @@ LTAudioSample::~LTAudioSample() {
 
 void LTAudioSample::play(LTfloat pitch, LTfloat gain) {
     ALuint source_id = get_source(true);
+    //ltLog("play is_temp: %d", source_id);
     alSourceQueueBuffers(source_id, 1, &buffer_id);
     alSourcef(source_id, AL_PITCH, pitch);
     alSourcef(source_id, AL_GAIN, gain);
@@ -146,6 +161,7 @@ LT_REGISTER_TYPE(LTAudioSample, "lt.Sample", "lt.Object")
 
 LTTrack::LTTrack() {
     source_id = get_source(false);
+    //ltLog("new track: %d", source_id);
     alSourcef(source_id, AL_PITCH, 1.0f);
     alSourcef(source_id, AL_GAIN, 1.0f);
     alSourcei(source_id, AL_LOOPING, AL_FALSE);
@@ -154,34 +170,33 @@ LTTrack::LTTrack() {
 }
 
 LTTrack::~LTTrack() {
+    //ltLog("delete track: %d", source_id);
     free_source(source_id);
 }
 
-static ALuint get_source(bool temp) {
+static ALuint get_source(bool is_temp) {
     for (unsigned i = 0; i < sources.size(); i++) {
-        Source s = sources[i];
-        if (s.free) {
-            s.temp = temp;
-            s.free = false;
-            return s.source_id;
+        Source *s = &sources[i];
+        if (s->is_free) {
+            s->is_temp = is_temp;
+            s->is_free = false;
+            return s->source_id;
         }
     }
     Source new_source;
-    new_source.temp = temp;
-    new_source.free = false;
+    new_source.is_temp = is_temp;
+    new_source.is_free = false;
     sources.push_back(new_source);
     return new_source.source_id;
 }
 
 static void free_source(ALuint source_id) {
     for (unsigned i = 0; i < sources.size(); i++) {
-        Source s = sources[i];
-        if (s.source_id == source_id) {
-            assert(!s.free);
-            alSourcei(source_id, AL_BUFFER, 0);
-            alSourceStop(source_id);
-            check_for_errors
-            s.free = true;
+        Source *s = &sources[i];
+        if (s->source_id == source_id) {
+            assert(!s->is_free);
+            s->reset();
+            s->is_free = true;
             return;
         }
     }
@@ -198,7 +213,7 @@ static void fixup_source_state(ALuint source_id) {
     alGetSourcei(source_id, AL_SOURCE_STATE, &state);
     alGetSourcei(source_id, AL_LOOPING, &looping);
     check_for_errors
-    if (state == AL_PLAYING && !looping) {
+    if (state == AL_PLAYING && looping == AL_FALSE) {
         alGetSourcei(source_id, AL_BUFFERS_QUEUED, &queued);
         alGetSourcei(source_id, AL_BUFFERS_PROCESSED, &processed);
         check_for_errors
@@ -231,6 +246,7 @@ void LTTrack::on_deactivate() {
 
 void LTTrack::queueSample(LTAudioSample *sample, int ref) {
     alSourceQueueBuffers(source_id, 1, &sample->buffer_id);
+    //ltLog("source: %d queue buffer: %d", source_id, sample->buffer_id);
     check_for_errors
     queued_samples.push_front(std::pair<LTAudioSample*, int>(sample, ref));
 }
@@ -293,8 +309,11 @@ int LTTrack::numPendingSamples() {
 }
 
 void LTTrack::dequeueSamples(lua_State *L, int track_index, int n) {
-    alSourceUnqueueBuffers(source_id, n, NULL);
+    //ltLog("source: %d dequeue buffers: %d", source_id, n);
+    ALuint *buffers = (ALuint*)malloc(sizeof(ALuint) * n);
+    alSourceUnqueueBuffers(source_id, n, buffers);
     check_for_errors
+    free(buffers);
     std::list<std::pair<LTAudioSample*, int> >::iterator it = queued_samples.begin();
     for (int i = 0; (i < n && !queued_samples.empty()); i++) {
         ltLuaDelRef(L, track_index, queued_samples.front().second);
@@ -333,17 +352,17 @@ LT_REGISTER_PROPERTY_FLOAT(LTTrack, pitch, &get_pitch, &set_pitch)
 void ltAudioSuspend() {
     if (!audio_is_suspended) {
         for (unsigned i = 0; i < sources.size(); i++) {
-            Source s = sources[i];
-            fixup_source_state(s.source_id);
+            Source *s = &sources[i];
+            fixup_source_state(s->source_id);
             ALint state;
-            alGetSourcei(s.source_id, AL_SOURCE_STATE, &state);
+            alGetSourcei(s->source_id, AL_SOURCE_STATE, &state);
             check_for_errors
             if (state == AL_PLAYING) {
-                s.play_on_resume = true;
-                alSourcePause(s.source_id);
+                s->play_on_resume = true;
+                alSourcePause(s->source_id);
                 check_for_errors
             } else {
-                s.play_on_resume = false;
+                s->play_on_resume = false;
             }
         }
         audio_is_suspended = true;
@@ -353,11 +372,11 @@ void ltAudioSuspend() {
 void ltAudioResume() {
     if (audio_is_suspended) {
         for (unsigned i = 0; i < sources.size(); i++) {
-            Source s = sources[i];
-            if (s.play_on_resume) {
-                alSourcePlay(s.source_id);
+            Source *s = &sources[i];
+            if (s->play_on_resume) {
+                alSourcePlay(s->source_id);
                 check_for_errors
-                s.play_on_resume = false;
+                s->play_on_resume = false;
             }
         }
         audio_is_suspended = false;
@@ -367,36 +386,36 @@ void ltAudioResume() {
 void ltAudioGC() {
     static int prev_num_temp = 0;
     static int prev_num_used = 0;
-    static int num_temp = 0;
-    static int num_used = 0;
+    static int prev_num_slots = 0;
+    int num_temp = 0;
+    int num_used = 0;
+    int num_slots = sources.size();
     if (!audio_is_suspended) {
         for (unsigned i = 0; i < sources.size(); i++) {
-            Source s = sources[i];
-            fixup_source_state(s.source_id);
-            if (!s.free) {
-                if (s.temp) {
+            Source *s = &sources[i];
+            fixup_source_state(s->source_id);
+            if (!s->is_free && s->is_temp) {
+                ALint state;
+                alGetSourcei(s->source_id, AL_SOURCE_STATE, &state);
+                check_for_errors
+                if (state != AL_PLAYING) {
+                    s->reset();
+                    s->is_free = true;
+                }
+            }
+            if (!s->is_free) {
+                if (s->is_temp) {
                     num_temp++;
                 }
                 num_used++;
             }
-            if (!s.free && s.temp) {
-                ALint state;
-                alGetSourcei(s.source_id, AL_SOURCE_STATE, &state);
-                check_for_errors
-                if (state != AL_PLAYING) {
-                    s.free = true;
-                    alSourcei(s.source_id, AL_BUFFER, 0);
-                    check_for_errors
-                }
-            }
         }
     }
     if (num_temp != prev_num_temp || num_used != prev_num_used) {
-        fprintf(stderr, "Audio sources: used: %d, temp: %d\n", num_used, num_temp);
+        //fprintf(stderr, "Audio sources: slots: %d, used: %d, temp: %d\n", num_slots, num_used, num_temp);
         prev_num_used = num_used;
         prev_num_temp = num_temp;
-        num_used = 0;
-        num_temp = 0;
+        prev_num_slots = num_slots;
     }
 }
 
