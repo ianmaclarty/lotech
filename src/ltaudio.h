@@ -29,8 +29,10 @@ struct LTAudioSample : LTObject {
     void play(LTfloat pitch = 1.0f, LTfloat gain = 1.0f);
 };
 
+struct LTAudioSource;
+
 struct LTTrack : LTSceneNode {
-    ALuint source_id;
+    LTAudioSource *source;
     std::list<std::pair<LTAudioSample*, int> > queued_samples;
     bool was_playing;
 
@@ -44,7 +46,6 @@ struct LTTrack : LTSceneNode {
     void play();
     void pause();
     void stop();
-    void rewind();
     int  numSamples();
     int  numProcessedSamples();
     int  numPendingSamples(); // numSamples() - numProcessedSamples()

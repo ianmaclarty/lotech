@@ -908,13 +908,6 @@ static int lt_StopTrack(lua_State *L) {
     return 0;
 }
 
-static int lt_RewindTrack(lua_State *L) {
-    ltLuaCheckNArgs(L, 1);
-    LTTrack *track = lt_expect_LTTrack(L, 1);
-    track->rewind();
-    return 0;
-}
-
 static int lt_QueueSampleInTrack(lua_State *L) {
     int num_args = ltLuaCheckNArgs(L, 2);
     LTTrack *track = lt_expect_LTTrack(L, 1);
@@ -2556,7 +2549,6 @@ static const luaL_Reg ltlib[] = {
     {"PlayTrack",                       lt_PlayTrack},
     {"PauseTrack",                      lt_PauseTrack},
     {"StopTrack",                       lt_StopTrack},
-    {"RewindTrack",                     lt_RewindTrack},
     {"QueueSampleInTrack",              lt_QueueSampleInTrack},
     {"SetTrackLoop",                    lt_SetTrackLoop},
     {"TrackQueueSize",                  lt_TrackQueueSize},

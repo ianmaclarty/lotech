@@ -25,46 +25,135 @@ static const char *oal_errstr(ALenum err) {
 static ALCcontext* audio_context = NULL;
 static ALCdevice* audio_device = NULL;
 
-struct Source {
+struct LTAudioSource {
     ALuint source_id;
     bool is_free;
     bool is_temp;
     bool play_on_resume;
-    Source() {
+    ALint curr_state;
+    ALint new_state;
+    LTAudioSource() {
         alGenSources(1, &source_id);
         check_for_errors
         // XXX recycle if error.
         is_free = true;
         is_temp = false;
         play_on_resume = false;
+        curr_state = AL_STOPPED;
+        new_state = AL_STOPPED;
     }
     void reset() {
         ALint queued;
         ALint processed;
         alSourceStop(source_id);
+        check_for_errors
         alGetSourcei(source_id, AL_BUFFERS_QUEUED, &queued);
+        check_for_errors
         alGetSourcei(source_id, AL_BUFFERS_PROCESSED, &processed);
-        //ltLog("Source %d reset, queued = %d, processed = %d", source_id, queued, processed);
-        ALuint *buffers = (ALuint*)malloc(sizeof(ALuint) * queued);
-        //alSourceUnqueueBuffers(source_id, queued, buffers);
+        check_for_errors
         alSourcei(source_id, AL_BUFFER, 0);
+        check_for_errors
+        curr_state = AL_STOPPED;
+        new_state = AL_STOPPED;
+        play_on_resume = false;
+        is_free = true;
+        is_temp = false;
+        set_pitch(1.0f);
+        set_gain(1.0f);
+        set_looping(false);
+    }
+    void play() {
+        new_state = AL_PLAYING;
+    }
+    void pause() {
+        new_state = AL_PAUSED;
+    }
+    void stop() {
+        new_state = AL_STOPPED;
+    }
+    bool is_playing() {
+        if (new_state != curr_state) {
+            return new_state == AL_PLAYING;
+        } else {
+            ALint state;
+            alGetSourcei(source_id, AL_SOURCE_STATE, &state);
+            return state == AL_PLAYING;
+        }
+    }
+    void update_state() {
+        if (new_state != curr_state) {
+            switch (new_state) {
+                case AL_PLAYING: alSourcePlay(source_id); break;
+                case AL_PAUSED: alSourcePause(source_id); break;
+                case AL_STOPPED: alSourceStop(source_id); break;
+                default: ltAbort();
+            }
+            check_for_errors
+            curr_state = new_state;
+        }
+    }
+    void set_pitch(LTfloat pitch) {
+        alSourcef(source_id, AL_PITCH, pitch);
+        check_for_errors
+    }
+    void set_gain(LTfloat gain) {
+        alSourcef(source_id, AL_GAIN, gain);
+        check_for_errors
+    }
+    void set_looping(bool looping) {
+        alSourcei(source_id, AL_LOOPING, looping ? AL_TRUE : AL_FALSE);
+        check_for_errors
+    }
+    LTfloat get_pitch() {
+        ALfloat val;
+        alGetSourcef(source_id, AL_PITCH, &val);
+        check_for_errors
+        return val;
+    }
+    LTfloat get_gain() {
+        ALfloat val;
+        alGetSourcef(source_id, AL_GAIN, &val);
+        check_for_errors
+        return val;
+    }
+    bool get_looping() {
+        ALint looping;
+        alGetSourcei(source_id, AL_LOOPING, &looping);
+        check_for_errors
+        return looping == AL_TRUE ? true : false;
+    }
+    void queue_buffer(ALuint buffer_id) {
+        alSourceQueueBuffers(source_id, 1, &buffer_id);
+        check_for_errors
+    }
+    void dequeue_buffers(int n) {
+        ALuint *buffers = (ALuint*)malloc(sizeof(ALuint) * n);
+        alSourceUnqueueBuffers(source_id, n, buffers);
         check_for_errors
         free(buffers);
     }
+    int num_samples() {
+        ALint queued;
+        alGetSourcei(source_id, AL_BUFFERS_QUEUED, &queued);
+        check_for_errors
+        return queued;
+    }
+    int num_processed_samples() {
+        ALint processed;
+        alGetSourcei(source_id, AL_BUFFERS_PROCESSED, &processed);
+        check_for_errors
+        return processed;
+    }
+    int num_pending_samples() {
+        return num_samples() - num_processed_samples();
+    }
 };
 
-static std::vector<Source> sources;
+static std::vector<LTAudioSource*> sources;
 
-// On Mac OS X if you pause and then play a source in the same frame,
-// it will behave as if only alSourcePlay was called, which will restart
-// it from the beginning (maybe something to do with the state not being
-// updated immediately on pausing?). To work around this bug we track
-// which sources need to be paused here and make sure to only pause them
-// once per frame.
-static std::set<ALuint> to_pause;
+static LTAudioSource* aquire_source(bool is_temp);
+static void release_source(LTAudioSource *source);
 
-static ALuint get_source(bool is_temp);
-static void free_source(ALuint source_id);
 static void fixup_source_state(ALuint source_id);
 
 static bool audio_is_suspended = false;
@@ -89,9 +178,10 @@ void ltAudioInit() {
 void ltAudioTeardown() {
 #ifndef LTANDROID
     for (unsigned i = 0; i < sources.size(); i++) {
-        Source* s = &sources[i];
+        LTAudioSource* s = sources[i];
         s->reset();
         alDeleteSources(1, &s->source_id);
+        delete s;
     }
     sources.clear();
     if (audio_context != NULL) {
@@ -112,21 +202,18 @@ LTAudioSample::LTAudioSample(ALuint buf_id, const char *name) {
 }
 
 LTAudioSample::~LTAudioSample() {
-    // XXX What happens to the sources the buffer is attached to?
+    // XXX Make sure there are no sources using this buffer.
     alDeleteBuffers(1, &buffer_id);
     check_for_errors
     delete[] name;
 }
 
 void LTAudioSample::play(LTfloat pitch, LTfloat gain) {
-    ALuint source_id = get_source(true);
-    //ltLog("play is_temp: %d", source_id);
-    alSourceQueueBuffers(source_id, 1, &buffer_id);
-    alSourcef(source_id, AL_PITCH, pitch);
-    alSourcef(source_id, AL_GAIN, gain);
-    alSourcei(source_id, AL_LOOPING, AL_FALSE);
-    alSourcePlay(source_id);
-    check_for_errors
+    LTAudioSource *source = aquire_source(true);
+    source->queue_buffer(buffer_id);
+    source->set_pitch(pitch);
+    source->set_gain(pitch);
+    source->play();
 }
 
 int LTAudioSample::bytes() {
@@ -168,47 +255,40 @@ LTdouble LTAudioSample::length() {
 LT_REGISTER_TYPE(LTAudioSample, "lt.Sample", "lt.Object")
 
 LTTrack::LTTrack() {
-    source_id = get_source(false);
-    //ltLog("new track: %d", source_id);
-    alSourcef(source_id, AL_PITCH, 1.0f);
-    alSourcef(source_id, AL_GAIN, 1.0f);
-    alSourcei(source_id, AL_LOOPING, AL_FALSE);
+    source = aquire_source(false);
     was_playing = false;
-    check_for_errors
 }
 
 LTTrack::~LTTrack() {
-    //ltLog("delete track: %d", source_id);
-    free_source(source_id);
+    release_source(source);
 }
 
-static ALuint get_source(bool is_temp) {
+static LTAudioSource* aquire_source(bool is_temp) {
     for (unsigned i = 0; i < sources.size(); i++) {
-        Source *s = &sources[i];
+        LTAudioSource *s = sources[i];
         if (s->is_free) {
             s->is_temp = is_temp;
             s->is_free = false;
-            return s->source_id;
+            return s;
         }
     }
-    Source new_source;
-    new_source.is_temp = is_temp;
-    new_source.is_free = false;
+    LTAudioSource *new_source = new LTAudioSource();
+    new_source->is_temp = is_temp;
+    new_source->is_free = false;
     sources.push_back(new_source);
-    return new_source.source_id;
+    return new_source;
 }
 
-static void free_source(ALuint source_id) {
+static void release_source(LTAudioSource *source) {
     for (unsigned i = 0; i < sources.size(); i++) {
-        Source *s = &sources[i];
-        if (s->source_id == source_id) {
+        LTAudioSource *s = sources[i];
+        if (s == source) {
             assert(!s->is_free);
             s->reset();
-            s->is_free = true;
             return;
         }
     }
-    assert(false); // source_id not in sources.
+    assert(false); // source not in sources.
 }
 
 static void fixup_source_state(ALuint source_id) {
@@ -234,45 +314,24 @@ static void fixup_source_state(ALuint source_id) {
 
 void LTTrack::on_activate() {
     if (was_playing) {
-        std::set<ALuint>::iterator it = to_pause.find(source_id);
-        if (it == to_pause.end()) {
-            alSourcePlay(source_id);
-        } else {
-            to_pause.erase(it);
-        }
-        check_for_errors
+        source->play();
         was_playing = false;
     }
 }
 
 void LTTrack::on_deactivate() {
-    fixup_source_state(source_id);
-    ALint state;
-    alGetSourcei(source_id, AL_SOURCE_STATE, &state);
-    check_for_errors
-    if (state == AL_PLAYING) {
-        was_playing = true;
-    }
-    to_pause.insert(source_id);
-    check_for_errors
+    was_playing = source->is_playing();
+    source->pause();
 }
 
 void LTTrack::queueSample(LTAudioSample *sample, int ref) {
-    alSourceQueueBuffers(source_id, 1, &sample->buffer_id);
-    //ltLog("source: %d queue buffer: %d", source_id, sample->buffer_id);
-    check_for_errors
+    source->queue_buffer(sample->buffer_id);
     queued_samples.push_front(std::pair<LTAudioSample*, int>(sample, ref));
 }
 
 void LTTrack::play() {
     if (active) {
-        ALint state;
-        alGetSourcei(source_id, AL_SOURCE_STATE, &state);
-        check_for_errors
-        if (state != AL_PLAYING) {
-            alSourcePlay(source_id);
-        }
-        check_for_errors
+        source->play();
         was_playing = false;
     } else {
         was_playing = true;
@@ -280,53 +339,34 @@ void LTTrack::play() {
 }
 
 void LTTrack::pause() {
-    alSourcePause(source_id);
-    check_for_errors
+    source->pause();
     was_playing = false;
 }
 
 void LTTrack::stop() {
-    alSourceStop(source_id);
-    check_for_errors
-    was_playing = false;
-}
-
-void LTTrack::rewind() {
-    alSourceRewind(source_id);
-    check_for_errors
+    source->stop();
     was_playing = false;
 }
 
 void LTTrack::setLoop(bool loop) {
-    alSourcei(source_id, AL_LOOPING, loop ? AL_TRUE : AL_FALSE);
-    check_for_errors
+    source->set_looping(loop);
 }
 
 
 int LTTrack::numSamples() {
-    ALint queued;
-    alGetSourcei(source_id, AL_BUFFERS_QUEUED, &queued);
-    check_for_errors
-    return queued;
+    return source->num_samples();
 }
 
 int LTTrack::numProcessedSamples() {
-    ALint processed;
-    alGetSourcei(source_id, AL_BUFFERS_PROCESSED, &processed);
-    check_for_errors
-    return processed;
+    return source->num_processed_samples();
 }
 
 int LTTrack::numPendingSamples() {
-    return numSamples() - numProcessedSamples();
+    return source->num_pending_samples();
 }
 
 void LTTrack::dequeueSamples(lua_State *L, int track_index, int n) {
-    //ltLog("source: %d dequeue buffers: %d", source_id, n);
-    ALuint *buffers = (ALuint*)malloc(sizeof(ALuint) * n);
-    alSourceUnqueueBuffers(source_id, n, buffers);
-    check_for_errors
-    free(buffers);
+    source->dequeue_buffers(n);
     std::list<std::pair<LTAudioSample*, int> >::iterator it = queued_samples.begin();
     for (int i = 0; (i < n && !queued_samples.empty()); i++) {
         ltLuaDelRef(L, track_index, queued_samples.front().second);
@@ -335,27 +375,19 @@ void LTTrack::dequeueSamples(lua_State *L, int track_index, int n) {
 }
 
 static LTfloat get_gain(LTObject *obj) {
-    LTfloat val;
-    alGetSourcef(((LTTrack*)(obj))->source_id, AL_GAIN, &val);
-    check_for_errors
-    return val;
+    return ((LTTrack*)obj)->source->get_gain();
 }
 
 static void set_gain(LTObject *obj, LTfloat val) {
-    alSourcef(((LTTrack*)(obj))->source_id, AL_GAIN, val);
-    check_for_errors
+    ((LTTrack*)obj)->source->set_gain(val);
 }
 
 static LTfloat get_pitch(LTObject *obj) {
-    LTfloat val;
-    alGetSourcef(((LTTrack*)(obj))->source_id, AL_PITCH, &val);
-    check_for_errors
-    return val;
+    return ((LTTrack*)obj)->source->get_pitch();
 }
 
 static void set_pitch(LTObject *obj, LTfloat val) {
-    alSourcef(((LTTrack*)(obj))->source_id, AL_PITCH, val);
-    check_for_errors
+    ((LTTrack*)obj)->source->set_pitch(val);
 }
 
 LT_REGISTER_TYPE(LTTrack, "lt.Track", "lt.SceneNode")
@@ -365,15 +397,10 @@ LT_REGISTER_PROPERTY_FLOAT(LTTrack, pitch, &get_pitch, &set_pitch)
 void ltAudioSuspend() {
     if (!audio_is_suspended) {
         for (unsigned i = 0; i < sources.size(); i++) {
-            Source *s = &sources[i];
-            fixup_source_state(s->source_id);
-            ALint state;
-            alGetSourcei(s->source_id, AL_SOURCE_STATE, &state);
-            check_for_errors
-            if (state == AL_PLAYING) {
+            LTAudioSource *s = sources[i];
+            if (s->is_playing()) {
                 s->play_on_resume = true;
-                alSourcePause(s->source_id);
-                check_for_errors
+                s->pause();
             } else {
                 s->play_on_resume = false;
             }
@@ -385,10 +412,9 @@ void ltAudioSuspend() {
 void ltAudioResume() {
     if (audio_is_suspended) {
         for (unsigned i = 0; i < sources.size(); i++) {
-            Source *s = &sources[i];
+            LTAudioSource *s = sources[i];
             if (s->play_on_resume) {
-                alSourcePlay(s->source_id);
-                check_for_errors
+                s->play();
                 s->play_on_resume = false;
             }
         }
@@ -405,15 +431,10 @@ void ltAudioGC() {
     int num_slots = sources.size();
     if (!audio_is_suspended) {
         for (unsigned i = 0; i < sources.size(); i++) {
-            Source *s = &sources[i];
-            fixup_source_state(s->source_id);
+            LTAudioSource *s = sources[i];
             if (!s->is_free && s->is_temp) {
-                ALint state;
-                alGetSourcei(s->source_id, AL_SOURCE_STATE, &state);
-                check_for_errors
-                if (state != AL_PLAYING) {
+                if (!s->is_playing()) {
                     s->reset();
-                    s->is_free = true;
                 }
             }
             if (!s->is_free) {
@@ -421,6 +442,7 @@ void ltAudioGC() {
                     num_temp++;
                 }
                 num_used++;
+                s->update_state();
             }
         }
     }
@@ -430,12 +452,6 @@ void ltAudioGC() {
         prev_num_temp = num_temp;
         prev_num_slots = num_slots;
     }
-
-    std::set<ALuint>::iterator it;
-    for (it = to_pause.begin(); it != to_pause.end(); ++it) {
-        alSourcePause(*it);
-    }
-    to_pause.clear();
 }
 
 static int read_4_byte_little_endian_int(LTResource *rsc) {
