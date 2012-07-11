@@ -7,7 +7,7 @@
 #define DELAY ((int)((1.0 / 60.0) * 1000000.0))
 #define MAX_CMD_LEN 1024
 
-static const char *sync_file_patterns[] = {"*.png", "*.lua", "*.wav", NULL};
+static const char *sync_file_patterns[] = {"*.png", "*.lua", "*.wav", "*.obj", NULL};
 
 static bool need_prompt = true;
 static bool need_nl_before_logs = true;
