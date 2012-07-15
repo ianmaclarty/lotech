@@ -960,7 +960,6 @@ static int lt_TrackDequeuePlayed(lua_State *L) {
     if (n > processed) {
         n = processed;
     }
-    ltLog("dequeing %d", n);
     track->dequeueSamples(L, 1, n);
     return 0;
 }

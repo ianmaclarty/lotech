@@ -33,7 +33,7 @@ struct LTParticleQuad {
 };
 
 struct LTParticleSystem : LTSceneNode {
-    bool active;
+    bool particles_active;
     LTfloat duration;
     LTfloat elapsed;
     LTPoint source_position;

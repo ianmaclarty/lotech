@@ -2,7 +2,7 @@
 
 LT_INIT_IMPL(ltaudio)
 
-static LTfloat master_gain = 0.0f;
+static LTfloat master_gain = 1.0f;
 
 static const char *oal_errstr(ALenum err) {
     switch (err) {
@@ -449,7 +449,7 @@ void ltAudioGC() {
         }
     }
     if (num_temp != prev_num_temp || num_used != prev_num_used) {
-        fprintf(stderr, "Audio sources: slots: %d, used: %d, temp: %d\n", num_slots, num_used, num_temp);
+        //fprintf(stderr, "Audio sources: slots: %d, used: %d, temp: %d\n", num_slots, num_used, num_temp);
         prev_num_used = num_used;
         prev_num_temp = num_temp;
         prev_num_slots = num_slots;

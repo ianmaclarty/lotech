@@ -2,7 +2,11 @@
 
 LT_INIT_DECL(ltobject)
 
+struct LTTypeDef;
+
 struct LTObject {
+    const LTTypeDef *type;
+
     //lua_Debug debug;
     LTObject();
     virtual ~LTObject();

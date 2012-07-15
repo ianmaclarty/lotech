@@ -4,9 +4,15 @@
 
 LT_INIT_IMPL(ltscene)
 
+//static std::list<LTSceneNode *> all_nodes;
+//static std::set<LTSceneNode *> roots;
+
+//static void check_scene_nodes();
+
 LTSceneNode::LTSceneNode() {
     event_handlers = NULL;
     active = 0;
+    //all_nodes.push_back(this);
 }
 
 LTSceneNode::~LTSceneNode() {
@@ -34,6 +40,7 @@ LTSceneNode::~LTSceneNode() {
         }
         delete actions;
     }
+    //all_nodes.remove(this);
 }
 
 bool LTSceneNode::consumePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
@@ -61,54 +68,77 @@ void LTSceneNode::addHandler(LTPointerEventHandler *handler) {
 }
 
 struct EnterVisitor : LTSceneNodeVisitor {
-    LTSceneNode *parent;
-    EnterVisitor(LTSceneNode *p) {
-        parent = p;
+    int inc;
+    EnterVisitor(int n) {
+        inc = n;
     }
     virtual void visit(LTSceneNode *node) {
-        node->enter(parent);
+        if (!node->active) {
+            node->on_activate();
+            if (node->actions != NULL) {
+                for (std::list<LTAction*>::iterator it = node->actions->begin(); it != node->actions->end(); it++) {
+                    (*it)->schedule();
+                }
+            }
+        }
+        node->active += inc;
+        node->visitChildren(this);
+    }
+};
+
+static void map_inc(std::map<LTSceneNode *, int> *ss, LTSceneNode *node) {
+    if (ss->find(node) == ss->end()) {
+        (*ss)[node] = 1;
+    } else {
+        (*ss)[node] = (*ss)[node] + 1;
+    }
+}
+
+struct CheckVisitor : LTSceneNodeVisitor {
+    std::map<LTSceneNode *, int> *ss;
+    CheckVisitor(std::map<LTSceneNode *, int> *s) {
+        ss = s;
+    }
+    virtual void visit(LTSceneNode *node) {
+        map_inc(ss, node);
+        CheckVisitor v2(ss);
+        node->visitChildren(&v2);
     }
 };
 
 void LTSceneNode::enter(LTSceneNode *parent) {
     if (parent == NULL || parent->active) {
-        if (!active) {
-            on_activate();
-            if (actions != NULL) {
-                for (std::list<LTAction*>::iterator it = actions->begin(); it != actions->end(); it++) {
-                    (*it)->schedule();
-                }
-            }
-        }
-        active++;
-        EnterVisitor v(this);
-        visitChildren(&v);
+        int n = parent == NULL ? 1 : parent->active;
+        EnterVisitor v(n);
+        v.visit(this);
     }
 }
 
 struct ExitVisitor : LTSceneNodeVisitor {
-    LTSceneNode *parent;
-    ExitVisitor(LTSceneNode *p) {
-        parent = p;
+    int dec;
+    ExitVisitor(int n) {
+        dec = n;
     }
     virtual void visit(LTSceneNode *node) {
-        node->exit(parent);
+        node->visitChildren(this);
+        node->active -= dec;
+        assert(node->active >= 0);
+        if (node->active == 0) {
+            if (node->actions != NULL) {
+                for (std::list<LTAction*>::iterator it = node->actions->begin(); it != node->actions->end(); it++) {
+                    (*it)->unschedule();
+                }
+            }
+            node->on_deactivate();
+        }
     }
 };
 
 void LTSceneNode::exit(LTSceneNode *parent) {
     if (parent == NULL || parent->active) {
-        ExitVisitor v(this);
-        visitChildren(&v);
-        active--;
-        if (!active) {
-            if (actions != NULL) {
-                for (std::list<LTAction*>::iterator it = actions->begin(); it != actions->end(); it++) {
-                    (*it)->unschedule();
-                }
-            }
-            on_deactivate();
-        }
+        int n = parent == NULL ? 1 : parent->active;
+        ExitVisitor v(n);
+        v.visit(this);
     }
 }
 
@@ -150,6 +180,7 @@ static void push_scene_roots_table(lua_State *L) {
 }
 
 static int activate_scene_node(lua_State *L) {
+    //check_scene_nodes();
     ltLuaCheckNArgs(L, 1);
     LTSceneNode *node = lt_expect_LTSceneNode(L, 1);
     push_scene_roots_table(L);
@@ -161,13 +192,16 @@ static int activate_scene_node(lua_State *L) {
         lua_pushboolean(L, 1);
         lua_rawset(L, -3);
         node->enter(NULL);
-        return 0;
     } else {
         return luaL_error(L, "Scene node already active");
     }
+    //roots.insert(node);
+    //check_scene_nodes();
+    return 0;
 }
 
 static int deactivate_scene_node(lua_State *L) {
+    //check_scene_nodes();
     ltLuaCheckNArgs(L, 1);
     LTSceneNode *node = lt_expect_LTSceneNode(L, 1);
     push_scene_roots_table(L);
@@ -179,10 +213,13 @@ static int deactivate_scene_node(lua_State *L) {
         lua_pushnil(L);
         lua_rawset(L, -3);
         node->exit(NULL);
-        return 0;
     } else {
         return luaL_error(L, "Scene node not active");
     }
+    //assert(roots.find(node) != roots.end());
+    //roots.erase(node);
+    //check_scene_nodes();
+    return 0;
 }
 
 LT_REGISTER_METHOD(LTSceneNode, Activate, activate_scene_node);
@@ -197,6 +234,7 @@ void ltDeactivateAllScenes(lua_State *L) {
         lua_pop(L, 1); 
     }
     lua_pop(L, 1); // pop scene roots.
+    //roots.clear();
 }
 
 LTWrapNode::LTWrapNode() {
@@ -231,13 +269,16 @@ static LTObject *get_child(LTObject *obj) {
 }
 
 static void set_child(LTObject *obj, LTObject *val) {
+    //check_scene_nodes();
     LTWrapNode *wrap = (LTWrapNode*)obj;
-    LTSceneNode *child = (LTSceneNode*)val;
-    if (wrap->child != NULL) {
-        wrap->child->exit(wrap);
+    LTSceneNode *old_child = wrap->child;
+    LTSceneNode *new_child = (LTSceneNode*)val;
+    if (old_child != NULL) {
+        old_child->exit(wrap);
     }
-    wrap->child = child;
-    child->enter(wrap);
+    wrap->child = new_child;
+    new_child->enter(wrap);
+    //check_scene_nodes();
 }
 
 LT_REGISTER_TYPE(LTWrapNode, "lt.Wrap", "lt.SceneNode");
@@ -246,18 +287,23 @@ LT_REGISTER_PROPERTY_OBJ(LTWrapNode, child, LTSceneNode, get_child, set_child);
 #define NODEINDEX std::list<LTSceneNode*>::iterator
 
 void LTLayer::insert_front(LTSceneNode *node, int ref) {
+    //check_scene_nodes();
     node_list.push_back(LTLayerNodeRefPair(node, ref));
     node_index.insert(std::pair<LTSceneNode*, std::list<LTLayerNodeRefPair>::iterator>(node, --node_list.end()));
     node->enter(this);
+    //check_scene_nodes();
 }
 
 void LTLayer::insert_back(LTSceneNode *node, int ref) {
+    //check_scene_nodes();
     node_list.push_front(LTLayerNodeRefPair(node, ref));
     node_index.insert(std::pair<LTSceneNode*, std::list<LTLayerNodeRefPair>::iterator>(node, node_list.begin()));
     node->enter(this);
+    //check_scene_nodes();
 }
 
 bool LTLayer::insert_above(LTSceneNode *existing_node, LTSceneNode *new_node, int ref) {
+    //check_scene_nodes();
     std::pair<std::multimap<LTSceneNode*, std::list<LTLayerNodeRefPair>::iterator>::iterator,
               std::multimap<LTSceneNode*, std::list<LTLayerNodeRefPair>::iterator>::iterator> range;
     std::multimap<LTSceneNode*, std::list<LTLayerNodeRefPair>::iterator>::iterator it;
@@ -267,6 +313,7 @@ bool LTLayer::insert_above(LTSceneNode *existing_node, LTSceneNode *new_node, in
         std::list<LTLayerNodeRefPair>::iterator new_it = node_list.insert(++existing_it, LTLayerNodeRefPair(new_node, ref));
         node_index.insert(std::pair<LTSceneNode*, std::list<LTLayerNodeRefPair>::iterator>(new_node, new_it));
         new_node->enter(this);
+        //check_scene_nodes();
         return true;
     } else {
         return false;
@@ -274,6 +321,7 @@ bool LTLayer::insert_above(LTSceneNode *existing_node, LTSceneNode *new_node, in
 }
 
 bool LTLayer::insert_below(LTSceneNode *existing_node, LTSceneNode *new_node, int ref) {
+    //check_scene_nodes();
     std::pair<std::multimap<LTSceneNode*, std::list<LTLayerNodeRefPair>::iterator>::iterator,
               std::multimap<LTSceneNode*, std::list<LTLayerNodeRefPair>::iterator>::iterator> range;
     std::multimap<LTSceneNode*, std::list<LTLayerNodeRefPair>::iterator>::iterator it;
@@ -283,6 +331,7 @@ bool LTLayer::insert_below(LTSceneNode *existing_node, LTSceneNode *new_node, in
         std::list<LTLayerNodeRefPair>::iterator new_it = node_list.insert(existing_it, LTLayerNodeRefPair(new_node, ref));
         node_index.insert(std::pair<LTSceneNode*, std::list<LTLayerNodeRefPair>::iterator>(new_node, new_it));
         new_node->enter(this);
+        //check_scene_nodes();
         return true;
     } else {
         return false;
@@ -294,6 +343,7 @@ int LTLayer::size() {
 }
 
 void LTLayer::remove(lua_State *L, int layer_index, LTSceneNode *node) {
+    //check_scene_nodes();
     std::pair<std::multimap<LTSceneNode*, std::list<LTLayerNodeRefPair>::iterator>::iterator,
               std::multimap<LTSceneNode*, std::list<LTLayerNodeRefPair>::iterator>::iterator> range;
     std::multimap<LTSceneNode*, std::list<LTLayerNodeRefPair>::iterator>::iterator it;
@@ -304,6 +354,7 @@ void LTLayer::remove(lua_State *L, int layer_index, LTSceneNode *node) {
         it->first->exit(this);
     }
     node_index.erase(range.first, range.second);
+    //check_scene_nodes();
 }
 
 void LTLayer::draw() {
@@ -566,3 +617,24 @@ LT_REGISTER_FIELD_FLOAT(LTDownFilter, left)
 LT_REGISTER_FIELD_FLOAT(LTDownFilter, bottom)
 LT_REGISTER_FIELD_FLOAT(LTDownFilter, right)
 LT_REGISTER_FIELD_FLOAT(LTDownFilter, top)
+
+/*
+static void check_scene_nodes() {
+    std::list<LTSceneNode *>::iterator it;
+    std::map<LTSceneNode *, int> active_nodes;
+    std::set<LTSceneNode*>::iterator roots_it;
+    CheckVisitor visitor(&active_nodes);
+    for (roots_it = roots.begin(); roots_it != roots.end(); ++roots_it) {
+        LTSceneNode *root = *roots_it;
+        map_inc(&active_nodes, root);
+        root->visitChildren(&visitor);
+    }
+    for (it = all_nodes.begin(); it != all_nodes.end(); ++it) {
+        if (active_nodes.find(*it) == active_nodes.end()) {
+            assert((*it)->active == 0);
+        } else {
+            assert((*it)->active == active_nodes[*it]);
+        }
+    }
+}
+*/
