@@ -38,6 +38,9 @@ char *skip_line(char *str) {
 }
 
 bool ltReadWavefrontMesh(const char *filename, LTMesh *mesh) {
+    // Init obj in case we return false.
+    new (mesh) LTMesh(0, false, false, false, NULL, LT_DRAWMODE_TRIANGLES, NULL, 0);
+
     char *str0 = ltReadTextResource(filename);
     char *str = str0;
     if (str == NULL) {

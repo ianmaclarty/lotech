@@ -2,6 +2,8 @@
 
 LT_INIT_IMPL(ltaudio)
 
+static LTfloat master_gain = 0.0f;
+
 static const char *oal_errstr(ALenum err) {
     switch (err) {
         case AL_NO_ERROR: return "AL_NO_ERROR";
@@ -32,6 +34,7 @@ struct LTAudioSource {
     bool play_on_resume;
     ALint curr_state;
     ALint new_state;
+    LTfloat gain;
     LTAudioSource() {
         alGenSources(1, &source_id);
         check_for_errors
@@ -41,6 +44,7 @@ struct LTAudioSource {
         play_on_resume = false;
         curr_state = AL_STOPPED;
         new_state = AL_STOPPED;
+        gain = 1.0f;
     }
     void reset() {
         ALint queued;
@@ -96,8 +100,9 @@ struct LTAudioSource {
         alSourcef(source_id, AL_PITCH, pitch);
         check_for_errors
     }
-    void set_gain(LTfloat gain) {
-        alSourcef(source_id, AL_GAIN, gain);
+    void set_gain(LTfloat g) {
+        gain = g;
+        alSourcef(source_id, AL_GAIN, gain * master_gain);
         check_for_errors
     }
     void set_looping(bool looping) {
@@ -111,10 +116,7 @@ struct LTAudioSource {
         return val;
     }
     LTfloat get_gain() {
-        ALfloat val;
-        alGetSourcef(source_id, AL_GAIN, &val);
-        check_for_errors
-        return val;
+        return gain;
     }
     bool get_looping() {
         ALint looping;
