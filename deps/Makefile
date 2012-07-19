@@ -138,7 +138,7 @@ ifeq ($(TARGET_PLATFORM),osx)
 ############################ Mac OS X Targets ##############################
 
 liblua.a: rebuild
-	cd $(LUA_DIR) && $(MAKE) macosx CC="gcc -m64 -arch x86_64"
+	cd $(LUA_DIR) && $(MAKE) macosx CC="gcc -m64 -arch x86_64 -g -O0"
 	cp $(LUA_DIR)/src/liblua.a $@
 
 libbox2d.a: rebuild

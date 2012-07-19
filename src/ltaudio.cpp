@@ -2,7 +2,7 @@
 
 LT_INIT_IMPL(ltaudio)
 
-static LTfloat master_gain = 1.0f;
+static LTfloat master_gain = 0.0f;
 
 static const char *oal_errstr(ALenum err) {
     switch (err) {
