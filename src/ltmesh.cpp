@@ -2,6 +2,23 @@
 
 LT_INIT_IMPL(ltmesh);
 
+LTMesh::LTMesh(LTMesh *mesh) {
+    dimensions = mesh->dimensions;
+    has_colors = mesh->has_colors;
+    has_normals = mesh->has_normals;
+    has_texture_coords = mesh->has_texture_coords;
+    texture = mesh->texture;
+    draw_mode = mesh->draw_mode;
+
+    stride = mesh->stride;
+    size = mesh->size;
+    data = malloc(stride * size);
+    memcpy(data, mesh->data, stride * size);
+
+    dirty = true;
+    vertbuf = ltGenVertBuffer();
+}
+
 LTMesh::LTMesh(int dims, bool has_col, bool has_norm, bool has_tex_coords, LTImage *tex, LTDrawMode mode, void* dat, int sz) {
     dimensions = dims;
     has_colors = has_col;
@@ -65,6 +82,70 @@ void LTMesh::draw() {
     }
 }
 
+void LTMesh::stretch(LTfloat px, LTfloat py, LTfloat pz,
+    LTfloat left, LTfloat right, LTfloat up, LTfloat down, LTfloat forward, LTfloat backward)
+{
+    char *ptr = (char*)data;
+    for (int i = 0; i < size; i++) {
+        LTfloat *x = (LTfloat*)ptr;
+        LTfloat *y = x + 1;
+        if (*x < px) {
+            *x -= left;
+        } else {
+            *x += right;
+        }
+        if (*y < py) {
+            *y -= down;
+        } else {
+            *y += up;
+        }
+        if (dimensions > 2) {
+            LTfloat *z = x + 2;
+            if (*z < pz) {
+                *z -= backward;
+            } else {
+                *z += forward;
+            }
+        }
+        ptr += stride;
+    }
+
+    dirty = true;
+}
+
+void LTMesh::shift(LTfloat sx, LTfloat sy, LTfloat sz) {
+    char *ptr = (char*)data;
+    for (int i = 0; i < size; i++) {
+        LTfloat *x = (LTfloat*)ptr;
+        LTfloat *y = x + 1;
+        *x += sx;
+        *y += sy;
+        if (dimensions > 2) {
+            LTfloat *z = x + 2;
+            *z += sz;
+        }
+        ptr += stride;
+    }
+
+    dirty = true;
+}
+
+void LTMesh::merge(LTMesh *mesh) {
+    assert(mesh->dimensions == dimensions);
+    assert(mesh->has_colors == has_colors);
+    assert(mesh->has_normals == has_normals);
+    assert(mesh->has_texture_coords == has_texture_coords);
+    assert(mesh->stride == stride);
+    assert(mesh->draw_mode == draw_mode);
+    assert(draw_mode == LT_DRAWMODE_TRIANGLES); // Others NYI
+
+    data = realloc(data, stride * (size + mesh->size));
+    memcpy(((char*)data) + stride * size, mesh->data, stride * mesh->size);
+    size += mesh->size;
+
+    dirty = true;
+}
+
 void LTMesh::ensure_buffer_uptodate() {
     if (dirty) {
         ltBindVertBuffer(vertbuf);
@@ -109,4 +190,68 @@ void LTMesh::print() {
     }
 }
 
+static int clone_mesh(lua_State *L) {
+    ltLuaCheckNArgs(L, 1);
+    LTMesh *mesh = lt_expect_LTMesh(L, 1);
+    new (lt_alloc_LTMesh(L)) LTMesh(mesh);
+    return 1;
+}
+
+static int stretch_mesh(lua_State *L) {
+    ltLuaCheckNArgs(L, 10);
+    LTMesh *mesh = lt_expect_LTMesh(L, 1);
+    LTfloat px = luaL_checknumber(L, 2);
+    LTfloat py = luaL_checknumber(L, 3);
+    LTfloat pz = luaL_checknumber(L, 4);
+    LTfloat left = luaL_checknumber(L, 5);
+    LTfloat right = luaL_checknumber(L, 6);
+    LTfloat up = luaL_checknumber(L, 7);
+    LTfloat down = luaL_checknumber(L, 8);
+    LTfloat forward = luaL_checknumber(L, 9);
+    LTfloat backward = luaL_checknumber(L, 10);
+    mesh->stretch(px, py, pz, left, right, up, down, forward, backward);
+    return 0;
+}
+
+static int shift_mesh(lua_State *L) {
+    ltLuaCheckNArgs(L, 4);
+    LTMesh *mesh = lt_expect_LTMesh(L, 1);
+    LTfloat sx = luaL_checknumber(L, 2);
+    LTfloat sy = luaL_checknumber(L, 3);
+    LTfloat sz = luaL_checknumber(L, 4);
+    mesh->shift(sx, sy, sz);
+    return 0;
+}
+
+static int merge_mesh(lua_State *L) {
+    ltLuaCheckNArgs(L, 2);
+    LTMesh *mesh1 = lt_expect_LTMesh(L, 1);
+    LTMesh *mesh2 = lt_expect_LTMesh(L, 2);
+
+    if (mesh1->dimensions != mesh2->dimensions) {
+        return luaL_error(L, "Mesh merge error: incompatible dimensions");
+    }
+    if (mesh1->has_colors != mesh2->has_colors) {
+        return luaL_error(L, "Mesh merge error: one has colors, the other doesn't");
+    }
+    if (mesh1->has_normals != mesh2->has_normals) {
+        return luaL_error(L, "Mesh merge error: one has normals, the other doesn't");
+    }
+    if (mesh1->has_texture_coords != mesh2->has_texture_coords) {
+        return luaL_error(L, "Mesh merge error: one has texture coords, the other doesn't");
+    }
+    if (mesh1->stride != mesh2->stride) {
+        return luaL_error(L, "Mesh merge error: incompatible strides");
+    }
+    if (mesh1->draw_mode != LT_DRAWMODE_TRIANGLES || mesh2->draw_mode != LT_DRAWMODE_TRIANGLES) {
+        return luaL_error(L, "Mesh merge error: sorry, only triangle meshes can be merged");
+    }
+    mesh1->merge(mesh2);
+    return 0;
+}
+
 LT_REGISTER_TYPE(LTMesh, "lt.Mesh", "lt.SceneNode")
+LT_REGISTER_METHOD(LTMesh, "Clone", clone_mesh)
+LT_REGISTER_METHOD(LTMesh, "Stretch", stretch_mesh)
+LT_REGISTER_METHOD(LTMesh, "Shift", shift_mesh)
+LT_REGISTER_METHOD(LTMesh, "Merge", merge_mesh)
