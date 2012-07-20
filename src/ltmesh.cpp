@@ -83,7 +83,7 @@ void LTMesh::draw() {
 }
 
 void LTMesh::stretch(LTfloat px, LTfloat py, LTfloat pz,
-    LTfloat left, LTfloat right, LTfloat up, LTfloat down, LTfloat forward, LTfloat backward)
+    LTfloat left, LTfloat right, LTfloat down, LTfloat up, LTfloat backward, LTfloat forward)
 {
     char *ptr = (char*)data;
     for (int i = 0; i < size; i++) {
@@ -205,12 +205,13 @@ static int stretch_mesh(lua_State *L) {
     LTfloat pz = luaL_checknumber(L, 4);
     LTfloat left = luaL_checknumber(L, 5);
     LTfloat right = luaL_checknumber(L, 6);
-    LTfloat up = luaL_checknumber(L, 7);
-    LTfloat down = luaL_checknumber(L, 8);
-    LTfloat forward = luaL_checknumber(L, 9);
-    LTfloat backward = luaL_checknumber(L, 10);
-    mesh->stretch(px, py, pz, left, right, up, down, forward, backward);
-    return 0;
+    LTfloat down = luaL_checknumber(L, 7);
+    LTfloat up = luaL_checknumber(L, 8);
+    LTfloat backward = luaL_checknumber(L, 9);
+    LTfloat forward = luaL_checknumber(L, 10);
+    mesh->stretch(px, py, pz, left, right, down, up, backward, forward);
+    lua_pushvalue(L, 1);
+    return 1;
 }
 
 static int shift_mesh(lua_State *L) {
@@ -220,7 +221,8 @@ static int shift_mesh(lua_State *L) {
     LTfloat sy = luaL_checknumber(L, 3);
     LTfloat sz = luaL_checknumber(L, 4);
     mesh->shift(sx, sy, sz);
-    return 0;
+    lua_pushvalue(L, 1);
+    return 1;
 }
 
 static int merge_mesh(lua_State *L) {
@@ -247,11 +249,12 @@ static int merge_mesh(lua_State *L) {
         return luaL_error(L, "Mesh merge error: sorry, only triangle meshes can be merged");
     }
     mesh1->merge(mesh2);
-    return 0;
+    lua_pushvalue(L, 1);
+    return 1;
 }
 
 LT_REGISTER_TYPE(LTMesh, "lt.Mesh", "lt.SceneNode")
-LT_REGISTER_METHOD(LTMesh, "Clone", clone_mesh)
-LT_REGISTER_METHOD(LTMesh, "Stretch", stretch_mesh)
-LT_REGISTER_METHOD(LTMesh, "Shift", shift_mesh)
-LT_REGISTER_METHOD(LTMesh, "Merge", merge_mesh)
+LT_REGISTER_METHOD(LTMesh, Clone, clone_mesh)
+LT_REGISTER_METHOD(LTMesh, Stretch, stretch_mesh)
+LT_REGISTER_METHOD(LTMesh, Shift, shift_mesh)
+LT_REGISTER_METHOD(LTMesh, Merge, merge_mesh)

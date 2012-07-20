@@ -27,7 +27,7 @@ struct LTMesh : LTSceneNode {
 
     void stretch(
         /* about this point: */ LTfloat px, LTfloat py, LTfloat pz,
-        /* this much along each axis: */ LTfloat left, LTfloat right, LTfloat up, LTfloat down, LTfloat forward, LTfloat backward);
+        /* this much along each axis: */ LTfloat left, LTfloat right, LTfloat down, LTfloat up, LTfloat backward, LTfloat forward);
 
     void shift(LTfloat sx, LTfloat sy, LTfloat sz);
     void merge(LTMesh *mesh);
