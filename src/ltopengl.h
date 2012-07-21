@@ -125,6 +125,7 @@ void ltLightAmbient(int light, LTfloat r, LTfloat g, LTfloat b);
 void ltLightDiffuse(int light, LTfloat r, LTfloat g, LTfloat b);
 void ltLightSpecular(int light, LTfloat r, LTfloat g, LTfloat b);
 void ltLightPosition(int light, LTfloat x, LTfloat y, LTfloat z, LTfloat w);
+void ltLightAttenuation(int light, LTfloat q, LTfloat l, LTfloat c);
 
 void ltMaterialShininess(LTfloat shininess);
 void ltMaterialAmbient(LTfloat r, LTfloat g, LTfloat b);

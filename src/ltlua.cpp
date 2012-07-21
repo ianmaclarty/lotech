@@ -2117,7 +2117,9 @@ struct LTLuaAction : LTAction {
             ltLuaGetRef(g_L, -1, lua_func_ref);
             assert(lua_isfunction(g_L, -1));
             lua_pushnumber(g_L, dt);
-            lua_call(g_L, 1, 1);
+            get_weak_ref(g_L, node_ref);
+            assert(lt_is_LTSceneNode(g_L, -1));
+            lua_call(g_L, 2, 1);
             if (lua_type(g_L, -1) == LUA_TNUMBER) {
                 t_accum -= lua_tonumber(g_L, -1);
             } else {
@@ -2141,7 +2143,8 @@ static int lt_AddAction(lua_State *L) {
     int nref = make_weak_ref(L, 1);
     LTAction *action = new LTLuaAction(node, nref, fref);
     node->add_action(action);
-    return 0;
+    lua_pushvalue(L, 1);
+    return 1;
 }
 
 static int lt_ExecuteActions(lua_State *L) {

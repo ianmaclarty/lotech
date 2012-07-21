@@ -42,6 +42,9 @@ LTLight::LTLight() {
     position.x = 0;
     position.y = 0;
     position.z = 1;
+    atten_c = 1;
+    atten_l = 0;
+    atten_q = 0;
 }
 
 void LTLight::draw() {
@@ -51,7 +54,8 @@ void LTLight::draw() {
     ltLightAmbient(light_num, ambient.red, ambient.green, ambient.blue);
     ltLightDiffuse(light_num, diffuse.red, diffuse.green, diffuse.blue);
     ltLightSpecular(light_num, specular.red, specular.green, specular.blue);
-    ltLightPosition(light_num, position.x, position.y, position.z, 0);
+    ltLightPosition(light_num, position.x, position.y, position.z, 1);
+    ltLightAttenuation(light_num, atten_q, atten_l, atten_c);
     child->draw();
     ltDisableLight(light_num);
     next_light_num--;
@@ -70,6 +74,9 @@ LT_REGISTER_FIELD_FLOAT_AS(LTLight, specular.blue, "specular_blue")
 LT_REGISTER_FIELD_FLOAT_AS(LTLight, position.x, "x")
 LT_REGISTER_FIELD_FLOAT_AS(LTLight, position.y, "y")
 LT_REGISTER_FIELD_FLOAT_AS(LTLight, position.z, "z")
+LT_REGISTER_FIELD_FLOAT_AS(LTLight, atten_c, "c")
+LT_REGISTER_FIELD_FLOAT_AS(LTLight, atten_l, "l")
+LT_REGISTER_FIELD_FLOAT_AS(LTLight, atten_q, "q")
 
 LTMaterial::LTMaterial() {
     ambient.red = 0.2f;

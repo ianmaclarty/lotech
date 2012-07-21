@@ -605,6 +605,16 @@ void ltLightPosition(int light, LTfloat x, LTfloat y, LTfloat z, LTfloat w) {
     gltrace
 }
 
+void ltLightAttenuation(int light, LTfloat q, LTfloat l, LTfloat c) {
+    gltrace
+    if (light < GL_MAX_LIGHTS) {
+        glLightf(GL_LIGHT0 + light, GL_CONSTANT_ATTENUATION, c);
+        glLightf(GL_LIGHT0 + light, GL_LINEAR_ATTENUATION, l);
+        glLightf(GL_LIGHT0 + light, GL_QUADRATIC_ATTENUATION, q);
+    }
+    gltrace
+}
+
 void ltMaterialShininess(LTfloat shininess) {
     gltrace
     glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
