@@ -14,6 +14,7 @@ struct LTLight : LTWrapNode {
     LTColor specular;
     LTPoint3D position;
     LTfloat atten_c, atten_l, atten_q;
+    LTbool fixed;
 
     LTLight();
     virtual void draw();
