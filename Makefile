@@ -2,11 +2,15 @@ include Make.common
 
 TARGET_DIR=$(TARGET_PLATFORM)
 PWD=$(shell pwd)
+LTCFLAGS=-O3
+-include Make.params
 
 all: $(TARGET_DIR)/liblt.a deplibs headers
 
 ############################ iOS Target ##############################
 ifeq ($(TARGET_PLATFORM),ios)
+LTCFLAGS+=-mno-thumb
+
 .PHONY: $(TARGET_DIR)/liblt.a
 $(TARGET_DIR)/liblt.a: headers | $(TARGET_DIR)
 	mkdir -p buildtmp.ios.armv6
@@ -15,17 +19,21 @@ $(TARGET_DIR)/liblt.a: headers | $(TARGET_DIR)
 		CROSS=$(ISDKP)/ \
 		TARGET_FLAGS="-arch armv6 -isysroot $(ISDK)/SDKs/$(ISDKVER) -mno-thumb" \
 		OUT_DIR=$(PWD)/buildtmp.ios.armv6 \
+		LTCFLAGS="$(LTCFLAGS)" \
 		all
 	cd src && $(MAKE) \
 		CROSS=$(ISDKP) \
 		TARGET_FLAGS="-arch armv7 -isysroot $(ISDK)/SDKs/$(ISDKVER) -mno-thumb" \
 		OUT_DIR=$(PWD)/buildtmp.ios.armv7 \
+		LTCFLAGS="$(LTCFLAGS)" \
 		all
 	lipo -create buildtmp.ios.armv6/liblt.a buildtmp.ios.armv7/liblt.a -output $@
 endif
 
 ############################ Android Target ##############################
 ifeq ($(TARGET_PLATFORM),android)
+LTCFLAGS+=-mno-thumb
+
 .PHONY: $(TARGET_DIR)/liblt.a
 $(TARGET_DIR)/liblt.a: headers | $(TARGET_DIR)
 	mkdir -p buildtmp.android
@@ -33,6 +41,7 @@ $(TARGET_DIR)/liblt.a: headers | $(TARGET_DIR)
 		CROSS=$(NDKP) \
 		TARGET_FLAGS="$(NDKSTL) --sysroot $(NDKSYSROOT)" \
 		OUT_DIR=$(PWD)/buildtmp.android \
+		LTCFLAGS="$(LTCFLAGS)" \
 		all
 	cp buildtmp.android/liblt.a $(TARGET_DIR)/
 endif
@@ -45,6 +54,7 @@ $(TARGET_DIR)/liblt.a: headers | $(TARGET_DIR)
 	cd src && $(MAKE) \
 		TARGET_FLAGS="-m64 -arch x86_64" \
 		OUT_DIR=$(PWD)/buildtmp.osx \
+		LTCFLAGS="$(LTCFLAGS)" \
 		all
 	cp buildtmp.osx/liblt.a $(TARGET_DIR)/
 endif
@@ -56,6 +66,7 @@ $(TARGET_DIR)/liblt.a: headers | $(TARGET_DIR)
 	mkdir -p buildtmp.linux
 	cd src && $(MAKE) \
 		OUT_DIR=$(PWD)/buildtmp.linux \
+		LTCFLAGS="$(LTCFLAGS)" \
 		all
 	cp buildtmp.linux/liblt.a $(TARGET_DIR)/
 endif
@@ -67,6 +78,7 @@ $(TARGET_DIR)/liblt.a: headers | $(TARGET_DIR)
 	mkdir -p buildtmp.mingw
 	cd src && $(MAKE) \
 		OUT_DIR=$(PWD)/buildtmp.mingw \
+		LTCFLAGS="$(LTCFLAGS)" \
 		all
 	cp buildtmp.mingw/liblt.a $(TARGET_DIR)/
 endif
@@ -78,7 +90,7 @@ endif
 
 .PHONY: deplibs
 deplibs: | $(TARGET_DIR)
-	cd deps && $(MAKE)
+	cd deps && $(MAKE) LTCFLAGS="$(LTCFLAGS)"
 	-cp deps/*.a deps/*.lib $(TARGET_DIR)
 	cp -r deps/include $(TARGET_DIR)
 

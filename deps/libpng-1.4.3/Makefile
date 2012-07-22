@@ -5,7 +5,7 @@ all: libpng.a
 C_FILES:=$(wildcard *.c)
 O_FILES:=$(patsubst %.c,%.o,$(C_FILES))
 
-GCC_FLAGS=-I. -I../$(ZLIB) -O3 $(TARGET_FLAGS)
+GCC_FLAGS=-I. -I../$(ZLIB) $(LTCFLAGS) $(TARGET_FLAGS)
 GCC=$(CROSS)gcc
 AR=$(CROSS)ar rcus
 

@@ -49,11 +49,13 @@ libbox2d.a: rebuild
 	cd $(BOX2D_DIR) && $(MAKE) \
 		CROSS=$(ISDKP)/ \
 		TARGET_FLAGS="-arch armv6 -isysroot $(ISDK)/SDKs/$(ISDKVER) -mno-thumb" \
+		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(BOX2D_DIR)/libbox2d.a libbox2d-armv6.a
 	cd $(BOX2D_DIR) && $(MAKE) \
 		CROSS=$(ISDKP)/ \
 		TARGET_FLAGS="-arch armv7 -isysroot $(ISDK)/SDKs/$(ISDKVER) -mno-thumb" \
+		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(BOX2D_DIR)/libbox2d.a libbox2d-armv7.a
 	lipo -create libbox2d-armv*.a -output libbox2d.a
@@ -68,6 +70,7 @@ libz.a: rebuild
 	cd $(ZLIB_DIR) && $(MAKE) \
 		CROSS=$(ISDKP)/ \
 		TARGET_FLAGS="-arch armv7 -isysroot $(ISDK)/SDKs/$(ISDKVER) -mno-thumb" \
+		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(ZLIB_DIR)/libz.a libz-armv7.a
 	lipo -create libz-armv*.a -output libz.a
@@ -82,6 +85,7 @@ libpng.a: rebuild
 	cd $(LIBPNG_DIR) && $(MAKE) \
 		CROSS=$(ISDKP)/ \
 		TARGET_FLAGS="-arch armv7 -isysroot $(ISDK)/SDKs/$(ISDKVER) -mno-thumb" \
+		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(LIBPNG_DIR)/libpng.a libpng-armv7.a
 	lipo -create libpng-armv*.a -output libpng.a
@@ -111,6 +115,7 @@ libz.a: rebuild
 	cd $(ZLIB_DIR) && $(MAKE) \
 		CROSS=$(NDKP) \
 		TARGET_FLAGS="--sysroot $(NDKSYSROOT) -marm" \
+		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(ZLIB_DIR)/libz.a .
 
@@ -118,6 +123,7 @@ libpng.a: rebuild
 	cd $(LIBPNG_DIR) && $(MAKE) \
 		CROSS=$(NDKP) \
 		TARGET_FLAGS="--sysroot $(NDKSYSROOT) -marm" \
+		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(LIBPNG_DIR)/libpng.a .
 
@@ -125,6 +131,7 @@ libopenal.a: rebuild.openal
 	cd openal-android && $(MAKE) \
 		CROSS=$(NDKP) \
 		TARGET_FLAGS="--sysroot $(NDKSYSROOT) -marm" \
+		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp openal-android/libopenal.a .
 
@@ -138,24 +145,27 @@ ifeq ($(TARGET_PLATFORM),osx)
 ############################ Mac OS X Targets ##############################
 
 liblua.a: rebuild
-	cd $(LUA_DIR) && $(MAKE) macosx CC="gcc -m64 -arch x86_64 -g -O0"
+	cd $(LUA_DIR) && $(MAKE) macosx CC="gcc -m64 -arch x86_64 $(LTCFLAGS)"
 	cp $(LUA_DIR)/src/liblua.a $@
 
 libbox2d.a: rebuild
 	cd $(BOX2D_DIR) && $(MAKE) \
 		TARGET_FLAGS="-m64 -arch x86_64" \
+		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(BOX2D_DIR)/libbox2d.a .
 
 libz.a: rebuild
 	cd $(ZLIB_DIR) && $(MAKE) \
 		TARGET_FLAGS="-m64 -arch x86_64" \
+		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(ZLIB_DIR)/libz.a .
 
 libpng.a: rebuild
 	cd $(LIBPNG_DIR) && $(MAKE) \
 		TARGET_FLAGS="-m64 -arch x86_64" \
+		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(LIBPNG_DIR)/libpng.a .
 
@@ -187,21 +197,24 @@ ifeq ($(TARGET_PLATFORM),linux)
 liblua.a: rebuild
 	#cd $(LUAJIT_DIR) && $(MAKE)
 	#cp $(LUAJIT_DIR)/src/libluajit.a $@
-	cd $(LUA_DIR) && $(MAKE) linux
+	cd $(LUA_DIR) && $(MAKE) linux CC="gcc $(LTCFLAGS)"
 	cp $(LUA_DIR)/src/liblua.a $@
 
 libbox2d.a: rebuild
 	cd $(BOX2D_DIR) && $(MAKE) \
+		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(BOX2D_DIR)/libbox2d.a .
 
 libz.a: rebuild
 	cd $(ZLIB_DIR) && $(MAKE) \
+		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(ZLIB_DIR)/libz.a .
 
 libpng.a: rebuild
 	cd $(LIBPNG_DIR) && $(MAKE) \
+		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(LIBPNG_DIR)/libpng.a .
 
@@ -236,16 +249,19 @@ liblua.a: rebuild
 
 libbox2d.a: rebuild
 	cd $(BOX2D_DIR) && $(MAKE) \
+		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(BOX2D_DIR)/libbox2d.a .
 
 libz.a: rebuild
 	cd $(ZLIB_DIR) && $(MAKE) \
+		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(ZLIB_DIR)/libz.a .
 
 libpng.a: rebuild
 	cd $(LIBPNG_DIR) && $(MAKE) \
+		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(LIBPNG_DIR)/libpng.a .
 

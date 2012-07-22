@@ -5,7 +5,7 @@ VPATH=Box2D:Box2D/Common:Box2D/Collision:Box2D/Collision/Shapes:Box2D/Dynamics:B
 BOX2D_CPP_FILES:=$(shell find Box2D -name "*.cpp" -exec basename \{\} \;)
 BOX2D_O_FILES:=$(patsubst %.cpp,%.o,$(BOX2D_CPP_FILES))
 
-GPP_FLAGS=-I. -O3 $(TARGET_FLAGS)
+GPP_FLAGS=-I. $(LTCFLAGS) $(TARGET_FLAGS)
 GPP=$(CROSS)g++
 AR=$(CROSS)ar rcus
 
