@@ -3,7 +3,7 @@ all: libz.a
 C_FILES:=$(wildcard *.c)
 O_FILES:=$(patsubst %.c,%.o,$(C_FILES))
 
-GCC_FLAGS=-I. -O3 $(TARGET_FLAGS)
+GCC_FLAGS=-I. $(LTCFLAGS) $(TARGET_FLAGS)
 GCC=$(CROSS)gcc
 AR=$(CROSS)ar rcus
 

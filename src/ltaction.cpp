@@ -9,28 +9,28 @@ static std::list<LTAction*> cancelled_actions;
 LTAction::LTAction(LTSceneNode *n) {
     position = action_list.end();
     node = n;
-    id = NULL;
+    action_id = NULL;
     no_dups = false;
     cancelled = false;
+    scheduled = false;
 }
 
 LTAction::~LTAction() {
-    if (position != action_list.end()) {
-        unschedule();
-    }
+    assert(!scheduled);
 }
 
 void LTAction::schedule() {
-    if (position != action_list.end()) {
+    if (scheduled) {
         ltLog("LTAction::schedule: already scheduled");
         ltAbort();
     }
     action_list.push_front(this);
     position = action_list.begin();
+    scheduled = true;
 }
 
 void LTAction::unschedule() {
-    if (position == action_list.end()) {
+    if (!scheduled) {
         ltLog("LTAction::unschedule: not scheduled");
         ltAbort();
     }
@@ -39,13 +39,14 @@ void LTAction::unschedule() {
     } else {
         action_list.erase(position);
     }
-    position = action_list.end();
+    scheduled = false;
 } 
 
 void LTAction::cancel() {
     if (!cancelled) {
         cancelled_actions.push_back(this);
         cancelled = true;
+        on_cancel();
     }
 }
 
@@ -54,17 +55,24 @@ void ltExecuteActions(LTfloat dt) {
     while (next_action != action_list.end()) {
         LTAction *action = *next_action;
         next_action++;
-        bool finished = action->doAction(dt);
-        if (finished) {
-            action->cancel();
+        assert(action->cancelled || action->node->active);
+        if (!action->cancelled) {
+            bool finished = action->doAction(dt);
+            if (finished) {
+                action->cancel();
+            }
         }
     }
     for (std::list<LTAction*>::iterator it = cancelled_actions.begin(); it != cancelled_actions.end(); it++) {
         LTAction *action = *it;
-        if (action->position != action_list.end()) {
+        assert(action->cancelled);
+        if (action->scheduled) {
             action->unschedule();
         }
-        action->node->actions->remove(action);
+        // node == NULL implies the node has been deleted (see ltscene.cpp)
+        if (action->node != NULL) {
+            action->node->actions->remove(action);
+        }
         delete action;
     }
     cancelled_actions.clear();

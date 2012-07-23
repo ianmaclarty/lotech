@@ -39,3 +39,5 @@ static inline float ltRand0_1() {
     return (float)random() / (float)(RAND_MAX);
 #endif
 }
+
+#define lt_incr_ptr(ptr, n) {ptr = (void*)(((LTbyte*)ptr) + n);}

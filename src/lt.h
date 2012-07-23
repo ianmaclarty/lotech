@@ -1,5 +1,6 @@
 /* Copyright (C) 2010-2011 Ian MacLarty */
 
+#include <assert.h>
 #include <string.h>
 #include <errno.h>
 #include <cfloat>
@@ -122,11 +123,14 @@ extern "C" {
 #include "lttween.h"
 #include "ltaudio.h"
 #include "ltvector.h"
+#include "ltmesh.h"
 #include "ltrendertarget.h"
 #include "ltparticles.h"
 #include "lttext.h"
 #include "ltstore.h"
 #include "ltfilestore.h"
+#include "ltwavefront.h"
+#include "ltlighting.h"
 
 #include "ltgamecenter.h"
 #include "ltios.h"

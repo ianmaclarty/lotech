@@ -23,6 +23,7 @@ enum LTMatrixMode {
 enum LTVertDataType {
     LT_VERT_DATA_TYPE_FLOAT = GL_FLOAT,
     LT_VERT_DATA_TYPE_SHORT = GL_SHORT,
+    LT_VERT_DATA_TYPE_BYTE  = GL_BYTE,
     LT_VERT_DATA_TYPE_UBYTE = GL_UNSIGNED_BYTE,
 };
 
@@ -98,6 +99,9 @@ void ltDisableIndexArrays();
 void ltEnableColorArrays();
 void ltDisableColorArrays();
 
+void ltEnableNormalArrays();
+void ltDisableNormalArrays();
+
 void ltEnableFog();
 void ltDisableFog();
 void ltFogColor(LTfloat r, LTfloat g, LTfloat b);
@@ -111,6 +115,23 @@ void ltClearColor(LTfloat r, LTfloat g, LTfloat b, LTfloat a);
 void ltClear(bool color, bool depthbuf);
 
 void ltColor(LTfloat r, LTfloat g, LTfloat b, LTfloat a);
+
+void ltEnableLighting();
+void ltDisableLighting();
+
+void ltEnableLight(int light);
+void ltDisableLight(int light);
+void ltLightAmbient(int light, LTfloat r, LTfloat g, LTfloat b);
+void ltLightDiffuse(int light, LTfloat r, LTfloat g, LTfloat b);
+void ltLightSpecular(int light, LTfloat r, LTfloat g, LTfloat b);
+void ltLightPosition(int light, LTfloat x, LTfloat y, LTfloat z, LTfloat w);
+void ltLightAttenuation(int light, LTfloat q, LTfloat l, LTfloat c);
+
+void ltMaterialShininess(LTfloat shininess);
+void ltMaterialAmbient(LTfloat r, LTfloat g, LTfloat b);
+void ltMaterialDiffuse(LTfloat r, LTfloat g, LTfloat b, LTfloat a);
+void ltMaterialSpecular(LTfloat r, LTfloat g, LTfloat b);
+void ltMaterialEmission(LTfloat r, LTfloat g, LTfloat b);
 
 void ltMatrixMode(LTMatrixMode mode);
 void ltPushMatrix();
@@ -132,6 +153,7 @@ void ltBindVertBuffer(LTvertbuf vb);
 void ltStaticVertBufferData(int size, const void *data);
 void ltVertexPointer(int size, LTVertDataType type, int stride, void *data);
 void ltColorPointer(int size, LTVertDataType type, int stride, void *data);
+void ltNormalPointer(LTVertDataType type, int stride, void *data);
 void ltTexCoordPointer(int size, LTVertDataType type, int stride, void *data);
 void ltDrawArrays(LTDrawMode mode, int start, int count);
 void ltDrawElements(LTDrawMode mode, int n, LTvertindex *indices);

@@ -9,7 +9,7 @@ MM_O_FILES:=$(patsubst %.mm,$(OUT_DIR)/%.o,$(MM_FILES))
 
 O_FILES=$(CPP_O_FILES)
 INCLUDE_FLAGS=-I. -I../$(TARGET_PLATFORM)/include
-GPP_FLAGS= $(INCLUDE_FLAGS) -O0 -DLTDEPTHBUF $(TARGET_FLAGS) -Wall -Wno-invalid-offsetof -g
+GPP_FLAGS= $(INCLUDE_FLAGS) $(LTCFLAGS) -DLTDEPTHBUF $(TARGET_FLAGS) -Wall
 GPP=$(CROSS)g++
 AR=$(CROSS)ar rcus
 
@@ -33,11 +33,11 @@ endif
 
 $(CPP_O_FILES): $(OUT_DIR)/%.o: %.cpp
 	@echo CPP   `basename $@`
-	@$(GPP) $(GPP_FLAGS) -c $< -o $@
+	$(GPP) $(GPP_FLAGS) -c $< -o $@
 
 $(MM_O_FILES): $(OUT_DIR)/%.o: %.mm
 	@echo MM   `basename $@`
-	@$(GPP) -ObjC++ $(GPP_FLAGS) -c $< -o $@
+	$(GPP) -ObjC++ $(GPP_FLAGS) -c $< -o $@
 
 $(OUT_DIR)/liblt.a: $(O_FILES)
 	@echo AR $@

@@ -12,12 +12,12 @@ struct LTParticleSystemAction : LTAction {
     virtual bool doAction(LTfloat dt) {
         LTParticleSystem *particles = (LTParticleSystem*)node;
         particles->advance(dt);
-        return !particles->active;
+        return false;
     }
 };
 
 LTParticleSystem::LTParticleSystem() {
-    active = true;
+    particles_active = true;
     duration = -1.0f;
     speed = 1.0f;
     start_size = 1.0f;
@@ -94,13 +94,13 @@ bool LTParticleSystem::is_full() {
 }
 
 void LTParticleSystem::stop() {
-    active = false;
+    particles_active = false;
     elapsed = duration;
     emit_counter = 0.0f;
 }
 
 void LTParticleSystem::reset() {
-    active = true;
+    particles_active = true;
     elapsed = 0.0f;
     for (int i = 0; i < num_particles; ++i) {
         particles[i].time_to_live = 0.0f;
@@ -125,19 +125,19 @@ void LTParticleSystem::add_particle() {
             b2Fixture *f = fixture->fixture;
             if (f == NULL) {
                 // Fixture has been deleted, so don't create any new particles.
-                active = false;
+                particles_active = false;
                 return;
             }
             LTBody *b = fixture->body;
             if (b == NULL) {
                 // Fixture not attached to any bodies.
-                active = false;
+                particles_active = false;
                 return;
             }
             LTWorld *w = b->world;
             if (w == NULL) {
                 // Shouldn't happen, but just in case.
-                active = false;
+                particles_active = false;
                 return;
             }
             LTfloat s = w->scaling;
@@ -201,6 +201,7 @@ void LTParticleSystem::add_particle() {
 
         p->radial_accel = radial_accel + radial_accel_variance * ltRandMinus1_1();
         p->tangential_accel = tangential_accel + tangential_accel_variance * ltRandMinus1_1();
+        p->damping = damping + damping_variance * ltRandMinus1_1();
 
         num_particles++;
     }
@@ -209,16 +210,16 @@ void LTParticleSystem::add_particle() {
 void LTParticleSystem::advance(LTfloat dt) {
     //if (!executeActions(dt)) return;
 
-    if (active && emission_rate > 0.0f) {
+    if (particles_active && emission_rate > 0.0f) {
         LTfloat rate = 1.0f / emission_rate;
         emit_counter += dt;
-        while (num_particles < max_particles && emit_counter > rate && active) {
+        while (num_particles < max_particles && emit_counter > rate && particles_active) {
             add_particle();
             emit_counter -= rate;
         }
 
         elapsed += dt;
-        if ((duration != -1.0f && duration < elapsed) || !active) {
+        if ((duration != -1.0f && duration < elapsed) || !particles_active) {
             stop();
         }
     }
@@ -242,6 +243,8 @@ void LTParticleSystem::advance(LTfloat dt) {
             tangential.y *= p->tangential_accel;
             p->dir.x += (radial.x + tangential.x + gravity.x) * dt;
             p->dir.y += (radial.y + tangential.y + gravity.y) * dt;
+            p->dir.x *= 1.0f - dt * p->damping;
+            p->dir.y *= 1.0f - dt * p->damping;
             p->pos.x += p->dir.x * dt;
             p->pos.y += p->dir.y * dt;
             p->color.red += p->delta_color.red * dt;
@@ -374,6 +377,8 @@ LT_REGISTER_FIELD_FLOAT(LTParticleSystem, tangential_accel)
 LT_REGISTER_FIELD_FLOAT(LTParticleSystem, tangential_accel_variance)
 LT_REGISTER_FIELD_FLOAT(LTParticleSystem, radial_accel)
 LT_REGISTER_FIELD_FLOAT(LTParticleSystem, radial_accel_variance)
+LT_REGISTER_FIELD_FLOAT(LTParticleSystem, damping)
+LT_REGISTER_FIELD_FLOAT(LTParticleSystem, damping_variance)
 LT_REGISTER_FIELD_FLOAT(LTParticleSystem, start_size)
 LT_REGISTER_FIELD_FLOAT(LTParticleSystem, start_size_variance)
 LT_REGISTER_FIELD_FLOAT(LTParticleSystem, end_size)

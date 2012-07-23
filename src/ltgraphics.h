@@ -29,6 +29,35 @@ struct LTPoint {
     }
 };
 
+struct LTPoint3D {
+    LTfloat x;
+    LTfloat y;
+    LTfloat z;
+
+    LTPoint3D(LTfloat x, LTfloat y, LTfloat z) {
+        LTPoint3D::x = x;
+        LTPoint3D::y = y;
+        LTPoint3D::z = z;
+    }
+
+    LTPoint3D() {
+        x = 0.0f;
+        y = 0.0f;
+        z = 0.0f;
+    }
+
+    void normalize() {
+        LTfloat l = len();
+        x /= l;
+        y /= l;
+        z /= l;
+    }
+
+    LTfloat len() {
+        return sqrtf(x * x + y * y + z * z);
+    }
+};
+
 struct LTCompactColor {
     LTubyte r;
     LTubyte g;

@@ -21,10 +21,10 @@ static bool g_gamecenter_initialized = false;
 /************************* Functions for calling lua **************************/
 
 // Check lua_pcall return status.
-static void check_status(int status) {
+static void check_status(lua_State *L, int status) {
     if (status) {
-        const char *msg = lua_tostring(g_L, -1);
-        lua_pop(g_L, 1);
+        const char *msg = lua_tostring(L, -1);
+        lua_pop(L, 1);
         if (msg == NULL) msg = "Unknown error (error object is not a string).";
         ltLog(msg);
         #ifdef LTDEVMODE
@@ -71,7 +71,7 @@ static void docall(lua_State *L, int nargs, int nresults) {
 #else
   status = lua_pcall(L, nargs, nresults, 0);
 #endif
-  check_status(status);
+  check_status(L, status);
 }
 
 /************************* Weak references **************************/
@@ -143,6 +143,10 @@ static const char *image_path(const char *name) {
 
 static const char *sound_path(const char *name) {
     return resource_path(name, ".wav");
+}
+
+static const char *model_path(const char *name) {
+    return resource_path(name, ".obj");
 }
 
 /************************* Graphics **************************/
@@ -797,6 +801,42 @@ static int lt_LoadImages(lua_State *L) {
     return 1;
 }
 
+/************************* Models **************************/
+
+static int lt_LoadModels(lua_State *L) {
+    // Load wavefront models in 1st argument (an array) and return a table
+    // of meshes indexed by model name.
+    ltLuaCheckNArgs(L, 1);
+    lua_newtable(L); // The table to be returned.
+    int i = 1;
+    while (true) {
+        lua_pushinteger(L, i);
+        lua_gettable(L, 1);
+        // The top of the stack now contains the ith entry of the array argument.
+        if (lua_isnil(L, -1)) {
+            // We've reached the end of the array.
+            lua_pop(L, 1);
+            break;
+        }
+        const char* name = lua_tostring(L, -1);
+        lua_pop(L, 1);
+        // The top of the stack now contains the table to be returned.
+        if (name == NULL) {
+            return luaL_error(L, "Expecting an array of strings.");
+        }
+        const char *path = model_path(name); 
+        LTMesh *mesh = (LTMesh*)lt_alloc_LTMesh(L);
+        if (!ltReadWavefrontMesh(path, mesh)) {
+            return luaL_error(L, "Unable to read model at path %s", path);
+        }
+        mesh->setup();
+        delete[] path;
+        lua_setfield(L, -2, name);
+        i++;
+    }
+    return 1;
+}
+
 /************************* Audio **************************/
 
 static int lt_LoadSamples(lua_State *L) {
@@ -865,13 +905,6 @@ static int lt_StopTrack(lua_State *L) {
     ltLuaCheckNArgs(L, 1);
     LTTrack *track = lt_expect_LTTrack(L, 1);
     track->stop();
-    return 0;
-}
-
-static int lt_RewindTrack(lua_State *L) {
-    ltLuaCheckNArgs(L, 1);
-    LTTrack *track = lt_expect_LTTrack(L, 1);
-    track->rewind();
     return 0;
 }
 
@@ -2056,28 +2089,46 @@ static int lt_OpenURL(lua_State *L) {
 struct LTLuaAction : LTAction {
     int node_ref;
     int lua_func_ref;
+    LTdouble t_accum;
 
     LTLuaAction(LTSceneNode *node, int node_ref, int lua_func_ref) : LTAction(node) {
         LTLuaAction::node_ref = node_ref;
         LTLuaAction::lua_func_ref = lua_func_ref;
+        t_accum = 0.0;
     }
 
     virtual ~LTLuaAction() {
+    }
+
+    virtual void on_cancel() {
         get_weak_ref(g_L, node_ref);
-        if (!lua_isnil(g_L, -1)) {
-            ltLuaDelRef(g_L, -1, lua_func_ref);
-            del_weak_ref(g_L, node_ref);
-        }
+        assert(lt_is_LTSceneNode(g_L, -1));
+        ltLuaDelRef(g_L, -1, lua_func_ref);
+        del_weak_ref(g_L, node_ref);
         lua_pop(g_L, 1);
     }
 
-    virtual bool doAction(LTfloat dt) {
+    virtual bool doAction(LTfloat fdt) {
+        bool res = false;
+        LTdouble dt = (LTdouble)fdt;
+        t_accum += dt;
         get_weak_ref(g_L, node_ref);
-        ltLuaGetRef(g_L, -1, lua_func_ref);
-        lua_pushnumber(g_L, dt);
-        lua_call(g_L, 1, 1);
-        bool res = lua_toboolean(g_L, -1);
-        lua_pop(g_L, 2); // pop res + node
+        while (t_accum > 0.0) {
+            ltLuaGetRef(g_L, -1, lua_func_ref);
+            assert(lua_isfunction(g_L, -1));
+            lua_pushnumber(g_L, dt);
+            get_weak_ref(g_L, node_ref);
+            assert(lt_is_LTSceneNode(g_L, -1));
+            lua_call(g_L, 2, 1);
+            if (lua_type(g_L, -1) == LUA_TNUMBER) {
+                t_accum -= lua_tonumber(g_L, -1);
+            } else {
+                res = lua_toboolean(g_L, -1);
+                t_accum = 0.0;
+            }
+            lua_pop(g_L, 1); // pop res
+        }
+        lua_pop(g_L, 1); // pop node
         return res;
     }
 };
@@ -2092,7 +2143,8 @@ static int lt_AddAction(lua_State *L) {
     int nref = make_weak_ref(L, 1);
     LTAction *action = new LTLuaAction(node, nref, fref);
     node->add_action(action);
-    return 0;
+    lua_pushvalue(L, 1);
+    return 1;
 }
 
 static int lt_ExecuteActions(lua_State *L) {
@@ -2104,25 +2156,39 @@ static int lt_ExecuteActions(lua_State *L) {
 /************************* Tweens **************************/
 
 struct LTLuaTweenOnDone : LTTweenOnDone {
+    LTSceneNode *node;
     int node_ref;
     int func_ref;
-    LTLuaTweenOnDone(int nref, int fref) {
+    bool executed;
+    bool cancelled;
+
+    LTLuaTweenOnDone(LTSceneNode *node, int nref, int fref) {
+        LTLuaTweenOnDone::node = node;
         node_ref = nref;
         func_ref = fref;
+        executed = false;
+        cancelled = false;
     }
-    virtual ~LTLuaTweenOnDone() {
+    virtual void on_cancel() {
+        assert(!cancelled);
         get_weak_ref(g_L, node_ref);
-        if (!lua_isnil(g_L, -1)) {
-            ltLuaDelRef(g_L, -1, func_ref);
-            del_weak_ref(g_L, node_ref);
-        }
+        assert(lua_touserdata(g_L, -1) == node);
+        ltLuaDelRef(g_L, -1, func_ref);
+        del_weak_ref(g_L, node_ref);
         lua_pop(g_L, 1);
+        cancelled = true;
     }
-    virtual void done() {
+    virtual void done(LTTweenAction *action) {
+        assert(action->node == node);
+        assert(!executed);
+        assert(!cancelled);
         get_weak_ref(g_L, node_ref);
+        assert(node == lua_touserdata(g_L, -1));
         ltLuaGetRef(g_L, -1, func_ref);
+        assert(lua_isfunction(g_L, -1));
         lua_call(g_L, 0, 0);
         lua_pop(g_L, 1); // pop node
+        executed = true;
     }
 };
 
@@ -2181,11 +2247,11 @@ static int lt_AddTween(lua_State *L) {
     } else {
         return luaL_error(L, "Invalid easing function: ", ease_func_str);
     }
-    LTTweenOnDone *on_done = NULL;
+    LTLuaTweenOnDone *on_done = NULL;
     if (lua_isfunction(L, 7)) {
         int fref = ltLuaAddRef(L, -1, 7); // Add reference from node to action func.
         int nref = make_weak_ref(L, -1);
-        on_done = new LTLuaTweenOnDone(nref, fref);
+        on_done = new LTLuaTweenOnDone(node, nref, fref);
     } else if (!lua_isnil(L, 7)) {
         return luaL_error(L, "Argument 7 not a function or nil");
     }
@@ -2366,18 +2432,18 @@ static int import(lua_State *L) {
     path = resource_path(module, ".lua");
     LTResource *rsc = ltOpenResource(path);
     if (rsc != NULL) {
-        int r = loadfile(g_L, rsc);
+        int r = loadfile(L, rsc);
         delete[] path;
         ltCloseResource(rsc);
         if (r != 0) {
-            const char *msg = lua_tostring(g_L, -1);
+            const char *msg = lua_tostring(L, -1);
             lua_pop(L, 1);
             return luaL_error(L, "%s", msg);
         }
         for (int i = 2; i <= nargs; i++) {
             lua_pushvalue(L, i);
         }
-        lua_call(g_L, nargs - 1, LUA_MULTRET);
+        lua_call(L, nargs - 1, LUA_MULTRET);
         return lua_gettop(L) - top;
     } else {
         return luaL_error(L, "File %s does no exist", path);
@@ -2462,6 +2528,8 @@ static const luaL_Reg ltlib[] = {
     {"FillVectorColumnsWithImageQuads", lt_FillVectorColumnsWithImageQuads},
     //{"DrawQuads",                       lt_DrawQuads},
 
+    {"LoadModels",                      lt_LoadModels},
+
     //{"ParticleSystemFixtureFilter",     lt_ParticleSystemFixtureFilter},
 
     {"AddTween",                        lt_AddTween},
@@ -2479,7 +2547,6 @@ static const luaL_Reg ltlib[] = {
     {"PlayTrack",                       lt_PlayTrack},
     {"PauseTrack",                      lt_PauseTrack},
     {"StopTrack",                       lt_StopTrack},
-    {"RewindTrack",                     lt_RewindTrack},
     {"QueueSampleInTrack",              lt_QueueSampleInTrack},
     {"SetTrackLoop",                    lt_SetTrackLoop},
     {"TrackQueueSize",                  lt_TrackQueueSize},
@@ -2551,36 +2618,36 @@ static const luaL_Reg ltlib[] = {
 
 /************************************************************/
 
-static bool push_lt_func(const char *func) {
-    lua_getglobal(g_L, "lt");
-    if (lua_istable(g_L, -1)) {
-        lua_getfield(g_L, -1, func);
-        lua_remove(g_L, -2); // Remove lt table.
-        if (lua_isfunction(g_L, -1)) {
+static bool push_lt_func(lua_State *L, const char *func) {
+    lua_getglobal(L, "lt");
+    if (lua_istable(L, -1)) {
+        lua_getfield(L, -1, func);
+        lua_remove(L, -2); // Remove lt table.
+        if (lua_isfunction(L, -1)) {
             return true;
         } else {
-            lua_pop(g_L, 1); // Pop the field since we won't be calling it.
+            lua_pop(L, 1); // Pop the field since we won't be calling it.
             return false;
         }
     } else {
-        lua_pop(g_L, 1);
+        lua_pop(L, 1);
         return false;
     }
 }
 
-static void call_lt_func(const char *func) {
-    if (push_lt_func(func)) {
-        docall(g_L, 0, 0);
+static void call_lt_func(lua_State *L, const char *func) {
+    if (push_lt_func(L, func)) {
+        docall(L, 0, 0);
     }
 }
 
-static void run_lua_file(const char *file) {
+static void run_lua_file(lua_State *L, const char *file) {
     if (!g_suspended) {
         const char *f = resource_path(file, ".lua");
         LTResource *r = ltOpenResource(f);
         if (r != NULL) {
-            check_status(loadfile(g_L, r));
-            docall(g_L, 0, 0);
+            check_status(L, loadfile(L, r));
+            docall(L, 0, 0);
             ltCloseResource(r);
         } else {
             ltLog("File %s does not exist", f);
@@ -2589,60 +2656,60 @@ static void run_lua_file(const char *file) {
     }
 }
 
-static void setup_wref_ref() {
-    lua_getglobal(g_L, "lt");
-    lua_getfield(g_L, -1, "wrefs");
-    g_wrefs_ref = luaL_ref(g_L, LUA_REGISTRYINDEX);
-    lua_pop(g_L, 1); // pop lt.
+static void setup_wref_ref(lua_State *L) {
+    lua_getglobal(L, "lt");
+    lua_getfield(L, -1, "wrefs");
+    g_wrefs_ref = luaL_ref(L, LUA_REGISTRYINDEX);
+    lua_pop(L, 1); // pop lt.
 }
 
-static void set_viewport_globals() {
-    if (g_L != NULL) {
-        lua_getglobal(g_L, "lt");
-        lua_pushnumber(g_L, ltGetViewPortLeftEdge());
-        lua_setfield(g_L, -2, "left");
-        lua_pushnumber(g_L, ltGetViewPortBottomEdge());
-        lua_setfield(g_L, -2, "bottom");
-        lua_pushnumber(g_L, ltGetViewPortRightEdge());
-        lua_setfield(g_L, -2, "right");
-        lua_pushnumber(g_L, ltGetViewPortTopEdge());
-        lua_setfield(g_L, -2, "top");
-        lua_pushnumber(g_L, ltGetViewPortRightEdge() - ltGetViewPortLeftEdge());
-        lua_setfield(g_L, -2, "width");
-        lua_pushnumber(g_L, ltGetViewPortTopEdge() - ltGetViewPortBottomEdge());
-        lua_setfield(g_L, -2, "height");
-        lua_pop(g_L, 1); // pop lt
+static void set_viewport_globals(lua_State *L) {
+    if (L != NULL) {
+        lua_getglobal(L, "lt");
+        lua_pushnumber(L, ltGetViewPortLeftEdge());
+        lua_setfield(L, -2, "left");
+        lua_pushnumber(L, ltGetViewPortBottomEdge());
+        lua_setfield(L, -2, "bottom");
+        lua_pushnumber(L, ltGetViewPortRightEdge());
+        lua_setfield(L, -2, "right");
+        lua_pushnumber(L, ltGetViewPortTopEdge());
+        lua_setfield(L, -2, "top");
+        lua_pushnumber(L, ltGetViewPortRightEdge() - ltGetViewPortLeftEdge());
+        lua_setfield(L, -2, "width");
+        lua_pushnumber(L, ltGetViewPortTopEdge() - ltGetViewPortBottomEdge());
+        lua_setfield(L, -2, "height");
+        lua_pop(L, 1); // pop lt
     }
 }
 
-static void set_globals() {
-    if (g_L != NULL) {
-        lua_getglobal(g_L, "lt");
+static void set_globals(lua_State *L) {
+    if (L != NULL) {
+        lua_getglobal(L, "lt");
         #ifdef LTIOS
-            lua_pushboolean(g_L, 1);
-            lua_setfield(g_L, -2, "ios");
-            lua_pushboolean(g_L, ltIsIPad() ? 1 : 0);
-            lua_setfield(g_L, -2, "ipad");
-            lua_pushboolean(g_L, ltIOSSupportsES2());
-            lua_setfield(g_L, -2, "shaders");
+            lua_pushboolean(L, 1);
+            lua_setfield(L, -2, "ios");
+            lua_pushboolean(L, ltIsIPad() ? 1 : 0);
+            lua_setfield(L, -2, "ipad");
+            lua_pushboolean(L, ltIOSSupportsES2());
+            lua_setfield(L, -2, "shaders");
             #ifdef LTADS
                 if (LTADS == LT_AD_TOP) {
-                    lua_pushstring(g_L, "top");
+                    lua_pushstring(L, "top");
                 } else {
-                    lua_pushstring(g_L, "bottom");
+                    lua_pushstring(L, "bottom");
                 }
-                lua_setfield(g_L, -2, "ads");
+                lua_setfield(L, -2, "ads");
             #endif
         #endif
         #ifdef LTOSX
-            lua_pushboolean(g_L, 1);
-            lua_setfield(g_L, -2, "osx");
-            lua_pushboolean(g_L, 1);
-            lua_setfield(g_L, -2, "desktop");
-            lua_pushboolean(g_L, 1);
-            lua_setfield(g_L, -2, "shaders");
+            lua_pushboolean(L, 1);
+            lua_setfield(L, -2, "osx");
+            lua_pushboolean(L, 1);
+            lua_setfield(L, -2, "desktop");
+            lua_pushboolean(L, 1);
+            lua_setfield(L, -2, "shaders");
         #endif
-        lua_pop(g_L, 1); // pop lt
+        lua_pop(L, 1); // pop lt
     }
 }
 
@@ -2663,10 +2730,10 @@ void ltLuaSetup() {
     lua_setglobal(g_L, "log");
     luaL_register(g_L, "lt", ltlib);
     lua_pop(g_L, 1); // pop lt
-    run_lua_file("lt");
-    setup_wref_ref();
-    set_globals();
-    run_lua_file("config");
+    run_lua_file(g_L, "lt");
+    setup_wref_ref(g_L);
+    set_globals(g_L);
+    run_lua_file(g_L, "config");
     ltRestoreState();
 }
 
@@ -2676,6 +2743,7 @@ void ltLuaSetResourcePrefix(const char *prefix) {
 
 void ltLuaTeardown() {
     if (g_L != NULL) {
+        ltDeactivateAllScenes(g_L);
         lua_close(g_L);
         g_L = NULL;
     }
@@ -2702,7 +2770,7 @@ void ltLuaResume() {
 }
 
 void ltLuaAdvance(LTdouble secs) {
-    if (g_L != NULL && !g_suspended && push_lt_func("Advance")) {
+    if (g_L != NULL && !g_suspended && push_lt_func(g_L, "Advance")) {
         lua_pushnumber(g_L, secs);
         docall(g_L, 1, 0);
     }
@@ -2714,8 +2782,8 @@ void ltLuaRender() {
         if (!g_initialized) {
             ltInitGLState();
             ltAdjustViewportAspectRatio();
-            set_viewport_globals();
-            run_lua_file("main");
+            set_viewport_globals(g_L);
+            run_lua_file(g_L, "main");
             #ifdef LTGAMECENTER
             if (ltIOSGameCenterIsAvailable()) {
                 ltLuaGameCenterBecameAvailable();
@@ -2725,7 +2793,7 @@ void ltLuaRender() {
         }
         if (!g_suspended) {
             ltInitGraphics();
-            call_lt_func("Render");
+            call_lt_func(g_L, "Render");
             ltDrawAdBackground();
             ltDrawConnectingOverlay();
         }
@@ -2796,7 +2864,7 @@ static const char *lt_key_str(LTKey key) {
 }
 
 void ltLuaKeyDown(LTKey key) {
-    if (g_L != NULL && !g_suspended && push_lt_func("KeyDown")) {
+    if (g_L != NULL && !g_suspended && push_lt_func(g_L, "KeyDown")) {
         const char *str = lt_key_str(key);
         lua_pushstring(g_L, str);
         docall(g_L, 1, 0);
@@ -2804,7 +2872,7 @@ void ltLuaKeyDown(LTKey key) {
 }
 
 void ltLuaKeyUp(LTKey key) {
-    if (g_L != NULL && !g_suspended && push_lt_func("KeyUp")) {
+    if (g_L != NULL && !g_suspended && push_lt_func(g_L, "KeyUp")) {
         const char *str = lt_key_str(key);
         lua_pushstring(g_L, str);
         docall(g_L, 1, 0);
@@ -2812,7 +2880,7 @@ void ltLuaKeyUp(LTKey key) {
 }
 
 void ltLuaPointerDown(int input_id, LTfloat x, LTfloat y) {
-    if (g_L != NULL && !g_suspended && push_lt_func("PointerDown")) {
+    if (g_L != NULL && !g_suspended && push_lt_func(g_L, "PointerDown")) {
         lua_pushinteger(g_L, input_id);
         lua_pushnumber(g_L, ltGetViewPortX(x));
         lua_pushnumber(g_L, ltGetViewPortY(y));
@@ -2821,7 +2889,7 @@ void ltLuaPointerDown(int input_id, LTfloat x, LTfloat y) {
 }
 
 void ltLuaPointerUp(int input_id, LTfloat x, LTfloat y) {
-    if (g_L != NULL && !g_suspended && push_lt_func("PointerUp")) {
+    if (g_L != NULL && !g_suspended && push_lt_func(g_L, "PointerUp")) {
         lua_pushinteger(g_L, input_id);
         lua_pushnumber(g_L, ltGetViewPortX(x));
         lua_pushnumber(g_L, ltGetViewPortY(y));
@@ -2830,7 +2898,7 @@ void ltLuaPointerUp(int input_id, LTfloat x, LTfloat y) {
 }
 
 void ltLuaPointerMove(int input_id, LTfloat x, LTfloat y) {
-    if (g_L != NULL && !g_suspended && push_lt_func("PointerMove")) {
+    if (g_L != NULL && !g_suspended && push_lt_func(g_L, "PointerMove")) {
         lua_pushinteger(g_L, input_id);
         lua_pushnumber(g_L, ltGetViewPortX(x));
         lua_pushnumber(g_L, ltGetViewPortY(y));
@@ -2850,7 +2918,7 @@ void ltLuaResizeWindow(LTfloat w, LTfloat h) {
 void ltLuaGameCenterBecameAvailable() {
     if (!g_gamecenter_initialized &&
         g_L != NULL && !g_suspended &&
-        push_lt_func("GameCenterBecameAvailable"))
+        push_lt_func(g_L, "GameCenterBecameAvailable"))
     {
         docall(g_L, 0, 0);
         g_gamecenter_initialized = true;

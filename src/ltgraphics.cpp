@@ -263,7 +263,6 @@ void ltDrawConnectingOverlay() {
     LTfloat t = viewport_top;
     if (ltClientIsTryingToConnect()) {
         ltLoadIdentity();
-        fprintf(stderr, "b = %f, h = %f\n", b, viewport_height);
         if (s & 16) {
             ltPushTint(0.4f, 0.4f, 0.4f, 1.0f);
         } else {

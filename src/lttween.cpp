@@ -19,7 +19,7 @@ LTTweenAction::LTTweenAction(LTSceneNode *node,
     LTTweenAction::ease = ease;
     LTTweenAction::on_done = on_done;
     LTTweenAction::distance = target_val - initial_val;
-    LTTweenAction::id = (void*)getter;
+    LTTweenAction::action_id = (void*)getter;
     LTTweenAction::no_dups = true;
 }
 
@@ -29,20 +29,27 @@ LTTweenAction::~LTTweenAction() {
     }
 }
 
+void LTTweenAction::on_cancel() {
+    if (on_done != NULL) {
+        on_done->on_cancel();
+    }
+}
+
 bool LTTweenAction::doAction(LTfloat dt) {
     if (delay > 0) {
         delay -= dt;
         return false;
     }
-    if (t < 1.0f) {
+    LTfloat inc = dt / time;
+    t += inc;
+    if (t < 1.0f - inc) {
         LTfloat v = initial_val + distance * ease(t);
-        t += dt / time;
         setter(node, v);
         return false;
     } else {
         setter(node, target_val);
         if (on_done != NULL) {
-            on_done->done();
+            on_done->done(this);
         }
         return true;
     }

@@ -15,6 +15,7 @@ struct LTParticle {
     LTPoint dir;
     LTfloat radial_accel;
     LTfloat tangential_accel;
+    LTfloat damping;
 };
 
 struct LTParticleVertexData {
@@ -32,7 +33,7 @@ struct LTParticleQuad {
 };
 
 struct LTParticleSystem : LTSceneNode {
-    bool active;
+    bool particles_active;
     LTfloat duration;
     LTfloat elapsed;
     LTPoint source_position;
@@ -46,6 +47,8 @@ struct LTParticleSystem : LTSceneNode {
     LTfloat tangential_accel_variance;
     LTfloat radial_accel;
     LTfloat radial_accel_variance;
+    LTfloat damping;
+    LTfloat damping_variance;
     LTfloat start_size;
     LTfloat start_size_variance;
     LTfloat end_size;

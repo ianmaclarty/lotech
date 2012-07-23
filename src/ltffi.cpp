@@ -42,6 +42,9 @@ static void init_core_modules() {
     lttween_init();
     ltutil_init();
     ltvector_init();
+    ltmesh_init();
+    ltwavefront_init();
+    ltlighting_init();
 }
 
 struct LTFieldInfo {
@@ -221,6 +224,9 @@ static inline int push_field_val(lua_State *L, LTObject *obj, LTFieldInfo *field
 
 static inline void set_field_val(lua_State *L, LTObject *obj, LTFieldInfo *field,
         int obj_index, int field_index, int val_index) {
+    obj_index = absidx(L, obj_index);
+    field_index = absidx(L, field_index);
+    val_index = absidx(L, val_index);
     if (field->setter == NULL) {
         const char *field_name = lua_tostring(L, field_index);
         luaL_error(L, "Attempt to set readonly field '%s'", field_name);
@@ -246,7 +252,6 @@ static inline void set_field_val(lua_State *L, LTObject *obj, LTFieldInfo *field
             lua_getmetatable(L, obj_index);
             lua_pushlightuserdata(L, (void*)field);
             lua_rawget(L, -2);
-            if (val_index < 0) val_index -= 2;
             lua_pushvalue(L, val_index);
             lua_rawget(L, -2);
             if (lua_isnil(L, -1)) {
@@ -287,9 +292,7 @@ static inline void set_field_val(lua_State *L, LTObject *obj, LTFieldInfo *field
             setter(obj, val);
             // Record value in obj's env table so it's not gc'd.
             lua_getfenv(L, obj_index);
-            if (field_index < 0) field_index--;
             lua_pushvalue(L, field_index); // push field name
-            if (val_index < 0) val_index -= 2;
             lua_pushvalue(L, val_index); // push value
             lua_rawset(L, -3);
             lua_pop(L, 1); // pop env table.
@@ -409,6 +412,9 @@ static int index_func(lua_State *L) {
 }
 
 static int newindex_func(lua_State *L) {
+    if (lua_type(L, 2) != LUA_TSTRING) {
+        luaL_error(L, "Field not a string");
+    }
     LTObject *obj = (LTObject *)lua_touserdata(L, 1);
     if (obj != NULL) {
         lua_getmetatable(L, 1); // push metatable
@@ -559,6 +565,7 @@ static int constructor_func_default(lua_State *L) {
     lua_setfenv(L, -2);
     type->default_constructor(ud);
     LTObject *obj = (LTObject*)ud;
+    //lua_getstack(L, 0, &(obj->debug));
     int i = 1;
     while (i <= nargs && !lua_istable(L, i)) {
         lua_rawgeti(L, lua_upvalueindex(2), i); // get field name for arg from metatable
@@ -597,6 +604,7 @@ static int constructor_func_default(lua_State *L) {
         return luaL_error(L, "Invalid argument %d", i);
     }
     obj->init(L);
+    obj->type = type;
     return 1;
 }
 
@@ -728,12 +736,12 @@ void ltLuaGetFloatGetterAndSetter(lua_State *L, int obj_index, int field_index, 
 }
 
 void ltLuaFindFieldOwner(lua_State *L, int obj_index, int field_index) {
+    obj_index = absidx(L, obj_index);
+    field_index = absidx(L, field_index);
     if (!lt_is_LTSceneNode(L, obj_index)) {
         lua_pushnil(L);
         return;
     }
-    obj_index = absidx(L, obj_index);
-    field_index = absidx(L, field_index);
     lua_pushvalue(L, obj_index);
     while (true) {
         lua_getmetatable(L, -1);
