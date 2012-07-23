@@ -1,8 +1,8 @@
 /* Copyright (C) 2011 Ian MacLarty */
-#ifndef LTMINGW
 #include "lt.h"
 
 LT_INIT_IMPL(ltprotocol)
+#ifndef LTMINGW
 
 #define MAX_BASENAME_LEN 512
 
