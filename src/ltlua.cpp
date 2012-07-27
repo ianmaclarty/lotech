@@ -600,6 +600,24 @@ static int lt_PropagateEvent(lua_State *L) {
     return 0;
 }
 
+static int lt_MakeSceneNodeExclusive(lua_State *L) {
+    int nargs = ltLuaCheckNArgs(L, 1);
+    LTSceneNode *node = lt_expect_LTSceneNode(L, 1);
+    bool exclusive = true;
+    if (nargs > 1) {
+        exclusive = lua_toboolean(L, 2);
+    }
+    if (exclusive && !node->active) {
+        luaL_error(L, "scene node not active");
+    }
+    if (exclusive) {
+        lt_exclusive_receiver = node;
+    } else if (lt_exclusive_receiver == node) {
+        lt_exclusive_receiver = NULL;
+    }
+    return 0;
+}
+
 /************************* Images **************************/
 
 static int max_atlas_size() {
@@ -2485,11 +2503,11 @@ static const luaL_Reg ltlib[] = {
     {"AddPointerDownHandler",           lt_AddPointerDownHandler},
     {"AddPointerUpHandler",             lt_AddPointerUpHandler},
     {"AddPointerMoveHandler",           lt_AddPointerMoveHandler},
-
     {"AddKeyHandler",                   lt_AddKeyHandler},
     {"AddKeyUpHandler",                 lt_AddKeyUpHandler},
     {"AddKeyDownHandler",               lt_AddKeyDownHandler},
     {"PropagateEvent",                  lt_PropagateEvent},
+    {"MakeSceneNodeExclusive",          lt_MakeSceneNodeExclusive},
 
     {"LoadImages",                      lt_LoadImages},
 

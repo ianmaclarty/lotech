@@ -60,6 +60,7 @@ mt_add("lt.SceneNode", "Key", lt.AddKeyHandler)
 mt_add("lt.SceneNode", "KeyDown", lt.AddKeyDownHandler)
 mt_add("lt.SceneNode", "KeyUp", lt.AddKeyUpHandler)
 mt_add("lt.SceneNode", "PropagateEvent", lt.PropagateEvent)
+mt_add("lt.SceneNode", "Exclusive", lt.MakeSceneNodeExclusive)
 
 mt_add("lt.Layer", "Insert", lt.InsertLayerFront)
 mt_add("lt.Layer", "InsertBack", lt.InsertLayerBack)
