@@ -66,13 +66,13 @@ void ltOSXRender() {
         event_and_pos top = event_queue[event_queue_top];
         switch ([(top.event) type]) {
             case NSLeftMouseDown:
-                ltLuaPointerDown(1, top.pos.x, h - top.pos.y);
+                ltLuaMouseDown(1, top.pos.x, h - top.pos.y);
                 break;
             case NSLeftMouseUp:
-                ltLuaPointerUp(1, top.pos.x, h - top.pos.y);
+                ltLuaMouseUp(1, top.pos.x, h - top.pos.y);
                 break;
             case NSMouseMoved:
-                ltLuaPointerMove(0, top.pos.x, h - top.pos.y);
+                ltLuaMouseMove(top.pos.x, h - top.pos.y);
                 break;
             case NSKeyDown:
                 ltLuaKeyDown(get_lt_key(top.event));

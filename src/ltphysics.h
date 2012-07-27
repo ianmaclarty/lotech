@@ -60,7 +60,6 @@ LT_INIT_DECL(ltphysics)
 //        LTfloat min_x, LTfloat max_x, LTfloat min_y, LTfloat max_y, LTfloat snap_to);
 //
 //    virtual void draw();
-//    virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
 //};
 //
 //// Check if Box2D will allow the polygon to be attached to a body

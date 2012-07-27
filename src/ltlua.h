@@ -10,12 +10,14 @@ void ltLuaResume();
 void ltLuaAdvance(LTdouble secs);
 void ltLuaRender();
 
-void ltLuaKeyDown(LTKey);
-void ltLuaKeyUp(LTKey);
-
-void ltLuaPointerDown(int input_id, LTfloat x, LTfloat y);
-void ltLuaPointerUp(int input_id, LTfloat x, LTfloat y);
-void ltLuaPointerMove(int input_id, LTfloat x, LTfloat y);
+void ltLuaKeyDown(LTKey key);
+void ltLuaKeyUp(LTKey key);
+void ltLuaTouchDown(int touch_id, LTfloat x, LTfloat y);
+void ltLuaTouchUp(int touch_id, LTfloat x, LTfloat y);
+void ltLuaTouchMove(int touch_id, LTfloat x, LTfloat y);
+void ltLuaMouseDown(int button, LTfloat x, LTfloat y);
+void ltLuaMouseUp(int button, LTfloat x, LTfloat y);
+void ltLuaMouseMove(LTfloat x, LTfloat y);
 
 void ltLuaResizeWindow(LTfloat w, LTfloat h);
 

@@ -8,7 +8,7 @@ struct LTSceneNodeVisitor {
 };
 
 struct LTSceneNode : LTObject {
-    std::list<LTPointerEventHandler *> *event_handlers;
+    std::list<LTEventHandler *> *event_handlers;
     std::list<LTAction *> *actions;
     int active;
 
@@ -16,35 +16,21 @@ struct LTSceneNode : LTObject {
     virtual ~LTSceneNode();
 
     virtual void draw() {};
-    virtual void visitChildren(LTSceneNodeVisitor *v) {};
+    virtual void visit_children(LTSceneNodeVisitor *v) {};
 
-    // Call all the event handles for this node only, returning true iff at least one
-    // of the event handlers returns true.
-    bool consumePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
+    // Returns false if inverse transform not possible or
+    // not implemented.
+    virtual bool inverse_transform(LTfloat *x, LTfloat *y) { return true; };
 
-    // Propogate an event to this and all descendent nodes, calling event
-    // handlers along the way.  If at least one of the event handlers for a particular
-    // node returns true, then propogation stops.
-    virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
-
-    // Returns true iff this node, or one of its descendents, contains the given point.
-    // XXX deprecated in favour of LTHitFilter.
-    virtual bool containsPoint(LTfloat x, LTfloat y) { return false; }
-
-    // The scene node takes over ownership of the handler and
-    // will free it when the scene node is freed.
-    void addHandler(LTPointerEventHandler *handler);
+    void add_event_handler(LTEventHandler *handler);
 
     void enter(LTSceneNode *parent);
     void exit(LTSceneNode *parent);
     virtual void on_activate() {};
     virtual void on_deactivate() {};
-
     void add_action(LTAction *action);
-    // Called before changing OpenGL context.
-    //virtual void preContextChange() {};
-    // Called after changing OpenGL context.
-    //virtual void postContextChange() {};
+
+    virtual bool containsPoint(LTfloat x, LTfloat y) { return false; }
 };
 
 struct LTLayerNodeRefPair {
@@ -73,8 +59,7 @@ struct LTLayer : LTSceneNode {
     int size();
 
     virtual void draw();
-    virtual void visitChildren(LTSceneNodeVisitor *v);
-    virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
+    virtual void visit_children(LTSceneNodeVisitor *v);
 };
 
 struct LTWrapNode : LTSceneNode {
@@ -84,8 +69,7 @@ struct LTWrapNode : LTSceneNode {
     
     virtual void init(lua_State *L);
     virtual void draw();
-    virtual void visitChildren(LTSceneNodeVisitor *v);
-    virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
+    virtual void visit_children(LTSceneNodeVisitor *v);
 };
 
 struct LTTranslateNode : LTWrapNode {
@@ -94,7 +78,7 @@ struct LTTranslateNode : LTWrapNode {
     LTfloat z;
 
     virtual void draw();
-    virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
+    virtual bool inverse_transform(LTfloat *x, LTfloat *y);
 };
 
 struct LTRotateNode : LTWrapNode {
@@ -104,7 +88,7 @@ struct LTRotateNode : LTWrapNode {
     LTfloat cy;
 
     virtual void draw();
-    virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
+    virtual bool inverse_transform(LTfloat *x, LTfloat *y);
 };
 
 struct LTScaleNode : LTWrapNode {
@@ -117,7 +101,7 @@ struct LTScaleNode : LTWrapNode {
 
     virtual void init(lua_State *L);
     virtual void draw();
-    virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
+    virtual bool inverse_transform(LTfloat *x, LTfloat *y);
 };
 
 struct LTTintNode : LTWrapNode {
@@ -129,7 +113,6 @@ struct LTTintNode : LTWrapNode {
     LTTintNode() {red = 1; green = 1; blue = 1; alpha = 1;};
 
     virtual void draw();
-    virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
 };
 
 struct LTTextureModeNode : LTWrapNode {
@@ -154,26 +137,6 @@ struct LTRectNode : LTSceneNode {
     LTRectNode() {};
     
     virtual void draw();
-};
-
-// Filters all pointer events.
-struct LTHitFilter : LTWrapNode {
-    LTfloat left, bottom, right, top;
-
-    LTHitFilter() {};
-    
-    virtual void draw();
-    virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
-};
-
-// Filters only down events.
-struct LTDownFilter : LTWrapNode {
-    LTfloat left, bottom, right, top;
-
-    LTDownFilter() {};
-    
-    virtual void draw();
-    virtual bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
 };
 
 LTSceneNode *lt_expect_LTSceneNode(lua_State *L, int arg);

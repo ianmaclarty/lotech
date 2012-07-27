@@ -18,7 +18,7 @@ LTSceneNode::LTSceneNode() {
 LTSceneNode::~LTSceneNode() {
     assert(!active);
     if (event_handlers != NULL) {
-        std::list<LTPointerEventHandler*>::iterator it;
+        std::list<LTEventHandler*>::iterator it;
         for (it = event_handlers->begin(); it != event_handlers->end(); it++) {
             delete *it;
         }
@@ -43,26 +43,9 @@ LTSceneNode::~LTSceneNode() {
     //all_nodes.remove(this);
 }
 
-bool LTSceneNode::consumePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
-    bool consumed = false;
-    if (event_handlers != NULL) {
-        std::list<LTPointerEventHandler*>::iterator it;
-        for (it = event_handlers->begin(); it != event_handlers->end(); it++) {
-            if ((*it)->consume(x, y, this, event)) {
-                consumed = true;
-            }
-        }
-    }
-    return consumed;
-}
-
-bool LTSceneNode::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
-    return consumePointerEvent(x, y, event);
-}
-
-void LTSceneNode::addHandler(LTPointerEventHandler *handler) {
+void LTSceneNode::add_event_handler(LTEventHandler *handler) {
     if (event_handlers == NULL) {
-        event_handlers = new std::list<LTPointerEventHandler *>();
+        event_handlers = new std::list<LTEventHandler *>();
     }
     event_handlers->push_front(handler);
 }
@@ -82,7 +65,7 @@ struct EnterVisitor : LTSceneNodeVisitor {
             }
         }
         node->active += inc;
-        node->visitChildren(this);
+        node->visit_children(this);
     }
 };
 
@@ -102,7 +85,7 @@ struct CheckVisitor : LTSceneNodeVisitor {
     virtual void visit(LTSceneNode *node) {
         map_inc(ss, node);
         CheckVisitor v2(ss);
-        node->visitChildren(&v2);
+        node->visit_children(&v2);
     }
 };
 
@@ -120,7 +103,7 @@ struct ExitVisitor : LTSceneNodeVisitor {
         dec = n;
     }
     virtual void visit(LTSceneNode *node) {
-        node->visitChildren(this);
+        node->visit_children(this);
         node->active -= dec;
         assert(node->active >= 0);
         if (node->active == 0) {
@@ -130,6 +113,9 @@ struct ExitVisitor : LTSceneNodeVisitor {
                 }
             }
             node->on_deactivate();
+            if (node == lt_exclusive_receiver) {
+                lt_exclusive_receiver = NULL;
+            }
         }
     }
 };
@@ -252,16 +238,8 @@ void LTWrapNode::draw() {
     child->draw();
 }
 
-void LTWrapNode::visitChildren(LTSceneNodeVisitor *v) {
+void LTWrapNode::visit_children(LTSceneNodeVisitor *v) {
     v->visit(child);
-}
-
-bool LTWrapNode::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
-    if (!consumePointerEvent(x, y, event)) {
-        return child->propogatePointerEvent(x, y, event);
-    } else {
-        return true;
-    }
 }
 
 static LTObject *get_child(LTObject *obj) {
@@ -374,24 +352,10 @@ void LTLayer::draw() {
     }
 }
 
-void LTLayer::visitChildren(LTSceneNodeVisitor *v) {
+void LTLayer::visit_children(LTSceneNodeVisitor *v) {
     std::list<LTLayerNodeRefPair>::iterator it;
     for (it = node_list.begin(); it != node_list.end(); it++) {
         v->visit((*it).node);
-    }
-}
-
-bool LTLayer::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
-    if (!consumePointerEvent(x, y, event)) {
-        std::list<LTLayerNodeRefPair>::reverse_iterator it;
-        for (it = node_list.rbegin(); it != node_list.rend(); it++) {
-            if ((*it).node->propogatePointerEvent(x, y, event)) {
-                return true;
-            }
-        }
-        return false;
-    } else {
-        return true;
     }
 }
 
@@ -417,19 +381,10 @@ void LTTranslateNode::draw() {
     child->draw();
 }
 
-bool LTTranslateNode::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
-    if (!consumePointerEvent(x, y, event)) {
-        LTfloat x1, y1;
-        x1 = x - LTTranslateNode::x;
-        y1 = y - LTTranslateNode::y;
-        if (z == 0.0f) {
-            return child->propogatePointerEvent(x1, y1, event);
-        } else {
-            return false;
-        }
-    } else {
-        return true;
-    }
+bool LTTranslateNode::inverse_transform(LTfloat *x1, LTfloat *y1) {
+    *x1 -= x;
+    *y1 -= y;
+    return true;
 }
 
 LT_REGISTER_TYPE(LTTranslateNode, "lt.Translate", "lt.Wrap");
@@ -444,18 +399,13 @@ void LTRotateNode::draw() {
     child->draw();
 }
 
-bool LTRotateNode::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
-    if (!consumePointerEvent(x, y, event)) {
-        LTfloat x1, y1;
-        LTfloat a = -angle * LT_RADIANS_PER_DEGREE;
-        LTfloat s = sinf(a);
-        LTfloat c = cosf(a);
-        x1 = c * x - s * y;
-        y1 = s * x + c * y;
-        return child->propogatePointerEvent(x1, y1, event);
-    } else {
-        return true;
-    }
+bool LTRotateNode::inverse_transform(LTfloat *x, LTfloat *y) {
+    LTfloat a = -angle * LT_RADIANS_PER_DEGREE;
+    LTfloat s = sinf(a);
+    LTfloat c = cosf(a);
+    *x = c * *x - s * *y;
+    *y = s * *x + c * *y;
+    return true;
 }
 
 LT_REGISTER_TYPE(LTRotateNode, "lt.Rotate", "lt.Wrap");
@@ -479,18 +429,13 @@ void LTScaleNode::draw() {
     child->draw();
 }
 
-bool LTScaleNode::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
-    if (!consumePointerEvent(x, y, event)) {
-        LTfloat x1, y1;
-        if (scale_x != 0.0f && scale_y != 0.0f && scale != 0.0f && scale_z == 1.0f) {
-            x1 = x / (scale_x * scale);
-            y1 = y / (scale_y * scale);
-            return child->propogatePointerEvent(x1, y1, event);
-        } else {
-            return false;
-        }
-    } else {
+bool LTScaleNode::inverse_transform(LTfloat *x, LTfloat *y) {
+    if (scale_x != 0.0f && scale_y != 0.0f && scale != 0.0f && scale_z == 1.0f) {
+        *x /= (scale_x * scale);
+        *y /= (scale_y * scale);
         return true;
+    } else {
+        return false;
     }
 }
 
@@ -504,14 +449,6 @@ void LTTintNode::draw() {
     ltPushTint(red, green, blue, alpha);
     child->draw();
     ltPopTint();
-}
-
-bool LTTintNode::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
-    if (!consumePointerEvent(x, y, event)) {
-        return child->propogatePointerEvent(x, y, event);
-    } else {
-        return true;
-    }
 }
 
 LT_REGISTER_TYPE(LTTintNode, "lt.Tint", "lt.Wrap");
@@ -574,50 +511,6 @@ LT_REGISTER_FIELD_FLOAT(LTRectNode, y1)
 LT_REGISTER_FIELD_FLOAT(LTRectNode, x2)
 LT_REGISTER_FIELD_FLOAT(LTRectNode, y2)
 
-void LTHitFilter::draw() {
-    child->draw();
-}
-
-bool LTHitFilter::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
-    if (x >= left && x <= right && y >= bottom && y <= top) {
-        if (!consumePointerEvent(x, y, event)) {
-            return child->propogatePointerEvent(x, y, event);
-        } else {
-            return true;
-        }
-    } else {
-        return false;
-    }
-}
-
-LT_REGISTER_TYPE(LTHitFilter, "lt.HitFilter", "lt.Wrap")
-LT_REGISTER_FIELD_FLOAT(LTHitFilter, left)
-LT_REGISTER_FIELD_FLOAT(LTHitFilter, bottom)
-LT_REGISTER_FIELD_FLOAT(LTHitFilter, right)
-LT_REGISTER_FIELD_FLOAT(LTHitFilter, top)
-
-void LTDownFilter::draw() {
-    child->draw();
-}
-
-bool LTDownFilter::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
-    if (event->type != LT_EVENT_POINTER_DOWN || (x >= left && x <= right && y >= bottom && y <= top)) {
-        if (!consumePointerEvent(x, y, event)) {
-            return child->propogatePointerEvent(x, y, event);
-        } else {
-            return true;
-        }
-    } else {
-        return false;
-    }
-}
-
-LT_REGISTER_TYPE(LTDownFilter, "lt.DownFilter", "lt.Wrap")
-LT_REGISTER_FIELD_FLOAT(LTDownFilter, left)
-LT_REGISTER_FIELD_FLOAT(LTDownFilter, bottom)
-LT_REGISTER_FIELD_FLOAT(LTDownFilter, right)
-LT_REGISTER_FIELD_FLOAT(LTDownFilter, top)
-
 /*
 static void check_scene_nodes() {
     std::list<LTSceneNode *>::iterator it;
@@ -627,7 +520,7 @@ static void check_scene_nodes() {
     for (roots_it = roots.begin(); roots_it != roots.end(); ++roots_it) {
         LTSceneNode *root = *roots_it;
         map_inc(&active_nodes, root);
-        root->visitChildren(&visitor);
+        root->visit_children(&visitor);
     }
     for (it = all_nodes.begin(); it != all_nodes.end(); ++it) {
         if (active_nodes.find(*it) == active_nodes.end()) {

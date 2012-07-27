@@ -2,7 +2,7 @@ include Make.common
 
 TARGET_DIR=$(TARGET_PLATFORM)
 PWD=$(shell pwd)
-LTCFLAGS=-O3
+LTCFLAGS=-O3 -DNDEBUG
 -include Make.params
 
 all: $(TARGET_DIR)/liblt.a deplibs headers

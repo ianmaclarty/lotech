@@ -12,28 +12,26 @@ struct LTPerspective : LTWrapNode {
     LTPerspective() {near = 1; origin = 2; far = 10;};
     
     virtual void draw();
-    bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
+    bool inverse_transform(LTfloat *x, LTfloat *y);
 };
 
 struct LTDepthTest : LTWrapNode {
     bool on;
     LTDepthTest() {on = true;}
     virtual void draw();
-    bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
 };
 
 struct LTDepthMask : LTWrapNode {
     bool on;
     LTDepthMask() {on = true;}
     virtual void draw();
-    bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
 };
 
 struct LTPitch : LTWrapNode {
     LTfloat pitch;
 
     virtual void draw();
-    bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
+    bool inverse_transform(LTfloat *x, LTfloat *y);
 };
 
 struct LTFog : LTWrapNode {
@@ -42,5 +40,4 @@ struct LTFog : LTWrapNode {
     LTfloat red, green, blue;
 
     virtual void draw();
-    bool propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event);
 };

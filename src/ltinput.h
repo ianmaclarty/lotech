@@ -1,6 +1,7 @@
 /* Copyright (C) 2010 Ian MacLarty */
 LT_INIT_DECL(ltinput)
 enum LTKey {
+    LT_KEY_UNKNOWN,
     LT_KEY_0,
     LT_KEY_1,
     LT_KEY_2,
@@ -57,5 +58,4 @@ enum LTKey {
     LT_KEY_TICK,
     LT_KEY_DEL,
     LT_KEY_ESC,
-    LT_KEY_UNKNOWN
 };

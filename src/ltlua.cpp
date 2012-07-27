@@ -461,182 +461,142 @@ static int lt_FillVectorColumnsWithImageQuads(lua_State *L) {
 
 /************************* Events **************************/
 
-static bool call_pointer_event_handler(lua_State *L, int func, LTfloat x, LTfloat y, int input_id) {
-    get_weak_ref(L, func);
-    if (lua_isfunction(L, -1)) {
-        lua_pushinteger(L, input_id);
-        lua_pushnumber(L, x);
-        lua_pushnumber(L, y);
-        lua_call(L, 3, 1);
-        bool consumed;
-        if (lua_isnil(L, -1)) {
-            consumed = false;
+struct LTLuaEventHandler : LTEventHandler {
+    int func_ref;
+    int node_ref;
+
+    LTLuaEventHandler(int node_ref, int func_ref, int filter) : LTEventHandler(filter) {
+        LTLuaEventHandler::node_ref = node_ref;
+        LTLuaEventHandler::func_ref = func_ref;
+    }
+
+    LTLuaEventHandler(int node_ref, int func_ref, int filter,
+            LTfloat left, LTfloat bottom, LTfloat right, LTfloat top)
+        : LTEventHandler(filter, left, bottom, right, top)
+    {
+        LTLuaEventHandler::node_ref = node_ref;
+        LTLuaEventHandler::func_ref = func_ref;
+    }
+
+    virtual bool consume(LTSceneNode *node, LTEvent *event) {
+        get_weak_ref(g_L, node_ref);
+        ltLuaGetRef(g_L, -1, func_ref);
+        assert(lua_isfunction(g_L, -1));
+        new (lt_alloc_LTEvent(g_L)) LTEvent(event); // push copy of event
+        lua_pushvalue(g_L, -3); // push scene node
+        lua_call(g_L, 2, 1);
+        bool res;
+        if (lua_isnil(g_L, -1)) {
+            res = true; // consume by default.
         } else {
-            consumed = lua_toboolean(L, -1);
+            res = lua_toboolean(g_L, -1);
         }
-        lua_pop(L, 1);
-        return consumed;
+        lua_pop(g_L, 1); // pop res, node
+        return res;
+    }
+};
+
+static int add_event_handler(lua_State *L, int filter) {
+    int nargs = ltLuaCheckNArgs(L, 2);
+    LTSceneNode *node = lt_expect_LTSceneNode(L, 1);
+    if (!lua_isfunction(L, 2)) {
+        return luaL_error(L, "argument not a function");
+    }
+    int fref = ltLuaAddRef(L, 1, 2); // Add reference from node to handler func.
+    int nref = make_weak_ref(L, 1);
+    LTLuaEventHandler *handler;
+    if (nargs == 2) {
+        handler = new LTLuaEventHandler(nref, fref, filter);
     } else {
-        lua_pop(L, 1);
-        return false;
-    }
-}
-
-struct LTLPointerUpEventHandler : LTPointerEventHandler {
-    int lua_func_ref;
-
-    LTLPointerUpEventHandler(int func_index) {
-        lua_func_ref = make_weak_ref(g_L, func_index);
-    }
-
-    virtual bool consume(LTfloat x, LTfloat y, LTSceneNode *node, LTPointerEvent *event) {
-        if (event->type == LT_EVENT_POINTER_UP) {
-            return call_pointer_event_handler(g_L, lua_func_ref, x, y, event->input_id);
-        } else {
-            return false;
+        LTfloat left = luaL_checknumber(L, 3);
+        LTfloat bottom = -1000000.0f;
+        LTfloat right = 1000000.0f;
+        LTfloat top = 1000000.0f;
+        if (nargs > 3) {
+            bottom = luaL_checknumber(L, 4);
         }
-    }
-};
-
-struct LTLPointerDownEventHandler : LTPointerEventHandler {
-    int lua_func_ref;
-
-    LTLPointerDownEventHandler(int func_index) {
-        lua_func_ref = make_weak_ref(g_L, func_index);
-    }
-
-    virtual bool consume(LTfloat x, LTfloat y, LTSceneNode *node, LTPointerEvent *event) {
-        if (event->type == LT_EVENT_POINTER_DOWN) {
-            return call_pointer_event_handler(g_L, lua_func_ref, x, y, event->input_id);
-        } else {
-            return false;
+        if (nargs > 4) {
+            right = luaL_checknumber(L, 5);
         }
-    }
-};
-
-struct LTLPointerMoveEventHandler : LTPointerEventHandler {
-    int lua_func_ref;
-
-    LTLPointerMoveEventHandler(int func_index) {
-        lua_func_ref = make_weak_ref(g_L, func_index);
-    }
-
-    virtual bool consume(LTfloat x, LTfloat y, LTSceneNode *node, LTPointerEvent *event) {
-        if (event->type == LT_EVENT_POINTER_MOVE) {
-            return call_pointer_event_handler(g_L, lua_func_ref, x, y, event->input_id);
-        } else {
-            return false;
+        if (nargs > 5) {
+            top = luaL_checknumber(L, 6);
         }
+        handler = new LTLuaEventHandler(nref, fref, filter, left, bottom, right, top);
     }
-};
-
-struct LTLPointerOverEventHandler : LTPointerEventHandler {
-    int lua_enter_func_ref;
-    int lua_exit_func_ref;
-    bool first_time;
-    bool in;
-
-    LTLPointerOverEventHandler(int enter_func_index, int exit_func_index) {
-        lua_enter_func_ref = make_weak_ref(g_L, enter_func_index);
-        lua_exit_func_ref = make_weak_ref(g_L, exit_func_index);
-        first_time = true;
-        in = false;
-    }
-
-    virtual bool consume(LTfloat x, LTfloat y, LTSceneNode *node, LTPointerEvent *event) {
-        if (event->type == LT_EVENT_POINTER_MOVE) {
-            bool containsPoint = node->containsPoint(x, y);
-            if (first_time) {
-                first_time = false;
-                in = containsPoint;
-                if (in) {
-                    return call_pointer_event_handler(g_L, lua_enter_func_ref, x, y, event->input_id);
-                } else {
-                    return false;
-                }
-            } else {
-                bool res = false;
-                if (containsPoint && !in) {
-                    res = call_pointer_event_handler(g_L, lua_enter_func_ref, x, y, event->input_id);
-                } else if (!containsPoint && in) {
-                    res = call_pointer_event_handler(g_L, lua_exit_func_ref, x, y, event->input_id);
-                }
-                in = containsPoint;
-                return res;
-            }
-        } else {
-            return false;
-        }
-    }
-};
-
-static int lt_AddOnPointerUpHandler(lua_State *L) {
-    ltLuaCheckNArgs(L, 2);
-    LTSceneNode *node = lt_expect_LTSceneNode(L, 1);
-    LTLPointerUpEventHandler *handler = new LTLPointerUpEventHandler(2);
-    node->addHandler(handler);
-    ltLuaAddRef(L, 1, 2); // XXX ref never deleted.
-    return 0;
+    node->add_event_handler(handler);
+    lua_pushvalue(L, 1);
+    return 1;
 }
 
-static int lt_AddOnPointerDownHandler(lua_State *L) {
-    ltLuaCheckNArgs(L, 2);
-    LTSceneNode *node = lt_expect_LTSceneNode(L, 1);
-    LTLPointerDownEventHandler *handler = new LTLPointerDownEventHandler(2);
-    node->addHandler(handler);
-    ltLuaAddRef(L, 1, 2); // XXX ref never deleted.
-    return 0;
+static int lt_AddEventHandler(lua_State *L) {
+    return add_event_handler(L, 0);
 }
 
-static int lt_AddOnPointerMoveHandler(lua_State *L) {
-    ltLuaCheckNArgs(L, 2);
-    LTSceneNode *node = lt_expect_LTSceneNode(L, 1);
-    LTLPointerMoveEventHandler *handler = new LTLPointerMoveEventHandler(2);
-    node->addHandler(handler);
-    ltLuaAddRef(L, 1, 2); // XXX ref never deleted.
-    return 0;
+static int lt_AddMouseHandler(lua_State *L) {
+    return add_event_handler(L, LT_EVENT_MOUSE);
 }
 
-static int lt_AddOnPointerOverHandler(lua_State *L) {
-    ltLuaCheckNArgs(L, 3);
-    LTSceneNode *node = lt_expect_LTSceneNode(L, 1);
-    LTLPointerOverEventHandler *handler = new LTLPointerOverEventHandler(2, 3);
-    node->addHandler(handler);
-    ltLuaAddRef(L, 1, 2); // XXX ref never deleted.
-    ltLuaAddRef(L, 1, 3); // XXX ref never deleted.
-    return 0;
+static int lt_AddMouseDownHandler(lua_State *L) {
+    return add_event_handler(L, LT_EVENT_MOUSE_DOWN);
 }
 
-static int lt_PropogatePointerUpEvent(lua_State *L) {
-    ltLuaCheckNArgs(L, 4);
-    LTSceneNode *node = lt_expect_LTSceneNode(L, 1);
-    int input_id = luaL_checkinteger(L, 2);
-    LTfloat x = luaL_checknumber(L, 3);
-    LTfloat y = luaL_checknumber(L, 4);
-    LTPointerEvent event(LT_EVENT_POINTER_UP, x, y, input_id);
-    node->propogatePointerEvent(x, y, &event);
-    return 0;
+static int lt_AddMouseUpHandler(lua_State *L) {
+    return add_event_handler(L, LT_EVENT_MOUSE_UP);
 }
 
-static int lt_PropogatePointerDownEvent(lua_State *L) {
-    ltLuaCheckNArgs(L, 4);
-    LTSceneNode *node = lt_expect_LTSceneNode(L, 1);
-    int input_id = luaL_checkinteger(L, 2);
-    LTfloat x = luaL_checknumber(L, 3);
-    LTfloat y = luaL_checknumber(L, 4);
-    LTPointerEvent event(LT_EVENT_POINTER_DOWN, x, y, input_id);
-    node->propogatePointerEvent(x, y, &event);
-    return 0;
+static int lt_AddMouseMoveHandler(lua_State *L) {
+    return add_event_handler(L, LT_EVENT_MOUSE_MOVE);
 }
 
-static int lt_PropogatePointerMoveEvent(lua_State *L) {
-    ltLuaCheckNArgs(L, 4);
+static int lt_AddTouchHandler(lua_State *L) {
+    return add_event_handler(L, LT_EVENT_TOUCH);
+}
+
+static int lt_AddTouchDownHandler(lua_State *L) {
+    return add_event_handler(L, LT_EVENT_TOUCH_DOWN);
+}
+
+static int lt_AddTouchUpHandler(lua_State *L) {
+    return add_event_handler(L, LT_EVENT_TOUCH_UP);
+}
+
+static int lt_AddTouchMoveHandler(lua_State *L) {
+    return add_event_handler(L, LT_EVENT_TOUCH_MOVE);
+}
+
+static int lt_AddPointerHandler(lua_State *L) {
+    return add_event_handler(L, LT_EVENT_POINTER);
+}
+
+static int lt_AddPointerDownHandler(lua_State *L) {
+    return add_event_handler(L, LT_EVENT_POINTER_DOWN);
+}
+
+static int lt_AddPointerUpHandler(lua_State *L) {
+    return add_event_handler(L, LT_EVENT_POINTER_UP);
+}
+
+static int lt_AddPointerMoveHandler(lua_State *L) {
+    return add_event_handler(L, LT_EVENT_POINTER_MOVE);
+}
+
+static int lt_AddKeyHandler(lua_State *L) {
+    return add_event_handler(L, LT_EVENT_KEY);
+}
+
+static int lt_AddKeyDownHandler(lua_State *L) {
+    return add_event_handler(L, LT_EVENT_KEY_DOWN);
+}
+
+static int lt_AddKeyUpHandler(lua_State *L) {
+    return add_event_handler(L, LT_EVENT_KEY_UP);
+}
+
+static int lt_PropagateEvent(lua_State *L) {
+    ltLuaCheckNArgs(L, 1);
     LTSceneNode *node = lt_expect_LTSceneNode(L, 1);
-    int input_id = luaL_checkinteger(L, 2);
-    LTfloat x = luaL_checknumber(L, 3);
-    LTfloat y = luaL_checknumber(L, 4);
-    LTPointerEvent event(LT_EVENT_POINTER_MOVE, x, y, input_id);
-    node->propogatePointerEvent(x, y, &event);
+    LTEvent *event = lt_expect_LTEvent(L, 2);
+    ltPropagateEvent(node, event);
     return 0;
 }
 
@@ -2088,12 +2048,12 @@ static int lt_OpenURL(lua_State *L) {
 
 struct LTLuaAction : LTAction {
     int node_ref;
-    int lua_func_ref;
+    int func_ref;
     LTdouble t_accum;
 
-    LTLuaAction(LTSceneNode *node, int node_ref, int lua_func_ref) : LTAction(node) {
+    LTLuaAction(LTSceneNode *node, int node_ref, int func_ref) : LTAction(node) {
         LTLuaAction::node_ref = node_ref;
-        LTLuaAction::lua_func_ref = lua_func_ref;
+        LTLuaAction::func_ref = func_ref;
         t_accum = 0.0;
     }
 
@@ -2103,7 +2063,7 @@ struct LTLuaAction : LTAction {
     virtual void on_cancel() {
         get_weak_ref(g_L, node_ref);
         assert(lt_is_LTSceneNode(g_L, -1));
-        ltLuaDelRef(g_L, -1, lua_func_ref);
+        ltLuaDelRef(g_L, -1, func_ref);
         del_weak_ref(g_L, node_ref);
         lua_pop(g_L, 1);
     }
@@ -2114,11 +2074,10 @@ struct LTLuaAction : LTAction {
         t_accum += dt;
         get_weak_ref(g_L, node_ref);
         while (t_accum > 0.0) {
-            ltLuaGetRef(g_L, -1, lua_func_ref);
+            ltLuaGetRef(g_L, -1, func_ref);
             assert(lua_isfunction(g_L, -1));
             lua_pushnumber(g_L, dt);
-            get_weak_ref(g_L, node_ref);
-            assert(lt_is_LTSceneNode(g_L, -1));
+            lua_pushvalue(g_L, -3); // push scene node
             lua_call(g_L, 2, 1);
             if (lua_type(g_L, -1) == LUA_TNUMBER) {
                 t_accum -= lua_tonumber(g_L, -1);
@@ -2506,20 +2465,31 @@ static const luaL_Reg ltlib[] = {
     {"DrawEllipse",                     lt_DrawEllipse},
 
     {"DrawSceneNode",                   lt_DrawSceneNode},
-    //{"AdvanceSceneNode",                lt_AdvanceSceneNode},
-    {"AddOnPointerUpHandler",           lt_AddOnPointerUpHandler},
-    {"AddOnPointerDownHandler",         lt_AddOnPointerDownHandler},
-    {"AddOnPointerMoveHandler",         lt_AddOnPointerMoveHandler},
-    {"AddOnPointerOverHandler",         lt_AddOnPointerOverHandler},
-    {"PropogatePointerUpEvent",         lt_PropogatePointerUpEvent},
-    {"PropogatePointerDownEvent",       lt_PropogatePointerDownEvent},
-    {"PropogatePointerMoveEvent",       lt_PropogatePointerMoveEvent},
     {"InsertLayerFront",                lt_InsertLayerFront},
     {"InsertLayerBack",                 lt_InsertLayerBack},
     {"InsertLayerAbove",                lt_InsertLayerAbove},
     {"InsertLayerBelow",                lt_InsertLayerBelow},
     {"RemoveFromLayer",                 lt_RemoveFromLayer},
     {"LayerSize",                       lt_LayerSize},
+
+    {"AddEventHandler",                 lt_AddEventHandler},
+    {"AddMouseHandler",                 lt_AddMouseHandler},
+    {"AddMouseDownHandler",             lt_AddMouseDownHandler},
+    {"AddMouseUpHandler",               lt_AddMouseUpHandler},
+    {"AddMouseMoveHandler",             lt_AddMouseMoveHandler},
+    {"AddTouchHandler",                 lt_AddTouchHandler},
+    {"AddTouchDownHandler",             lt_AddTouchDownHandler},
+    {"AddTouchUpHandler",               lt_AddTouchUpHandler},
+    {"AddTouchMoveHandler",             lt_AddTouchMoveHandler},
+    {"AddPointerHandler",               lt_AddPointerHandler},
+    {"AddPointerDownHandler",           lt_AddPointerDownHandler},
+    {"AddPointerUpHandler",             lt_AddPointerUpHandler},
+    {"AddPointerMoveHandler",           lt_AddPointerMoveHandler},
+
+    {"AddKeyHandler",                   lt_AddKeyHandler},
+    {"AddKeyUpHandler",                 lt_AddKeyUpHandler},
+    {"AddKeyDownHandler",               lt_AddKeyDownHandler},
+    {"PropagateEvent",                  lt_PropagateEvent},
 
     {"LoadImages",                      lt_LoadImages},
 
@@ -2800,111 +2770,93 @@ void ltLuaRender() {
     }
 }
 
-static const char *lt_key_str(LTKey key) {
-    switch (key) {
-        case LT_KEY_0: return "0"; 
-        case LT_KEY_1: return "1"; 
-        case LT_KEY_2: return "2"; 
-        case LT_KEY_3: return "3"; 
-        case LT_KEY_4: return "4"; 
-        case LT_KEY_5: return "5"; 
-        case LT_KEY_6: return "6"; 
-        case LT_KEY_7: return "7"; 
-        case LT_KEY_8: return "8"; 
-        case LT_KEY_9: return "9"; 
-        case LT_KEY_A: return "A"; 
-        case LT_KEY_B: return "B"; 
-        case LT_KEY_C: return "C"; 
-        case LT_KEY_D: return "D"; 
-        case LT_KEY_E: return "E"; 
-        case LT_KEY_F: return "F"; 
-        case LT_KEY_G: return "G"; 
-        case LT_KEY_H: return "H"; 
-        case LT_KEY_I: return "I"; 
-        case LT_KEY_J: return "J"; 
-        case LT_KEY_K: return "K"; 
-        case LT_KEY_L: return "L"; 
-        case LT_KEY_M: return "M"; 
-        case LT_KEY_N: return "N"; 
-        case LT_KEY_O: return "O"; 
-        case LT_KEY_P: return "P"; 
-        case LT_KEY_Q: return "Q"; 
-        case LT_KEY_R: return "R"; 
-        case LT_KEY_S: return "S"; 
-        case LT_KEY_T: return "T"; 
-        case LT_KEY_U: return "U"; 
-        case LT_KEY_V: return "V"; 
-        case LT_KEY_W: return "W"; 
-        case LT_KEY_X: return "X"; 
-        case LT_KEY_Y: return "Y"; 
-        case LT_KEY_Z: return "Z"; 
-        case LT_KEY_SPACE: return "space"; 
-        case LT_KEY_TAB: return "tab"; 
-        case LT_KEY_ENTER: return "enter"; 
-        case LT_KEY_UP: return "up"; 
-        case LT_KEY_DOWN: return "down"; 
-        case LT_KEY_LEFT: return "left"; 
-        case LT_KEY_RIGHT: return "right"; 
-        case LT_KEY_RIGHT_BRACKET: return "["; 
-        case LT_KEY_LEFT_BRACKET: return "]"; 
-        case LT_KEY_BACKSLASH: return "\\"; 
-        case LT_KEY_SEMI_COLON: return ":"; 
-        case LT_KEY_APOS: return ";"; 
-        case LT_KEY_COMMA: return ","; 
-        case LT_KEY_PERIOD: return "."; 
-        case LT_KEY_SLASH: return "/"; 
-        case LT_KEY_PLUS: return "+"; 
-        case LT_KEY_MINUS: return "-"; 
-        case LT_KEY_TICK: return "`"; 
-        case LT_KEY_DEL: return "del"; 
-        case LT_KEY_ESC: return "esc"; 
-        case LT_KEY_UNKNOWN: return "unknown";
+static void handle_event(LTEvent *e) {
+    if (g_L != NULL && !g_suspended && push_lt_func(g_L, "HandleEvent")) {
+        new (lt_alloc_LTEvent(g_L)) LTEvent(e);
+        docall(g_L, 1, 0);
     }
-    return "";
+}
+
+void ltLuaMouseDown(int button, LTfloat x, LTfloat y) {
+    LTEvent e;
+    e.event = LT_EVENT_MOUSE_DOWN;
+    e.x = ltGetViewPortX(x);
+    e.y = ltGetViewPortY(y);
+    e.orig_x = x;
+    e.orig_y = y;
+    e.button = button;
+    handle_event(&e);
+}
+
+void ltLuaMouseUp(int button, LTfloat x, LTfloat y) {
+    LTEvent e;
+    e.event = LT_EVENT_MOUSE_UP;
+    e.x = ltGetViewPortX(x);
+    e.y = ltGetViewPortY(y);
+    e.orig_x = x;
+    e.orig_y = y;
+    e.button = button;
+    handle_event(&e);
+}
+
+void ltLuaMouseMove(LTfloat x, LTfloat y) {
+    LTEvent e;
+    e.event = LT_EVENT_MOUSE_MOVE;
+    e.x = ltGetViewPortX(x);
+    e.y = ltGetViewPortY(y);
+    e.orig_x = x;
+    e.orig_y = y;
+    handle_event(&e);
+}
+
+void ltLuaTouchDown(int touch_id, LTfloat x, LTfloat y) {
+    LTEvent e;
+    e.event = LT_EVENT_TOUCH_DOWN;
+    e.x = ltGetViewPortX(x);
+    e.y = ltGetViewPortY(y);
+    e.orig_x = x;
+    e.orig_y = y;
+    e.touch_id = touch_id;
+    handle_event(&e);
+}
+
+void ltLuaTouchUp(int touch_id, LTfloat x, LTfloat y) {
+    LTEvent e;
+    e.event = LT_EVENT_TOUCH_UP;
+    e.x = ltGetViewPortX(x);
+    e.y = ltGetViewPortY(y);
+    e.orig_x = x;
+    e.orig_y = y;
+    e.touch_id = touch_id;
+    handle_event(&e);
+}
+
+void ltLuaTouchMove(int touch_id, LTfloat x, LTfloat y) {
+    LTEvent e;
+    e.event = LT_EVENT_TOUCH_MOVE;
+    e.x = ltGetViewPortX(x);
+    e.y = ltGetViewPortY(y);
+    e.orig_x = x;
+    e.orig_y = y;
+    e.touch_id = touch_id;
+    handle_event(&e);
 }
 
 void ltLuaKeyDown(LTKey key) {
-    if (g_L != NULL && !g_suspended && push_lt_func(g_L, "KeyDown")) {
-        const char *str = lt_key_str(key);
-        lua_pushstring(g_L, str);
-        docall(g_L, 1, 0);
-    }
+    LTEvent e;
+    e.event = LT_EVENT_KEY_DOWN;
+    e.key = key;
+    handle_event(&e);
 }
 
 void ltLuaKeyUp(LTKey key) {
-    if (g_L != NULL && !g_suspended && push_lt_func(g_L, "KeyUp")) {
-        const char *str = lt_key_str(key);
-        lua_pushstring(g_L, str);
-        docall(g_L, 1, 0);
-    }
+    LTEvent e;
+    e.event = LT_EVENT_KEY_UP;
+    e.key = key;
+    handle_event(&e);
 }
 
-void ltLuaPointerDown(int input_id, LTfloat x, LTfloat y) {
-    if (g_L != NULL && !g_suspended && push_lt_func(g_L, "PointerDown")) {
-        lua_pushinteger(g_L, input_id);
-        lua_pushnumber(g_L, ltGetViewPortX(x));
-        lua_pushnumber(g_L, ltGetViewPortY(y));
-        docall(g_L, 3, 0);
-    }
-}
-
-void ltLuaPointerUp(int input_id, LTfloat x, LTfloat y) {
-    if (g_L != NULL && !g_suspended && push_lt_func(g_L, "PointerUp")) {
-        lua_pushinteger(g_L, input_id);
-        lua_pushnumber(g_L, ltGetViewPortX(x));
-        lua_pushnumber(g_L, ltGetViewPortY(y));
-        docall(g_L, 3, 0);
-    }
-}
-
-void ltLuaPointerMove(int input_id, LTfloat x, LTfloat y) {
-    if (g_L != NULL && !g_suspended && push_lt_func(g_L, "PointerMove")) {
-        lua_pushinteger(g_L, input_id);
-        lua_pushnumber(g_L, ltGetViewPortX(x));
-        lua_pushnumber(g_L, ltGetViewPortY(y));
-        docall(g_L, 3, 0);
-    }
-}
+/************************************************************/
 
 void ltLuaResizeWindow(LTfloat w, LTfloat h) {
     ltResizeScreen((int)w, (int)h);

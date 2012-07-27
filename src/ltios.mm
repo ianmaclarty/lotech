@@ -59,7 +59,7 @@ void ltIOSTouchesBegan(NSSet *touches) {
     UITouch *touch;
     while ((touch = [e nextObject])) {
         CGPoint pos = [touch locationInView:touch.view];
-        ltLuaPointerDown((int)touch, pos.x, pos.y);
+        ltLuaTouchDown((int)touch, pos.x, pos.y);
     }
 }
 
@@ -68,7 +68,7 @@ void ltIOSTouchesMoved(NSSet *touches) {
     UITouch *touch;
     while ((touch = [e nextObject])) {
         CGPoint pos = [touch locationInView:touch.view];
-        ltLuaPointerMove((int)touch, pos.x, pos.y);
+        ltLuaTouchMove((int)touch, pos.x, pos.y);
     }
 }
 
@@ -77,7 +77,7 @@ void ltIOSTouchesEnded(NSSet *touches) {
     UITouch *touch;
     while ((touch = [e nextObject])) {
         CGPoint pos = [touch locationInView:touch.view];
-        ltLuaPointerUp((int)touch, pos.x, pos.y);
+        ltLuaTouchUp((int)touch, pos.x, pos.y);
     }
 }
 

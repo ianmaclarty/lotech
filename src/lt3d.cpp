@@ -11,7 +11,7 @@ void LTPerspective::draw() {
     ltPopPerspective();
 }
 
-bool LTPerspective::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
+bool LTPerspective::inverse_transform(LTfloat *x, LTfloat *y) {
     return false;
 }
 
@@ -42,10 +42,6 @@ void LTDepthTest::draw() {
     }
 }
 
-bool LTDepthTest::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
-    return child->propogatePointerEvent(x, y, event);
-}
-
 LT_REGISTER_TYPE(LTDepthTest, "lt.DepthTest", "lt.Wrap")
 LT_REGISTER_FIELD_BOOL(LTDepthTest, on)
 
@@ -69,10 +65,6 @@ void LTDepthMask::draw() {
     }
 }
 
-bool LTDepthMask::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
-    return child->propogatePointerEvent(x, y, event);
-}
-
 LT_REGISTER_TYPE(LTDepthMask, "lt.DepthMask", "lt.Wrap")
 LT_REGISTER_FIELD_BOOL(LTDepthMask, on)
 
@@ -81,7 +73,7 @@ void LTPitch::draw() {
     child->draw();
 }
 
-bool LTPitch::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
+bool LTPitch::inverse_transform(LTfloat *x, LTfloat *y) {
     return false;
 }
 
@@ -95,10 +87,6 @@ void LTFog::draw() {
     ltFogEnd(end);
     child->draw();
     ltDisableFog();
-}
-
-bool LTFog::propogatePointerEvent(LTfloat x, LTfloat y, LTPointerEvent *event) {
-    return child->propogatePointerEvent(x, y, event);
 }
 
 LT_REGISTER_TYPE(LTFog, "lt.Fog", "lt.Wrap")
