@@ -7,14 +7,15 @@ struct LTMesh : LTSceneNode {
     bool has_texture_coords;
     LTImage *texture;
     LTDrawMode draw_mode;
-
     void *data;
     int stride;
     int size; // number of vertices
 
     LTvertbuf vertbuf;
+    bool vb_dirty;
 
-    bool dirty;
+    LTfloat left, right, bottom, top, far, near; // bounding box
+    bool bb_dirty;
 
     LTMesh() { ltAbort(); };
 
@@ -33,9 +34,11 @@ struct LTMesh : LTSceneNode {
     void merge(LTMesh *mesh);
 
     void setup();
-    void ensure_buffer_uptodate();
+    void ensure_vb_uptodate();
+    void ensure_bb_uptodate();
     void print();
 };
 
 void *lt_alloc_LTMesh(lua_State *L);
 LTMesh *lt_expect_LTMesh(lua_State *L, int arg);
+bool lt_is_LTMesh(lua_State *L, int arg);

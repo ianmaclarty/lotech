@@ -507,21 +507,31 @@ static int add_event_handler(lua_State *L, int filter) {
     LTLuaEventHandler *handler;
     if (nargs == 2) {
         handler = new LTLuaEventHandler(nref, fref, filter);
+    } else if (nargs == 3 && lt_is_LTMesh(L, 1)) {
+        LTMesh *mesh = (LTMesh*)node;
+        LTfloat border = luaL_checknumber(L, 3);
+        LTfloat l, r, b, t;
+        mesh->ensure_bb_uptodate();
+        l = mesh->left - border;
+        r = mesh->right + border;
+        b = mesh->bottom - border;
+        t = mesh->top + border;
+        handler = new LTLuaEventHandler(nref, fref, filter, l, b, r, t);
     } else {
-        LTfloat left = luaL_checknumber(L, 3);
-        LTfloat bottom = -1000000.0f;
-        LTfloat right = 1000000.0f;
-        LTfloat top = 1000000.0f;
+        LTfloat l = luaL_checknumber(L, 3);
+        LTfloat b = -1000000.0f;
+        LTfloat r = 1000000.0f;
+        LTfloat t = 1000000.0f;
         if (nargs > 3) {
-            bottom = luaL_checknumber(L, 4);
+            b = luaL_checknumber(L, 4);
         }
         if (nargs > 4) {
-            right = luaL_checknumber(L, 5);
+            r = luaL_checknumber(L, 5);
         }
         if (nargs > 5) {
-            top = luaL_checknumber(L, 6);
+            t = luaL_checknumber(L, 6);
         }
-        handler = new LTLuaEventHandler(nref, fref, filter, left, bottom, right, top);
+        handler = new LTLuaEventHandler(nref, fref, filter, l, b, r, t);
     }
     node->add_event_handler(handler);
     lua_pushvalue(L, 1);

@@ -15,8 +15,16 @@ LTMesh::LTMesh(LTMesh *mesh) {
     data = malloc(stride * size);
     memcpy(data, mesh->data, stride * size);
 
-    dirty = true;
     vertbuf = ltGenVertBuffer();
+    vb_dirty = true;
+
+    left = mesh->left;
+    right = mesh->right;
+    bottom = mesh->bottom;
+    top = mesh->top;
+    far = mesh->far;
+    near = mesh->near;
+    bb_dirty = mesh->bb_dirty;
 }
 
 LTMesh::LTMesh(int dims, bool has_col, bool has_norm, bool has_tex_coords, LTImage *tex, LTDrawMode mode, void* dat, int sz) {
@@ -28,7 +36,8 @@ LTMesh::LTMesh(int dims, bool has_col, bool has_norm, bool has_tex_coords, LTIma
     draw_mode = mode;
     data = dat;
     size = sz;
-    dirty = true;
+    vb_dirty = true;
+    bb_dirty = true;
 }
 
 LTMesh::~LTMesh() {
@@ -49,7 +58,7 @@ void LTMesh::setup() {
 }
 
 void LTMesh::draw() {
-    ensure_buffer_uptodate();
+    ensure_vb_uptodate();
     ltBindVertBuffer(vertbuf);
     int offset = 0;
     ltVertexPointer(dimensions, LT_VERT_DATA_TYPE_FLOAT, stride, (void*)offset);
@@ -110,7 +119,8 @@ void LTMesh::stretch(LTfloat px, LTfloat py, LTfloat pz,
         ptr += stride;
     }
 
-    dirty = true;
+    vb_dirty = true;
+    bb_dirty = true;
 }
 
 void LTMesh::shift(LTfloat sx, LTfloat sy, LTfloat sz) {
@@ -127,7 +137,8 @@ void LTMesh::shift(LTfloat sx, LTfloat sy, LTfloat sz) {
         ptr += stride;
     }
 
-    dirty = true;
+    vb_dirty = true;
+    bb_dirty = true;
 }
 
 void LTMesh::merge(LTMesh *mesh) {
@@ -143,14 +154,65 @@ void LTMesh::merge(LTMesh *mesh) {
     memcpy(((char*)data) + stride * size, mesh->data, stride * mesh->size);
     size += mesh->size;
 
-    dirty = true;
+    vb_dirty = true;
+    bb_dirty = true;
 }
 
-void LTMesh::ensure_buffer_uptodate() {
-    if (dirty) {
+void LTMesh::ensure_vb_uptodate() {
+    if (vb_dirty) {
         ltBindVertBuffer(vertbuf);
         ltStaticVertBufferData(size * stride, data);
-        dirty = false;
+        vb_dirty = false;
+    }
+}
+
+void LTMesh::ensure_bb_uptodate() {
+    if (bb_dirty) {
+        char *ptr = (char*)data;
+        if (size > 0) {
+            left = *(((LTfloat*)ptr));
+            right = left;
+            bottom = *(((LTfloat*)ptr)+1);
+            top = bottom;
+            if (dimensions > 2) {
+                far = *(((LTfloat*)ptr)+2);
+                near = far;
+            } else {
+                far = 0;
+                near = 0;
+            }
+            for (int i = 0; i < size; i++) {
+                LTfloat x = *((LTfloat*)ptr);
+                LTfloat y = *(((LTfloat*)ptr)+1);
+                if (x > right) {
+                    right = x;
+                } else if (x < left) {
+                    left = x;
+                }
+                if (y > top) {
+                    top = y;
+                } else if (y < bottom) {
+                    bottom = y;
+                }
+                if (dimensions > 2) {
+                    LTfloat z = *(((LTfloat*)ptr)+2);
+                    if (z > near) {
+                        near = z;
+                    } else if (z < far) {
+                        far = z;
+                    }
+                }
+                ptr += stride;
+            }
+        } else {
+            left = 0;
+            right = 0;
+            bottom = 0;
+            top = 0;
+            far = 0;
+            near = 0;
+        }
+        bb_dirty = false;
     }
 }
 
