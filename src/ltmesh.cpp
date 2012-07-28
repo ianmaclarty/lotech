@@ -8,6 +8,7 @@ LTMesh::LTMesh(LTMesh *mesh) {
     has_normals = mesh->has_normals;
     has_texture_coords = mesh->has_texture_coords;
     texture = mesh->texture;
+    texture_ref = LUA_NOREF;
     draw_mode = mesh->draw_mode;
 
     stride = mesh->stride;
@@ -27,17 +28,57 @@ LTMesh::LTMesh(LTMesh *mesh) {
     bb_dirty = mesh->bb_dirty;
 }
 
+LTMesh::LTMesh(LTTexturedNode *img) {
+    dimensions = 2;
+    has_colors = false;
+    has_normals = false;
+    has_texture_coords = true;
+    texture = img;
+    texture_ref = LUA_NOREF;
+    draw_mode = LT_DRAWMODE_TRIANGLE_FAN;
+
+    compute_stride();
+    size = 4;
+    data = malloc(stride * size);
+    char *ptr = (char*)data;
+    for (int i = 0; i < size; i++) {
+        LTfloat *x = (LTfloat*)ptr;
+        LTfloat *y = x + 1;
+        LTtexcoord *u = ((LTtexcoord*)(y+1));
+        LTtexcoord *v = u + 1;
+        *x = img->world_vertices[i*2];
+        *y = img->world_vertices[i*2+1];
+        *u = img->tex_coords[i*2];
+        *v = img->tex_coords[i*2+1];
+        ptr += stride;
+    }
+
+    vertbuf = ltGenVertBuffer();
+    vb_dirty = true;
+
+    left = img->world_vertices[0];
+    right = img->world_vertices[2];
+    bottom = img->world_vertices[5];
+    top = img->world_vertices[1];
+    far = 0;
+    near = 0;
+    bb_dirty = false;
+}
+
 LTMesh::LTMesh(int dims, bool has_col, bool has_norm, bool has_tex_coords, LTImage *tex, LTDrawMode mode, void* dat, int sz) {
     dimensions = dims;
     has_colors = has_col;
     has_normals = has_norm;
     has_texture_coords = has_tex_coords;
     texture = tex;
+    texture_ref = LUA_NOREF;
     draw_mode = mode;
     data = dat;
     size = sz;
     vb_dirty = true;
     bb_dirty = true;
+    compute_stride();
+    vertbuf = ltGenVertBuffer();
 }
 
 LTMesh::~LTMesh() {
@@ -49,12 +90,11 @@ LTMesh::~LTMesh() {
     }
 }
 
-void LTMesh::setup() {
+void LTMesh::compute_stride() {
     stride = dimensions * 4; // 4 bytes per vertex coord
     stride += has_colors ? 4 : 0; // 1 byte per channel (r, g, b, a = 4 total)
     stride += has_normals ? 4 : 0; // 1 byte per normal component + 1 extra to keep 4-byte alignment
     stride += has_texture_coords ? 4 : 0; // 2 bytes per texture coordinate (u + v) = 4 total
-    vertbuf = ltGenVertBuffer();
 }
 
 void LTMesh::draw() {
@@ -158,6 +198,113 @@ void LTMesh::merge(LTMesh *mesh) {
     bb_dirty = true;
 }
 
+void LTMesh::grid(int rows, int columns) {
+    assert(dimensions == 2);
+    assert(has_texture_coords);
+    assert(!has_colors);
+    assert(!has_normals);
+
+    draw_mode = LT_DRAWMODE_TRIANGLES;
+
+    ensure_bb_uptodate();
+
+    size = rows * columns * 6;
+    data = realloc(data, stride * size);
+    LTfloat col_width = (right - left) / (LTfloat)columns;
+    LTfloat row_height = (top - bottom) / (LTfloat)rows;
+    LTfloat *x = (LTfloat*)data;
+    LTfloat *y = x + 1;
+    LTtexcoord *u = (LTtexcoord*)(y + 1);
+    LTtexcoord *v = u + 1;
+    LTtexcoord tex_left = texture->tex_coords[0];
+    LTtexcoord tex_right = texture->tex_coords[2];
+    LTtexcoord tex_bottom = texture->tex_coords[5];
+    LTtexcoord tex_top = texture->tex_coords[1];
+    LTtexcoord tex_col_width = (tex_right - tex_left) / columns;
+    LTtexcoord tex_row_height = (tex_top - tex_bottom) / rows;
+    LTfloat y1 = bottom;
+    LTfloat y2 = y1 + row_height;
+    LTtexcoord v1 = tex_bottom;
+    LTtexcoord v2 = v1 + tex_row_height;
+    for (int row = 0; row < rows; row++) {
+        LTfloat x1 = left;
+        LTfloat x2 = x1 + col_width;
+        LTfloat u1 = tex_left;
+        LTfloat u2 = u1 + tex_col_width;
+        for (int col = 0; col < columns; col++) {
+            *x = x1;
+            *y = y1;
+            *u = u1;
+            *v = v1;
+            lt_incr_ptr(x, stride);
+            lt_incr_ptr(y, stride);
+            lt_incr_ptr(u, stride);
+            lt_incr_ptr(v, stride);
+            *x = x1;
+            *y = y2;
+            *u = u1;
+            *v = v2;
+            lt_incr_ptr(x, stride);
+            lt_incr_ptr(y, stride);
+            lt_incr_ptr(u, stride);
+            lt_incr_ptr(v, stride);
+            *x = x2;
+            *y = y1;
+            *u = u2;
+            *v = v1;
+            lt_incr_ptr(x, stride);
+            lt_incr_ptr(y, stride);
+            lt_incr_ptr(u, stride);
+            lt_incr_ptr(v, stride);
+            *x = x1;
+            *y = y2;
+            *u = u1;
+            *v = v2;
+            lt_incr_ptr(x, stride);
+            lt_incr_ptr(y, stride);
+            lt_incr_ptr(u, stride);
+            lt_incr_ptr(v, stride);
+            *x = x2;
+            *y = y2;
+            *u = u2;
+            *v = v2;
+            lt_incr_ptr(x, stride);
+            lt_incr_ptr(y, stride);
+            lt_incr_ptr(u, stride);
+            lt_incr_ptr(v, stride);
+            *x = x2;
+            *y = y1;
+            *u = u2;
+            *v = v1;
+            lt_incr_ptr(x, stride);
+            lt_incr_ptr(y, stride);
+            lt_incr_ptr(u, stride);
+            lt_incr_ptr(v, stride);
+
+            x1 += col_width;
+            u1 += tex_col_width;
+            if (col == columns - 2) {
+                x2 = right;
+                u2 = tex_right;
+            } else {
+                x2 = x1 + col_width;
+                u2 = u1 + tex_col_width;
+            }
+        }
+        y1 += row_height;
+        v1 += tex_row_height;
+        if (row == rows - 2) {
+            y2 = top;
+            v2 = tex_top;
+        } else {
+            y2 = y1 + row_height;
+            v2 = v1 + tex_row_height;
+        }
+    }
+
+    vb_dirty = true;
+}
+
 void LTMesh::ensure_vb_uptodate() {
     if (vb_dirty) {
         ltBindVertBuffer(vertbuf);
@@ -217,7 +364,11 @@ void LTMesh::ensure_bb_uptodate() {
 }
 
 void LTMesh::print() {
-    printf("     X     Y     Z");
+    if (dimensions == 2) {
+        printf("     X     Y");
+    } else {
+        printf("     X     Y     Z");
+    }
     if (has_colors) {
         printf("  R  G  B  A");
     }
@@ -231,8 +382,12 @@ void LTMesh::print() {
     void *ptr = data;
     for (int i = 0; i < size; i++) {
         LTfloat *vptr = (LTfloat*)ptr;
-        printf(" %5.2f %5.2f %5.2f", (double)vptr[0], (double)vptr[1], (double)vptr[2]);
-        lt_incr_ptr(ptr, 3 * 4);
+        if (dimensions == 2) {
+            printf(" %5.2f %5.2f", (double)vptr[0], (double)vptr[1]);
+        } else {
+            printf(" %5.2f %5.2f %5.2f", (double)vptr[0], (double)vptr[1], (double)vptr[2]);
+        }
+        lt_incr_ptr(ptr, dimensions * 4);
         if (has_colors) {
             LTubyte *cptr = (LTubyte*)ptr;
             printf(" %2X %2X %2X %2X", cptr[0], cptr[1], cptr[2], cptr[3]);
@@ -244,7 +399,7 @@ void LTMesh::print() {
             lt_incr_ptr(ptr, 4);
         }
         if (has_texture_coords) {
-            LTshort *tptr = (LTshort*)ptr;
+            LTtexcoord *tptr = (LTtexcoord*)ptr;
             printf(" %5.2f %5.2f", (double)tptr[0]/(double)LT_MAX_TEX_COORD, (double)tptr[1]/(double)LT_MAX_TEX_COORD);
             lt_incr_ptr(ptr, 4);
         }
@@ -255,7 +410,13 @@ void LTMesh::print() {
 static int clone_mesh(lua_State *L) {
     ltLuaCheckNArgs(L, 1);
     LTMesh *mesh = lt_expect_LTMesh(L, 1);
-    new (lt_alloc_LTMesh(L)) LTMesh(mesh);
+    LTMesh *clone = new (lt_alloc_LTMesh(L)) LTMesh(mesh);
+    if (mesh->texture != NULL) {
+        // Add reference from clone to texture node
+        ltLuaGetRef(L, 1, mesh->texture_ref);
+        clone->texture_ref = ltLuaAddRef(L, -2, -1);
+        lua_pop(L, 1); // pop texture node
+    }
     return 1;
 }
 
@@ -315,8 +476,28 @@ static int merge_mesh(lua_State *L) {
     return 1;
 }
 
+static int make_grid(lua_State *L) {
+    ltLuaCheckNArgs(L, 3);
+    LTMesh *mesh = lt_expect_LTMesh(L, 1);
+    if (mesh->dimensions != 2) {
+        return luaL_error(L, "Mesh must be 2D");
+    } else if (mesh->has_colors) {
+        return luaL_error(L, "Mesh may not have colors");
+    } else if (mesh->has_normals) {
+        return luaL_error(L, "Mesh may not have normals");
+    } else if (!mesh->has_texture_coords) {
+        return luaL_error(L, "Mesh must have a texture");
+    }
+    int rows = luaL_checkinteger(L, 2);
+    int columns = luaL_checkinteger(L, 3);
+    mesh->grid(rows, columns);
+    lua_pushvalue(L, 1);
+    return 1;
+}
+
 LT_REGISTER_TYPE(LTMesh, "lt.Mesh", "lt.SceneNode")
 LT_REGISTER_METHOD(LTMesh, Clone, clone_mesh)
 LT_REGISTER_METHOD(LTMesh, Stretch, stretch_mesh)
 LT_REGISTER_METHOD(LTMesh, Shift, shift_mesh)
 LT_REGISTER_METHOD(LTMesh, Merge, merge_mesh)
+LT_REGISTER_METHOD(LTMesh, Grid, make_grid)

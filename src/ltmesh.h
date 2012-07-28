@@ -5,7 +5,8 @@ struct LTMesh : LTSceneNode {
     bool has_colors;
     bool has_normals;
     bool has_texture_coords;
-    LTImage *texture;
+    LTTexturedNode *texture;
+    int texture_ref;
     LTDrawMode draw_mode;
     void *data;
     int stride;
@@ -20,6 +21,7 @@ struct LTMesh : LTSceneNode {
     LTMesh() { ltAbort(); };
 
     LTMesh(LTMesh *mesh); // clone
+    LTMesh(LTTexturedNode *img);
     // dat should be malloc'd.  it will be freed by ~LTMesh.
     LTMesh(int dims, bool has_col, bool has_norm, bool has_tex_coords, LTImage *tex, LTDrawMode mode, void* dat, int sz);
     virtual ~LTMesh();
@@ -32,8 +34,9 @@ struct LTMesh : LTSceneNode {
 
     void shift(LTfloat sx, LTfloat sy, LTfloat sz);
     void merge(LTMesh *mesh);
+    void grid(int rows, int columns);
 
-    void setup();
+    void compute_stride();
     void ensure_vb_uptodate();
     void ensure_bb_uptodate();
     void print();

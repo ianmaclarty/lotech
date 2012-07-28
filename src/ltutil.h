@@ -40,4 +40,4 @@ static inline float ltRand0_1() {
 #endif
 }
 
-#define lt_incr_ptr(ptr, n) {ptr = (void*)(((LTbyte*)ptr) + n);}
+#define lt_incr_ptr(ptr, n) {*((LTbyte**)&ptr) += n;}

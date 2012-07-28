@@ -710,6 +710,16 @@ LT_REGISTER_PROPERTY_FLOAT(LTTexturedNode, tex_bottom,  &get_tex_bottom,    NULL
 LT_REGISTER_PROPERTY_FLOAT(LTTexturedNode, tex_right,   &get_tex_right,     NULL);
 LT_REGISTER_PROPERTY_FLOAT(LTTexturedNode, tex_top,     &get_tex_top,       NULL);
 
+static int to_mesh(lua_State *L) {
+    ltLuaCheckNArgs(L, 1);
+    LTTexturedNode *img = lt_expect_LTTexturedNode(L, 1);
+    LTMesh *mesh = new (lt_alloc_LTMesh(L)) LTMesh(img);
+    mesh->texture_ref = ltLuaAddRef(L, -1, 1); // add ref from mesh to image
+    return 1;
+}
+
+LT_REGISTER_METHOD(LTTexturedNode, Mesh, to_mesh);
+
 LTImage::LTImage(LTAtlas *atls, int atlas_w, int atlas_h, LTImagePacker *packer) {
     if (packer->occupant == NULL) {
         ltLog("Packer occupant is NULL");

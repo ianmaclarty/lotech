@@ -817,7 +817,6 @@ static int lt_LoadModels(lua_State *L) {
         if (!ltReadWavefrontMesh(path, mesh)) {
             return luaL_error(L, "Unable to read model at path %s", path);
         }
-        mesh->setup();
         delete[] path;
         lua_setfield(L, -2, name);
         i++;
