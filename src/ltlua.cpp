@@ -506,7 +506,18 @@ static int add_event_handler(lua_State *L, int filter) {
     int nref = make_weak_ref(L, 1);
     LTLuaEventHandler *handler;
     if (nargs == 2) {
-        handler = new LTLuaEventHandler(nref, fref, filter);
+        if (lt_is_LTMesh(L, 1) &&
+            (LT_EVENT_MATCH(filter, LT_EVENT_POINTER_ENTER)
+             || LT_EVENT_MATCH(filter, LT_EVENT_POINTER_EXIT)
+             || LT_EVENT_MATCH(filter, LT_EVENT_POINTER_DOWN)))
+        {
+            LTMesh *mesh = (LTMesh*)node;
+            mesh->ensure_bb_uptodate();
+            handler = new LTLuaEventHandler(nref, fref, filter,
+                mesh->left, mesh->bottom, mesh->right, mesh->top);
+        } else {
+            handler = new LTLuaEventHandler(nref, fref, filter);
+        }
     } else if (nargs == 3 && lt_is_LTMesh(L, 1)) {
         LTMesh *mesh = (LTMesh*)node;
         LTfloat border = luaL_checknumber(L, 3);
@@ -558,6 +569,14 @@ static int lt_AddMouseMoveHandler(lua_State *L) {
     return add_event_handler(L, LT_EVENT_MOUSE_MOVE);
 }
 
+static int lt_AddMouseEnterHandler(lua_State *L) {
+    return add_event_handler(L, LT_EVENT_MOUSE_ENTER);
+}
+
+static int lt_AddMouseExitHandler(lua_State *L) {
+    return add_event_handler(L, LT_EVENT_MOUSE_EXIT);
+}
+
 static int lt_AddTouchHandler(lua_State *L) {
     return add_event_handler(L, LT_EVENT_TOUCH);
 }
@@ -574,6 +593,14 @@ static int lt_AddTouchMoveHandler(lua_State *L) {
     return add_event_handler(L, LT_EVENT_TOUCH_MOVE);
 }
 
+static int lt_AddTouchEnterHandler(lua_State *L) {
+    return add_event_handler(L, LT_EVENT_TOUCH_ENTER);
+}
+
+static int lt_AddTouchExitHandler(lua_State *L) {
+    return add_event_handler(L, LT_EVENT_TOUCH_EXIT);
+}
+
 static int lt_AddPointerHandler(lua_State *L) {
     return add_event_handler(L, LT_EVENT_POINTER);
 }
@@ -588,6 +615,14 @@ static int lt_AddPointerUpHandler(lua_State *L) {
 
 static int lt_AddPointerMoveHandler(lua_State *L) {
     return add_event_handler(L, LT_EVENT_POINTER_MOVE);
+}
+
+static int lt_AddPointerEnterHandler(lua_State *L) {
+    return add_event_handler(L, LT_EVENT_POINTER_ENTER);
+}
+
+static int lt_AddPointerExitHandler(lua_State *L) {
+    return add_event_handler(L, LT_EVENT_POINTER_EXIT);
 }
 
 static int lt_AddKeyHandler(lua_State *L) {
@@ -2504,14 +2539,20 @@ static const luaL_Reg ltlib[] = {
     {"AddMouseDownHandler",             lt_AddMouseDownHandler},
     {"AddMouseUpHandler",               lt_AddMouseUpHandler},
     {"AddMouseMoveHandler",             lt_AddMouseMoveHandler},
+    {"AddMouseEnterHandler",            lt_AddMouseEnterHandler},
+    {"AddMouseExitHandler",             lt_AddMouseExitHandler},
     {"AddTouchHandler",                 lt_AddTouchHandler},
     {"AddTouchDownHandler",             lt_AddTouchDownHandler},
     {"AddTouchUpHandler",               lt_AddTouchUpHandler},
     {"AddTouchMoveHandler",             lt_AddTouchMoveHandler},
+    {"AddTouchEnterHandler",            lt_AddTouchEnterHandler},
+    {"AddTouchExitHandler",             lt_AddTouchExitHandler},
     {"AddPointerHandler",               lt_AddPointerHandler},
     {"AddPointerDownHandler",           lt_AddPointerDownHandler},
     {"AddPointerUpHandler",             lt_AddPointerUpHandler},
     {"AddPointerMoveHandler",           lt_AddPointerMoveHandler},
+    {"AddPointerEnterHandler",          lt_AddPointerEnterHandler},
+    {"AddPointerExitHandler",           lt_AddPointerExitHandler},
     {"AddKeyHandler",                   lt_AddKeyHandler},
     {"AddKeyUpHandler",                 lt_AddKeyUpHandler},
     {"AddKeyDownHandler",               lt_AddKeyDownHandler},
@@ -2797,10 +2838,19 @@ void ltLuaRender() {
     }
 }
 
+static LTfloat prev_x = 0;
+static LTfloat prev_y = 0;
+
 static void handle_event(LTEvent *e) {
+    e->prev_x = prev_x;
+    e->prev_y = prev_y;
     if (g_L != NULL && !g_suspended && push_lt_func(g_L, "HandleEvent")) {
         new (lt_alloc_LTEvent(g_L)) LTEvent(e);
         docall(g_L, 1, 0);
+    }
+    if (LT_EVENT_MATCH(e->event, LT_EVENT_POINTER_MOVE)) {
+        prev_x = e->orig_x;
+        prev_y = e->orig_y;
     }
 }
 
@@ -2809,8 +2859,8 @@ void ltLuaMouseDown(int button, LTfloat x, LTfloat y) {
     e.event = LT_EVENT_MOUSE_DOWN;
     e.x = ltGetViewPortX(x);
     e.y = ltGetViewPortY(y);
-    e.orig_x = x;
-    e.orig_y = y;
+    e.orig_x = e.x;
+    e.orig_y = e.y;
     e.button = button;
     handle_event(&e);
 }
@@ -2820,8 +2870,8 @@ void ltLuaMouseUp(int button, LTfloat x, LTfloat y) {
     e.event = LT_EVENT_MOUSE_UP;
     e.x = ltGetViewPortX(x);
     e.y = ltGetViewPortY(y);
-    e.orig_x = x;
-    e.orig_y = y;
+    e.orig_x = e.x;
+    e.orig_y = e.y;
     e.button = button;
     handle_event(&e);
 }
@@ -2831,8 +2881,8 @@ void ltLuaMouseMove(LTfloat x, LTfloat y) {
     e.event = LT_EVENT_MOUSE_MOVE;
     e.x = ltGetViewPortX(x);
     e.y = ltGetViewPortY(y);
-    e.orig_x = x;
-    e.orig_y = y;
+    e.orig_x = e.x;
+    e.orig_y = e.y;
     handle_event(&e);
 }
 
@@ -2841,8 +2891,8 @@ void ltLuaTouchDown(int touch_id, LTfloat x, LTfloat y) {
     e.event = LT_EVENT_TOUCH_DOWN;
     e.x = ltGetViewPortX(x);
     e.y = ltGetViewPortY(y);
-    e.orig_x = x;
-    e.orig_y = y;
+    e.orig_x = e.x;
+    e.orig_y = e.y;
     e.touch_id = touch_id;
     handle_event(&e);
 }
@@ -2852,8 +2902,8 @@ void ltLuaTouchUp(int touch_id, LTfloat x, LTfloat y) {
     e.event = LT_EVENT_TOUCH_UP;
     e.x = ltGetViewPortX(x);
     e.y = ltGetViewPortY(y);
-    e.orig_x = x;
-    e.orig_y = y;
+    e.orig_x = e.x;
+    e.orig_y = e.y;
     e.touch_id = touch_id;
     handle_event(&e);
 }
@@ -2863,8 +2913,8 @@ void ltLuaTouchMove(int touch_id, LTfloat x, LTfloat y) {
     e.event = LT_EVENT_TOUCH_MOVE;
     e.x = ltGetViewPortX(x);
     e.y = ltGetViewPortY(y);
-    e.orig_x = x;
-    e.orig_y = y;
+    e.orig_x = e.x;
+    e.orig_y = e.y;
     e.touch_id = touch_id;
     handle_event(&e);
 }

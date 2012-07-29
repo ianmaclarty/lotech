@@ -24,8 +24,27 @@ LTEventHandler::~LTEventHandler() {
 }
 
 bool LTEventHandler::hit(LTEvent *e) {
-    return ((filter & e->event) == filter) &&
-        ( bb == NULL || (e->x >= bb->left && e->x <= bb->right && e->y >= bb->bottom && e->y <= bb->top) );
+    ltLog("hit test: %x, %f, %f", e->event, e->x, e->y);
+    if (bb != NULL && LT_EVENT_MATCH(filter, LT_EVENT_POINTER_ENTER)
+        // prev position outside
+        && (e->prev_x < bb->left || e->prev_x > bb->right || e->prev_y < bb->bottom || e->prev_y > bb->top)
+        // new position inside
+        && (e->x >= bb->left && e->x <= bb->right && e->y >= bb->bottom && e->y <= bb->top))
+    {
+        e->event |= LT_EVENT_POINTER_ENTER;
+        return ((filter & e->event) == filter);
+    } else if (bb != NULL && LT_EVENT_MATCH(filter, LT_EVENT_POINTER_EXIT)
+        // new position outside
+        && (e->x < bb->left || e->x > bb->right || e->y < bb->bottom || e->y > bb->top)
+        // prev position inside
+        && (e->prev_x >= bb->left && e->prev_x <= bb->right && e->prev_y >= bb->bottom && e->prev_y <= bb->top))
+    {
+        e->event |= LT_EVENT_POINTER_EXIT;
+        return ((filter & e->event) == filter);
+    } else {
+        return (LT_EVENT_MATCH(e->event, filter) &&
+            ( bb == NULL || (e->x >= bb->left && e->x <= bb->right && e->y >= bb->bottom && e->y <= bb->top) ));
+    }
 }
 
 LTSceneNode *lt_exclusive_receiver = NULL;
@@ -37,25 +56,37 @@ struct LTEventVisitor : LTSceneNodeVisitor {
     }
     virtual void visit(LTSceneNode *node) {
         bool consumed = false;
-        LTfloat prev_x = event->x;
-        LTfloat prev_y = event->y;
-        consumed = !node->inverse_transform(&event->x, &event->y);
+        LTfloat old_x, old_y, old_prev_x, old_prev_y;
+        if (LT_EVENT_MATCH(event->event, LT_EVENT_POINTER)) { 
+            old_x = event->x;
+            old_y = event->y;
+            old_prev_x = event->prev_x;
+            old_prev_y = event->prev_y;
+            node->inverse_transform(&event->prev_x, &event->prev_y);
+            consumed = !node->inverse_transform(&event->x, &event->y);
+        }
         if (!consumed && (lt_exclusive_receiver == NULL || lt_exclusive_receiver == node)) {
             if (node->event_handlers != NULL) {
                 std::list<LTEventHandler*>::iterator it;
                 for (it = node->event_handlers->begin(); it != node->event_handlers->end(); it++) {
                     LTEventHandler *handler = *it;
+                    int e = event->event;
                     if (handler->hit(event) && handler->consume(node, event)) {
                         consumed = true;
                     }
+                    event->event = e; // call to hit() may alter event
                 }
             }
         }
         if (!consumed) {
             node->visit_children(this);
         }
-        event->x = prev_x;
-        event->y = prev_y;
+        if (LT_EVENT_MATCH(event->event, LT_EVENT_POINTER)) { 
+            event->x = old_x;
+            event->y = old_y;
+            event->prev_x = old_prev_x;
+            event->prev_y = old_prev_y;
+        }
     }
 };
 
