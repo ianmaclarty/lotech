@@ -10,21 +10,26 @@ LTEventHandler::LTEventHandler(int filter, LTfloat left, LTfloat bottom, LTfloat
     bb->right = right;
     bb->top = top;
     LTEventHandler::filter = filter;
+    execution_pending = false;
+    cancelled = false;
 }
 
 LTEventHandler::LTEventHandler(int filter) {
     bb = NULL;
     LTEventHandler::filter = filter;
+    execution_pending = false;
+    cancelled = false;
 }
 
 LTEventHandler::~LTEventHandler() {
+    assert(!execution_pending);
     if (bb != NULL) {
         delete bb;
     }
 }
 
 bool LTEventHandler::hit(LTEvent *e) {
-    ltLog("hit test: %x, %f, %f", e->event, e->x, e->y);
+    //ltLog("hit test: %x, %f, %f", e->event, e->x, e->y);
     if (bb != NULL && LT_EVENT_MATCH(filter, LT_EVENT_POINTER_ENTER)
         // prev position outside
         && (e->prev_x < bb->left || e->prev_x > bb->right || e->prev_y < bb->bottom || e->prev_y > bb->top)
@@ -49,29 +54,57 @@ bool LTEventHandler::hit(LTEvent *e) {
 
 LTSceneNode *lt_exclusive_receiver = NULL;
 
+struct event_info {
+    LTSceneNode *node;
+    LTEventHandler *handler;
+    LTEvent event;
+
+    event_info(LTSceneNode *n, LTEventHandler *h, LTEvent *e) {
+        node = n;
+        handler = h;
+        event = *e;
+    }
+};
+
 struct LTEventVisitor : LTSceneNodeVisitor {
     LTEvent *event;
+    bool events_allowed;
+    LTSceneNode *exclusive_node;
+    std::list<event_info> events_to_execute;
+
     LTEventVisitor(LTEvent *e) {
         event = e;
+        exclusive_node = lt_exclusive_receiver;
+        events_allowed = (exclusive_node == NULL);
     }
     virtual void visit(LTSceneNode *node) {
-        bool consumed = false;
         LTfloat old_x, old_y, old_prev_x, old_prev_y;
         if (LT_EVENT_MATCH(event->event, LT_EVENT_POINTER)) { 
             old_x = event->x;
             old_y = event->y;
             old_prev_x = event->prev_x;
             old_prev_y = event->prev_y;
-            node->inverse_transform(&event->prev_x, &event->prev_y);
-            consumed = !node->inverse_transform(&event->x, &event->y);
+            if (!node->inverse_transform(&event->prev_x, &event->prev_y)) {
+                return;
+            }
+            if (!node->inverse_transform(&event->x, &event->y)) {
+                return;
+            }
         }
-        if (!consumed && (lt_exclusive_receiver == NULL || lt_exclusive_receiver == node)) {
+        bool prev_allowed = events_allowed;
+        if (exclusive_node != NULL && node == exclusive_node) {
+            events_allowed = true;
+        }
+        bool consumed = false;
+        if (events_allowed) {
             if (node->event_handlers != NULL) {
                 std::list<LTEventHandler*>::iterator it;
                 for (it = node->event_handlers->begin(); it != node->event_handlers->end(); it++) {
                     LTEventHandler *handler = *it;
                     int e = event->event;
-                    if (handler->hit(event) && handler->consume(node, event)) {
+                    if (handler->hit(event)) {
+                        events_to_execute.push_back(event_info(node, handler, event));
+                        handler->execution_pending = true;
                         consumed = true;
                     }
                     event->event = e; // call to hit() may alter event
@@ -81,6 +114,7 @@ struct LTEventVisitor : LTSceneNodeVisitor {
         if (!consumed) {
             node->visit_children(this);
         }
+        events_allowed = prev_allowed;
         if (LT_EVENT_MATCH(event->event, LT_EVENT_POINTER)) { 
             event->x = old_x;
             event->y = old_y;
@@ -93,6 +127,22 @@ struct LTEventVisitor : LTSceneNodeVisitor {
 void ltPropagateEvent(LTSceneNode *node, LTEvent *event) {
     LTEventVisitor v(event);
     v.visit(node);
+    std::list<event_info>::iterator it;
+    std::set<LTEventHandler *> cancelled_handlers;
+    for (it = v.events_to_execute.begin(); it != v.events_to_execute.end(); it++) {
+        LTEvent *e = &it->event;
+        LTEventHandler *h = it->handler;
+        if (h->cancelled) {
+            cancelled_handlers.insert(h);
+        } else if (h->execution_pending) {
+            h->consume(it->node, e);
+            h->execution_pending = false;
+        }
+    }
+    std::set<LTEventHandler *>::iterator cit;
+    for (cit = cancelled_handlers.begin(); cit != cancelled_handlers.end(); cit++) {
+        delete *cit;
+    }
 }
 
 LT_REGISTER_TYPE(LTEvent, "lt.Event", "lt.Object")

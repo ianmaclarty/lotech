@@ -78,6 +78,8 @@ struct LTEventHandlerBB {
 struct LTEventHandler {
     LTEventHandlerBB *bb;
     int filter;
+    bool execution_pending;
+    bool cancelled;
 
     LTEventHandler(int filter, LTfloat left, LTfloat bottom, LTfloat right, LTfloat top);
     LTEventHandler(int filter);

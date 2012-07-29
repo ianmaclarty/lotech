@@ -20,7 +20,11 @@ LTSceneNode::~LTSceneNode() {
     if (event_handlers != NULL) {
         std::list<LTEventHandler*>::iterator it;
         for (it = event_handlers->begin(); it != event_handlers->end(); it++) {
-            delete *it;
+            if (!(*it)->execution_pending) {
+                delete *it;
+            } else {
+                (*it)->cancelled = true;
+            }
         }
         delete event_handlers;
     }
