@@ -29,24 +29,31 @@ LTEventHandler::~LTEventHandler() {
 }
 
 bool LTEventHandler::hit(LTEvent *e) {
-    //ltLog("hit test: %x, %f, %f", e->event, e->x, e->y);
-    if (bb != NULL && LT_EVENT_MATCH(filter, LT_EVENT_POINTER_ENTER)
+    //ltLog("hit test: %x, %x, %f, %f", e->event, filter, e->x, e->y);
+    if (bb != NULL
+        && LT_EVENT_MATCH(e->event, LT_EVENT_POINTER_MOVE)
+        && LT_EVENT_MATCH(filter, LT_EVENT_POINTER_ENTER)
         // prev position outside
         && (e->prev_x < bb->left || e->prev_x > bb->right || e->prev_y < bb->bottom || e->prev_y > bb->top)
         // new position inside
         && (e->x >= bb->left && e->x <= bb->right && e->y >= bb->bottom && e->y <= bb->top))
     {
+        ltLog("here1");
         e->event |= LT_EVENT_POINTER_ENTER;
         return ((filter & e->event) == filter);
-    } else if (bb != NULL && LT_EVENT_MATCH(filter, LT_EVENT_POINTER_EXIT)
+    } else if (bb != NULL
+        && LT_EVENT_MATCH(e->event, LT_EVENT_POINTER_MOVE)
+        && LT_EVENT_MATCH(filter, LT_EVENT_POINTER_EXIT)
         // new position outside
         && (e->x < bb->left || e->x > bb->right || e->y < bb->bottom || e->y > bb->top)
         // prev position inside
         && (e->prev_x >= bb->left && e->prev_x <= bb->right && e->prev_y >= bb->bottom && e->prev_y <= bb->top))
     {
+        ltLog("here2");
         e->event |= LT_EVENT_POINTER_EXIT;
         return ((filter & e->event) == filter);
     } else {
+        ltLog("here3");
         return (LT_EVENT_MATCH(e->event, filter) &&
             ( bb == NULL || (e->x >= bb->left && e->x <= bb->right && e->y >= bb->bottom && e->y <= bb->top) ));
     }
