@@ -2838,19 +2838,13 @@ void ltLuaRender() {
     }
 }
 
-static LTfloat prev_x = 0;
-static LTfloat prev_y = 0;
+static LTfloat mouse_prev_x = 0;
+static LTfloat mouse_prev_y = 0;
 
 static void handle_event(LTEvent *e) {
-    e->prev_x = prev_x;
-    e->prev_y = prev_y;
     if (g_L != NULL && !g_suspended && push_lt_func(g_L, "HandleEvent")) {
         new (lt_alloc_LTEvent(g_L)) LTEvent(e);
         docall(g_L, 1, 0);
-    }
-    if (LT_EVENT_MATCH(e->event, LT_EVENT_POINTER_MOVE)) {
-        prev_x = e->orig_x;
-        prev_y = e->orig_y;
     }
 }
 
@@ -2861,8 +2855,12 @@ void ltLuaMouseDown(int button, LTfloat x, LTfloat y) {
     e.y = ltGetViewPortY(y);
     e.orig_x = e.x;
     e.orig_y = e.y;
+    e.prev_x = ltGetViewPortX(mouse_prev_x);
+    e.prev_y = ltGetViewPortY(mouse_prev_y);
     e.button = button;
     handle_event(&e);
+    mouse_prev_x = x;
+    mouse_prev_y = y;
 }
 
 void ltLuaMouseUp(int button, LTfloat x, LTfloat y) {
@@ -2872,8 +2870,12 @@ void ltLuaMouseUp(int button, LTfloat x, LTfloat y) {
     e.y = ltGetViewPortY(y);
     e.orig_x = e.x;
     e.orig_y = e.y;
+    e.prev_x = ltGetViewPortX(mouse_prev_x);
+    e.prev_y = ltGetViewPortY(mouse_prev_y);
     e.button = button;
     handle_event(&e);
+    mouse_prev_x = x;
+    mouse_prev_y = y;
 }
 
 void ltLuaMouseMove(LTfloat x, LTfloat y) {
@@ -2883,7 +2885,53 @@ void ltLuaMouseMove(LTfloat x, LTfloat y) {
     e.y = ltGetViewPortY(y);
     e.orig_x = e.x;
     e.orig_y = e.y;
+    e.prev_x = ltGetViewPortX(mouse_prev_x);
+    e.prev_y = ltGetViewPortY(mouse_prev_y);
     handle_event(&e);
+    mouse_prev_x = x;
+    mouse_prev_y = y;
+}
+
+struct touch_record {
+    bool active;
+    int id;
+    LTfloat prev_x;
+    LTfloat prev_y;
+};
+
+#define MAX_TOUCHES 8
+static touch_record active_touches[MAX_TOUCHES] = {
+    {false, 0, 0.0f, 0.0f},
+    {false, 0, 0.0f, 0.0f},
+    {false, 0, 0.0f, 0.0f},
+    {false, 0, 0.0f, 0.0f},
+    {false, 0, 0.0f, 0.0f},
+    {false, 0, 0.0f, 0.0f},
+    {false, 0, 0.0f, 0.0f},
+    {false, 0, 0.0f, 0.0f},
+};
+
+static int find_touch(int id) {
+    for (int i = 0; i < MAX_TOUCHES; i++) {
+        if (active_touches[i].active && active_touches[i].id == id) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+static int add_touch(int id, LTfloat x, LTfloat y) {
+    for (int i = 0; i < MAX_TOUCHES; i++) {
+        if (!active_touches[i].active) {
+            active_touches[i].active = true;
+            active_touches[i].id = id;
+            active_touches[i].prev_x = x;
+            active_touches[i].prev_y = y;
+            return i;
+        }
+    }
+    ltLog("WARNING: too many touches");
+    return -1;
 }
 
 void ltLuaTouchDown(int touch_id, LTfloat x, LTfloat y) {
@@ -2893,30 +2941,47 @@ void ltLuaTouchDown(int touch_id, LTfloat x, LTfloat y) {
     e.y = ltGetViewPortY(y);
     e.orig_x = e.x;
     e.orig_y = e.y;
-    e.touch_id = touch_id;
+    e.touch_id = add_touch(touch_id, x, y);
     handle_event(&e);
 }
 
 void ltLuaTouchUp(int touch_id, LTfloat x, LTfloat y) {
+    int i = find_touch(touch_id);
+    if (i < 0) {
+        return;
+    }
+    touch_record *rec = &active_touches[i];
     LTEvent e;
     e.event = LT_EVENT_TOUCH_UP;
     e.x = ltGetViewPortX(x);
     e.y = ltGetViewPortY(y);
     e.orig_x = e.x;
     e.orig_y = e.y;
-    e.touch_id = touch_id;
+    e.prev_x = ltGetViewPortX(rec->prev_x);
+    e.prev_y = ltGetViewPortY(rec->prev_y);
+    e.touch_id = i;
     handle_event(&e);
+    rec->active = false;
 }
 
 void ltLuaTouchMove(int touch_id, LTfloat x, LTfloat y) {
+    int i = find_touch(touch_id);
+    if (i < 0) {
+        return;
+    }
+    touch_record *rec = &active_touches[i];
     LTEvent e;
     e.event = LT_EVENT_TOUCH_MOVE;
     e.x = ltGetViewPortX(x);
     e.y = ltGetViewPortY(y);
     e.orig_x = e.x;
     e.orig_y = e.y;
-    e.touch_id = touch_id;
+    e.touch_id = i;
+    e.prev_x = ltGetViewPortX(rec->prev_x);
+    e.prev_y = ltGetViewPortY(rec->prev_y);
     handle_event(&e);
+    rec->prev_x = x;
+    rec->prev_y = y;
 }
 
 void ltLuaKeyDown(LTKey key) {
