@@ -155,7 +155,7 @@ LT_REGISTER_FIELD_FLOAT(LTEvent, y)
 LT_REGISTER_FIELD_FLOAT(LTEvent, orig_x)
 LT_REGISTER_FIELD_FLOAT(LTEvent, orig_y)
 LT_REGISTER_FIELD_INT(LTEvent, button)
-LT_REGISTER_FIELD_INT(LTEvent, touch_id)
+LT_REGISTER_FIELD_INT_AS(LTEvent, touch_id, "touch")
 
 static const LTEnumConstant key_enum_vals[] = {
     {"unknown", LT_KEY_UNKNOWN},

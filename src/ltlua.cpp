@@ -2941,7 +2941,7 @@ void ltLuaTouchDown(int touch_id, LTfloat x, LTfloat y) {
     e.y = ltGetViewPortY(y);
     e.orig_x = e.x;
     e.orig_y = e.y;
-    e.touch_id = add_touch(touch_id, x, y);
+    e.touch_id = add_touch(touch_id, x, y) + 1;
     handle_event(&e);
 }
 
@@ -2959,7 +2959,7 @@ void ltLuaTouchUp(int touch_id, LTfloat x, LTfloat y) {
     e.orig_y = e.y;
     e.prev_x = ltGetViewPortX(rec->prev_x);
     e.prev_y = ltGetViewPortY(rec->prev_y);
-    e.touch_id = i;
+    e.touch_id = i + 1;
     handle_event(&e);
     rec->active = false;
 }
@@ -2976,7 +2976,7 @@ void ltLuaTouchMove(int touch_id, LTfloat x, LTfloat y) {
     e.y = ltGetViewPortY(y);
     e.orig_x = e.x;
     e.orig_y = e.y;
-    e.touch_id = i;
+    e.touch_id = i + 1;
     e.prev_x = ltGetViewPortX(rec->prev_x);
     e.prev_y = ltGetViewPortY(rec->prev_y);
     handle_event(&e);
