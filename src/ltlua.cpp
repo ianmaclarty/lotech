@@ -2723,30 +2723,61 @@ static void set_viewport_globals(lua_State *L) {
 static void set_globals(lua_State *L) {
     if (L != NULL) {
         lua_getglobal(L, "lt");
-        #ifdef LTIOS
-            lua_pushboolean(L, 1);
-            lua_setfield(L, -2, "ios");
-            lua_pushboolean(L, ltIsIPad() ? 1 : 0);
-            lua_setfield(L, -2, "ipad");
-            lua_pushboolean(L, ltIOSSupportsES2());
-            lua_setfield(L, -2, "shaders");
-            #ifdef LTADS
-                if (LTADS == LT_AD_TOP) {
-                    lua_pushstring(L, "top");
-                } else {
-                    lua_pushstring(L, "bottom");
-                }
-                lua_setfield(L, -2, "ads");
-            #endif
+        #if defined(LTIOS)
+            lua_pushstring(L, "ios");
+        #elif defined(LTOSX)
+            lua_pushstring(L, "osx");
+        #elif defined(LTANDROID)
+            lua_pushstring(L, "android");
+        #elif defined(LTMINGW)
+            lua_pushstring(L, "windows");
+        #elif defined(LTLINUX)
+            lua_pushstring(L, "linux");
+        #else
+            #error Unknown OS
         #endif
-        #ifdef LTOSX
-            lua_pushboolean(L, 1);
-            lua_setfield(L, -2, "osx");
-            lua_pushboolean(L, 1);
-            lua_setfield(L, -2, "desktop");
-            lua_pushboolean(L, 1);
-            lua_setfield(L, -2, "shaders");
+        lua_setfield(L, -2, "os");
+
+        #if defined(LTIOS)
+            if (ltIsIPad()) {
+                lua_pushstring(L, "tablet");
+            } else {
+                lua_pushstring(L, "phone");
+            }
+        #elif defined(LTANDROID)
+            // XXX Could be tablet.
+            lua_pushstring(L, "phone");
+        #elif defined(LTMINGW) || defined(LTOSX) || defined(LTLINUX)
+            lua_pushstring(L, "desktop");
+        #else
+            #error Unknown OS
         #endif
+        lua_setfield(L, -2, "form_factor");
+
+        #if defined(LTIOS)
+            if (ltIOSSupportsES2()) {
+                lua_pushinteger(L, 5);
+            } else {
+                lua_pushinteger(L, 1);
+            }
+        #elif defined(LTANDROID)
+            lua_pushinteger(L, 5);
+        #elif defined(LTMINGW) || defined(LTOSX) || defined(LTLINUX)
+            lua_pushinteger(L, 20);
+        #else
+            #error Unknown OS
+        #endif
+        lua_setfield(L, -2, "performance_score");
+
+        #ifdef LTADS
+            if (LTADS == LT_AD_TOP) {
+                lua_pushstring(L, "top");
+            } else {
+                lua_pushstring(L, "bottom");
+            }
+            lua_setfield(L, -2, "ads");
+        #endif
+
         lua_pop(L, 1); // pop lt
     }
 }
