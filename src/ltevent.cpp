@@ -227,5 +227,5 @@ static const LTEnumConstant event_enum_vals[] = {
     {"mouse_move", LT_EVENT_MOUSE_MOVE},
     {"key_down",   LT_EVENT_KEY_DOWN},
     {"key_up",     LT_EVENT_KEY_UP},
-};
+    {NULL, 0}};
 LT_REGISTER_FIELD_ENUM(LTEvent, event, int, event_enum_vals)
