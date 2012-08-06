@@ -2,7 +2,7 @@
 
 LT_INIT_IMPL(ltaudio)
 
-static LTfloat master_gain = 0.0f;
+static LTfloat master_gain = 1.0f;
 
 static const char *oal_errstr(ALenum err) {
     switch (err) {
@@ -48,12 +48,7 @@ struct LTAudioSource {
     }
     void reset() {
         ALint queued;
-        ALint processed;
         alSourceStop(source_id);
-        check_for_errors
-        alGetSourcei(source_id, AL_BUFFERS_QUEUED, &queued);
-        check_for_errors
-        alGetSourcei(source_id, AL_BUFFERS_PROCESSED, &processed);
         check_for_errors
         alSourcei(source_id, AL_BUFFER, 0);
         check_for_errors
