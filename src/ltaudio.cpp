@@ -209,7 +209,7 @@ void LTAudioSample::play(LTfloat pitch, LTfloat gain) {
     LTAudioSource *source = aquire_source(true);
     source->queue_buffer(buffer_id);
     source->set_pitch(pitch);
-    source->set_gain(pitch);
+    source->set_gain(gain);
     source->play();
 }
 
