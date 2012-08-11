@@ -2207,7 +2207,8 @@ struct LTLuaTweenOnDone : LTTweenOnDone {
         assert(node == lua_touserdata(g_L, -1));
         ltLuaGetRef(g_L, -1, func_ref);
         assert(lua_isfunction(g_L, -1));
-        lua_call(g_L, 0, 0);
+        lua_pushvalue(g_L, -2); // push node again to pass to function
+        lua_call(g_L, 1, 0);
         lua_pop(g_L, 1); // pop node
         executed = true;
     }
