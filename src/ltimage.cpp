@@ -226,8 +226,8 @@ LTImageBuffer *ltReadImage(const char *path, const char *name) {
     rows = png_get_rows(png_ptr, info_ptr);
 
     LTImageBuffer *imgbuf = new LTImageBuffer(name);
-    if (strcmp(path + strlen(path) - 2, "2x") == 0) {
-        imgbuf->scaling = 2.0f;
+    if (strcmp(path + strlen(path) - 2, "1x") == 0) {
+        imgbuf->scaling = 0.5f;
     }
 
     // Check for bounding box chunk.
@@ -338,7 +338,7 @@ void ltWriteImage(const char *path, LTImageBuffer *img) {
     png_set_rows(png_ptr, info_ptr, rows);
 
     // Write image.
-    png_write_png(png_ptr, info_ptr, PNG_TRANSFORM_SWAP_ALPHA | PNG_TRANSFORM_BGR, NULL);
+    png_write_png(png_ptr, info_ptr, PNG_TRANSFORM_BGR, NULL); //PNG_TRANSFORM_SWAP_ALPHA | PNG_TRANSFORM_BGR, NULL);
 
     // Free libpng data.
     png_destroy_write_struct(&png_ptr, &info_ptr);

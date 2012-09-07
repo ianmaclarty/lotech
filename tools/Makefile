@@ -8,7 +8,7 @@ else
 GPPOPTS=-O3 -DLTLINUX -I$(LTDIR)/linux/include -L$(LTDIR)/linux -llt -lpng -lz -llua -lbox2d -lGLEW -lglfw -lopenal -lGL
 endif
 
-PROGS=randtest devserver
+PROGS=randtest devserver pngbb
 
 all: $(PROGS)
 
