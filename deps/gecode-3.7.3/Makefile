@@ -11,7 +11,7 @@ VPATH=$(DIRS_SEP)
 GECODE_CPP_FILES:=$(shell find gecode -name "*.cpp")
 GECODE_O_FILES:=$(patsubst %.cpp,%.o,$(GECODE_CPP_FILES))
 
-GPP_FLAGS=$(INCLUDE_DIRS) $(LTCFLAGS) $(TARGET_FLAGS) -Os
+GPP_FLAGS=$(INCLUDE_DIRS) $(LTCFLAGS) $(TARGET_FLAGS) -Os -DNDEBUG
 GPP=$(CROSS)g++
 AR=$(CROSS)ar rcus
 
