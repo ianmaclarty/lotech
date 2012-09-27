@@ -5,6 +5,10 @@ void ltAudioTeardown();
 void ltAudioSuspend();
 void ltAudioResume();
 
+#ifdef LTANDROID
+#define ALuint unsigned int
+#endif
+
 struct LTAudioSample : LTObject {
     ALuint buffer_id;
     char *name;

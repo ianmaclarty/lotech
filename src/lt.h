@@ -58,7 +58,7 @@
 #elif LTMINGW
 #include <AL/al.h>
 #include <AL/alc.h>
-#else
+#elif !defined(LTANDROID)
 #include <OpenAL/al.h>
 #include <OpenAL/alc.h>
 #endif

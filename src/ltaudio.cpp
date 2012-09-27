@@ -2,6 +2,46 @@
 
 LT_INIT_IMPL(ltaudio)
 
+LT_REGISTER_TYPE(LTAudioSample, "lt.Sample", "lt.Object")
+
+#ifdef LTANDROID
+void ltAudioInit() { }
+void ltAudioTeardown() { }
+void ltAudioSuspend() { }
+void ltAudioResume() { }
+LTAudioSample::LTAudioSample(ALuint buffer_id, const char *name) { }
+LTAudioSample::~LTAudioSample() { }
+int LTAudioSample::bytes() { return 0; }
+int LTAudioSample::bitsPerDataPoint() { return 0; }
+int LTAudioSample::channels() { return 0; }
+int LTAudioSample::numDataPoints() { return 0; }
+int LTAudioSample::dataPointsPerSec() { return 0; }
+LTdouble LTAudioSample::length() { return 0.0; }
+void LTAudioSample::play(LTfloat pitch, LTfloat gain) { }
+LTTrack::LTTrack() { }
+LTTrack::~LTTrack() { }
+void LTTrack::on_activate() { }
+void LTTrack::on_deactivate() { }
+void LTTrack::queueSample(LTAudioSample *sample, int ref) { }
+void LTTrack::setLoop(bool loop) { }
+void LTTrack::play() { }
+void LTTrack::pause() { }
+void LTTrack::stop() { } 
+int  LTTrack::numSamples() { return 0; }
+int  LTTrack::numProcessedSamples() { return 0; }
+int  LTTrack::numPendingSamples() { return 0; } 
+void LTTrack::dequeueSamples(lua_State *L, int track_index, int n) { }
+LTAudioSample *ltReadAudioSample(lua_State *L, const char *path, const char *name) {
+    LTAudioSample *buf = new (lt_alloc_LTAudioSample(L)) LTAudioSample(0, name);
+    return buf;
+}
+void ltAudioGC() { }
+static LTfloat get_gain(LTObject *obj) { return 0.0f; }
+static void set_gain(LTObject *obj, LTfloat val) { }
+static LTfloat get_pitch(LTObject *obj) { return 0.0f; }
+static void set_pitch(LTObject *obj, LTfloat val) { }
+#else
+
 static LTfloat master_gain = 1.0f;
 
 static const char *oal_errstr(ALenum err) {
@@ -47,7 +87,6 @@ struct LTAudioSource {
         gain = 1.0f;
     }
     void reset() {
-        ALint queued;
         alSourceStop(source_id);
         check_for_errors
         alSourcei(source_id, AL_BUFFER, 0);
@@ -156,7 +195,6 @@ static void fixup_source_state(ALuint source_id);
 static bool audio_is_suspended = false;
 
 void ltAudioInit() {
-#ifndef LTANDROID
     audio_device = alcOpenDevice(NULL);
     if (audio_device == NULL) {
         ltLog("Unable to open audio device");
@@ -169,11 +207,9 @@ void ltAudioInit() {
     }
     alcMakeContextCurrent(audio_context);
     check_for_errors
-#endif
 }
 
 void ltAudioTeardown() {
-#ifndef LTANDROID
     for (unsigned i = 0; i < sources.size(); i++) {
         LTAudioSource* s = sources[i];
         s->reset();
@@ -189,7 +225,6 @@ void ltAudioTeardown() {
         alcCloseDevice(audio_device);
         audio_device = NULL;
     }
-#endif
 }
 
 LTAudioSample::LTAudioSample(ALuint buf_id, const char *name) {
@@ -248,8 +283,6 @@ int LTAudioSample::dataPointsPerSec() {
 LTdouble LTAudioSample::length() {
     return (LTdouble)numDataPoints() / (LTdouble)dataPointsPerSec();
 }
-
-LT_REGISTER_TYPE(LTAudioSample, "lt.Sample", "lt.Object")
 
 LTTrack::LTTrack() {
     source = aquire_source(false);
@@ -386,10 +419,6 @@ static LTfloat get_pitch(LTObject *obj) {
 static void set_pitch(LTObject *obj, LTfloat val) {
     ((LTTrack*)obj)->source->set_pitch(val);
 }
-
-LT_REGISTER_TYPE(LTTrack, "lt.Track", "lt.SceneNode")
-LT_REGISTER_PROPERTY_FLOAT(LTTrack, gain, &get_gain, &set_gain)
-LT_REGISTER_PROPERTY_FLOAT(LTTrack, pitch, &get_pitch, &set_pitch)
 
 void ltAudioSuspend() {
     if (!audio_is_suspended) {
@@ -587,3 +616,9 @@ LTAudioSample *ltReadAudioSample(lua_State *L, const char *path, const char *nam
     LTAudioSample *buf = new (lt_alloc_LTAudioSample(L)) LTAudioSample(buf_id, name);
     return buf;
 }
+#endif
+
+LT_REGISTER_TYPE(LTTrack, "lt.Track", "lt.SceneNode")
+LT_REGISTER_PROPERTY_FLOAT(LTTrack, gain, &get_gain, &set_gain)
+LT_REGISTER_PROPERTY_FLOAT(LTTrack, pitch, &get_pitch, &set_pitch)
+

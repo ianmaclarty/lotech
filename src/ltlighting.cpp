@@ -28,6 +28,7 @@ void LTLightingNode::draw() {
 }
 
 LT_REGISTER_TYPE(LTLightingNode, "lt.Lighting", "lt.Wrap")
+LT_REGISTER_FIELD_BOOL(LTLightingNode, enabled)
 
 LTLight::LTLight() {
     ambient.red = 0;

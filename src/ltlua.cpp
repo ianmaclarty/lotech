@@ -2784,9 +2784,7 @@ static void set_globals(lua_State *L) {
 }
 
 void ltLuaSetup() {
-    #ifndef LTANDROID
     ltAudioInit();
-    #endif
     g_L = luaL_newstate();
     if (g_L == NULL) {
         ltLog("Cannot create lua state: not enough memory.");

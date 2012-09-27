@@ -10,7 +10,7 @@ GLFW_DIR=$(GLFW)
 
 TARGETS=liblua.a libbox2d.a libz.a libpng.a headers
 ifeq ($(TARGET_PLATFORM),android)
-TARGETS+=libopenal.a openal_headers
+#TARGETS+=libopenal.a openal_headers
 endif
 ifeq ($(TARGET_PLATFORM),mingw)
 TARGETS+=glfw_headers libglfw.a libOpenAL32.dll.a openal_headers glew32s.lib glew_headers
@@ -127,17 +127,17 @@ libpng.a: rebuild
 		clean all
 	cp $(LIBPNG_DIR)/libpng.a .
 
-libopenal.a: rebuild.openal
-	cd openal-android && $(MAKE) \
-		CROSS=$(NDKP) \
-		TARGET_FLAGS="--sysroot $(NDKSYSROOT) -marm" \
-		LTCFLAGS="$(LTCFLAGS)" \
-		clean all
-	cp openal-android/libopenal.a .
+#libopenal.a: rebuild.openal
+#	cd openal-android && $(MAKE) \
+#		CROSS=$(NDKP) \
+#		TARGET_FLAGS="--sysroot $(NDKSYSROOT) -marm" \
+#		LTCFLAGS="$(LTCFLAGS)" \
+#		clean all
+#	cp openal-android/libopenal.a .
 
-.PHONY: openal_headers
-openal_headers:
-	cp -r openal-android/include/AL include/OpenAL
+#.PHONY: openal_headers
+#openal_headers:
+#	cp -r openal-android/include/AL include/OpenAL
 
 endif
 
