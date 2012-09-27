@@ -190,20 +190,20 @@ bool ltReadWavefrontMesh(const char *filename, LTMesh *mesh) {
             fptr[0] = vertices[v].x;
             fptr[1] = vertices[v].y;
             fptr[2] = vertices[v].z;
-            lt_incr_ptr(ptr, 3 * 4);
+            lt_incr_ptr(&ptr, 3 * 4);
             if (n >= 0) {
                 LTbyte *bptr = (LTbyte*)ptr;
                 bptr[0] = (LTbyte)(normals[n].nx * 127.0f);
                 bptr[1] = (LTbyte)(normals[n].ny * 127.0f);
                 bptr[2] = (LTbyte)(normals[n].nz * 127.0f);
                 bptr[3] = '\0';
-                lt_incr_ptr(ptr, 4);
+                lt_incr_ptr(&ptr, 4);
             }
             if (t >= 0) {
                 LTshort *sptr = (LTshort*)ptr;
                 sptr[0] = (LTshort)(texture_coords[t].u * (LTfloat)LT_MAX_TEX_COORD);
                 sptr[1] = (LTshort)(texture_coords[t].v * (LTfloat)LT_MAX_TEX_COORD);
-                lt_incr_ptr(ptr, 4);
+                lt_incr_ptr(&ptr, 4);
             }
         }
     }

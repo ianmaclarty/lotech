@@ -40,4 +40,7 @@ static inline float ltRand0_1() {
 #endif
 }
 
-#define lt_incr_ptr(ptr, n) {*((LTbyte**)&ptr) += n;}
+template<typename T>
+static inline void lt_incr_ptr(T **p, unsigned int n) {
+    *p = reinterpret_cast<T *>(reinterpret_cast<char *>(*p) + n);
+}

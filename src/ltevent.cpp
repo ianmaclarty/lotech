@@ -82,7 +82,7 @@ struct LTEventVisitor : LTSceneNodeVisitor {
         events_allowed = (exclusive_node == NULL);
     }
     virtual void visit(LTSceneNode *node) {
-        LTfloat old_x, old_y, old_prev_x, old_prev_y;
+        LTfloat old_x = 0, old_y = 0, old_prev_x = 0, old_prev_y = 0;
         if (LT_EVENT_MATCH(event->event, LT_EVENT_POINTER)) { 
             old_x = event->x;
             old_y = event->y;

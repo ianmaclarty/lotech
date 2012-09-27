@@ -190,8 +190,6 @@ static std::vector<LTAudioSource*> sources;
 static LTAudioSource* aquire_source(bool is_temp);
 static void release_source(LTAudioSource *source);
 
-static void fixup_source_state(ALuint source_id);
-
 static bool audio_is_suspended = false;
 
 void ltAudioInit() {
@@ -319,27 +317,6 @@ static void release_source(LTAudioSource *source) {
         }
     }
     assert(false); // source not in sources.
-}
-
-static void fixup_source_state(ALuint source_id) {
-    // There seems to be a bug in the Mac OS X OpenAL implementation
-    // where the state is not set to AL_STOPPED after all samples have finished.
-    ALint state;
-    ALint looping;
-    ALint queued;
-    ALint processed;
-    alGetSourcei(source_id, AL_SOURCE_STATE, &state);
-    alGetSourcei(source_id, AL_LOOPING, &looping);
-    check_for_errors
-    if (state == AL_PLAYING && looping == AL_FALSE) {
-        alGetSourcei(source_id, AL_BUFFERS_QUEUED, &queued);
-        alGetSourcei(source_id, AL_BUFFERS_PROCESSED, &processed);
-        check_for_errors
-        if (queued == processed) {
-            alSourceStop(source_id);
-            check_for_errors
-        }
-    }
 }
 
 void LTTrack::on_activate() {

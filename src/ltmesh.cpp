@@ -236,50 +236,50 @@ void LTMesh::grid(int rows, int columns) {
             *y = y1;
             *u = u1;
             *v = v1;
-            lt_incr_ptr(x, stride);
-            lt_incr_ptr(y, stride);
-            lt_incr_ptr(u, stride);
-            lt_incr_ptr(v, stride);
+            lt_incr_ptr(&x, stride);
+            lt_incr_ptr(&y, stride);
+            lt_incr_ptr(&u, stride);
+            lt_incr_ptr(&v, stride);
             *x = x1;
             *y = y2;
             *u = u1;
             *v = v2;
-            lt_incr_ptr(x, stride);
-            lt_incr_ptr(y, stride);
-            lt_incr_ptr(u, stride);
-            lt_incr_ptr(v, stride);
+            lt_incr_ptr(&x, stride);
+            lt_incr_ptr(&y, stride);
+            lt_incr_ptr(&u, stride);
+            lt_incr_ptr(&v, stride);
             *x = x2;
             *y = y1;
             *u = u2;
             *v = v1;
-            lt_incr_ptr(x, stride);
-            lt_incr_ptr(y, stride);
-            lt_incr_ptr(u, stride);
-            lt_incr_ptr(v, stride);
+            lt_incr_ptr(&x, stride);
+            lt_incr_ptr(&y, stride);
+            lt_incr_ptr(&u, stride);
+            lt_incr_ptr(&v, stride);
             *x = x1;
             *y = y2;
             *u = u1;
             *v = v2;
-            lt_incr_ptr(x, stride);
-            lt_incr_ptr(y, stride);
-            lt_incr_ptr(u, stride);
-            lt_incr_ptr(v, stride);
+            lt_incr_ptr(&x, stride);
+            lt_incr_ptr(&y, stride);
+            lt_incr_ptr(&u, stride);
+            lt_incr_ptr(&v, stride);
             *x = x2;
             *y = y2;
             *u = u2;
             *v = v2;
-            lt_incr_ptr(x, stride);
-            lt_incr_ptr(y, stride);
-            lt_incr_ptr(u, stride);
-            lt_incr_ptr(v, stride);
+            lt_incr_ptr(&x, stride);
+            lt_incr_ptr(&y, stride);
+            lt_incr_ptr(&u, stride);
+            lt_incr_ptr(&v, stride);
             *x = x2;
             *y = y1;
             *u = u2;
             *v = v1;
-            lt_incr_ptr(x, stride);
-            lt_incr_ptr(y, stride);
-            lt_incr_ptr(u, stride);
-            lt_incr_ptr(v, stride);
+            lt_incr_ptr(&x, stride);
+            lt_incr_ptr(&y, stride);
+            lt_incr_ptr(&u, stride);
+            lt_incr_ptr(&v, stride);
 
             x1 += col_width;
             u1 += tex_col_width;
@@ -387,21 +387,21 @@ void LTMesh::print() {
         } else {
             printf(" %5.2f %5.2f %5.2f", (double)vptr[0], (double)vptr[1], (double)vptr[2]);
         }
-        lt_incr_ptr(ptr, dimensions * 4);
+        lt_incr_ptr(&ptr, dimensions * 4);
         if (has_colors) {
             LTubyte *cptr = (LTubyte*)ptr;
             printf(" %2X %2X %2X %2X", cptr[0], cptr[1], cptr[2], cptr[3]);
-            lt_incr_ptr(ptr, 4);
+            lt_incr_ptr(&ptr, 4);
         }
         if (has_normals) {
             LTbyte *nptr = (LTbyte*)ptr;
             printf(" %5.2f %5.2f %5.2f", ((double)nptr[0])/127.0f, ((double)nptr[1])/127.0f, ((double)nptr[2])/127.0f);
-            lt_incr_ptr(ptr, 4);
+            lt_incr_ptr(&ptr, 4);
         }
         if (has_texture_coords) {
             LTtexcoord *tptr = (LTtexcoord*)ptr;
             printf(" %5.2f %5.2f", (double)tptr[0]/(double)LT_MAX_TEX_COORD, (double)tptr[1]/(double)LT_MAX_TEX_COORD);
-            lt_incr_ptr(ptr, 4);
+            lt_incr_ptr(&ptr, 4);
         }
         printf("\n");
     }

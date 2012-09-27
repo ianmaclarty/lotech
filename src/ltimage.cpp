@@ -159,7 +159,7 @@ LTImageBuffer *ltReadImage(const char *path, const char *name) {
 
     int png_transforms;
 
-    int bb_left, bb_top, bb_right, bb_bottom; // Only valid if has_bbchunk == false.
+    int bb_left = 0, bb_top = 0, bb_right = 0, bb_bottom = 0; // Only valid if has_bbchunk == false.
 
     png_byte **rows;
 
