@@ -12,6 +12,7 @@ LT_INIT_IMPL(ltscene)
 LTSceneNode::LTSceneNode() {
     event_handlers = NULL;
     active = 0;
+    action_speed = 1.0f;
     //all_nodes.push_back(this);
 }
 
@@ -156,6 +157,29 @@ void LTSceneNode::add_action(LTAction *action) {
 
 LT_REGISTER_TYPE(LTSceneNode, "lt.SceneNode", "lt.Object");
 
+struct SpeedVisitor : LTSceneNodeVisitor {
+    LTfloat spd;
+    SpeedVisitor(LTfloat s) {
+        spd = s;
+    }
+    virtual void visit(LTSceneNode *node) {
+        node->action_speed = spd;
+        node->visit_children(this);
+    }
+};
+
+static void set_action_speed(LTObject *obj, LTfloat val) {
+    LTSceneNode* node = (LTSceneNode*)obj;
+    SpeedVisitor v(val);
+    v.visit(node);
+}
+
+static LTfloat get_action_speed(LTObject *obj) {
+    return ((LTSceneNode *)obj)->action_speed;
+}
+
+LT_REGISTER_PROPERTY_FLOAT_NOCONS(LTSceneNode, action_speed, &get_action_speed, &set_action_speed)
+
 static void push_scene_roots_table(lua_State *L) {
     static void *scene_root_key;
     lua_pushlightuserdata(L, &scene_root_key);
@@ -214,6 +238,22 @@ static int deactivate_scene_node(lua_State *L) {
 
 LT_REGISTER_METHOD(LTSceneNode, Activate, activate_scene_node);
 LT_REGISTER_METHOD(LTSceneNode, Deactivate, deactivate_scene_node);
+
+static int pause_scene_node(lua_State *L) {
+    ltLuaCheckNArgs(L, 1);
+    LTSceneNode *node = lt_expect_LTSceneNode(L, 1);
+    set_action_speed(node, 0.0f);
+    return 0;
+}
+static int resume_scene_node(lua_State *L) {
+    ltLuaCheckNArgs(L, 1);
+    LTSceneNode *node = lt_expect_LTSceneNode(L, 1);
+    set_action_speed(node, 1.0f);
+    return 0;
+}
+
+LT_REGISTER_METHOD(LTSceneNode, Pause, pause_scene_node);
+LT_REGISTER_METHOD(LTSceneNode, Resume, resume_scene_node);
 
 void ltDeactivateAllScenes(lua_State *L) {
     push_scene_roots_table(L);

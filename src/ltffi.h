@@ -53,13 +53,13 @@ LT_INIT_DECL(ltffi)
     static LTFieldDef LT_CONCAT(lt_field_def_, __LINE__) = \
         {#cpp_type, #field_name, LT_FIELD_KIND_BOOL, NULL, \
             (void*)LT_CONCAT(&lt_field_getter_, __LINE__), (void*)LT_CONCAT(&lt_field_setter_, __LINE__), \
-            NULL, __LINE__}; \
+            NULL, __LINE__, true}; \
     static LTRegisterField LT_CONCAT(lt_register_field_, __LINE__)(LT_CONCAT(&lt_field_def_, __LINE__));
 
 #define LT_REGISTER_PROPERTY_BOOL(cpp_type, field_name, getter, setter) \
     static LTFieldDef LT_CONCAT(lt_field_def_, __LINE__) = \
         {#cpp_type, #field_name, LT_FIELD_KIND_BOOL, NULL, \
-            (void*)getter, (void*)setter, NULL, __LINE__}; \
+            (void*)getter, (void*)setter, NULL, __LINE__, true}; \
     static LTRegisterField LT_CONCAT(lt_register_field_, __LINE__)(LT_CONCAT(&lt_field_def_, __LINE__));
 
 #define LT_REGISTER_FIELD_INT(cpp_type, field_name) \
@@ -72,7 +72,7 @@ LT_INIT_DECL(ltffi)
     static LTFieldDef LT_CONCAT(lt_field_def_, __LINE__) = \
         {#cpp_type, #field_name, LT_FIELD_KIND_INT, NULL, \
             (void*)LT_CONCAT(&lt_field_getter_, __LINE__), (void*)LT_CONCAT(&lt_field_setter_, __LINE__), \
-            NULL, __LINE__}; \
+            NULL, __LINE__, true}; \
     static LTRegisterField LT_CONCAT(lt_register_field_, __LINE__)(LT_CONCAT(&lt_field_def_, __LINE__));
 
 #define LT_REGISTER_FIELD_INT_AS(cpp_type, field_name, lua_name) \
@@ -85,13 +85,13 @@ LT_INIT_DECL(ltffi)
     static LTFieldDef LT_CONCAT(lt_field_def_, __LINE__) = \
         {#cpp_type, lua_name, LT_FIELD_KIND_INT, NULL, \
             (void*)LT_CONCAT(&lt_field_getter_, __LINE__), (void*)LT_CONCAT(&lt_field_setter_, __LINE__), \
-            NULL, __LINE__}; \
+            NULL, __LINE__, true}; \
     static LTRegisterField LT_CONCAT(lt_register_field_, __LINE__)(LT_CONCAT(&lt_field_def_, __LINE__));
 
 #define LT_REGISTER_PROPERTY_INT(cpp_type, field_name, getter, setter) \
     static LTFieldDef LT_CONCAT(lt_field_def_, __LINE__) = \
         {#cpp_type, #field_name, LT_FIELD_KIND_INT, NULL, \
-            (void*)getter, (void*)setter, NULL, __LINE__}; \
+            (void*)getter, (void*)setter, NULL, __LINE__, true}; \
     static LTRegisterField LT_CONCAT(lt_register_field_, __LINE__)(LT_CONCAT(&lt_field_def_, __LINE__));
 
 #define LT_REGISTER_FIELD_ENUM(cpp_type, field_name, enum_type, enum_vals) \
@@ -104,7 +104,7 @@ LT_INIT_DECL(ltffi)
     static LTFieldDef LT_CONCAT(lt_field_def_, __LINE__) = \
         {#cpp_type, #field_name, LT_FIELD_KIND_ENUM, NULL, \
             (void*)LT_CONCAT(&lt_field_getter_, __LINE__), (void*)LT_CONCAT(&lt_field_setter_, __LINE__), \
-            enum_vals, __LINE__}; \
+            enum_vals, __LINE__, true}; \
     static LTRegisterField LT_CONCAT(lt_register_field_, __LINE__)(LT_CONCAT(&lt_field_def_, __LINE__));
 
 #define LT_REGISTER_FIELD_FLOAT(cpp_type, field_name) \
@@ -117,7 +117,7 @@ LT_INIT_DECL(ltffi)
     static LTFieldDef LT_CONCAT(lt_field_def_, __LINE__) = \
         {#cpp_type, #field_name, LT_FIELD_KIND_FLOAT, NULL, \
             (void*)LT_CONCAT(&lt_field_getter_, __LINE__), (void*)LT_CONCAT(&lt_field_setter_, __LINE__), \
-            NULL, __LINE__}; \
+            NULL, __LINE__, true}; \
     static LTRegisterField LT_CONCAT(lt_register_field_, __LINE__)(LT_CONCAT(&lt_field_def_, __LINE__));
 
 #define LT_REGISTER_FIELD_FLOAT_AS(cpp_type, field_name, lua_name) \
@@ -130,13 +130,19 @@ LT_INIT_DECL(ltffi)
     static LTFieldDef LT_CONCAT(lt_field_def_, __LINE__) = \
         {#cpp_type, lua_name, LT_FIELD_KIND_FLOAT, NULL, \
             (void*)LT_CONCAT(&lt_field_getter_, __LINE__), (void*)LT_CONCAT(&lt_field_setter_, __LINE__), \
-            NULL, __LINE__}; \
+            NULL, __LINE__, true}; \
     static LTRegisterField LT_CONCAT(lt_register_field_, __LINE__)(LT_CONCAT(&lt_field_def_, __LINE__));
 
 #define LT_REGISTER_PROPERTY_FLOAT(cpp_type, field_name, getter, setter) \
     static LTFieldDef LT_CONCAT(lt_field_def_, __LINE__) = \
         {#cpp_type, #field_name, LT_FIELD_KIND_FLOAT, NULL, \
-            (void*)getter, (void*)setter, NULL, __LINE__}; \
+            (void*)getter, (void*)setter, NULL, __LINE__, true}; \
+    static LTRegisterField LT_CONCAT(lt_register_field_, __LINE__)(LT_CONCAT(&lt_field_def_, __LINE__));
+
+#define LT_REGISTER_PROPERTY_FLOAT_NOCONS(cpp_type, field_name, getter, setter) \
+    static LTFieldDef LT_CONCAT(lt_field_def_, __LINE__) = \
+        {#cpp_type, #field_name, LT_FIELD_KIND_FLOAT, NULL, \
+            (void*)getter, (void*)setter, NULL, __LINE__, false}; \
     static LTRegisterField LT_CONCAT(lt_register_field_, __LINE__)(LT_CONCAT(&lt_field_def_, __LINE__));
 
 #define LT_REGISTER_FIELD_OBJ(cpp_type, field_name, value_type) \
@@ -149,20 +155,20 @@ LT_INIT_DECL(ltffi)
     static LTFieldDef LT_CONCAT(lt_field_def_, __LINE__) = \
         {#cpp_type, #field_name, LT_FIELD_KIND_OBJECT, #value_type, \
             (void*)LT_CONCAT(&lt_field_getter_, __LINE__), (void*)LT_CONCAT(&lt_field_setter_, __LINE__), \
-            NULL, __LINE__}; \
+            NULL, __LINE__, true}; \
     static LTRegisterField LT_CONCAT(lt_register_field_, __LINE__)(LT_CONCAT(&lt_field_def_, __LINE__));
 
 #define LT_REGISTER_PROPERTY_OBJ(cpp_type, field_name, value_type, getter, setter) \
     static LTFieldDef LT_CONCAT(lt_field_def_, __LINE__) = \
         {#cpp_type, #field_name, LT_FIELD_KIND_OBJECT, #value_type, \
-            (void*)getter, (void*)setter, NULL, __LINE__}; \
+            (void*)getter, (void*)setter, NULL, __LINE__, true}; \
     static LTRegisterField LT_CONCAT(lt_register_field_, __LINE__)(LT_CONCAT(&lt_field_def_, __LINE__));
 
 #define LT_REGISTER_METHOD(cpp_type, field_name, function) \
     static lua_CFunction LT_CONCAT(lt_lua_func_typecheck_, __LINE__) = &function; \
     static LTFieldDef LT_CONCAT(lt_field_def_, __LINE__) = \
         {#cpp_type, #field_name, LT_FIELD_KIND_METHOD, NULL, \
-            (void*)LT_CONCAT(lt_lua_func_typecheck_, __LINE__), NULL, NULL, __LINE__}; \
+            (void*)LT_CONCAT(lt_lua_func_typecheck_, __LINE__), NULL, NULL, __LINE__, true}; \
     static LTRegisterField LT_CONCAT(lt_register_field_, __LINE__)(LT_CONCAT(&lt_field_def_, __LINE__));
 
 enum LTFieldKind {
@@ -196,6 +202,7 @@ struct LTFieldDef {
     void* setter; 
     const LTEnumConstant *enum_vals; // NULL terminated array
     int line;
+    bool include_in_constructor;
 };
 
 struct LTRegisterType {

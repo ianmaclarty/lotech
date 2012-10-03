@@ -82,6 +82,10 @@ struct LTEventVisitor : LTSceneNodeVisitor {
         events_allowed = (exclusive_node == NULL);
     }
     virtual void visit(LTSceneNode *node) {
+        if (node->action_speed == 0.0f) {
+            // Ignore pause nodes and their children.
+            return;
+        }
         LTfloat old_x = 0, old_y = 0, old_prev_x = 0, old_prev_y = 0;
         if (LT_EVENT_MATCH(event->event, LT_EVENT_POINTER)) { 
             old_x = event->x;

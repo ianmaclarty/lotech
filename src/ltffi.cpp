@@ -506,7 +506,7 @@ static void push_metatable(lua_State *L, int type_id) {
                         lua_pushcfunction(L, (lua_CFunction)field_def->getter);
                     } else {
                         lua_pushlightuserdata(L, (void*)field_info);
-                        if (field_def->setter != NULL) {
+                        if (field_def->setter != NULL && field_def->include_in_constructor) {
                             cons_it = cons_args.insert(cons_it, field_def->name);
                             cons_it++;
                         }

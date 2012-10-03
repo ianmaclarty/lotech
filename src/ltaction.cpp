@@ -56,8 +56,8 @@ void ltExecuteActions(LTfloat dt) {
         LTAction *action = *next_action;
         next_action++;
         assert(action->cancelled || action->node->active);
-        if (!action->cancelled) {
-            bool finished = action->doAction(dt);
+        if (!action->cancelled && action->node->action_speed != 0.0f) {
+            bool finished = action->doAction(dt * action->node->action_speed);
             if (finished) {
                 action->cancel();
             }

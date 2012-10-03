@@ -11,6 +11,7 @@ struct LTSceneNode : LTObject {
     std::list<LTEventHandler *> *event_handlers;
     std::list<LTAction *> *actions;
     int active;
+    LTfloat action_speed;
 
     LTSceneNode();
     virtual ~LTSceneNode();
