@@ -105,6 +105,39 @@ struct LTScaleNode : LTWrapNode {
     virtual bool inverse_transform(LTfloat *x, LTfloat *y);
 };
 
+struct LTShearNode : LTWrapNode {
+    LTfloat xy;
+    LTfloat xz;
+    LTfloat yx;
+    LTfloat yz;
+    LTfloat zx;
+    LTfloat zy;
+
+    virtual void draw();
+};
+
+struct LTTransformNode : LTWrapNode {
+    LTfloat m1;
+    LTfloat m2;
+    LTfloat m3;
+    LTfloat m4;
+    LTfloat m5;
+    LTfloat m6;
+    LTfloat m7;
+    LTfloat m8;
+    LTfloat m9;
+    LTfloat m10;
+    LTfloat m11;
+    LTfloat m12;
+    LTfloat m13;
+    LTfloat m14;
+    LTfloat m15;
+    LTfloat m16;
+
+    LTTransformNode();
+    virtual void draw();
+};
+
 struct LTTintNode : LTWrapNode {
     LTfloat red;
     LTfloat green;

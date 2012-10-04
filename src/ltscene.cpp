@@ -489,6 +489,62 @@ LT_REGISTER_FIELD_FLOAT(LTScaleNode, scale_y);
 LT_REGISTER_FIELD_FLOAT(LTScaleNode, scale_z);
 LT_REGISTER_FIELD_FLOAT(LTScaleNode, scale);
 
+void LTShearNode::draw() {
+    LTfloat matrix[] = {
+        1,  xy, xz, 0,
+        yx, 1,  yz, 0,
+        zx, zy, 1,  0,
+        0,  0,  0,  1,
+    };
+    ltMultMatrix(matrix);
+    child->draw();
+}
+
+LT_REGISTER_TYPE(LTShearNode, "lt.Shear", "lt.Wrap");
+LT_REGISTER_FIELD_FLOAT(LTShearNode, xy);
+LT_REGISTER_FIELD_FLOAT(LTShearNode, xz);
+LT_REGISTER_FIELD_FLOAT(LTShearNode, yx);
+LT_REGISTER_FIELD_FLOAT(LTShearNode, yz);
+LT_REGISTER_FIELD_FLOAT(LTShearNode, zx);
+LT_REGISTER_FIELD_FLOAT(LTShearNode, zy);
+
+LTTransformNode::LTTransformNode() {
+    // initialize to identity
+    m1 = 1;
+    m6 = 1;
+    m11 = 1;
+    m16 = 1;
+}
+
+void LTTransformNode::draw() {
+    LTfloat matrix[] = {
+        m1, m5, m9,  m13,
+        m2, m6, m10, m14,
+        m3, m7, m11, m15,
+        m4, m8, m12, m16,
+    };
+    ltMultMatrix(matrix);
+    child->draw();
+}
+
+LT_REGISTER_TYPE(LTTransformNode, "lt.Transform", "lt.Wrap");
+LT_REGISTER_FIELD_FLOAT(LTTransformNode, m1);
+LT_REGISTER_FIELD_FLOAT(LTTransformNode, m2);
+LT_REGISTER_FIELD_FLOAT(LTTransformNode, m3);
+LT_REGISTER_FIELD_FLOAT(LTTransformNode, m4);
+LT_REGISTER_FIELD_FLOAT(LTTransformNode, m5);
+LT_REGISTER_FIELD_FLOAT(LTTransformNode, m6);
+LT_REGISTER_FIELD_FLOAT(LTTransformNode, m7);
+LT_REGISTER_FIELD_FLOAT(LTTransformNode, m8);
+LT_REGISTER_FIELD_FLOAT(LTTransformNode, m9);
+LT_REGISTER_FIELD_FLOAT(LTTransformNode, m10);
+LT_REGISTER_FIELD_FLOAT(LTTransformNode, m11);
+LT_REGISTER_FIELD_FLOAT(LTTransformNode, m12);
+LT_REGISTER_FIELD_FLOAT(LTTransformNode, m13);
+LT_REGISTER_FIELD_FLOAT(LTTransformNode, m14);
+LT_REGISTER_FIELD_FLOAT(LTTransformNode, m15);
+LT_REGISTER_FIELD_FLOAT(LTTransformNode, m16);
+
 void LTTintNode::draw() {
     ltPushTint(red, green, blue, alpha);
     child->draw();
