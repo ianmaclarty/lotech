@@ -12,7 +12,7 @@ void ltAbortImpl(const char *file, int line) {
     exit(1);
 }
 
-#define MAX_MSG_LEN 2048
+#define MAX_MSG_LEN 102400
 
 extern void ltLog(const char *fmt, ...) {
     char msg[MAX_MSG_LEN];
