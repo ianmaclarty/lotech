@@ -59,6 +59,12 @@ enum LTTextureFilter {
     LT_TEXTURE_FILTER_NEAREST = GL_NEAREST,
 };
 
+enum LTCullMode {
+    LT_CULL_BACK,
+    LT_CULL_FRONT,
+    LT_CULL_OFF,
+};
+
 void ltInitGLState();
 
 void ltEnableTexturing();
@@ -132,6 +138,8 @@ void ltMaterialAmbient(LTfloat r, LTfloat g, LTfloat b);
 void ltMaterialDiffuse(LTfloat r, LTfloat g, LTfloat b, LTfloat a);
 void ltMaterialSpecular(LTfloat r, LTfloat g, LTfloat b);
 void ltMaterialEmission(LTfloat r, LTfloat g, LTfloat b);
+
+void ltCullFace(LTCullMode);
 
 void ltMatrixMode(LTMatrixMode mode);
 void ltPushMatrix();

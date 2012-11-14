@@ -90,6 +90,8 @@ void ltInitGLState() {
     fog = false;
     glDisable(GL_LIGHTING);
     lighting = false;
+    glDisable(GL_CULL_FACE);
+    glFrontFace(GL_CCW);
     glEnable(GL_NORMALIZE);
     glBindTexture(GL_TEXTURE_2D, 0);
     bound_texture = 0;
@@ -646,6 +648,32 @@ void ltMaterialEmission(LTfloat r, LTfloat g, LTfloat b) {
     gltrace
     GLfloat color[] = {r, g, b, 1};
     glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, color);
+    gltrace
+}
+
+void ltCullFace(LTCullMode mode) {
+    gltrace
+    switch (mode) {
+        case LT_CULL_BACK: {
+            glEnable(GL_CULL_FACE);
+            check_for_errors
+            glCullFace(GL_BACK);
+            check_for_errors
+            break;
+        }
+        case LT_CULL_FRONT: {
+            glEnable(GL_CULL_FACE);
+            check_for_errors
+            glCullFace(GL_FRONT);
+            check_for_errors
+            break;
+        }
+        case LT_CULL_OFF: {
+            glDisable(GL_CULL_FACE);
+            check_for_errors
+            break;
+        }
+    }
     gltrace
 }
 

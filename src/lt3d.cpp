@@ -4,6 +4,7 @@ LT_INIT_IMPL(lt3d)
 
 static bool depth_test_on = false;
 static bool depth_mask_on = true;
+static LTCullMode cull_mode = LT_CULL_OFF;
 
 void LTPerspective::draw() {
     ltPushPerspective(near, origin, far, vanish_x, vanish_y);
@@ -21,6 +22,23 @@ LT_REGISTER_FIELD_FLOAT(LTPerspective, origin);
 LT_REGISTER_FIELD_FLOAT(LTPerspective, far);
 LT_REGISTER_FIELD_FLOAT(LTPerspective, vanish_x);
 LT_REGISTER_FIELD_FLOAT(LTPerspective, vanish_y);
+
+void LTCullFace::draw() {
+    LTCullMode prev_mode = cull_mode;
+    cull_mode = mode;
+    ltCullFace(mode);
+    child->draw();
+    ltCullFace(prev_mode);
+    cull_mode = prev_mode;
+}
+
+static const LTEnumConstant CullMode_enum_vals[] = {
+    {"back",    LT_CULL_BACK},
+    {"front",   LT_CULL_FRONT},
+    {"off",     LT_CULL_OFF},
+    {NULL, 0}};
+LT_REGISTER_TYPE(LTCullFace, "lt.CullFace", "lt.Wrap")
+LT_REGISTER_FIELD_ENUM(LTCullFace, mode, LTCullMode, CullMode_enum_vals);
 
 void LTDepthTest::draw() {
     bool prev_depth_test = depth_test_on;

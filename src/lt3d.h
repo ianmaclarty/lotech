@@ -15,6 +15,12 @@ struct LTPerspective : LTWrapNode {
     bool inverse_transform(LTfloat *x, LTfloat *y);
 };
 
+struct LTCullFace : LTWrapNode {
+    LTCullMode mode;
+    LTCullFace() { mode = LT_CULL_BACK; }
+    virtual void draw();
+};
+
 struct LTDepthTest : LTWrapNode {
     bool on;
     LTDepthTest() {on = true;}
