@@ -173,6 +173,10 @@ struct LTRectNode : LTSceneNode {
     virtual void draw();
 };
 
+struct LTHiddenNode : LTWrapNode {
+    virtual void draw();
+};
+
 LTSceneNode *lt_expect_LTSceneNode(lua_State *L, int arg);
 LTLayer *lt_expect_LTLayer(lua_State *L, int arg);
 LTWrapNode *lt_expect_LTWrapNode(lua_State *L, int arg);

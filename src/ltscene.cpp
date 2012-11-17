@@ -611,6 +611,10 @@ LT_REGISTER_FIELD_FLOAT(LTRectNode, y1)
 LT_REGISTER_FIELD_FLOAT(LTRectNode, x2)
 LT_REGISTER_FIELD_FLOAT(LTRectNode, y2)
 
+void LTHiddenNode::draw() {};
+
+LT_REGISTER_TYPE(LTHiddenNode, "lt.Hidden", "lt.Wrap")
+
 /*
 static void check_scene_nodes() {
     std::list<LTSceneNode *>::iterator it;
