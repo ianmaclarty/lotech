@@ -604,7 +604,6 @@ static int constructor_func_default(lua_State *L) {
         return luaL_error(L, "Invalid argument %d", i);
     }
     obj->init(L);
-    obj->type = type;
     return 1;
 }
 

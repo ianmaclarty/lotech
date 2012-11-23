@@ -6,8 +6,6 @@ static int num_objs = 0;
 
 LTObject::LTObject() {
     num_objs++;
-    //memset(&debug, 0, sizeof(lua_Debug));
-    type = NULL;
 }
 
 LTObject::~LTObject() {
