@@ -29,6 +29,8 @@ extern LTSceneNode *lt_exclusive_receiver;
 
 #define LT_EVENT_MATCH(e, f) ((e & f) == f)
 
+struct LTEventHandler;
+
 struct LTEvent : LTObject {
     int event;
     LTfloat orig_x;
@@ -40,6 +42,8 @@ struct LTEvent : LTObject {
     int touch_id;
     int button;
     LTKey key;
+    LTSceneNode *node;
+    LTEventHandler *handler;
 
     LTEvent() {
         event = 0;
@@ -52,6 +56,8 @@ struct LTEvent : LTObject {
         touch_id = 0;
         button = 0;
         key = LT_KEY_UNKNOWN;
+        node = NULL;
+        handler = NULL;
     }
 
     LTEvent(LTEvent *event) {
@@ -65,6 +71,8 @@ struct LTEvent : LTObject {
         LTEvent::touch_id = event->touch_id;
         LTEvent::button = event->button;
         LTEvent::key = event->key;
+        LTEvent::node = event->node;
+        LTEvent::handler = event->handler;
     }
 };
 

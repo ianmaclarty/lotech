@@ -2813,6 +2813,7 @@ void ltLuaTeardown() {
     if (g_L != NULL) {
         ltDeactivateAllScenes(g_L);
         lua_close(g_L);
+        assert(ltNumLiveObjects() == 0);
         g_L = NULL;
     }
     ltAudioTeardown();

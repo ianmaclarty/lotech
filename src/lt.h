@@ -97,6 +97,10 @@ extern "C" {
 #import <GameKit/GameKit.h>
 #endif
 
+#if defined(LTDEVMODE) && (defined(LTOSX) || defined(LTLINUX) || defined(LTMINGW))
+#define LTMEMTRACK 1
+#endif
+
 // Lotech.
 #include "ltcommon.h"
 #include "ltconfig.h"

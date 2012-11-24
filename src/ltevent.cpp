@@ -58,23 +58,11 @@ bool LTEventHandler::hit(LTEvent *e) {
 
 LTSceneNode *lt_exclusive_receiver = NULL;
 
-struct event_info {
-    LTSceneNode *node;
-    LTEventHandler *handler;
-    LTEvent event;
-
-    event_info(LTSceneNode *n, LTEventHandler *h, LTEvent *e) {
-        node = n;
-        handler = h;
-        event = *e;
-    }
-};
-
 struct LTEventVisitor : LTSceneNodeVisitor {
     LTEvent *event;
     bool events_allowed;
     LTSceneNode *exclusive_node;
-    std::list<event_info> events_to_execute;
+    std::list<LTEvent*> events_to_execute;
 
     LTEventVisitor(LTEvent *e) {
         event = e;
@@ -111,7 +99,10 @@ struct LTEventVisitor : LTSceneNodeVisitor {
                     LTEventHandler *handler = *it;
                     int e = event->event;
                     if (handler->hit(event)) {
-                        events_to_execute.push_back(event_info(node, handler, event));
+                        LTEvent *event_with_handler = new LTEvent(event);
+                        event_with_handler->node = node;
+                        event_with_handler->handler = handler;
+                        events_to_execute.push_back(event_with_handler);
                         handler->execution_pending = true;
                         consumed = true;
                     }
@@ -135,17 +126,18 @@ struct LTEventVisitor : LTSceneNodeVisitor {
 void ltPropagateEvent(LTSceneNode *node, LTEvent *event) {
     LTEventVisitor v(event);
     v.visit(node);
-    std::list<event_info>::iterator it;
+    std::list<LTEvent*>::iterator it;
     std::set<LTEventHandler *> cancelled_handlers;
     for (it = v.events_to_execute.begin(); it != v.events_to_execute.end(); it++) {
-        LTEvent *e = &it->event;
-        LTEventHandler *h = it->handler;
+        LTEvent *e = *it;
+        LTEventHandler *h = e->handler;
         if (h->cancelled) {
             cancelled_handlers.insert(h);
         } else if (h->execution_pending) {
-            h->consume(it->node, e);
+            h->consume(e->node, e);
             h->execution_pending = false;
         }
+        delete e;
     }
     std::set<LTEventHandler *>::iterator cit;
     for (cit = cancelled_handlers.begin(); cit != cancelled_handlers.end(); cit++) {

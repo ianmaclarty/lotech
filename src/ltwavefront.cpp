@@ -208,6 +208,7 @@ bool ltReadWavefrontMesh(const char *filename, LTMesh *mesh) {
         }
     }
 
+    mesh->~LTMesh(); // decontruct before constructing again.
     new (mesh) LTMesh(3, false, has_normals, has_texture_coords, NULL, LT_DRAWMODE_TRIANGLES, data, num_faces * 3);
     return true;
 }

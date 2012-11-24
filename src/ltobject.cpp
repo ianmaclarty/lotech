@@ -3,13 +3,22 @@
 LT_INIT_IMPL(ltobject)
 
 static int num_objs = 0;
+#ifdef LTMEMTRACK
+static std::set<LTObject*> registry;
+#endif
 
 LTObject::LTObject() {
+#ifdef LTMEMTRACK
     num_objs++;
+    assert(registry.insert(this).second == true);
+#endif
 }
 
 LTObject::~LTObject() {
+#ifdef LTMEMTRACK
     num_objs--;
+    assert(registry.erase(this) == 1);
+#endif
 }
 
 LT_REGISTER_TYPE(LTObject, "lt.Object", NULL)
