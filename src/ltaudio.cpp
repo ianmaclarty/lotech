@@ -208,6 +208,23 @@ void ltAudioInit() {
     check_for_errors
 }
 
+static void buffers_gc() {
+    std::vector<ALuint> undeleted;
+    for (unsigned i = 0; i < buffers_to_delete.size(); i++) {
+        alDeleteBuffers(1, &buffers_to_delete[i]);
+        ALenum err = alGetError();
+        // Sometimes happens on OSX if we try to delete the
+        // buffer just after removing it from the source.
+        if (err == AL_INVALID_OPERATION) {
+            undeleted.push_back(buffers_to_delete[i]);
+        }
+    }
+    buffers_to_delete.clear();
+    for (unsigned i = 0; i < undeleted.size(); i++) {
+        buffers_to_delete.push_back(undeleted[i]);
+    }
+}
+
 void ltAudioTeardown() {
     for (unsigned i = 0; i < sources.size(); i++) {
         LTAudioSource* s = sources[i];
@@ -216,6 +233,7 @@ void ltAudioTeardown() {
         delete s;
     }
     sources.clear();
+    buffers_gc();
     if (audio_context != NULL) {
         alcDestroyContext(audio_context);
         audio_context = NULL;
@@ -456,10 +474,7 @@ void ltAudioGC() {
         prev_num_slots = num_slots;
     }
 
-    // Delete any buffers queued for deletion.
-    alDeleteBuffers(buffers_to_delete.size(), &buffers_to_delete[0]);
-    check_for_errors
-    buffers_to_delete.clear();
+    buffers_gc();
 }
 
 static int read_4_byte_little_endian_int(LTResource *rsc) {
