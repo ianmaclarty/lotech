@@ -186,6 +186,7 @@ struct LTAudioSource {
 };
 
 static std::vector<LTAudioSource*> sources;
+static std::vector<ALuint> buffers_to_delete;
 
 static LTAudioSource* aquire_source(bool is_temp);
 static void release_source(LTAudioSource *source);
@@ -232,9 +233,7 @@ LTAudioSample::LTAudioSample(ALuint buf_id, const char *name) {
 }
 
 LTAudioSample::~LTAudioSample() {
-    // XXX Make sure there are no sources using this buffer.
-    alDeleteBuffers(1, &buffer_id);
-    check_for_errors
+    buffers_to_delete.push_back(buffer_id);
     delete[] name;
 }
 
@@ -288,6 +287,7 @@ LTTrack::LTTrack() {
 }
 
 LTTrack::~LTTrack() {
+    //fprintf(stderr, "Deleting track %p\n", this);
     release_source(source);
 }
 
@@ -455,6 +455,11 @@ void ltAudioGC() {
         prev_num_temp = num_temp;
         prev_num_slots = num_slots;
     }
+
+    // Delete any buffers queued for deletion.
+    alDeleteBuffers(buffers_to_delete.size(), &buffers_to_delete[0]);
+    check_for_errors
+    buffers_to_delete.clear();
 }
 
 static int read_4_byte_little_endian_int(LTResource *rsc) {
