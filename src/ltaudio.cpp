@@ -74,6 +74,8 @@ struct LTAudioSource {
     bool play_on_resume;
     ALint curr_state;
     ALint new_state;
+    bool was_stop;
+    bool was_rewind;
     LTfloat gain;
     LTAudioSource() {
         alGenSources(1, &source_id);
@@ -85,6 +87,8 @@ struct LTAudioSource {
         curr_state = AL_STOPPED;
         new_state = AL_STOPPED;
         gain = 1.0f;
+        was_stop = false;
+        was_rewind = false;
     }
     void reset() {
         alSourceStop(source_id);
@@ -108,6 +112,10 @@ struct LTAudioSource {
     }
     void stop() {
         new_state = AL_STOPPED;
+        was_stop = true;
+    }
+    void rewind() {
+        was_rewind = true;
     }
     bool is_playing() {
         if (new_state != curr_state) {
@@ -119,7 +127,10 @@ struct LTAudioSource {
         }
     }
     void update_state() {
-        if (new_state != curr_state) {
+        if (was_stop || was_rewind) {
+            alSourceRewind(source_id);
+        }
+        if (new_state != curr_state || new_state == AL_PLAYING && was_rewind) {
             switch (new_state) {
                 case AL_PLAYING: alSourcePlay(source_id); break;
                 case AL_PAUSED: alSourcePause(source_id); break;
@@ -129,6 +140,8 @@ struct LTAudioSource {
             check_for_errors
             curr_state = new_state;
         }
+        was_stop = false;
+        was_rewind = false;
     }
     void set_pitch(LTfloat pitch) {
         alSourcef(source_id, AL_PITCH, pitch);
@@ -371,6 +384,10 @@ void LTTrack::pause() {
 void LTTrack::stop() {
     source->stop();
     was_playing = false;
+}
+
+void LTTrack::rewind() {
+    source->rewind();
 }
 
 void LTTrack::setLoop(bool loop) {
