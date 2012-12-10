@@ -4,6 +4,8 @@
 
 LT_INIT_IMPL(ltlua)
 
+#define MAX_START_SCRIPT_LEN 128
+
 static inline int absidx(lua_State *L, int index) {
     if (index < 0) {
         return lua_gettop(L) + index + 1;
@@ -17,6 +19,7 @@ static int g_wrefs_ref = LUA_NOREF;
 static bool g_suspended = false;
 static bool g_initialized = false;
 static bool g_gamecenter_initialized = false;
+static char g_start_script[MAX_START_SCRIPT_LEN];
 
 /************************* Functions for calling lua **************************/
 
@@ -147,6 +150,15 @@ static const char *sound_path(const char *name) {
 
 static const char *model_path(const char *name) {
     return resource_path(name, ".obj");
+}
+
+/************************* Start script **************************/
+
+static int lt_SetStartScript(lua_State *L) {
+    ltLuaCheckNArgs(L, 1);
+    strncpy(g_start_script, lua_tostring(L, 1), MAX_START_SCRIPT_LEN);
+    g_start_script[MAX_START_SCRIPT_LEN - 1] = '\0';
+    return 0;
 }
 
 /************************* Graphics **************************/
@@ -2522,6 +2534,7 @@ static int log(lua_State *L) {
 /************************************************************/
 
 static const luaL_Reg ltlib[] = {
+    {"SetStartScript",                  lt_SetStartScript},
     {"SetViewPort",                     lt_SetViewPort},
     {"SetDesignScreenSize",             lt_SetDesignScreenSize},
     {"SetOrientation",                  lt_SetOrientation},
@@ -2809,6 +2822,7 @@ void ltLuaSetup() {
     run_lua_file(g_L, "lt");
     setup_wref_ref(g_L);
     set_globals(g_L);
+    strcpy(g_start_script, "main");
     run_lua_file(g_L, "config");
     ltRestoreState();
 }
@@ -2860,7 +2874,7 @@ void ltLuaRender() {
             ltInitGLState();
             ltAdjustViewportAspectRatio();
             set_viewport_globals(g_L);
-            run_lua_file(g_L, "main");
+            run_lua_file(g_L, g_start_script);
             #ifdef LTGAMECENTER
             if (ltIOSGameCenterIsAvailable()) {
                 ltLuaGameCenterBecameAvailable();
