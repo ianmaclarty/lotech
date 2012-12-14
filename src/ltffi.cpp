@@ -11,40 +11,46 @@ static inline int absidx(lua_State *L, int index) {
     }
 }
 
+static bool init_done = false;
+
 static void init_core_modules() {
-    // These are only to ensure the static initializers in each translation unit are run.
-    lt3d_init();
-    ltaction_init();
-    ltaudio_init();
-    ltcommon_init();
-    ltconfig_init();
-    ltevent_init();
-    ltffi_init();
-    ltfilestore_init();
-    ltgraphics_init();
-    ltimage_init();
-    ltlua_init();
-    ltnet_init();
-    ltobject_init();
-    ltopengl_init();
-    ltparticles_init();
-    ltphysics_init();
-    ltpickle_init();
-    ltprotocol_init();
-    ltrandom_init();
-    ltrendertarget_init();
-    ltresource_init();
-    ltscene_init();
-    ltstate_init();
-    ltstore_init();
-    lttext_init();
-    lttime_init();
-    lttween_init();
-    ltutil_init();
-    ltvector_init();
-    ltmesh_init();
-    ltwavefront_init();
-    ltlighting_init();
+    if (!init_done) {
+        // This ensures the static initializers in each translation unit are run.
+        lt3d_init();
+        ltaction_init();
+        ltaudio_init();
+        ltcommon_init();
+        ltconfig_init();
+        ltevent_init();
+        ltffi_init();
+        ltfilestore_init();
+        ltgraphics_init();
+        ltimage_init();
+        ltlua_init();
+        ltnet_init();
+        ltobject_init();
+        ltopengl_init();
+        ltparticles_init();
+        ltphysics_init();
+        ltpickle_init();
+        ltprotocol_init();
+        ltrandom_init();
+        ltrendertarget_init();
+        ltresource_init();
+        ltscene_init();
+        ltstate_init();
+        ltstore_init();
+        lttext_init();
+        lttime_init();
+        lttween_init();
+        ltutil_init();
+        ltvector_init();
+        ltmesh_init();
+        ltwavefront_init();
+        ltlighting_init();
+        ltmixer_init();
+        init_done = true;
+    }
 }
 
 struct LTFieldInfo {

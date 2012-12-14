@@ -44,3 +44,5 @@ template<typename T>
 static inline void lt_incr_ptr(T **p, unsigned int n) {
     *p = reinterpret_cast<T *>(reinterpret_cast<char *>(*p) + n);
 }
+
+void ltSleep(int millisecs);

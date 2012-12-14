@@ -156,3 +156,11 @@ void ltMkDir(const char* dir) {
         }
     }
 }
+
+void ltSleep(int millisecs) {
+    #ifdef LTMINGW
+        Sleep(millisecs);
+    #else
+        usleep(millisecs * 1000);
+    #endif
+}
