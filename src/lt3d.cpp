@@ -7,7 +7,7 @@ static bool depth_mask_on = true;
 static LTCullMode cull_mode = LT_CULL_OFF;
 
 void LTPerspective::draw() {
-    ltPushPerspective(near, origin, far, vanish_x, vanish_y);
+    ltPushPerspective(nearz, origin, farz, vanish_x, vanish_y);
     child->draw();
     ltPopPerspective();
 }
@@ -17,9 +17,9 @@ bool LTPerspective::inverse_transform(LTfloat *x, LTfloat *y) {
 }
 
 LT_REGISTER_TYPE(LTPerspective, "lt.Perspective", "lt.Wrap")
-LT_REGISTER_FIELD_FLOAT(LTPerspective, near);
+LT_REGISTER_FIELD_FLOAT_AS(LTPerspective, nearz, "near");
 LT_REGISTER_FIELD_FLOAT(LTPerspective, origin);
-LT_REGISTER_FIELD_FLOAT(LTPerspective, far);
+LT_REGISTER_FIELD_FLOAT_AS(LTPerspective, farz, "far");
 LT_REGISTER_FIELD_FLOAT(LTPerspective, vanish_x);
 LT_REGISTER_FIELD_FLOAT(LTPerspective, vanish_y);
 

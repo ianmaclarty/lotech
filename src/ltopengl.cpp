@@ -712,23 +712,23 @@ void ltLoadIdentity() {
     gltrace
 }
 
-void ltOrtho(LTfloat left, LTfloat right, LTfloat bottom, LTfloat top, LTfloat near, LTfloat far) {
+void ltOrtho(LTfloat left, LTfloat right, LTfloat bottom, LTfloat top, LTfloat nearz, LTfloat farz) {
     gltrace
     #ifdef LTGLES1
-    glOrthof(left, right, bottom, top, near, far);
+    glOrthof(left, right, bottom, top, nearz, farz);
     #else
-    glOrtho(left, right, bottom, top, near, far);
+    glOrtho(left, right, bottom, top, nearz, farz);
     #endif
     check_for_errors
     gltrace
 }
 
-void ltFrustum(LTfloat left, LTfloat right, LTfloat bottom, LTfloat top, LTfloat near, LTfloat far) {
+void ltFrustum(LTfloat left, LTfloat right, LTfloat bottom, LTfloat top, LTfloat nearz, LTfloat farz) {
     gltrace
     #ifdef LTGLES1
-    glFrustumf(left, right, bottom, top, near, far);
+    glFrustumf(left, right, bottom, top, nearz, farz);
     #else
-    glFrustum(left, right, bottom, top, near, far);
+    glFrustum(left, right, bottom, top, nearz, farz);
     #endif
     check_for_errors
     gltrace

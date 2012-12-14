@@ -15,6 +15,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <pthread.h>
 #if !defined(LTANDROID) && !defined(LTMINGW)
 #include <glob.h>
 #endif
@@ -23,12 +24,6 @@
 #include <netinet/in.h>
 #include <pwd.h>
 #endif
-
-#ifdef LTMINGW
-#include <windows.h>
-#endif
-
-#include <pthread.h>
 
 // OpenGL
 #ifdef LTLINUX
@@ -85,22 +80,28 @@ extern "C" {
 #include "lualib.h"
 }
 
-// Android specific headers.
+// Android specific
 #ifdef LTANDROID
 #include <android/asset_manager.h>
 #include <android/log.h>
 #endif
 
-// OSX specific headers.
+// OSX specific
 #ifdef LTOSX
 #import <AppKit/AppKit.h>
 #endif
 
+// iOS specific
 #ifdef LTIOS
 #import <objc/runtime.h>
 #import <UIKit/UIKit.h>
 #import <QuartzCore/QuartzCore.h>
 #import <GameKit/GameKit.h>
+#endif
+
+// Windows specific
+#ifdef LTMINGW
+#include <windows.h>
 #endif
 
 #if defined(LTDEVMODE) && (defined(LTOSX) || defined(LTLINUX) || defined(LTMINGW))
@@ -109,8 +110,8 @@ extern "C" {
 
 // Lotech.
 #include "ltcommon.h"
-#include "ltconfig.h"
 #include "ltthreads.h"
+#include "ltconfig.h"
 #include "ltobject.h"
 #include "ltffi.h"
 #include "ltutil.h"

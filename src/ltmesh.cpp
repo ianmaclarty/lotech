@@ -22,8 +22,8 @@ LTMesh::LTMesh(LTMesh *mesh) {
     right = mesh->right;
     bottom = mesh->bottom;
     top = mesh->top;
-    far = mesh->far;
-    near = mesh->near;
+    farz = mesh->farz;
+    nearz = mesh->nearz;
     bb_dirty = mesh->bb_dirty;
 
     vertbuf = 0;
@@ -60,8 +60,8 @@ LTMesh::LTMesh(LTTexturedNode *img) {
     right = img->world_vertices[2];
     bottom = img->world_vertices[5];
     top = img->world_vertices[1];
-    far = 0;
-    near = 0;
+    farz = 0;
+    nearz = 0;
     bb_dirty = false;
 
     vertbuf = 0;
@@ -328,11 +328,11 @@ void LTMesh::ensure_bb_uptodate() {
             bottom = *(((LTfloat*)ptr)+1);
             top = bottom;
             if (dimensions > 2) {
-                far = *(((LTfloat*)ptr)+2);
-                near = far;
+                farz = *(((LTfloat*)ptr)+2);
+                nearz = farz;
             } else {
-                far = 0;
-                near = 0;
+                farz = 0;
+                nearz = 0;
             }
             for (int i = 0; i < size; i++) {
                 LTfloat x = *((LTfloat*)ptr);
@@ -349,10 +349,10 @@ void LTMesh::ensure_bb_uptodate() {
                 }
                 if (dimensions > 2) {
                     LTfloat z = *(((LTfloat*)ptr)+2);
-                    if (z > near) {
-                        near = z;
-                    } else if (z < far) {
-                        far = z;
+                    if (z > nearz) {
+                        nearz = z;
+                    } else if (z < farz) {
+                        farz = z;
                     }
                 }
                 ptr += stride;
@@ -362,8 +362,8 @@ void LTMesh::ensure_bb_uptodate() {
             right = 0;
             bottom = 0;
             top = 0;
-            far = 0;
-            near = 0;
+            farz = 0;
+            nearz = 0;
         }
         bb_dirty = false;
     }

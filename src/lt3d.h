@@ -3,13 +3,13 @@
 LT_INIT_DECL(lt3d)
 
 struct LTPerspective : LTWrapNode {
-    LTfloat near;
+    LTfloat nearz;
     LTfloat origin;
-    LTfloat far;
+    LTfloat farz;
     LTfloat vanish_x;
     LTfloat vanish_y;
 
-    LTPerspective() {near = 1; origin = 2; far = 10;};
+    LTPerspective() {nearz = 1; origin = 2; farz = 10;};
     
     virtual void draw();
     bool inverse_transform(LTfloat *x, LTfloat *y);

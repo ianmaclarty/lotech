@@ -32,7 +32,6 @@ static void update_mixers(void *ud) {
             mixers[i]->update();
         }
         ltUnlockMutex(mixers_mutex);
-        fprintf(stderr, "mixers updated\n");
         ltSleep(MIXER_SLEEP_MILLIS);
     } while (1);
 }

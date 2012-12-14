@@ -389,17 +389,17 @@ LTfloat ltGetViewPortTopEdge() {
     return viewport_top;
 }
 
-void ltPushPerspective(LTfloat near, LTfloat origin, LTfloat far, LTfloat vanish_x, LTfloat vanish_y) {
+void ltPushPerspective(LTfloat nearz, LTfloat origin, LTfloat farz, LTfloat vanish_x, LTfloat vanish_y) {
     ltMatrixMode(LT_MATRIX_MODE_PROJECTION);
     ltPushMatrix();
     ltLoadIdentity();
-    LTfloat r = (origin - near) / origin; 
+    LTfloat r = (origin - nearz) / origin; 
     LTfloat near_half_width = 0.5f * (viewport_width - r * viewport_width);
     LTfloat near_half_height = 0.5f * (viewport_height - r * viewport_height);
     vanish_x *= (1.0f - r);
     vanish_y *= (1.0f - r);
     ltFrustum(-near_half_width - vanish_x, near_half_width - vanish_x,
-        -near_half_height - vanish_y, near_half_height - vanish_y, near, far);
+        -near_half_height - vanish_y, near_half_height - vanish_y, nearz, farz);
     ltMatrixMode(LT_MATRIX_MODE_MODELVIEW);
     ltPushMatrix();
     ltTranslate(-(viewport_width * 0.5f + viewport_left),

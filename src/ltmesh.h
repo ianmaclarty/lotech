@@ -15,7 +15,7 @@ struct LTMesh : LTSceneNode {
     LTvertbuf vertbuf;
     bool vb_dirty;
 
-    LTfloat left, right, bottom, top, far, near; // bounding box
+    LTfloat left, right, bottom, top, farz, nearz; // bounding box
     bool bb_dirty;
 
     LTMesh() { ltAbort(); };

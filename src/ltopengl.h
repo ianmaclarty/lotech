@@ -146,8 +146,8 @@ void ltPushMatrix();
 void ltPopMatrix();
 void ltLoadIdentity();
 void ltMultMatrix(LTfloat *mat);
-void ltOrtho(LTfloat left, LTfloat right, LTfloat bottom, LTfloat top, LTfloat near, LTfloat far);
-void ltFrustum(LTfloat left, LTfloat right, LTfloat bottom, LTfloat top, LTfloat near, LTfloat far);
+void ltOrtho(LTfloat left, LTfloat right, LTfloat bottom, LTfloat top, LTfloat nearz, LTfloat farz);
+void ltFrustum(LTfloat left, LTfloat right, LTfloat bottom, LTfloat top, LTfloat nearz, LTfloat farz);
 
 void ltRotate(LTfloat angle, LTfloat x, LTfloat y, LTfloat z);
 void ltScale(LTfloat x, LTfloat y, LTfloat z);

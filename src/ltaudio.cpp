@@ -409,7 +409,6 @@ int LTTrack::numPendingSamples() {
 
 void LTTrack::dequeueSamples(lua_State *L, int track_index, int n) {
     source->dequeue_buffers(n);
-    std::list<std::pair<LTAudioSample*, int> >::iterator it = queued_samples.begin();
     for (int i = 0; (i < n && !queued_samples.empty()); i++) {
         ltLuaDelRef(L, track_index, queued_samples.front().second);
         queued_samples.pop_front();
@@ -463,10 +462,9 @@ void ltAudioResume() {
 void ltAudioGC() {
     static int prev_num_temp = 0;
     static int prev_num_used = 0;
-    static int prev_num_slots = 0;
     int num_temp = 0;
     int num_used = 0;
-    int num_slots = sources.size();
+    //int num_slots = sources.size();
     if (!audio_is_suspended) {
         for (unsigned i = 0; i < sources.size(); i++) {
             LTAudioSource *s = sources[i];
@@ -488,7 +486,6 @@ void ltAudioGC() {
         //fprintf(stderr, "Audio sources: slots: %d, used: %d, temp: %d\n", num_slots, num_used, num_temp);
         prev_num_used = num_used;
         prev_num_temp = num_temp;
-        prev_num_slots = num_slots;
     }
 
     buffers_gc();

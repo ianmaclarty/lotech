@@ -1,6 +1,7 @@
 /* Copyright (C) 2012 Ian MacLarty */
 
 #include "lt.h"
+#include <pthread.h>
 
 struct thread_data {
     void          (*f)(void*);
