@@ -24,6 +24,8 @@
 #include <pwd.h>
 #endif
 
+#include <pthread.h>
+
 // OpenGL
 #ifdef LTLINUX
     #define GLEW_STATIC 1
@@ -104,6 +106,7 @@ extern "C" {
 // Lotech.
 #include "ltcommon.h"
 #include "ltconfig.h"
+#include "ltthreads.h"
 #include "ltobject.h"
 #include "ltffi.h"
 #include "ltutil.h"

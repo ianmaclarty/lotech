@@ -130,7 +130,7 @@ struct LTAudioSource {
         if (was_stop || was_rewind) {
             alSourceRewind(source_id);
         }
-        if (new_state != curr_state || new_state == AL_PLAYING && was_rewind) {
+        if (new_state != curr_state || (new_state == AL_PLAYING && was_rewind)) {
             switch (new_state) {
                 case AL_PLAYING: alSourcePlay(source_id); break;
                 case AL_PAUSED: alSourcePause(source_id); break;
