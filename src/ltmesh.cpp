@@ -16,7 +16,6 @@ LTMesh::LTMesh(LTMesh *mesh) {
     data = malloc(stride * size);
     memcpy(data, mesh->data, stride * size);
 
-    vertbuf = ltGenVertBuffer();
     vb_dirty = true;
 
     left = mesh->left;
@@ -26,6 +25,8 @@ LTMesh::LTMesh(LTMesh *mesh) {
     far = mesh->far;
     near = mesh->near;
     bb_dirty = mesh->bb_dirty;
+
+    vertbuf = 0;
 }
 
 LTMesh::LTMesh(LTTexturedNode *img) {
@@ -53,7 +54,6 @@ LTMesh::LTMesh(LTTexturedNode *img) {
         ptr += stride;
     }
 
-    vertbuf = ltGenVertBuffer();
     vb_dirty = true;
 
     left = img->world_vertices[0];
@@ -63,6 +63,8 @@ LTMesh::LTMesh(LTTexturedNode *img) {
     far = 0;
     near = 0;
     bb_dirty = false;
+
+    vertbuf = 0;
 }
 
 LTMesh::LTMesh(int dims, bool has_col, bool has_norm, bool has_tex_coords, LTImage *tex, LTDrawMode mode, void* dat, int sz) {
@@ -78,7 +80,8 @@ LTMesh::LTMesh(int dims, bool has_col, bool has_norm, bool has_tex_coords, LTIma
     vb_dirty = true;
     bb_dirty = true;
     compute_stride();
-    vertbuf = ltGenVertBuffer();
+
+    vertbuf = 0;
 }
 
 LTMesh::~LTMesh() {
@@ -306,6 +309,9 @@ void LTMesh::grid(int rows, int columns) {
 }
 
 void LTMesh::ensure_vb_uptodate() {
+    if (vertbuf == 0) {
+        vertbuf = ltGenVertBuffer();
+    }
     if (vb_dirty) {
         ltBindVertBuffer(vertbuf);
         ltStaticVertBufferData(size * stride, data);
