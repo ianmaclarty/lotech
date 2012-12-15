@@ -26,3 +26,7 @@ LT_REGISTER_TYPE(LTObject, "lt.Object", NULL)
 int ltNumLiveObjects() {
     return num_objs;
 }
+
+void ltResetNumLiveObjects() {
+    num_objs = 0;
+}

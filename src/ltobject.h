@@ -16,3 +16,4 @@ struct LTObject {
 LTObject *lt_expect_LTObject(lua_State *L, int arg);
 
 int ltNumLiveObjects();
+void ltResetNumLiveObjects();

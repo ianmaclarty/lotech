@@ -11,10 +11,13 @@ function lt.Text(str, font, halign, valign)
     local fixed_w = font.fixed and em.width
     local x, y, dx, k, gap = 0, -em.height / 2, 0, 0, 0
     local line = lt.Layer()
+    local scale = 1
 
     -- Build an array of lines.
     local lines = {line}
-    for i = 1, str:len() do
+    local i = 1
+    local len = str:len()
+    while i <= len do
         local chr = str:sub(i, i)
         local kernpair = kerntable and str:sub(i, i + 1)
         if chr == "\n" then
@@ -23,6 +26,14 @@ function lt.Text(str, font, halign, valign)
             table.insert(lines, line)
             y = y - vmove
             x = 0
+        elseif chr == "\\" then
+            i = i + 1
+            chr = str:sub(i, i)
+            if chr == "+" then
+                scale = scale + 0.1
+            elseif chr == "-" then
+                scale = scale - 0.1
+            end
         else
             local img = font[chr] or font[string.upper(chr)] or font[string.lower(chr)]
             if not img then
@@ -30,13 +41,18 @@ function lt.Text(str, font, halign, valign)
                 gap = space
             else
                 local w = fixed_w or img.width
-                line:Insert(lt.Translate(img, x + w/2, y))
+                local node = img
+                if scale ~= 1 then
+                    node = node:Scale(scale)
+                end
+                line:Insert(node:Translate(x + w/2, y))
                 k = kerntable and kerntable[kernpair]
                 gap = (k and k * em.width or hmove)
                 dx = gap + w
             end
-            x = x + dx
+            x = x + scale * dx
         end
+        i = i + 1
     end
     line.width = x - gap
 

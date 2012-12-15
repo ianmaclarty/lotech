@@ -20,6 +20,7 @@ static bool g_suspended = false;
 static bool g_initialized = false;
 static bool g_gamecenter_initialized = false;
 static char g_start_script[MAX_START_SCRIPT_LEN];
+static bool g_was_error = false;
 
 /************************* Functions for calling lua **************************/
 
@@ -33,6 +34,7 @@ static void check_status(lua_State *L, int status) {
         #ifdef LTDEVMODE
         ltLog("Execution suspended");
         g_suspended = true;
+        g_was_error = true;
         #else
         // TODO Notify the user of the error and offer them the option of emailing a report.
         ltAbort();
@@ -2835,7 +2837,12 @@ void ltLuaTeardown() {
     if (g_L != NULL) {
         ltDeactivateAllScenes(g_L);
         lua_close(g_L);
-        assert(ltNumLiveObjects() == 0);
+        // If there was an error, then the descructors of some objects, such as
+        // events, may not be called
+        // XXX Fixme
+        assert(g_was_error || ltNumLiveObjects() == 0);
+        g_was_error = false;
+        ltResetNumLiveObjects();
         g_L = NULL;
     }
     ltAudioTeardown();
