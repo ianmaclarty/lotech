@@ -6,20 +6,21 @@
 struct thread_data {
     void          (*f)(void*);
     void *        data;
-    pthread_t     thread;
+    pthread_t     thread_id;
 };
 
 static void *wrap(void *ud) {
     thread_data *d = (thread_data*)ud;
     d->f(d->data);
+    delete d;
     return NULL;
 }
 
 void ltNewThread(void (*f)(void *), void* data) {
-    thread_data *d = new thread_data(); // XXX never deleted
+    thread_data *d = new thread_data();
     d->f = f;
     d->data = data;
-    pthread_create(&d->thread, NULL, wrap, d);
+    pthread_create(&d->thread_id, NULL, wrap, d);
 }
 
 LTMutex  *ltCreateMutex() {
