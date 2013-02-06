@@ -1,7 +1,9 @@
-all: libz.a
+all: liblua.a
 
-C_FILES:=$(wildcard *.c)
-O_FILES:=$(patsubst %.c,%.o,$(C_FILES))
+VPATH=src
+
+LUA_C_FILES:=$(shell find src -name "*.c" -exec basename \{\} \;)
+LUA_O_FILES:=$(patsubst %.c,%.o,$(LUA_C_FILES))
 
 ifndef LTCC
 LTCC=gcc
@@ -11,11 +13,11 @@ GCC_FLAGS=-I. $(LTCFLAGS) $(TARGET_FLAGS)
 GCC=$(CROSS)$(LTCC)
 AR=$(CROSS)ar rcus
 
-$(O_FILES): %.o: %.c
-	@echo CC $@
+$(LUA_O_FILES): %.o: %.c
+	@echo C $@
 	@$(GCC) $(GCC_FLAGS) -c $<
 
-libz.a: $(O_FILES)
+liblua.a: $(LUA_O_FILES)
 	@echo AR $@
 	@$(AR) $@ $^
 

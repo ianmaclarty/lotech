@@ -27,34 +27,54 @@ all: $(TARGETS)
 ifeq ($(TARGET_PLATFORM),ios)
 ############################ iOS Targets ##############################
 
+#liblua.a: rebuild
+#	cd $(LUAJIT_DIR) && $(MAKE) \
+#		HOST_CC="gcc -m32 -arch i386" \
+#		CROSS=$(ISDKP) \
+#		TARGET_FLAGS="$(IOS_ARMv6_OPTS) -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
+#		TARGET=arm TARGET_SYS=iOS \
+#		clean all
+#	cp $(LUAJIT_DIR)/src/libluajit.a libluajit-armv6.a
+#	cd $(LUAJIT_DIR) && $(MAKE) \
+#		HOST_CC="gcc -m32 -arch i386" \
+#		CROSS=$(ISDKP) \
+#		TARGET_FLAGS="$(IOS_ARMv7_OPTS) -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
+#		TARGET=arm TARGET_SYS=iOS \
+#		clean all
+#	cp $(LUAJIT_DIR)/src/libluajit.a libluajit-armv7.a
+#	lipo -create libluajit-armv*.a -output liblua.a
+#	rm libluajit-armv*.a
+
 liblua.a: rebuild
-	cd $(LUAJIT_DIR) && $(MAKE) \
-		HOST_CC="gcc -m32 -arch i386" \
-		CROSS=$(ISDKP) \
-		TARGET_FLAGS="-arch armv6 -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
-		TARGET=arm TARGET_SYS=iOS \
+	cd $(LUA_DIR) && $(MAKE) -f Makefile.custom \
+		CROSS=$(ISDKP)/ \
+		LTCC=$(IOS_CC) \
+		TARGET_FLAGS="$(IOS_ARMv6_OPTS) -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
+		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
-	cp $(LUAJIT_DIR)/src/libluajit.a libluajit-armv6.a
-	cd $(LUAJIT_DIR) && $(MAKE) \
-		HOST_CC="gcc -m32 -arch i386" \
-		CROSS=$(ISDKP) \
-		TARGET_FLAGS="-arch armv7 -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
-		TARGET=arm TARGET_SYS=iOS \
+	cp $(LUA_DIR)/liblua.a liblua-armv6.a
+	cd $(LUA_DIR) && $(MAKE) -f Makefile.custom \
+		CROSS=$(ISDKP)/ \
+		LTCC=$(IOS_CC) \
+		TARGET_FLAGS="$(IOS_ARMv7_OPTS) -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
+		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
-	cp $(LUAJIT_DIR)/src/libluajit.a libluajit-armv7.a
-	lipo -create libluajit-armv*.a -output liblua.a
-	rm libluajit-armv*.a
+	cp $(LUA_DIR)/liblua.a liblua-armv7.a
+	lipo -create liblua-armv*.a -output liblua.a
+	rm liblua-armv*.a
 
 libbox2d.a: rebuild
 	cd $(BOX2D_DIR) && $(MAKE) \
 		CROSS=$(ISDKP)/ \
-		TARGET_FLAGS="-arch armv6 -isysroot $(ISDK)/SDKs/$(ISDKVER) -mno-thumb" \
+		LTCPP=$(IOS_CPP) \
+		TARGET_FLAGS="$(IOS_ARMv6_OPTS) -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
 		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(BOX2D_DIR)/libbox2d.a libbox2d-armv6.a
 	cd $(BOX2D_DIR) && $(MAKE) \
 		CROSS=$(ISDKP)/ \
-		TARGET_FLAGS="-arch armv7 -isysroot $(ISDK)/SDKs/$(ISDKVER) -mno-thumb" \
+		LTCPP=$(IOS_CPP) \
+		TARGET_FLAGS="$(IOS_ARMv7_OPTS) -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
 		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(BOX2D_DIR)/libbox2d.a libbox2d-armv7.a
@@ -64,12 +84,15 @@ libbox2d.a: rebuild
 libz.a: rebuild
 	cd $(ZLIB_DIR) && $(MAKE) \
 		CROSS=$(ISDKP)/ \
-		TARGET_FLAGS="-arch armv6 -isysroot $(ISDK)/SDKs/$(ISDKVER) -mno-thumb" \
+		LTCC=$(IOS_CC) \
+		TARGET_FLAGS="$(IOS_ARMv6_OPTS) -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
+		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(ZLIB_DIR)/libz.a libz-armv6.a
 	cd $(ZLIB_DIR) && $(MAKE) \
 		CROSS=$(ISDKP)/ \
-		TARGET_FLAGS="-arch armv7 -isysroot $(ISDK)/SDKs/$(ISDKVER) -mno-thumb" \
+		LTCC=$(IOS_CC) \
+		TARGET_FLAGS="$(IOS_ARMv7_OPTS) -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
 		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(ZLIB_DIR)/libz.a libz-armv7.a
@@ -79,12 +102,15 @@ libz.a: rebuild
 libpng.a: rebuild
 	cd $(LIBPNG_DIR) && $(MAKE) \
 		CROSS=$(ISDKP)/ \
-		TARGET_FLAGS="-arch armv6 -isysroot $(ISDK)/SDKs/$(ISDKVER) -mno-thumb" \
+		LTCC=$(IOS_CC) \
+		TARGET_FLAGS="$(IOS_ARMv6_OPTS) -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
+		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(LIBPNG_DIR)/libpng.a libpng-armv6.a
 	cd $(LIBPNG_DIR) && $(MAKE) \
 		CROSS=$(ISDKP)/ \
-		TARGET_FLAGS="-arch armv7 -isysroot $(ISDK)/SDKs/$(ISDKVER) -mno-thumb" \
+		LTCC=$(IOS_CC) \
+		TARGET_FLAGS="$(IOS_ARMv7_OPTS) -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
 		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(LIBPNG_DIR)/libpng.a libpng-armv7.a

@@ -9,7 +9,6 @@ all: $(TARGET_DIR)/liblt.a deplibs headers
 
 ############################ iOS Target ##############################
 ifeq ($(TARGET_PLATFORM),ios)
-LTCFLAGS+=-mno-thumb
 
 .PHONY: $(TARGET_DIR)/liblt.a
 $(TARGET_DIR)/liblt.a: headers | $(TARGET_DIR)
@@ -17,13 +16,15 @@ $(TARGET_DIR)/liblt.a: headers | $(TARGET_DIR)
 	mkdir -p buildtmp.ios.armv7
 	cd src && $(MAKE) \
 		CROSS=$(ISDKP)/ \
-		TARGET_FLAGS="-arch armv6 -isysroot $(ISDK)/SDKs/$(ISDKVER) -mno-thumb" \
+		LTCPP=$(IOS_CPP) \
+		TARGET_FLAGS="$(IOS_ARMv6_OPTS) -isysroot $(ISDK)/SDKs/$(ISDKVER) -mno-thumb" \
 		OUT_DIR=$(PWD)/buildtmp.ios.armv6 \
 		LTCFLAGS="$(LTCFLAGS)" \
 		all
 	cd src && $(MAKE) \
 		CROSS=$(ISDKP) \
-		TARGET_FLAGS="-arch armv7 -isysroot $(ISDK)/SDKs/$(ISDKVER) -mno-thumb" \
+		LTCPP=$(IOS_CPP) \
+		TARGET_FLAGS="$(IOS_ARMv7_OPTS) -isysroot $(ISDK)/SDKs/$(ISDKVER) -mno-thumb" \
 		OUT_DIR=$(PWD)/buildtmp.ios.armv7 \
 		LTCFLAGS="$(LTCFLAGS)" \
 		all

@@ -37,6 +37,6 @@ static void update_mixers(void *ud) {
 }
 
 void ltmixer_init() {
-    ltNewThread(update_mixers, NULL);
-    mixers_mutex = ltCreateMutex();
+    //ltNewThread(update_mixers, NULL);
+    //mixers_mutex = ltCreateMutex();
 }

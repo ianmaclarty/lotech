@@ -9,9 +9,22 @@ LIBPNG=libpng-1.4.3
 GLEW=glew-1.7.0
 GLFW=glfw-2.7.3
 
+# iOS settings
+
 ISDK=/Developer/Platforms/iPhoneOS.platform/Developer
 ISDKVER=iPhoneOS4.3.sdk
 ISDKP=$(ISDK)/usr/bin/
+
+IOS_ARMv6_OPTS=-arch armv6 -mno-thumb -mfloat-abi=softfp -mfpu=vfp
+IOS_ARMv7_OPTS=-arch armv7 -mfloat-abi=softfp -mcpu=cortex-a8
+#ARMv7_OPTS=-arch armv7 -mfloat-abi=softfp -mfpu=vfp
+#ARMv7_OPTS=-arch armv7 -mfloat-abi=softfp -mcpu=cortex-a8
+IOS_CC=gcc
+IOS_CPP=g++
+#IOS_CC=clang
+#IOS_CPP=clang++
+
+# Android settings
 
 NDK=/Users/ian/muheyo/android-ndk-r7
 NDKABI=9
