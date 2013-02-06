@@ -229,7 +229,7 @@ void ltAdjustViewportAspectRatio() {
         } else {
             viewport_left = design_viewport_left;
             viewport_right = design_viewport_right;
-            if (dy > 0.01) {
+            if (dy > 0.01f) {
                 viewport_bottom = design_viewport_bottom - design_viewport_height * dy;
                 viewport_top = design_viewport_top + design_viewport_height * dy;
             } else {
