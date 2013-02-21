@@ -71,7 +71,7 @@ struct LTEventVisitor : LTSceneNodeVisitor {
     }
     virtual void visit(LTSceneNode *node) {
         if (node->action_speed == 0.0f) {
-            // Ignore pause nodes and their children.
+            // Ignore paused nodes and their children.
             return;
         }
         LTfloat old_x = 0, old_y = 0, old_prev_x = 0, old_prev_y = 0;
@@ -111,7 +111,7 @@ struct LTEventVisitor : LTSceneNodeVisitor {
             }
         }
         if (!consumed) {
-            node->visit_children(this);
+            node->visit_children(this, true);
         }
         events_allowed = prev_allowed;
         if (LT_EVENT_MATCH(event->event, LT_EVENT_POINTER)) { 
@@ -128,13 +128,16 @@ void ltPropagateEvent(LTSceneNode *node, LTEvent *event) {
     v.visit(node);
     std::list<LTEvent*>::iterator it;
     std::set<LTEventHandler *> cancelled_handlers;
+    bool consumed = false;
     for (it = v.events_to_execute.begin(); it != v.events_to_execute.end(); it++) {
         LTEvent *e = *it;
         LTEventHandler *h = e->handler;
         if (h->cancelled) {
             cancelled_handlers.insert(h);
         } else if (h->execution_pending) {
-            h->consume(e->node, e);
+            if (!consumed) {
+                consumed = h->consume(e->node, e);
+            }
             h->execution_pending = false;
         }
         delete e;

@@ -282,7 +282,7 @@ void LTWrapNode::draw() {
     child->draw();
 }
 
-void LTWrapNode::visit_children(LTSceneNodeVisitor *v) {
+void LTWrapNode::visit_children(LTSceneNodeVisitor *v, bool reverse) {
     v->visit(child);
 }
 
@@ -396,10 +396,17 @@ void LTLayer::draw() {
     }
 }
 
-void LTLayer::visit_children(LTSceneNodeVisitor *v) {
-    std::list<LTLayerNodeRefPair>::iterator it;
-    for (it = node_list.begin(); it != node_list.end(); it++) {
-        v->visit((*it).node);
+void LTLayer::visit_children(LTSceneNodeVisitor *v, bool reverse) {
+    if (reverse) {
+        std::list<LTLayerNodeRefPair>::reverse_iterator it;
+        for (it = node_list.rbegin(); it != node_list.rend(); it++) {
+            v->visit((*it).node);
+        }
+    } else {
+        std::list<LTLayerNodeRefPair>::iterator it;
+        for (it = node_list.begin(); it != node_list.end(); it++) {
+            v->visit((*it).node);
+        }
     }
 }
 

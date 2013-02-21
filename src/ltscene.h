@@ -17,7 +17,7 @@ struct LTSceneNode : LTObject {
     virtual ~LTSceneNode();
 
     virtual void draw() {};
-    virtual void visit_children(LTSceneNodeVisitor *v) {};
+    virtual void visit_children(LTSceneNodeVisitor *v, bool reverse = false) {};
 
     // Returns false if inverse transform not possible or
     // not implemented.
@@ -60,7 +60,7 @@ struct LTLayer : LTSceneNode {
     int size();
 
     virtual void draw();
-    virtual void visit_children(LTSceneNodeVisitor *v);
+    virtual void visit_children(LTSceneNodeVisitor *v, bool reverse);
 };
 
 struct LTWrapNode : LTSceneNode {
@@ -70,7 +70,7 @@ struct LTWrapNode : LTSceneNode {
     
     virtual void init(lua_State *L);
     virtual void draw();
-    virtual void visit_children(LTSceneNodeVisitor *v);
+    virtual void visit_children(LTSceneNodeVisitor *v, bool reverse);
 };
 
 struct LTTranslateNode : LTWrapNode {

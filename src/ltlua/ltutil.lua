@@ -17,6 +17,14 @@ function table.search(t, elem)
     return nil
 end
 
+function table.append(arr1, arr2)
+    local i = #arr1 + 1
+    for _, v in ipairs(arr2) do
+        arr1[i] = v
+        i = i + 1
+    end
+end
+
 local
 function table_tostring(t, indent)
     local tp = type(t)
