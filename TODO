@@ -1,0 +1,34 @@
+- Gecode/other CP system interface
+
+- OpenGL ES 2 support using google-angle (targetting DirectX 9 on Windows)
+
+- Portable audio solution.
+  OpenAL does not give consistent results/work on all platforms.
+  Need a software mixer+synthesiser with various backends (initially OpenAL and
+  OpenSL backends should be enough to target Windows (OpenAL), Linux (OpenAL),
+  Mac (OpenAL), Android (OpenSL) and iOS (OpenAL).
+  It would be nice to be able to build up sounds in a similar way to
+  Puredata.
+
+- Geometry library using Box2D geometry functions (these can be used without
+  physics).  Users should be able to define shapes and detect overlap, cast
+  rays, do spacial queries, etc.
+
+- Box2D physics binding - this should allow adding optional physics to shapes
+  defined in the geometry library described above.
+
+- Simplify event and action models.  The implementation of these is currently
+  too messy!  (The user API is currently ok though.)
+
+- View frustum culling.  This would be useful for both 2D and 3D scenes.
+  For 2D scenes it would be nice to be able to define an entire scene in 
+  one go and then pan around it (e.g. for a 2D platformer).  Currently
+  this leads to degraded performance because we currently always draw the
+  entire scene graph. 
+
+- Reorganise source code.  In particular don't put lua files int src/ltlua/
+
+- Switch from camel case to lowercase with underscores in C++ and lua code.
+  - Write a code style guide.
+
+- The use of 
