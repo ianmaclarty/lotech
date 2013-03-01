@@ -2,6 +2,12 @@
 
 - OpenGL ES 2 support using google-angle (targetting DirectX 9 on Windows)
 
+- Batched drawing - traverse scene graph building up vertices+data for drawing.
+  Keep track of state - if state change then flush.
+
+- Implement software matrix stack (glPushMatrix, glTranslate, etc not
+  supported in OpenGL ES 2).
+
 - Portable audio solution.
   OpenAL does not give consistent results/work on all platforms.
   Need a software mixer+synthesiser with various backends (initially OpenAL and
@@ -30,5 +36,3 @@
 
 - Switch from camel case to lowercase with underscores in C++ and lua code.
   - Write a code style guide.
-
-- The use of 
