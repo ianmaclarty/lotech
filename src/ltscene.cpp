@@ -454,8 +454,11 @@ bool LTRotateNode::inverse_transform(LTfloat *x, LTfloat *y) {
     LTfloat a = -angle * LT_RADIANS_PER_DEGREE;
     LTfloat s = sinf(a);
     LTfloat c = cosf(a);
-    *x = c * *x - s * *y;
-    *y = s * *x + c * *y;
+    LTfloat x1, y1;
+    x1 = c * *x - s * *y;
+    y1 = s * *x + c * *y;
+    *x = x1;
+    *y = y1;
     return true;
 }
 
