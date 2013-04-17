@@ -18,6 +18,8 @@
   It would be nice to be able to build up sounds in a similar way to
   Puredata.
 
+- .ogg streaming.
+
 - Geometry library using Box2D geometry functions (these can be used without
   physics).  Users should be able to define shapes and detect overlap, cast
   rays, do spacial queries, etc.
@@ -37,3 +39,8 @@
 - Switch from camel case to lowercase with underscores in C++ and lua code.
 
 - Write a manual.
+
+- Allow recording of events and generated random numbers for deterministic
+  replay.
+
+- Detect scene graph cycles.
