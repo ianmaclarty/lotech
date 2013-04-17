@@ -26,7 +26,7 @@ IOS_CPP=g++
 
 # Android settings
 
-NDK=/Users/ian/muheyo/android-ndk-r7
+NDK=$(HOME)/android-ndk-r7
 NDKABI=9
 NDKVER=$(NDK)/toolchains/arm-linux-androideabi-4.4.3
 NDKP=$(NDKVER)/prebuilt/darwin-x86/bin/arm-linux-androideabi-
