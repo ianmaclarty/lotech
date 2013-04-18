@@ -1,14 +1,14 @@
 /* Copyright (C) 2010 Ian MacLarty */
-LT_INIT_DECL(ltphysics)
+LT_INIT_DECL(ltbox2d)
 
-//struct LTWorld : LTObject {
-//    b2World *world;
-//    LTfloat scaling; // For scaling world coords to screen coords.
-//
-//    LTWorld(b2Vec2 gravity, bool doSleep, LTfloat scale);
-//    virtual ~LTWorld();
-//};
-//
+struct LTWorld : LTObject {
+    b2World *world;
+    LTfloat scaling; // For scaling world coords to screen coords.
+
+    LTWorld();
+    virtual ~LTWorld();
+};
+
 //struct LTBody : LTSceneNode {
 //    b2Body *body; // May be null if the body is destroyed.
 //    LTWorld *world;

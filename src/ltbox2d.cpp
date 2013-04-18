@@ -2,18 +2,61 @@
 
 #include "lt.h"
 
-LT_INIT_IMPL(ltphysics)
+LT_INIT_IMPL(ltbox2d)
 
-//LTWorld::LTWorld(b2Vec2 gravity, bool doSleep, LTfloat scaling) : LTObject(LT_TYPE_WORLD) {
-//    world = new b2World(gravity);
-//    world->SetAllowSleeping(doSleep);
-//    LTWorld::scaling = scaling;
-//}
-//
-//LTWorld::~LTWorld() {
-//    delete world;
-//}
-//
+LTWorld::LTWorld() {
+    world = new b2World(b2Vec2(0.0f, 0.0f));
+    world->SetAllowSleeping(true);
+    scaling = 1.0f;
+}
+
+LTWorld::~LTWorld() {
+    delete world;
+}
+
+static LTfloat get_world_gx(LTObject *obj) {
+    return ((LTWorld*)obj)->world->GetGravity().x;
+}
+
+static LTfloat get_world_gy(LTObject *obj) {
+    return ((LTWorld*)obj)->world->GetGravity().y;
+}
+
+static void set_world_gx(LTObject *obj, LTfloat val) {
+    LTWorld *w = (LTWorld*)obj;
+    b2Vec2 g = w->world->GetGravity();
+    w->world->SetGravity(b2Vec2(val, g.y));
+}
+
+static void set_world_gy(LTObject *obj, LTfloat val) {
+    LTWorld *w = (LTWorld*)obj;
+    b2Vec2 g = w->world->GetGravity();
+    w->world->SetGravity(b2Vec2(g.x, val));
+}
+
+LT_REGISTER_TYPE(LTWorld, "box2d.World", "lt.Object");
+LT_REGISTER_PROPERTY_FLOAT(LTWorld, gx, get_world_gx, set_world_gx);
+LT_REGISTER_PROPERTY_FLOAT(LTWorld, gx, get_world_gy, set_world_gy);
+LT_REGISTER_FIELD_FLOAT(LTWorld, scaling);
+
+static int world_step(lua_State *L) {
+    int num_args = ltLuaCheckNArgs(L, 2); 
+    LTWorld *world = lt_expect_LTWorld(L, 1);
+    LTfloat time_step = luaL_checknumber(L, 2);
+    int velocity_iterations = 8;
+    int position_iterations = 3;
+    if (num_args > 2) {
+        velocity_iterations = luaL_checkinteger(L, 3);
+    }
+    if (num_args > 3) {
+        position_iterations = luaL_checkinteger(L, 4);
+    }
+    world->world->Step(time_step, velocity_iterations, position_iterations);
+    return 0;
+}
+
+LT_REGISTER_METHOD(LTWorld, Step, world_step);
+
 //LTBody::LTBody(LTWorld *world, const b2BodyDef *def) : LTSceneNode(LT_TYPE_BODY) {
 //    LTBody::world = world;
 //    body = world->world->CreateBody(def);

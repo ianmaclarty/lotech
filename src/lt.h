@@ -126,7 +126,7 @@ extern "C" {
 #include "lt3d.h"
 #include "ltlua.h"
 #include "ltnet.h"
-#include "ltphysics.h"
+#include "ltbox2d.h"
 #include "ltprotocol.h"
 #include "ltrandom.h"
 #include "ltresource.h"

@@ -1067,22 +1067,6 @@ static int lt_FixtureIsDestroyed(lua_State *L) {
     return 1;
 }
 
-static int lt_DoWorldStep(lua_State *L) {
-    int num_args = ltLuaCheckNArgs(L, 2); 
-    LTWorld *world = (LTWorld*)get_object(L, 1, LT_TYPE_WORLD);
-    LTfloat time_step = luaL_checknumber(L, 2);
-    int velocity_iterations = 8;
-    int position_iterations = 3;
-    if (num_args > 2) {
-        velocity_iterations = luaL_checkinteger(L, 3);
-    }
-    if (num_args > 3) {
-        position_iterations = luaL_checkinteger(L, 4);
-    }
-    world->world->Step(time_step, velocity_iterations, position_iterations);
-    return 0;
-}
-
 static int lt_SetWorldGravity(lua_State *L) {
     ltLuaCheckNArgs(L, 3);
     LTWorld *world = (LTWorld*)get_object(L, 1, LT_TYPE_WORLD);
@@ -2628,7 +2612,6 @@ static const luaL_Reg ltlib[] = {
 //    {"FixtureContainsPoint",            lt_FixtureContainsPoint},
 //    {"DestroyFixture",                  lt_DestroyFixture},
 //    {"FixtureIsDestroyed",              lt_FixtureIsDestroyed},
-//    {"DoWorldStep",                     lt_DoWorldStep},
 //    {"SetWorldGravity",                 lt_SetWorldGravity},
 //    {"SetWorldAutoClearForces",         lt_SetWorldAutoClearForces},
 //    {"WorldQueryBox",                   lt_WorldQueryBox},

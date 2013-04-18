@@ -31,7 +31,7 @@ static void init_core_modules() {
         ltobject_init();
         ltopengl_init();
         ltparticles_init();
-        ltphysics_init();
+        ltbox2d_init();
         ltpickle_init();
         ltprotocol_init();
         ltrandom_init();
