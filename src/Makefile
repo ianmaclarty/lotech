@@ -35,11 +35,11 @@ ifeq ($(TARGET_PLATFORM),mingw)
 GPP_FLAGS+=-DLTMINGW
 endif
 
-$(CPP_O_FILES): $(OUT_DIR)/%.o: %.cpp
+$(CPP_O_FILES): $(OUT_DIR)/%.o: %.cpp *.h
 	@echo CPP   `basename $@`
 	@$(GPP) $(GPP_FLAGS) -c $< -o $@
 
-$(MM_O_FILES): $(OUT_DIR)/%.o: %.mm
+$(MM_O_FILES): $(OUT_DIR)/%.o: %.mm *.h
 	@echo MM   `basename $@`
 	@$(GPP) -ObjC++ $(GPP_FLAGS) -c $< -o $@
 

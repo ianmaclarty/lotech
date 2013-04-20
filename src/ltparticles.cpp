@@ -32,7 +32,7 @@ LTParticleSystem::LTParticleSystem() {
     end_color_variance.blue = 0.0f;
     end_color_variance.alpha = 0.0f;
     emission_rate = -1.0f;
-    //fixture = NULL;
+    fixture = NULL;
     add_action(new LTParticleSystemAction(this));
 }
 
@@ -120,7 +120,6 @@ void LTParticleSystem::add_particle() {
             p->time_to_live = 0.001f; // Avoid division by zero.
         }
 
-        /*
         if (fixture != NULL) {
             b2Fixture *f = fixture->fixture;
             if (f == NULL) {
@@ -135,12 +134,7 @@ void LTParticleSystem::add_particle() {
                 return;
             }
             LTWorld *w = b->world;
-            if (w == NULL) {
-                // Shouldn't happen, but just in case.
-                particles_active = false;
-                return;
-            }
-            LTfloat s = w->scaling;
+            LTfloat s = w->scale;
             b2AABB aabb = f->GetAABB(0);
             int num_tries = 20;
             b2Vec2 test_point;
@@ -151,9 +145,7 @@ void LTParticleSystem::add_particle() {
             } while (!f->TestPoint(test_point) && num_tries > 0);
             p->pos.x = test_point.x * s;
             p->pos.y = test_point.y * s;
-        } else
-        */
-        {
+        } else {
             p->pos.x = source_position.x + source_position_variance.x * ltRandMinus1_1();
             p->pos.y = source_position.y + source_position_variance.y * ltRandMinus1_1();
         }
@@ -403,3 +395,4 @@ LT_REGISTER_FIELD_FLOAT(LTParticleSystem, start_spin)
 LT_REGISTER_FIELD_FLOAT(LTParticleSystem, start_spin_variance)
 LT_REGISTER_FIELD_FLOAT(LTParticleSystem, end_spin)
 LT_REGISTER_FIELD_FLOAT(LTParticleSystem, end_spin_variance)
+LT_REGISTER_FIELD_OBJ(LTParticleSystem, fixture, LTFixture)

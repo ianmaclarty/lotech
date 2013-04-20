@@ -1,15 +1,19 @@
-/* Copyright (C) 2010 Ian MacLarty */
+/* Copyright (C) 2013 Ian MacLarty */
 LT_INIT_DECL(ltbox2d)
+
+struct LTBody;
 
 struct LTWorld : LTObject {
     b2World *world;
     LTfloat scale; // For scaling world coords to screen coords.
+    LTbool debug;
+    std::map<LTBody*, int> body_refs;
 
     LTWorld();
     virtual ~LTWorld();
 };
 
-struct LTBody : LTSceneNode {
+struct LTBody : LTWrapNode {
     b2Body *body; // May be null if the body is destroyed.
     LTWorld *world;
     int world_ref;
@@ -61,7 +65,6 @@ struct LTJoint : LTObject {
 
 struct LTBodyTracker : LTWrapNode {
     LTBody *body;
-    LTfloat scale;
     // Use viewport mode when the child is a layer containing
     // the body being tracked.  The layer will then follow
     // the body.

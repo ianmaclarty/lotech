@@ -8,6 +8,7 @@ LTWorld::LTWorld() {
     world = new b2World(b2Vec2(0.0f, 0.0f));
     world->SetAllowSleeping(true);
     scale = 1.0f;
+    debug = false;
 }
 
 LTWorld::~LTWorld() {
@@ -46,13 +47,20 @@ void LTBody::destroy() {
 void LTBody::draw() {
     if (body != NULL) {
         b2Vec2 pos = body->GetPosition();
+        LTfloat scale = world->scale;
+        ltScale(scale, scale, 1.0f);
         ltTranslate(pos.x, pos.y, 0.0f);
         ltRotate(body->GetAngle() * LT_DEGREES_PER_RADIAN, 0.0f, 0.0f, 1.0f);
-        b2Fixture *fixture = body->GetFixtureList();
-        while (fixture != NULL) {
-            LTFixture *f = (LTFixture*)fixture->GetUserData();
-            f->draw();
-            fixture = fixture->GetNext();
+        if (child != NULL) {
+            child->draw();
+        }
+        if (world->debug) {
+            b2Fixture *fixture = body->GetFixtureList();
+            while (fixture != NULL) {
+                LTFixture *f = (LTFixture*)fixture->GetUserData();
+                f->draw();
+                fixture = fixture->GetNext();
+            }
         }
     }
 }
@@ -154,12 +162,6 @@ LTBodyTracker::LTBodyTracker(LTBody *body, LTSceneNode *child,
     LTBodyTracker::min_y = min_y;
     LTBodyTracker::max_y = max_y;
     LTBodyTracker::snap_to = snap_to;
-    LTWorld *w = body->world;
-    if (w != NULL) {
-        LTBodyTracker::scale = w->scale;
-    } else {
-        LTBodyTracker::scale = 1.0f;
-    }
     LTBodyTracker::body = body;
 }
 
@@ -172,6 +174,7 @@ void LTBodyTracker::draw() {
     };
     b2Body *b = body->body;
     if (b != NULL) {
+        LTfloat scale = body->world->scale;
         const b2Transform b2t = b->GetTransform();
         LTfloat x = b2t.p.x * scale;
         LTfloat y = b2t.p.y * scale;
@@ -430,6 +433,7 @@ static int new_body(lua_State *L) {
 
     LTBody *body = new (lt_alloc_LTBody(L)) LTBody(world, &body_def);
     body->world_ref = ltLuaAddRef(L, 1, -1); // Add reference from world to body.
+    world->body_refs[body] = body->world_ref;
     ltLuaAddNamedRef(L, -1, 1, "world"); // Add reference from body to world.
     return 1;
 }
@@ -508,6 +512,7 @@ static void set_body_vx(LTObject *obj, LTfloat val) {
     if (b->body != NULL) {
         b2Vec2 v = b->body->GetLinearVelocity();
         b->body->SetLinearVelocity(b2Vec2(val, v.y));
+        b->body->SetAwake(true);
     }
 }
 
@@ -525,6 +530,7 @@ static void set_body_vy(LTObject *obj, LTfloat val) {
     if (b->body != NULL) {
         b2Vec2 v = b->body->GetLinearVelocity();
         b->body->SetLinearVelocity(b2Vec2(v.x, val));
+        b->body->SetAwake(true);
     }
 }
 
@@ -546,6 +552,7 @@ static void set_body_angular_velocity(LTObject *obj, LTfloat val) {
     LTBody *b = (LTBody*)obj;
     if (b->body != NULL) {
         b->body->SetAngularVelocity(val * LT_RADIANS_PER_DEGREE);
+        b->body->SetAwake(true);
     }
 }
 
@@ -610,12 +617,14 @@ static int destroy_body(lua_State *L) {
     LTBody *body = lt_expect_LTBody(L, 1);
     b2Body *b = body->body;
     if (b != NULL) {
+        LTWorld *world = body->world;
         body->destroy();
         ltLuaGetRef(L, 1, body->world_ref);
         ltLuaDelRef(L, -1, 1); // Remove reference from world to body
                                // so body can be GC'd.
         lua_pop(L, 1);
         body->world_ref = LUA_NOREF;
+        world->body_refs.erase(body);
     }
     return 0;
 }
@@ -766,15 +775,81 @@ static int destroy_fixture(lua_State *L) {
     return 0;
 }
 
+struct RayCastData {
+    b2Fixture *fixture;
+    b2Vec2 point;
+    b2Vec2 normal;
+};
+
+struct RayCastCallback : public b2RayCastCallback {
+    std::map<LTfloat, RayCastData> hits;
+
+    RayCastCallback() { }
+
+    virtual float32 ReportFixture(b2Fixture* fixture,
+        const b2Vec2& point, const b2Vec2& normal, float32 fraction)
+    {
+        RayCastData data;
+        data.fixture = fixture;
+        data.point = point;
+        data.normal = normal;
+        hits[fraction] = data;
+        return 1.0f;
+    }
+};
+
+static int world_ray_cast(lua_State *L) {
+    ltLuaCheckNArgs(L, 5);
+    LTWorld *world = lt_expect_LTWorld(L, 1);
+    LTfloat x1 = luaL_checknumber(L, 2);
+    LTfloat y1 = luaL_checknumber(L, 3);
+    LTfloat x2 = luaL_checknumber(L, 4);
+    LTfloat y2 = luaL_checknumber(L, 5);
+    
+    RayCastCallback cb;
+    world->world->RayCast(&cb, b2Vec2(x1, y1), b2Vec2(x2, y2));
+
+    lua_newtable(L);
+    int i = 1;
+    std::map<LTfloat, RayCastData>::iterator it;
+    for (it = cb.hits.begin(); it != cb.hits.end(); it++) {
+        lua_newtable(L);
+    
+        LTFixture *fixture = (LTFixture*)it->second.fixture->GetUserData();
+        if (fixture->body != NULL) {
+            ltLuaGetRef(L, 1, world->body_refs[fixture->body]); // push body
+            ltLuaGetRef(L, -1, fixture->body_ref); // push fixture
+            lua_setfield(L, -3, "fixture");
+            lua_pop(L, 1); // pop body
+        }
+
+        lua_pushnumber(L, it->second.point.x);
+        lua_setfield(L, -2, "x");
+        lua_pushnumber(L, it->second.point.y);
+        lua_setfield(L, -2, "y");
+        lua_pushnumber(L, it->second.normal.x);
+        lua_setfield(L, -2, "normal_x");
+        lua_pushnumber(L, it->second.normal.y);
+        lua_setfield(L, -2, "normal_y");
+        lua_pushnumber(L, it->first);
+        lua_setfield(L, -2, "fraction");
+        lua_rawseti(L, -2, i);
+        i++;
+    }
+    return 1;
+}
+
 LT_REGISTER_TYPE(LTWorld, "box2d.World", "lt.Object");
 LT_REGISTER_PROPERTY_FLOAT(LTWorld, gx, get_world_gx, set_world_gx);
 LT_REGISTER_PROPERTY_FLOAT(LTWorld, gy, get_world_gy, set_world_gy);
 LT_REGISTER_PROPERTY_BOOL(LTWorld, auto_clear_forces, get_world_auto_clear_forces, set_world_auto_clear_forces);
 LT_REGISTER_FIELD_FLOAT(LTWorld, scale);
+LT_REGISTER_FIELD_BOOL(LTWorld, debug);
 LT_REGISTER_METHOD(LTWorld, Step, world_step);
 LT_REGISTER_METHOD(LTWorld, Body, new_body);
+LT_REGISTER_METHOD(LTWorld, RayCast, world_ray_cast);
 
-LT_REGISTER_TYPE(LTBody, "box2d.Body", "lt.SceneNode");
+LT_REGISTER_TYPE(LTBody, "box2d.Body", "lt.Wrap");
 LT_REGISTER_PROPERTY_OBJ(LTBody, body, LTWorld, get_body_world, NULL);
 LT_REGISTER_PROPERTY_FLOAT(LTBody, x, get_body_x, set_body_x);
 LT_REGISTER_PROPERTY_FLOAT(LTBody, y, get_body_y, set_body_y);

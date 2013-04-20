@@ -9,22 +9,24 @@ LTLightingNode::LTLightingNode() {
 }
 
 void LTLightingNode::draw() {
-    static bool lighting_on = false;
-    bool prev_lighting = lighting_on;
-    if (enabled) {
-        ltEnableLighting();
-        lighting_on = true;
-    } else {
-        ltDisableLighting();
-        lighting_on = false;
+    if (child != NULL) {
+        static bool lighting_on = false;
+        bool prev_lighting = lighting_on;
+        if (enabled) {
+            ltEnableLighting();
+            lighting_on = true;
+        } else {
+            ltDisableLighting();
+            lighting_on = false;
+        }
+        child->draw();
+        if (prev_lighting) {
+            ltEnableLighting();
+        } else {
+            ltDisableLighting();
+        }
+        lighting_on = prev_lighting;
     }
-    child->draw();
-    if (prev_lighting) {
-        ltEnableLighting();
-    } else {
-        ltDisableLighting();
-    }
-    lighting_on = prev_lighting;
 }
 
 LT_REGISTER_TYPE(LTLightingNode, "lt.Lighting", "lt.Wrap")

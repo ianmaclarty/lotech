@@ -273,17 +273,18 @@ LTWrapNode::LTWrapNode() {
 
 void LTWrapNode::init(lua_State *L) {
     LTSceneNode::init(L);
-    if (child == NULL) {
-        luaL_error(L, "No child element for wrap node");
-    }
 }
 
 void LTWrapNode::draw() {
-    child->draw();
+    if (child != NULL) {
+        child->draw();
+    }
 }
 
 void LTWrapNode::visit_children(LTSceneNodeVisitor *v, bool reverse) {
-    v->visit(child);
+    if (child != NULL) {
+        v->visit(child);
+    }
 }
 
 static LTObject *get_child(LTObject *obj) {
@@ -428,8 +429,10 @@ static int new_Layer(lua_State *L) {
 LT_REGISTER_METHOD(LTLayer, new, new_Layer);
 
 void LTTranslateNode::draw() {
-    ltTranslate(x, y, z);
-    child->draw();
+    if (child != NULL) {
+        ltTranslate(x, y, z);
+        child->draw();
+    }
 }
 
 bool LTTranslateNode::inverse_transform(LTfloat *x1, LTfloat *y1) {
@@ -444,10 +447,12 @@ LT_REGISTER_FIELD_FLOAT(LTTranslateNode, y);
 LT_REGISTER_FIELD_FLOAT(LTTranslateNode, z);
 
 void LTRotateNode::draw() {
-    ltTranslate(cx, cy, 0.0f);
-    ltRotate(angle, 0.0f, 0.0f, 1.0f);
-    ltTranslate(-cx, -cy, 0.0f);
-    child->draw();
+    if (child != NULL) {
+        ltTranslate(cx, cy, 0.0f);
+        ltRotate(angle, 0.0f, 0.0f, 1.0f);
+        ltTranslate(-cx, -cy, 0.0f);
+        child->draw();
+    }
 }
 
 bool LTRotateNode::inverse_transform(LTfloat *x, LTfloat *y) {
@@ -479,8 +484,10 @@ void LTScaleNode::init(lua_State *L) {
 }
 
 void LTScaleNode::draw() {
-    ltScale(scale_x * scale, scale_y * scale, scale_z * scale);
-    child->draw();
+    if (child != NULL) {
+        ltScale(scale_x * scale, scale_y * scale, scale_z * scale);
+        child->draw();
+    }
 }
 
 bool LTScaleNode::inverse_transform(LTfloat *x, LTfloat *y) {
@@ -500,14 +507,16 @@ LT_REGISTER_FIELD_FLOAT(LTScaleNode, scale_z);
 LT_REGISTER_FIELD_FLOAT(LTScaleNode, scale);
 
 void LTShearNode::draw() {
-    LTfloat matrix[] = {
-        1,  xy, xz, 0,
-        yx, 1,  yz, 0,
-        zx, zy, 1,  0,
-        0,  0,  0,  1,
-    };
-    ltMultMatrix(matrix);
-    child->draw();
+    if (child != NULL) {
+        LTfloat matrix[] = {
+            1,  xy, xz, 0,
+            yx, 1,  yz, 0,
+            zx, zy, 1,  0,
+            0,  0,  0,  1,
+        };
+        ltMultMatrix(matrix);
+        child->draw();
+    }
 }
 
 LT_REGISTER_TYPE(LTShearNode, "lt.Shear", "lt.Wrap");
@@ -527,14 +536,16 @@ LTTransformNode::LTTransformNode() {
 }
 
 void LTTransformNode::draw() {
-    LTfloat matrix[] = {
-        m1, m5, m9,  m13,
-        m2, m6, m10, m14,
-        m3, m7, m11, m15,
-        m4, m8, m12, m16,
-    };
-    ltMultMatrix(matrix);
-    child->draw();
+    if (child != NULL) {
+        LTfloat matrix[] = {
+            m1, m5, m9,  m13,
+            m2, m6, m10, m14,
+            m3, m7, m11, m15,
+            m4, m8, m12, m16,
+        };
+        ltMultMatrix(matrix);
+        child->draw();
+    }
 }
 
 LT_REGISTER_TYPE(LTTransformNode, "lt.Transform", "lt.Wrap");
@@ -556,9 +567,11 @@ LT_REGISTER_FIELD_FLOAT(LTTransformNode, m15);
 LT_REGISTER_FIELD_FLOAT(LTTransformNode, m16);
 
 void LTTintNode::draw() {
-    ltPushTint(red, green, blue, alpha);
-    child->draw();
-    ltPopTint();
+    if (child != NULL) {
+        ltPushTint(red, green, blue, alpha);
+        child->draw();
+        ltPopTint();
+    }
 }
 
 LT_REGISTER_TYPE(LTTintNode, "lt.Tint", "lt.Wrap");
@@ -568,9 +581,11 @@ LT_REGISTER_FIELD_FLOAT(LTTintNode, blue);
 LT_REGISTER_FIELD_FLOAT(LTTintNode, alpha);
 
 void LTTextureModeNode::draw() {
-    ltPushTextureMode(mode);
-    child->draw();
-    ltPopTextureMode();
+    if (child != NULL) {
+        ltPushTextureMode(mode);
+        child->draw();
+        ltPopTextureMode();
+    }
 }
 
 static const LTEnumConstant TextureMode_enum_vals[] = {
@@ -584,9 +599,11 @@ LT_REGISTER_TYPE(LTTextureModeNode, "lt.TextureMode", "lt.Wrap");
 LT_REGISTER_FIELD_ENUM(LTTextureModeNode, mode, LTTextureMode, TextureMode_enum_vals);
 
 void LTBlendModeNode::draw() {
-    ltPushBlendMode(mode);
-    child->draw();
-    ltPopBlendMode();
+    if (child != NULL) {
+        ltPushBlendMode(mode);
+        child->draw();
+        ltPopBlendMode();
+    }
 }
 
 static const LTEnumConstant BlendMode_enum_vals[] = {

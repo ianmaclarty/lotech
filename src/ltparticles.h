@@ -79,7 +79,7 @@ struct LTParticleSystem : LTSceneNode {
     LTfloat img_bottom;
     LTfloat img_top;
 
-    //LTFixture *fixture; // A fixture to restrict start positions.
+    LTFixture *fixture; // A fixture used to restrict start positions.
 
     LTParticleSystem();
     virtual ~LTParticleSystem();

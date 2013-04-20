@@ -364,17 +364,20 @@ static bool set_wrap_node_field(lua_State *L) {
         lua_getfenv(L, -1); // push env table
         lua_pushstring(L, "child");
         lua_rawget(L, -2); // push child
-        lua_getmetatable(L, -1); // push metatable
-        lua_pushvalue(L, 2);
-        lua_rawget(L, -2); // push field info
-        LTFieldInfo *field = (LTFieldInfo*)lua_touserdata(L, -1);
-        lua_pop(L, 2); // pop field info and metatable
-        if (field != NULL) {
-            LTObject *child = (LTObject*)lua_touserdata(L, -1);
-            set_field_val(L, child, field, -1, 2, 3);
-            return true;
+        n += 2; // so we can pop env table and child later
+        if (!lua_isnil(L, -1)) {
+            lua_getmetatable(L, -1); // push metatable
+            lua_pushvalue(L, 2);
+            lua_rawget(L, -2); // push field info
+            LTFieldInfo *field = (LTFieldInfo*)lua_touserdata(L, -1);
+            lua_pop(L, 2); // pop field info and metatable
+            if (field != NULL) {
+                LTObject *child = (LTObject*)lua_touserdata(L, -1);
+                set_field_val(L, child, field, -1, 2, 3);
+                lua_pop(L, n);
+                return true;
+            }
         }
-        n += 2; // so we pop env table and child later
     }
     lua_pop(L, n);
     return false;

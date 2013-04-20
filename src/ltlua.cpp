@@ -136,8 +136,13 @@ static const char *resource_path(const char *resource, const char *suffix) {
         path = ltOSXBundlePath(resource, suffix);
     #else
         int len = strlen(resource_prefix) + strlen(resource) + strlen(suffix) + 3;
+        const char *slash = "";
+        if (resource_prefix[strlen(resource_prefix) - 1] != '/') {
+            len += 1;
+            slash = "/";
+        }
         path = new char[len];
-        snprintf((char*)path, len, "%s%s%s", resource_prefix, resource, suffix);
+        snprintf((char*)path, len, "%s%s%s%s", resource_prefix, slash, resource, suffix);
     #endif
     return path;
 }
@@ -1420,8 +1425,15 @@ static int lt_WorldRayCast(lua_State *L) {
     std::map<LTfloat, RayCastData>::iterator it;
     for (it = cb.hits.begin(); it != cb.hits.end(); it++) {
         lua_newtable(L);
-        push_wrap(L, (LTFixture*)it->second.fixture->GetUserData());
-        lua_setfield(L, -2, "fixture");
+    
+        LTFixture fixture = (LTFixture*)it->second.fixture->GetUserData();
+        if (fixture->body != NULL) {
+            ltLuaGetRef(L, 1, world->body_refs[fixture->body]); // push body
+            ltLuaGetRef(L, -1, fixture->body_ref); // push fixture
+            lua_setfield(L, -2, "fixture");
+            lua_pop(L, 1); // pop body
+        }
+
         lua_pushnumber(L, it->second.point.x);
         lua_setfield(L, -2, "x");
         lua_pushnumber(L, it->second.point.y);
@@ -1438,56 +1450,6 @@ static int lt_WorldRayCast(lua_State *L) {
     return 1;
 }
 
-static int lt_World(lua_State *L) {
-    int nargs = ltLuaCheckNArgs(L, 0);
-    LTfloat scaling = 1.0f;
-    if (nargs > 0) {
-        scaling = luaL_checknumber(L, 1);
-    }
-    LTWorld *world = new LTWorld(b2Vec2(0.0f, -10.0f), true, scaling);
-    push_wrap(L, world);
-    return 1;
-}
-
-static int lt_BodyTracker(lua_State *L) {
-    int nargs = ltLuaCheckNArgs(L, 2);
-    LTSceneNode *child = (LTSceneNode *)get_object(L, 1, LT_TYPE_SCENENODE);
-    LTBody *body = (LTBody *)get_object(L, 2, LT_TYPE_BODY);
-    bool viewport_mode = false;
-    bool track_rotation = true;
-    LTfloat min_x = -FLT_MAX;
-    LTfloat max_x = FLT_MAX;
-    LTfloat min_y = -FLT_MAX;
-    LTfloat max_y = FLT_MAX;
-    LTfloat snap_to = 0.0f;
-    if (nargs > 2) {
-        snap_to = luaL_checknumber(L, 3);
-    }
-    if (nargs > 3) {
-        viewport_mode = lua_toboolean(L, 4);
-    }
-    if (nargs > 4) {
-        track_rotation = lua_toboolean(L, 5);
-    }
-    if (nargs > 5) {
-        min_x = luaL_checknumber(L, 6);
-    }
-    if (nargs > 6) {
-        max_x = luaL_checknumber(L, 7);
-    }
-    if (nargs > 7) {
-        min_y = luaL_checknumber(L, 8);
-    }
-    if (nargs > 8) {
-        max_y = luaL_checknumber(L, 9);
-    }
-    LTBodyTracker *node = new LTBodyTracker(body, child, viewport_mode, track_rotation,
-        min_x, max_x, min_y, max_y, snap_to);
-    push_wrap(L, node);
-    set_ref_field(L, -1, "child", 1); // Add reference from new node to child.
-    set_ref_field(L, -1, "body", 2);  // Add reference from new node to body.
-    return 1;
-}
 */
 
 /********************* Game Center *****************************/
