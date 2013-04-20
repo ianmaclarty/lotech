@@ -1067,21 +1067,6 @@ static int lt_FixtureContainsPoint(lua_State *L) {
     return 1;
 }
 
-static int lt_FixtureIsDestroyed(lua_State *L) {
-    ltLuaCheckNArgs(L, 1); 
-    LTFixture *fixture = (LTFixture*)get_object(L, 1, LT_TYPE_FIXTURE);
-    lua_pushboolean(L, fixture->fixture == NULL);
-    return 1;
-}
-
-static int lt_SetWorldAutoClearForces(lua_State *L) {
-    ltLuaCheckNArgs(L, 2);
-    LTWorld *world = (LTWorld*)get_object(L, 1, LT_TYPE_WORLD);
-    bool clear = lua_toboolean(L, 2);
-    world->world->SetAutoClearForces(clear);
-    return 0;
-}
-
 struct AABBQueryCallBack : b2QueryCallback {
     lua_State *L;
     int i;

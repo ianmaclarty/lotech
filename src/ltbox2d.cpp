@@ -839,6 +839,58 @@ static int world_ray_cast(lua_State *L) {
     return 1;
 }
 
+struct AABBQueryCallBack : b2QueryCallback {
+    lua_State *L;
+    LTWorld *world;
+    int i;
+
+    AABBQueryCallBack(lua_State *L, LTWorld *world) {
+        AABBQueryCallBack::L = L;
+        AABBQueryCallBack::world = world;
+        i = 1;
+    }
+
+    virtual bool ReportFixture(b2Fixture *fixture) {
+        LTFixture *f = (LTFixture*)fixture->GetUserData();
+        if (f->body != NULL) {
+            ltLuaGetRef(L, 1, world->body_refs[f->body]); // push body
+            ltLuaGetRef(L, -1, f->body_ref); // push fixture
+            lua_rawseti(L, -3, i);
+            lua_pop(L, 1); // pop body
+            i++;
+        }
+        return true;
+    }
+};
+
+static int world_find_fixtures_in(lua_State *L) {
+    ltLuaCheckNArgs(L, 5);
+    LTWorld *world = lt_expect_LTWorld(L, 1);
+    LTfloat x1 = (LTfloat)luaL_checknumber(L, 2);
+    LTfloat y1 = (LTfloat)luaL_checknumber(L, 3);
+    LTfloat x2 = (LTfloat)luaL_checknumber(L, 4);
+    LTfloat y2 = (LTfloat)luaL_checknumber(L, 5);
+    b2AABB aabb;
+    if (x1 > x2) {
+        aabb.upperBound.x = x1;
+        aabb.lowerBound.x = x2;
+    } else {
+        aabb.upperBound.x = x2;
+        aabb.lowerBound.x = x1;
+    }
+    if (y1 > y2) {
+        aabb.upperBound.y = y1;
+        aabb.lowerBound.y = y2;
+    } else {
+        aabb.upperBound.y = y2;
+        aabb.lowerBound.y = y1;
+    }
+    AABBQueryCallBack cb(L, world);
+    lua_newtable(L);
+    world->world->QueryAABB(&cb, aabb);
+    return 1;
+}
+
 LT_REGISTER_TYPE(LTWorld, "box2d.World", "lt.Object");
 LT_REGISTER_PROPERTY_FLOAT(LTWorld, gx, get_world_gx, set_world_gx);
 LT_REGISTER_PROPERTY_FLOAT(LTWorld, gy, get_world_gy, set_world_gy);
@@ -848,6 +900,7 @@ LT_REGISTER_FIELD_BOOL(LTWorld, debug);
 LT_REGISTER_METHOD(LTWorld, Step, world_step);
 LT_REGISTER_METHOD(LTWorld, Body, new_body);
 LT_REGISTER_METHOD(LTWorld, RayCast, world_ray_cast);
+LT_REGISTER_METHOD(LTWorld, FixturesIn, world_find_fixtures_in);
 
 LT_REGISTER_TYPE(LTBody, "box2d.Body", "lt.Wrap");
 LT_REGISTER_PROPERTY_OBJ(LTBody, body, LTWorld, get_body_world, NULL);
