@@ -679,8 +679,6 @@ static void init_constructors(lua_State *L) {
     }
 }
 
-ct_assert(sizeof(long int) == sizeof(void*));
-
 int ltLuaAddRef(lua_State *L, int obj, int val) {
     obj = absidx(L, obj);
     val = absidx(L, val);
@@ -689,6 +687,15 @@ int ltLuaAddRef(lua_State *L, int obj, int val) {
     int ref = luaL_ref(L, -2);
     lua_pop(L, 1); // pop env table
     return ref;
+}
+
+void ltLuaAddNamedRef(lua_State *L, int obj, int val, const char* name) {
+    obj = absidx(L, obj);
+    val = absidx(L, val);
+    lua_getfenv(L, obj);
+    lua_pushvalue(L, val);
+    lua_setfield(L, -2, name);
+    lua_pop(L, 1); // pop env table
 }
 
 void ltLuaDelRef(lua_State *L, int obj, int ref) {

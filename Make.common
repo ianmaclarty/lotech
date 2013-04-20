@@ -1,10 +1,17 @@
 DIR := $(dir $(lastword $(MAKEFILE_LIST)))
-TARGET_PLATFORM:=$(shell cat $(DIR)/target)
+TARGET_PLATFORM:=$(shell if [ -e $(DIR)/target ]; then cat $(DIR)/target; fi)
 
 ifeq ($(TARGET_PLATFORM),)
-$(error No target specified. \
-Please create a file called 'target' containing one of the following values: \
-'linux', 'mingw', 'osx', 'ios' or 'android' and try again)
+UNAME=$(shell uname -s)
+ifneq (,$(findstring Linux,$(UNAME)))
+TARGET_PLATFORM=linux
+endif
+ifneq (,$(findstring W32,$(UNAME)))
+TARGET_PLATFORM=mingw
+endif
+ifneq (,$(findstring Darwin,$(UNAME)))
+TARGET_PLATFORM=osx
+endif
 endif
 
 LUA=lua-5.1.4

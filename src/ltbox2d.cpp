@@ -82,8 +82,10 @@ LTFixture::LTFixture(LTBody *body, const b2FixtureDef *def) {
 
 void LTFixture::destroy() {
     if (fixture != NULL) { // NULL means the fixture was already destroyed.
+        assert(body->body != NULL);
         body->body->DestroyFixture(fixture);
         fixture = NULL;
+        body = NULL;
     }
 }
 
@@ -278,6 +280,7 @@ LTFixture *lt_expect_LTFixture(lua_State *L, int arg);
 LTJoint *lt_expect_LTJoint(lua_State *L, int arg);
 
 void *lt_alloc_LTBody(lua_State *L);
+void *lt_alloc_LTFixture(lua_State *L);
 
 static LTfloat get_world_gx(LTObject *obj) {
     return ((LTWorld*)obj)->world->GetGravity().x;
@@ -350,10 +353,14 @@ static int new_body(lua_State *L) {
     lua_pop(L, 1);
 
     lua_getfield(L, 2, "x");
-    body_def.position.x = luaL_checknumber(L, -1);
+    if (!lua_isnil(L, -1)) {
+        body_def.position.x = luaL_checknumber(L, -1);
+    }
     lua_pop(L, 1);
     lua_getfield(L, 2, "y");
-    body_def.position.y = luaL_checknumber(L, -1);
+    if (!lua_isnil(L, -1)) {
+        body_def.position.y = luaL_checknumber(L, -1);
+    }
     lua_pop(L, 1);
 
     lua_getfield(L, 2, "angle");
@@ -363,10 +370,14 @@ static int new_body(lua_State *L) {
     lua_pop(L, 1);
 
     lua_getfield(L, 2, "vx");
-    body_def.linearVelocity.x = luaL_checknumber(L, -1);
+    if (!lua_isnil(L, -1)) {
+        body_def.linearVelocity.x = luaL_checknumber(L, -1);
+    }
     lua_pop(L, 1);
     lua_getfield(L, 2, "vy");
-    body_def.linearVelocity.y = luaL_checknumber(L, -1);
+    if (!lua_isnil(L, -1)) {
+        body_def.linearVelocity.y = luaL_checknumber(L, -1);
+    }
     lua_pop(L, 1);
 
     lua_getfield(L, 2, "angular_velocity");
@@ -419,8 +430,13 @@ static int new_body(lua_State *L) {
 
     LTBody *body = new (lt_alloc_LTBody(L)) LTBody(world, &body_def);
     body->world_ref = ltLuaAddRef(L, 1, -1); // Add reference from world to body.
-    ltLuaAddRef(L, -1, 1); // Add reference from body to world.
+    ltLuaAddNamedRef(L, -1, 1, "world"); // Add reference from body to world.
     return 1;
+}
+
+static LTObject* get_body_world(LTObject* obj) {
+    LTBody *b = (LTBody*)obj;
+    return b->world;
 }
 
 static LTfloat get_body_x(LTObject *obj) {
@@ -438,6 +454,7 @@ static void set_body_x(LTObject *obj, LTfloat val) {
         b2Vec2 pos = b->body->GetPosition();
         LTfloat angle = b->body->GetAngle();
         b->body->SetTransform(b2Vec2(val, pos.y), angle);
+        b->body->SetAwake(true);
     }
 }
 
@@ -456,6 +473,7 @@ static void set_body_y(LTObject *obj, LTfloat val) {
         b2Vec2 pos = b->body->GetPosition();
         LTfloat angle = b->body->GetAngle();
         b->body->SetTransform(b2Vec2(pos.x, val), angle);
+        b->body->SetAwake(true);
     }
 }
 
@@ -597,20 +615,167 @@ static int destroy_body(lua_State *L) {
         ltLuaDelRef(L, -1, 1); // Remove reference from world to body
                                // so body can be GC'd.
         lua_pop(L, 1);
+        body->world_ref = LUA_NOREF;
     }
     return 0;
 }
 
+static void read_fixture_attributes(lua_State *L, int table, b2FixtureDef *fixture_def) {
+    if (!lua_istable(L, table)) {
+        luaL_error(L, "Expecting a table in position %d", table);
+    }
+    lua_getfield(L, table, "friction");
+    if (!lua_isnil(L, -1)) {
+        fixture_def->friction = luaL_checknumber(L, -1);
+    }
+    lua_pop(L, 1);
+    lua_getfield(L, table, "restitution");
+    if (!lua_isnil(L, -1)) {
+        fixture_def->restitution = luaL_checknumber(L, -1);
+    }
+    lua_pop(L, 1);
+    lua_getfield(L, table, "density");
+    if (!lua_isnil(L, -1)) {
+        fixture_def->density = luaL_checknumber(L, -1);
+    }
+    lua_pop(L, 1);
+    lua_getfield(L, table, "category");
+    if (!lua_isnil(L, -1)) {
+        fixture_def->filter.categoryBits = lua_tointeger(L, -1);
+    }
+    lua_pop(L, 1);
+    lua_getfield(L, table, "mask");
+    if (!lua_isnil(L, -1)) {
+        fixture_def->filter.maskBits = lua_tointeger(L, -1);
+    }
+    lua_pop(L, 1);
+    lua_getfield(L, table, "group");
+    if (!lua_isnil(L, -1)) {
+        fixture_def->filter.groupIndex = lua_tointeger(L, -1);
+    }
+    lua_pop(L, 1);
+    lua_getfield(L, table, "sensor");
+    if (!lua_isnil(L, -1)) {
+        fixture_def->isSensor = lua_toboolean(L, -1);
+    }
+    lua_pop(L, 1);
+}
+
+static int new_polygon_fixture(lua_State *L) {
+    int nargs = ltLuaCheckNArgs(L, 2);
+    LTBody *body = lt_expect_LTBody(L, 1);
+    if (body->body != NULL) {
+        // Second argument is array of polygon vertices.
+        if (!lua_istable(L, 2)) {
+            return luaL_error(L, "Expecting an array in second argument");
+        }
+        int i = 1;
+        int num_vertices = 0;
+        b2PolygonShape poly;
+        b2Vec2 vertices[b2_maxPolygonVertices];
+        while (num_vertices < b2_maxPolygonVertices) {
+            lua_rawgeti(L, 2, i);
+            if (lua_isnil(L, -1)) {
+                lua_pop(L, 1);
+                break;
+            }
+            vertices[num_vertices].x = luaL_checknumber(L, -1);
+            lua_pop(L, 1);
+            i++;
+            lua_rawgeti(L, 2, i);
+            if (lua_isnil(L, -1)) {
+                lua_pop(L, 1);
+                break;
+            }
+            vertices[num_vertices].y = luaL_checknumber(L, -1);
+            lua_pop(L, 1);
+            i++;
+            num_vertices++;
+        }
+        if (!ltCheckB2Poly(vertices, num_vertices)) {
+            // Reverse vertices.
+            for (int j = 0; j < (num_vertices >> 1); j++) {
+                b2Vec2 tmp = vertices[j];
+                vertices[j] = vertices[num_vertices - j - 1];
+                vertices[num_vertices - j - 1] = tmp;
+            }
+            if (!ltCheckB2Poly(vertices, num_vertices)) {
+                lua_pushnil(L);
+                return 1;
+            }
+        }
+        poly.Set(vertices, num_vertices);
+
+        // Third argument is a table of fixture properties.
+        b2FixtureDef fixture_def;
+        fixture_def.density = 1.0f;
+        if (nargs >= 3) {
+            read_fixture_attributes(L, 3, &fixture_def);
+        }
+        fixture_def.shape = &poly;
+        LTFixture *fixture = new (lt_alloc_LTFixture(L)) LTFixture(body, &fixture_def);
+        fixture->body_ref = ltLuaAddRef(L, 1, -1); // Add reference from body to new fixture.
+        ltLuaAddNamedRef(L, -1, 1, "body"); // Add reference from fixture to body.
+    } else {
+        lua_pushnil(L);
+    }
+    return 1;
+}
+
+static int new_circle_fixture(lua_State *L) {
+    int nargs = ltLuaCheckNArgs(L, 4);
+    LTBody *body = lt_expect_LTBody(L, 1);
+    if (body->body != NULL) {
+        LTfloat radius = luaL_checknumber(L, 2);
+        LTfloat x = luaL_checknumber(L, 3);
+        LTfloat y = luaL_checknumber(L, 4);
+        b2CircleShape circle;
+        circle.m_radius = radius;
+        circle.m_p.Set(x, y);
+
+        b2FixtureDef fixture_def;
+        fixture_def.density = 1.0f;
+        if (nargs >= 5) {
+            read_fixture_attributes(L, 5, &fixture_def);
+        }
+        fixture_def.shape = &circle;
+        LTFixture *fixture = new (lt_alloc_LTFixture(L)) LTFixture(body, &fixture_def);
+        fixture->body_ref = ltLuaAddRef(L, 1, -1); // Add reference from body to new fixture.
+        ltLuaAddNamedRef(L, -1, 1, "body"); // Add reference from fixture to body.
+    } else {
+        lua_pushnil(L);
+    }
+    return 1;
+}
+
+static LTObject* get_fixture_body(LTObject* obj) {
+    LTFixture *f = (LTFixture*)obj;
+    return f->body;
+}
+
+static int destroy_fixture(lua_State *L) {
+    ltLuaCheckNArgs(L, 1); 
+    LTFixture *fixture = lt_expect_LTFixture(L, 1);
+    if (fixture->fixture != NULL) {
+        fixture->destroy();
+        ltLuaGetRef(L, 1, fixture->body_ref);
+        ltLuaDelRef(L, -1, 1); // Remove ref from body to fixture.
+        lua_pop(L, 1);
+        fixture->body_ref = LUA_NOREF;
+    }
+    return 0;
+}
 
 LT_REGISTER_TYPE(LTWorld, "box2d.World", "lt.Object");
 LT_REGISTER_PROPERTY_FLOAT(LTWorld, gx, get_world_gx, set_world_gx);
-LT_REGISTER_PROPERTY_FLOAT(LTWorld, gx, get_world_gy, set_world_gy);
+LT_REGISTER_PROPERTY_FLOAT(LTWorld, gy, get_world_gy, set_world_gy);
 LT_REGISTER_PROPERTY_BOOL(LTWorld, auto_clear_forces, get_world_auto_clear_forces, set_world_auto_clear_forces);
 LT_REGISTER_FIELD_FLOAT(LTWorld, scale);
 LT_REGISTER_METHOD(LTWorld, Step, world_step);
 LT_REGISTER_METHOD(LTWorld, Body, new_body);
 
 LT_REGISTER_TYPE(LTBody, "box2d.Body", "lt.SceneNode");
+LT_REGISTER_PROPERTY_OBJ(LTBody, body, LTWorld, get_body_world, NULL);
 LT_REGISTER_PROPERTY_FLOAT(LTBody, x, get_body_x, set_body_x);
 LT_REGISTER_PROPERTY_FLOAT(LTBody, y, get_body_y, set_body_y);
 LT_REGISTER_PROPERTY_FLOAT(LTBody, angle, get_body_angle, set_body_angle);
@@ -623,3 +788,9 @@ LT_REGISTER_METHOD(LTBody, Torque, body_apply_torque);
 LT_REGISTER_METHOD(LTBody, Impulse, body_apply_impulse);
 LT_REGISTER_METHOD(LTBody, AngularImpulse, body_apply_angular_impulse);
 LT_REGISTER_METHOD(LTBody, Destroy, destroy_body);
+LT_REGISTER_METHOD(LTBody, Polygon, new_polygon_fixture);
+LT_REGISTER_METHOD(LTBody, Circle, new_circle_fixture);
+
+LT_REGISTER_TYPE(LTFixture, "box2d.Fixture", "lt.SceneNode");
+LT_REGISTER_PROPERTY_OBJ(LTFixture, body, LTBody, get_fixture_body, NULL);
+LT_REGISTER_METHOD(LTFixture, Destroy, destroy_fixture);

@@ -5,7 +5,7 @@ PWD=$(shell pwd)
 LTCFLAGS=-O3 -DNDEBUG
 -include Make.params
 
-all: $(TARGET_DIR)/liblt.a deplibs headers
+default: ltclient
 
 ############################ iOS Target ##############################
 ifeq ($(TARGET_PLATFORM),ios)
@@ -84,6 +84,11 @@ $(TARGET_DIR)/liblt.a: headers | $(TARGET_DIR)
 	cp buildtmp.mingw/liblt.a $(TARGET_DIR)/
 endif
 
+##########################################################
+##########################################################
+
+ltclient: $(TARGET_DIR)/liblt.a deplibs headers
+	cd clients/$(TARGET_PLATFORM)/ && make && cp $@ ../../
 
 
 ##########################################################

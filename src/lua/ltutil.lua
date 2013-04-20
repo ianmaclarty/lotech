@@ -132,3 +132,27 @@ function lt.SceneNodeContainsPoint(node, x, y, buf)
     local t, b, l, r = node.top, node.bottom, node.left, node.right
     return x <= r + buf and x >= l - buf and y <= t + buf and y >= b - buf
 end
+
+
+lt.config = {
+    design_width = 960,
+    design_height = 640,
+    orientation = "landscape",
+    start_script = "main",
+    world_top = 1,
+    world_bottom = -1,
+    world_left = -1.5,
+    world_right = 1.5,
+}
+
+function lt._Setup() 
+    if not lt.config.short_name then
+        error("lt.config.short_name not set.  Please set it in config.lua.")
+    end
+    lt.SetAppShortName(lt.config.short_name)
+    lt.SetDesignScreenSize(lt.config.design_width, lt.config.design_height)
+    lt.SetOrientation(lt.config.orientation)
+
+    lt.SetViewPort(lt.config.world_left, lt.config.world_bottom, lt.config.world_right, lt.config.world_top)
+    lt.SetStartScript(lt.config.start_script)
+end

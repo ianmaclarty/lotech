@@ -31,6 +31,7 @@ struct LTBody : LTSceneNode {
 struct LTFixture : LTSceneNode {
     b2Fixture *fixture; // May be null if the fixture is destroyed.
     LTBody *body;
+    int body_ref;
 
     LTFixture() {
         ltAbort();

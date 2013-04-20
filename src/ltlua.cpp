@@ -4,6 +4,25 @@
 
 LT_INIT_IMPL(ltlua)
 
+#include "lua_scripts.h"
+
+static const char* setup_scripts[] = {
+    lt_script_lttimer,
+    lt_script_ltutil,
+    lt_script_ltrefs,
+    lt_script_ltui,
+    lt_script_lttween,
+    lt_script_ltanimator,
+    lt_script_lthierachy,
+    lt_script_ltmath,
+    lt_script_ltgraphics,
+    lt_script_ltimage,
+    lt_script_ltio,
+    lt_script_ltscene,
+    lt_script_lttext,
+    lt_script_ltsprite,
+};
+
 #define MAX_START_SCRIPT_LEN 128
 
 static inline int absidx(lua_State *L, int index) {
@@ -36,7 +55,6 @@ static void check_status(lua_State *L, int status) {
         g_suspended = true;
         g_was_error = true;
         #else
-        // TODO Notify the user of the error and offer them the option of emailing a report.
         ltAbort();
         #endif
     }
@@ -1044,22 +1062,6 @@ static int lt_FixtureContainsPoint(lua_State *L) {
     return 1;
 }
 
-static int lt_DestroyFixture(lua_State *L) {
-    ltLuaCheckNArgs(L, 1); 
-    LTFixture *fixture = lt_expect_LTFixture(L, 1);
-    fixture->destroy();
-    LTBody *body = fixture->body;
-    if (body != NULL) {
-        lt_pushfield_LTFixture
-        lt_unset_LTFixture_body(L, 1); // Remove reference from fixture to body.
-        ltLuaPushRef(L, 1, body);
-        ltLuaDelRef(L, -1, 1); // Remove reference from body to fixture.
-        ltLuaDelRef(L, 1, -1); 
-        lua_pop(L, 2);
-    }
-    return 0;
-}
-
 static int lt_FixtureIsDestroyed(lua_State *L) {
     ltLuaCheckNArgs(L, 1); 
     LTFixture *fixture = (LTFixture*)get_object(L, 1, LT_TYPE_FIXTURE);
@@ -1198,141 +1200,6 @@ static int lt_AddTriangleToBody(lua_State *L) {
     return 1;
 }
 
-static void read_fixture_attributes(lua_State *L, int table, b2FixtureDef *fixture_def) {
-    if (!lua_istable(L, table)) {
-        luaL_error(L, "Expecting a table in position %d", table);
-    }
-    lua_getfield(L, table, "friction");
-    if (!lua_isnil(L, -1)) {
-        fixture_def->friction = luaL_checknumber(L, -1);
-    }
-    lua_pop(L, 1);
-    lua_getfield(L, table, "restitution");
-    if (!lua_isnil(L, -1)) {
-        fixture_def->restitution = luaL_checknumber(L, -1);
-    }
-    lua_pop(L, 1);
-    lua_getfield(L, table, "density");
-    if (!lua_isnil(L, -1)) {
-        fixture_def->density = luaL_checknumber(L, -1);
-    }
-    lua_pop(L, 1);
-    lua_getfield(L, table, "category");
-    if (!lua_isnil(L, -1)) {
-        fixture_def->filter.categoryBits = lua_tointeger(L, -1);
-    }
-    lua_pop(L, 1);
-    lua_getfield(L, table, "mask");
-    if (!lua_isnil(L, -1)) {
-        fixture_def->filter.maskBits = lua_tointeger(L, -1);
-    }
-    lua_pop(L, 1);
-    lua_getfield(L, table, "group");
-    if (!lua_isnil(L, -1)) {
-        fixture_def->filter.groupIndex = lua_tointeger(L, -1);
-    }
-    lua_pop(L, 1);
-    lua_getfield(L, table, "sensor");
-    if (!lua_isnil(L, -1)) {
-        fixture_def->isSensor = lua_toboolean(L, -1);
-    }
-    lua_pop(L, 1);
-}
-
-static int lt_AddPolygonToBody(lua_State *L) {
-    ltLuaCheckNArgs(L, 3);
-    LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
-    if (body->body != NULL) {
-        // Second argument is array of polygon vertices.
-        if (!lua_istable(L, 2)) {
-            return luaL_error(L, "Expecting an array in second argument");
-        }
-        int i = 1;
-        int num_vertices = 0;
-        b2PolygonShape poly;
-        b2Vec2 vertices[b2_maxPolygonVertices];
-        while (num_vertices < b2_maxPolygonVertices) {
-            lua_rawgeti(L, 2, i);
-            if (lua_isnil(L, -1)) {
-                lua_pop(L, 1);
-                break;
-            }
-            vertices[num_vertices].x = luaL_checknumber(L, -1);
-            lua_pop(L, 1);
-            i++;
-            lua_rawgeti(L, 2, i);
-            if (lua_isnil(L, -1)) {
-                lua_pop(L, 1);
-                break;
-            }
-            vertices[num_vertices].y = luaL_checknumber(L, -1);
-            lua_pop(L, 1);
-            i++;
-            num_vertices++;
-        }
-        if (!ltCheckB2Poly(vertices, num_vertices)) {
-            // Reverse vertices.
-            for (int j = 0; j < (num_vertices >> 1); j++) {
-                b2Vec2 tmp = vertices[j];
-                vertices[j] = vertices[num_vertices - j - 1];
-                vertices[num_vertices - j - 1] = tmp;
-            }
-            if (!ltCheckB2Poly(vertices, num_vertices)) {
-                lua_pushnil(L);
-                return 1;
-            }
-        }
-        poly.Set(vertices, num_vertices);
-
-        // Third argument is a table of fixture properties.
-        b2FixtureDef fixture_def;
-        read_fixture_attributes(L, 3, &fixture_def);
-        fixture_def.shape = &poly;
-        LTFixture *fixture = new LTFixture(body, &fixture_def);
-        push_wrap(L, fixture);
-        ltLuaAddRef(L, 1, -1); // Add reference from body to new fixture.
-        set_ref_field(L, -1, "body", 1); // Add reference from fixture to body.
-    } else {
-        lua_pushnil(L);
-    }
-    return 1;
-}
-
-static int lt_AddCircleToBody(lua_State *L) {
-    ltLuaCheckNArgs(L, 5);
-    LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
-    if (body->body != NULL) {
-        LTfloat radius = luaL_checknumber(L, 2);
-        LTfloat x = luaL_checknumber(L, 3);
-        LTfloat y = luaL_checknumber(L, 4);
-        b2CircleShape circle;
-        circle.m_radius = radius;
-        circle.m_p.Set(x, y);
-
-        b2FixtureDef fixture_def;
-        read_fixture_attributes(L, 5, &fixture_def);
-        fixture_def.shape = &circle;
-        LTFixture *fixture = new LTFixture(body, &fixture_def);
-        push_wrap(L, fixture);
-        ltLuaAddRef(L, 1, -1); // Add reference from body to new fixture.
-        set_ref_field(L, -1, "body", 1); // Add reference from fixture to body.
-    } else {
-        lua_pushnil(L);
-    }
-    return 1;
-}
-
-static int lt_GetFixtureBody(lua_State *L) {
-    ltLuaCheckNArgs(L, 1);
-    LTFixture *fixture = (LTFixture*)get_object(L, 1, LT_TYPE_FIXTURE);
-    if (fixture->fixture != NULL && fixture->body != NULL) {
-        push_wrap(L, fixture->body);
-    } else {
-        lua_pushnil(L);
-    }
-    return 1;
-}
-
 static int lt_GetBodyFixtures(lua_State *L) {
     ltLuaCheckNArgs(L, 1);
     LTBody *body = (LTBody*)get_object(L, 1, LT_TYPE_BODY);
@@ -1365,248 +1232,6 @@ static int lt_FixtureBoundingBox(lua_State *L) {
     } else {
         return 0;
     }
-}
-
-static int lt_AddStaticBodyToWorld(lua_State *L) {
-    ltLuaCheckNArgs(L, 1);
-    LTWorld *world = (LTWorld*)get_object(L, 1, LT_TYPE_WORLD);
-    b2BodyDef def;
-    def.type = b2_staticBody;
-    LTBody *body = new LTBody(world, &def);
-    push_wrap(L, body);
-    ltLuaAddRef(L, 1, -1); // Add reference from world to body.
-    ltLuaAddRef(L, -1, 1); // Add reference from body to world.
-    return 1;
-}
-
-static int lt_AddDynamicBodyToWorld(lua_State *L) {
-    int num_args = ltLuaCheckNArgs(L, 3);
-    LTWorld *world = (LTWorld*)get_object(L, 1, LT_TYPE_WORLD);
-    LTfloat x = (LTfloat)luaL_checknumber(L, 2);
-    LTfloat y = (LTfloat)luaL_checknumber(L, 3);
-    LTfloat angle = 0.0f;
-    if (num_args > 3) {
-        angle = (LTfloat)luaL_checknumber(L, 4);
-    }
-    b2BodyDef def;
-    def.type = b2_dynamicBody;
-    def.position.Set(x, y);
-    def.angle = angle;
-    LTBody *body = new LTBody(world, &def);
-    push_wrap(L, body);
-    ltLuaAddRef(L, 1, -1); // Add reference from world to body.
-    ltLuaAddRef(L, -1, 1); // Add reference from body to world.
-    return 1;
-}
-
-static int lt_AddBodyToWorld(lua_State *L) {
-    ltLuaCheckNArgs(L, 2);
-    LTWorld *world = (LTWorld*)get_object(L, 1, LT_TYPE_WORLD);
-    // Second argument is a table of body properties.
-    b2BodyDef body_def;
-
-    lua_getfield(L, 2, "type");
-    if (!lua_isnil(L, -1)) {
-        const char *type = luaL_checkstring(L, -1);
-        b2BodyType btype;
-        if (strcmp(type, "dynamic") == 0) {
-            btype = b2_dynamicBody;
-        } else if (strcmp(type, "static") == 0) {
-            btype = b2_staticBody;
-        } else if (strcmp(type, "kinematic") == 0) {
-            btype = b2_kinematicBody;
-        } else {
-            return luaL_error(L, "Unknown body type: %s", type);
-        }
-        body_def.type = btype;
-    }
-    lua_pop(L, 1);
-
-    lua_getfield(L, 2, "position");
-    if (!lua_isnil(L, -1)) {
-        if (lua_istable(L, -1)) {
-            lua_rawgeti(L, -1, 1);
-            body_def.position.x = luaL_checknumber(L, -1);
-            lua_pop(L, 1);
-            lua_rawgeti(L, -1, 2);
-            body_def.position.y = luaL_checknumber(L, -1);
-            lua_pop(L, 1);
-        } else {
-            return luaL_error(L, "Expecting position field to be a table");
-        }
-    }
-    lua_pop(L, 1);
-
-    lua_getfield(L, 2, "angle");
-    if (!lua_isnil(L, -1)) {
-        body_def.angle = LT_RADIANS_PER_DEGREE * luaL_checknumber(L, -1);
-    }
-    lua_pop(L, 1);
-
-    lua_getfield(L, 2, "velocity");
-    if (!lua_isnil(L, -1)) {
-        if (lua_istable(L, -1)) {
-            lua_rawgeti(L, -1, 1);
-            body_def.linearVelocity.x = luaL_checknumber(L, -1);
-            lua_pop(L, 1);
-            lua_rawgeti(L, -1, 2);
-            body_def.linearVelocity.y = luaL_checknumber(L, -1);
-            lua_pop(L, 1);
-        } else {
-            return luaL_error(L, "Expecting position field to be a table");
-        }
-    }
-    lua_pop(L, 1);
-
-    lua_getfield(L, 2, "angular_velocity");
-    if (!lua_isnil(L, -1)) {
-        body_def.angularVelocity = LT_RADIANS_PER_DEGREE * luaL_checknumber(L, -1);
-    }
-    lua_pop(L, 1);
-
-    lua_getfield(L, 2, "damping");
-    if (!lua_isnil(L, -1)) {
-        body_def.linearDamping = luaL_checknumber(L, -1);
-    }
-    lua_pop(L, 1);
-
-    lua_getfield(L, 2, "angular_damping");
-    if (!lua_isnil(L, -1)) {
-        body_def.angularDamping = LT_RADIANS_PER_DEGREE * luaL_checknumber(L, -1);
-    }
-    lua_pop(L, 1);
-
-    lua_getfield(L, 2, "can_sleep");
-    if (!lua_isnil(L, -1)) {
-        body_def.allowSleep = lua_toboolean(L, -1);
-    }
-    lua_pop(L, 1);
-
-    lua_getfield(L, 2, "awake");
-    if (!lua_isnil(L, -1)) {
-        body_def.awake = lua_toboolean(L, -1);
-    }
-    lua_pop(L, 1);
-
-    lua_getfield(L, 2, "fixed_rotation");
-    if (!lua_isnil(L, -1)) {
-        body_def.fixedRotation = lua_toboolean(L, -1);
-    }
-    lua_pop(L, 1);
-
-    lua_getfield(L, 2, "bullet");
-    if (!lua_isnil(L, -1)) {
-        body_def.bullet = lua_toboolean(L, -1);
-    }
-    lua_pop(L, 1);
-
-    lua_getfield(L, 2, "active");
-    if (!lua_isnil(L, -1)) {
-        body_def.active = lua_toboolean(L, -1);
-    }
-    lua_pop(L, 1);
-
-    LTBody *body = new LTBody(world, &body_def);
-    push_wrap(L, body);
-    ltLuaAddRef(L, 1, -1); // Add reference from world to body.
-    ltLuaAddRef(L, -1, 1); // Add reference from body to world.
-    return 1;
-}
-
-static void read_common_joint_def_from_table(lua_State *L, int table, b2JointDef *def) {
-    def->userData = NULL;
-
-    lua_getfield(L, table, "body1");
-    if (lua_isnil(L, -1)) {
-        luaL_error(L, "Missing body1 field in revolution joint definition");
-    }
-    b2Body *body1 = ((LTBody*)get_object(L, -1, LT_TYPE_BODY))->body;
-    lua_pop(L, 1);
-    if (body1 == NULL) {
-        luaL_error(L, "body1 is destroyed");
-    }
-    def->bodyA = body1;
-
-    lua_getfield(L, table, "body2");
-    if (lua_isnil(L, -1)) {
-        luaL_error(L, "Missing body2 field in revolution joint definition");
-    }
-    b2Body *body2 = ((LTBody*)get_object(L, -1, LT_TYPE_BODY))->body;
-    lua_pop(L, 1);
-    if (body2 == NULL) {
-        luaL_error(L, "body2 is destroyed");
-    }
-    def->bodyB = body2;
-
-    lua_getfield(L, table, "collide");
-    if (!lua_isnil(L, -1)) {
-        def->collideConnected = lua_toboolean(L, -1);
-    }
-    lua_pop(L, 1);
-}
-
-static void read_revolute_joint_def_from_table(lua_State *L, int table, b2RevoluteJointDef *def) {
-    def->type = e_revoluteJoint;
-    read_common_joint_def_from_table(L, table, def);
-
-    lua_getfield(L, table, "anchor1");
-    if (lua_isnil(L, -1)) {
-        luaL_error(L, "Missing anchor1 field in revolute joint definition");
-    }
-    if (lua_istable(L, -1)) {
-        lua_rawgeti(L, -1, 1);
-        def->localAnchorA.x = luaL_checknumber(L, -1);
-        lua_pop(L, 1);
-        lua_rawgeti(L, -1, 2);
-        def->localAnchorA.y = luaL_checknumber(L, -1);
-        lua_pop(L, 1);
-    } else {
-        luaL_error(L, "Expecting anchor1 field to be a table");
-    }
-    lua_pop(L, 1);
-
-    lua_getfield(L, table, "anchor2");
-    if (lua_isnil(L, -1)) {
-        // Use the current world positions of the bodies to
-        // compute anchor2 from anchor1.
-        b2Vec2 anchor1_w = def->bodyA->GetWorldPoint(def->localAnchorA);
-        def->localAnchorB = def->bodyB->GetLocalPoint(anchor1_w);
-    } else {
-        if (lua_istable(L, -1)) {
-            lua_rawgeti(L, -1, 1);
-            def->localAnchorB.x = luaL_checknumber(L, -1);
-            lua_pop(L, 1);
-            lua_rawgeti(L, -1, 2);
-            def->localAnchorB.y = luaL_checknumber(L, -1);
-            lua_pop(L, 1);
-        } else {
-            luaL_error(L, "Expecting anchor2 field to be a table");
-        }
-    }
-    lua_pop(L, 1);
-
-    lua_getfield(L, table, "angle");
-    if (lua_isnil(L, -1)) {
-        // Compute the reference angle from the bodies' current angles.
-        def->referenceAngle = def->bodyB->GetAngle() - def->bodyA->GetAngle();
-    } else {
-        def->referenceAngle = luaL_checknumber(L, -1) * LT_RADIANS_PER_DEGREE;
-    }
-    lua_pop(L, 1);
-
-    lua_getfield(L, table, "lower_limit");
-    if (!lua_isnil(L, -1)) {
-        def->lowerAngle = luaL_checknumber(L, -1) * LT_RADIANS_PER_DEGREE;
-        def->enableLimit = true;
-    }
-    lua_pop(L, 1);
-
-    lua_getfield(L, table, "upper_limit");
-    if (!lua_isnil(L, -1)) {
-        def->upperAngle = luaL_checknumber(L, -1) * LT_RADIANS_PER_DEGREE;
-        def->enableLimit = true;
-    }
-    lua_pop(L, 1);
 }
 
 static void read_distance_joint_def_from_table(lua_State *L, int table, b2DistanceJointDef *def) {
@@ -2506,6 +2131,14 @@ static void run_lua_file(lua_State *L, const char *file) {
     }
 }
 
+static void run_setup_scripts(lua_State *L) {
+    int n = sizeof(setup_scripts) / sizeof(const char *);
+    for (int i = 0; (i < n && !g_suspended); i++) {
+        check_status(L, luaL_loadstring(L, setup_scripts[i]));
+        docall(L, 0, 0);
+    }
+}
+
 static void setup_wref_ref(lua_State *L) {
     lua_getglobal(L, "lt");
     lua_getfield(L, -1, "wrefs");
@@ -2609,11 +2242,12 @@ void ltLuaSetup() {
     lua_setglobal(g_L, "log");
     luaL_register(g_L, "lt", ltlib);
     lua_pop(g_L, 1); // pop lt
-    run_lua_file(g_L, "lt");
+    run_setup_scripts(g_L);
     setup_wref_ref(g_L);
     set_globals(g_L);
     strcpy(g_start_script, "main");
     run_lua_file(g_L, "config");
+    call_lt_func(g_L, "_Setup");
     ltRestoreState();
 }
 

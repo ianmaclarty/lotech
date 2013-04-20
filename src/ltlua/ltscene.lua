@@ -1,2 +1,0 @@
--- Copyright 2011 Ian MacLarty
---empty

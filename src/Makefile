@@ -47,6 +47,11 @@ $(OUT_DIR)/liblt.a: $(O_FILES)
 	@echo AR $@
 	@$(AR) $@ $^
 
+$(OUT_DIR)/ltlua.o: lua_scripts.h
+
+lua_scripts.h: lua/*.lua
+	./gen_lua_scripts_h.sh
+
 .PHONY: clean
 clean:
 	rm -f $(O_FILES) $(OUT_DIR)/*.a
