@@ -28,6 +28,7 @@ void LTBody::destroy() {
         while (f != NULL) {
             LTFixture *ud = (LTFixture*)f->GetUserData();
             ud->fixture = NULL;
+            ud->body = NULL;
             f = f->GetNext();
         }
         // Invalidate joint wrappers.
@@ -891,6 +892,52 @@ static int world_find_fixtures_in(lua_State *L) {
     return 1;
 }
 
+struct FixtureQueryCallBack : b2QueryCallback {
+    lua_State *L;
+    LTWorld *world;
+    LTFixture *master;
+    int i;
+
+    FixtureQueryCallBack(lua_State *L, LTFixture *master) {
+        FixtureQueryCallBack::L = L;
+        FixtureQueryCallBack::master = master;
+        i = 1;
+    }
+
+    virtual bool ReportFixture(b2Fixture *f) {
+        LTFixture *fixture = (LTFixture*)f->GetUserData();
+        if (fixture->body != NULL && fixture != master) {
+            if (b2TestOverlap(
+                fixture->fixture->GetShape(), 0,
+                master->fixture->GetShape(), 0,
+                fixture->body->body->GetTransform(),
+                master->body->body->GetTransform()))
+            {
+                ltLuaGetRef(L, 1, fixture->body->world->body_refs[fixture->body]); // push body
+                ltLuaGetRef(L, -1, fixture->body_ref); // push fixture
+                lua_rawseti(L, -3, i);
+                lua_pop(L, 1); // pop body
+                i++;
+            }
+        }
+        return true;
+    }
+};
+
+static int fixture_find_overlaps(lua_State *L) {
+    ltLuaCheckNArgs(L, 1);
+    LTFixture *fixture = lt_expect_LTFixture(L, 1);
+    lua_newtable(L);
+    if (fixture->fixture != NULL) {
+        b2Shape *shape = fixture->fixture->GetShape();
+        b2AABB aabb;
+        shape->ComputeAABB(&aabb, fixture->body->body->GetTransform(), 0);
+        FixtureQueryCallBack cb(L, fixture);
+        fixture->body->world->world->QueryAABB(&cb, aabb);
+    }
+    return 1;
+}
+
 LT_REGISTER_TYPE(LTWorld, "box2d.World", "lt.Object");
 LT_REGISTER_PROPERTY_FLOAT(LTWorld, gx, get_world_gx, set_world_gx);
 LT_REGISTER_PROPERTY_FLOAT(LTWorld, gy, get_world_gy, set_world_gy);
@@ -922,3 +969,4 @@ LT_REGISTER_METHOD(LTBody, Circle, new_circle_fixture);
 LT_REGISTER_TYPE(LTFixture, "box2d.Fixture", "lt.SceneNode");
 LT_REGISTER_PROPERTY_OBJ(LTFixture, body, LTBody, get_fixture_body, NULL);
 LT_REGISTER_METHOD(LTFixture, Destroy, destroy_fixture);
+LT_REGISTER_METHOD(LTFixture, Overlapping, fixture_find_overlaps);
