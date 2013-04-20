@@ -103,7 +103,7 @@ void LTMesh::compute_stride() {
 void LTMesh::draw() {
     ensure_vb_uptodate();
     ltBindVertBuffer(vertbuf);
-    int offset = 0;
+    LTuintptr offset = 0;
     ltVertexPointer(dimensions, LT_VERT_DATA_TYPE_FLOAT, stride, (void*)offset);
     offset += dimensions * 4;
     if (has_colors) {

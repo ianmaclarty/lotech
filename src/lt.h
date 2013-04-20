@@ -14,6 +14,7 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <stdint.h>
 #include <sys/stat.h>
 #include <pthread.h>
 #if !defined(LTANDROID) && !defined(LTMINGW)

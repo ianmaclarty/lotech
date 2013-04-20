@@ -1,6 +1,12 @@
 DIR := $(dir $(lastword $(MAKEFILE_LIST)))
 TARGET_PLATFORM:=$(shell cat $(DIR)/target)
 
+ifeq ($(TARGET_PLATFORM),)
+$(error No target specified. \
+Please create a file called 'target' containing one of the following values: \
+'linux', 'mingw', 'osx', 'ios' or 'android' and try again)
+endif
+
 LUA=lua-5.1.4
 LUAJIT=luajit-2.0
 BOX2D=Box2D-2.2.1

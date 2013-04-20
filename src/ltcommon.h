@@ -29,6 +29,8 @@ typedef unsigned int    LTuint;
 typedef unsigned short  LTushort;
 typedef unsigned char   LTubyte;
 typedef unsigned int    LTuint32;
+typedef uintptr_t       LTuintptr;
+typedef intptr_t        LTintptr;
 
 typedef float           LTsecs;
 typedef float           LTdegrees;

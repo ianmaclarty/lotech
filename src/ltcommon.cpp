@@ -1,5 +1,5 @@
 /* Copyright (C) 2010 Ian MacLarty */
-#include "ltcommon.h"
+#include "lt.h"
 
 LT_INIT_IMPL(ltcommon)
 
@@ -14,3 +14,5 @@ ct_assert(sizeof(LTuint32) == 4);
 ct_assert(sizeof(LTfloat) == 4);
 ct_assert(sizeof(float) == 4);
 ct_assert(sizeof(LTdouble) == 8);
+ct_assert(sizeof(LTuintptr) == sizeof(void*));
+ct_assert(sizeof(LTintptr) == sizeof(void*));
