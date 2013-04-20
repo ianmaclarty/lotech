@@ -21,6 +21,7 @@ struct LTMixer {
     }
 };
 
+/*
 static std::vector<LTMixer*> mixers;
 
 static LTMutex *mixers_mutex;
@@ -35,6 +36,7 @@ static void update_mixers(void *ud) {
         ltSleep(MIXER_SLEEP_MILLIS);
     } while (1);
 }
+*/
 
 void ltmixer_init() {
     //ltNewThread(update_mixers, NULL);
