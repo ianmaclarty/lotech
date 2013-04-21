@@ -11,6 +11,10 @@ endif
 ifeq ($(TARGET_PLATFORM),linux)
 LIBFLAGS= -llt -lpng -lz -llua -lbox2d -lglfw -lGLEW -lopenal -lX11 -lGL
 endif
+ifeq ($(TARGET_PLATFORM),mingw)
+LIBFLAGS= -static-libstdc++ -static-libgcc -llt -llua -lpng -lz -lbox2d \
+		-lglew32s -lglfw -lopengl32 -lopenal32 -lpthread
+endif
 
 .PHONY: ltclient
 ltclient: ltclient.cpp

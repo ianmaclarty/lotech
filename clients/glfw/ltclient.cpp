@@ -1,5 +1,8 @@
 #include <stdio.h>
 #include <string.h>
+#ifdef LTMINGW
+#define GLEW_STATIC 1
+#endif
 #include <GL/glew.h>
 #include <GL/glfw.h>
 
