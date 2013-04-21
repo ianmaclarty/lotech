@@ -6,7 +6,6 @@ LTCFLAGS=-O3 -DNDEBUG
 -include Make.params
 LTCFLAGS+=$(LT_PLATFLAGS)
 
-default: ltclient
 
 OBJC_FLAGS=
 ifeq ($(TARGET_PLATFORM),ios)
@@ -17,7 +16,14 @@ ifeq ($(TARGET_PLATFORM),android)
 default: libs
 endif
 ifeq ($(TARGET_PLATFORM),osx)
+default: ltclient
 OBJC_FLAGS=-ObjC++
+endif
+ifeq ($(TARGET_PLATFORM),linux)
+default: ltclient
+endif
+ifeq ($(TARGET_PLATFORM),mingw)
+default: ltclient
 endif
 
 ############################ iOS Target ##############################
