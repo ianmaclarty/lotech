@@ -1,5 +1,4 @@
 -- Copyright (C) 2010-2013 Ian MacLarty. See Copyright Notice in ../lt.h
--- Copyright (C) 2010-2013 Ian MacLarty. See Copyright Notice in ../lt.h
 local descendents = {}
 for name, mt in pairs(lt_metatables) do
     for ancestor, _ in pairs(mt.is) do

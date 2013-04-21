@@ -1,11 +1,11 @@
 -- Copyright (C) 2010-2013 Ian MacLarty. See Copyright Notice in ../lt.h
--- Copyright (C) 2010-2013 Ian MacLarty. See Copyright Notice in ../lt.h
 function lt.Tween(node, tween_info)
     local fields = {}
     local time = 0
     local delay = 0
     local easing = nil
     local action = nil
+    local reverse = false
     for field, value in pairs(tween_info) do
         if field == "time" then
             time = value
@@ -15,11 +15,18 @@ function lt.Tween(node, tween_info)
             action = value
         elseif field == "delay" then
             delay = value
+        --elseif field == "reverse" then
+        --    reverse = value
         else
             fields[field] = value
         end
     end
     for field, value in pairs(fields) do
+        --if reverse then
+        --    local tmp = node[field]
+        --    node[field] = value
+        --    value = tmp
+        --end
         lt.AddTween(node, field, value, time, delay, easing, action)
         action = nil -- only attach action to one field
     end
@@ -190,4 +197,3 @@ ease_func_table = {
     zoomout = lt.ZoomOutEase,
     revolve = lt.RevolveEase,
 }
-

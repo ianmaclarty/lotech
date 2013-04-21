@@ -1,6 +1,4 @@
 /* Copyright (C) 2010-2013 Ian MacLarty. See Copyright Notice in lt.h. */
-/* Copyright (C) 2010-2013 Ian MacLarty. See Copyright Notice in lt.h. */
-/* Copyright (C) 2010-2013 Ian MacLarty. See Copyright Notice in lt.h. */
 LT_INIT_DECL(ltutil)
 
 #define LT_TRACE ltLog("%s:%d %s", __FILE__, __LINE__, __PRETTY_FUNCTION__)

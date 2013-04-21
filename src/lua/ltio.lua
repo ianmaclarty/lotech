@@ -1,5 +1,4 @@
 -- Copyright (C) 2010-2013 Ian MacLarty. See Copyright Notice in ../lt.h
--- Copyright (C) 2010-2013 Ian MacLarty. See Copyright Notice in ../lt.h
 local function wrt(ind, file, x)
     local t = type(x)
     local spaces = string.rep("  ", ind + 1)

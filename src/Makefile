@@ -35,7 +35,7 @@ ifeq ($(TARGET_PLATFORM),mingw)
 GPP_FLAGS+=-DLTMINGW
 endif
 
-$(CPP_O_FILES): $(OUT_DIR)/%.o: %.cpp *.h
+$(CPP_O_FILES): $(OUT_DIR)/%.o: %.cpp lt*.h
 	@echo CPP   `basename $@`
 	@$(GPP) $(GPP_FLAGS) -c $< -o $@
 

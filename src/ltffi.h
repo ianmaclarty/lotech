@@ -1,6 +1,4 @@
 /* Copyright (C) 2010-2013 Ian MacLarty. See Copyright Notice in lt.h. */
-/* Copyright (C) 2010-2013 Ian MacLarty. See Copyright Notice in lt.h. */
-/* Copyright (C) 2010-2013 Ian MacLarty. See Copyright Notice in lt.h. */
 LT_INIT_DECL(ltffi)
 
 #define LT_REGISTER_TYPE(cpp_type, lua_name, lua_parent_name) \

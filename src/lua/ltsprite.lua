@@ -1,5 +1,4 @@
 -- Copyright (C) 2010-2013 Ian MacLarty. See Copyright Notice in ../lt.h
--- Copyright (C) 2010-2013 Ian MacLarty. See Copyright Notice in ../lt.h
 local sprites_mt = {__mode = "v"}
 
 -------------------------------------------------------------
