@@ -15,11 +15,15 @@ static bool fullscreen = false;
 static bool toggle_fullscreen = false;
 static void process_args(int argc, const char **argv);
 static const char *dir = "";
-static const char *title = "Lotech Client";
+static const char *title = "";
 
 static void setup_window();
 
 int main(int argc, const char **argv) {
+#ifdef LTOSX
+    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+#endif
+
     process_args(argc, argv);
 
     #ifdef LTDEVMODE
@@ -75,7 +79,9 @@ int main(int argc, const char **argv) {
         glfwSwapBuffers();
 
         // There seems to be a bug where the framerate skyrockets when the
-        // window is inactive.  This works around that.
+        // window is inactive.  This works around that (except that
+        // it doesn't always work, because glfwGetWindowParam returns
+        // incorrect results - see below).
         if (!glfwGetWindowParam(GLFW_ACTIVE)) {
             usleep(16000);
         }
@@ -87,7 +93,16 @@ int main(int argc, const char **argv) {
 
         t = glfwGetTime();
         if (!first_time) {
-            t_debt += t - t0;
+            double dt = fmin(0.1, t - t0); // Max of 0.1s in case process was suspended
+            t_debt += dt;
+            // Sleep for a bit to try and avoid the skyrocketing framerate
+            // problem described above.
+            if (dt < frame_time * 0.5) {
+                useconds_t sleep_time = (int)((frame_time - dt) * 500000.0);
+                //fprintf(stderr, "sleeping for %d\n", sleep_time);
+                usleep(sleep_time);
+            }
+
         } else {
             t_debt = frame_time;
             first_time = false;
@@ -115,6 +130,9 @@ int main(int argc, const char **argv) {
         fprintf(stderr, "ERROR: num live objects not zero (%d in fact)\n", ltNumLiveObjects());
     }
     glfwTerminate();
+#ifdef LTOSX
+    [pool release];
+#endif
     return 0;
 }
 

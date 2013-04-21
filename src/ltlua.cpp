@@ -132,7 +132,18 @@ static const char *resource_path(const char *resource, const char *suffix) {
     #ifdef LTIOS
         path = ltIOSBundlePath(resource, suffix);
     #elif LTOSX
-        path = ltOSXBundlePath(resource, suffix);
+        if (strlen(resource_prefix) == 0) {
+            path = ltOSXBundlePath(resource, suffix);
+        } else {
+            int len = strlen(resource_prefix) + strlen(resource) + strlen(suffix) + 3;
+            const char *slash = "";
+            if (resource_prefix[strlen(resource_prefix) - 1] != '/') {
+                len += 1;
+                slash = "/";
+            }
+            path = new char[len];
+            snprintf((char*)path, len, "%s%s%s%s", resource_prefix, slash, resource, suffix);
+        }
     #else
         int len = strlen(resource_prefix) + strlen(resource) + strlen(suffix) + 3;
         const char *slash = "";

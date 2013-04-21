@@ -4,14 +4,20 @@ TARGET_DIR=$(TARGET_PLATFORM)
 PWD=$(shell pwd)
 LTCFLAGS=-O3 -DNDEBUG
 -include Make.params
+LTCFLAGS+=$(LT_PLATFLAGS)
 
 default: ltclient
 
+OBJC_FLAGS=
 ifeq ($(TARGET_PLATFORM),ios)
 default: libs
+OBJC_FLAGS=-ObjC++
 endif
 ifeq ($(TARGET_PLATFORM),android)
 default: libs
+endif
+ifeq ($(TARGET_PLATFORM),osx)
+OBJC_FLAGS=-ObjC++
 endif
 
 ############################ iOS Target ##############################
@@ -26,14 +32,14 @@ $(TARGET_DIR)/liblt.a: headers | $(TARGET_DIR)
 		LTCPP=$(IOS_CPP) \
 		TARGET_FLAGS="$(IOS_ARMv6_OPTS) -isysroot $(ISDK)/SDKs/$(ISDKVER) -mno-thumb" \
 		OUT_DIR=$(PWD)/buildtmp.ios.armv6 \
-		LTCFLAGS="$(LTCFLAGS)" \
+		LTCFLAGS="$(LTCFLAGS) $(OBJC_FLAGS)" \
 		all
 	cd src && $(MAKE) \
 		CROSS=$(ISDKP) \
 		LTCPP=$(IOS_CPP) \
 		TARGET_FLAGS="$(IOS_ARMv7_OPTS) -isysroot $(ISDK)/SDKs/$(ISDKVER) -mno-thumb" \
 		OUT_DIR=$(PWD)/buildtmp.ios.armv7 \
-		LTCFLAGS="$(LTCFLAGS)" \
+		LTCFLAGS="$(LTCFLAGS) $(OBJC_FLAGS)" \
 		all
 	lipo -create buildtmp.ios.armv6/liblt.a buildtmp.ios.armv7/liblt.a -output $@
 endif
@@ -62,7 +68,7 @@ $(TARGET_DIR)/liblt.a: headers | $(TARGET_DIR)
 	cd src && $(MAKE) \
 		TARGET_FLAGS="-m64 -arch x86_64" \
 		OUT_DIR=$(PWD)/buildtmp.osx \
-		LTCFLAGS="$(LTCFLAGS)" \
+		LTCFLAGS="$(LTCFLAGS) $(OBJC_FLAGS)" \
 		all
 	cp buildtmp.osx/liblt.a $(TARGET_DIR)/
 endif
@@ -98,7 +104,7 @@ endif
 libs: $(TARGET_DIR)/liblt.a deplibs headers
 
 ltclient: libs
-	cd clients/glfw/ && make && cp $@ ../../
+	cd clients/glfw/ && make LTCFLAGS="$(LTCFLAGS) $(OBJC_FLAGS)" && cp $@ ../../
 
 
 ##########################################################

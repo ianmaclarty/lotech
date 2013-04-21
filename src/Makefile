@@ -7,6 +7,8 @@ CPP_O_FILES:=$(patsubst %.cpp,$(OUT_DIR)/%.o,$(CPP_FILES))
 MM_FILES:=$(wildcard *.mm)
 MM_O_FILES:=$(patsubst %.mm,$(OUT_DIR)/%.o,$(MM_FILES))
 
+O_FILES=$(CPP_O_FILES)
+
 ifeq ($(TARGET_PLATFORM),ios)
 O_FILES+=$(MM_O_FILES)
 endif
@@ -18,7 +20,6 @@ ifndef LTCPP
 LTCPP=g++
 endif
 
-O_FILES=$(CPP_O_FILES)
 INCLUDE_FLAGS=-I. -I../$(TARGET_PLATFORM)/include
 GPP_FLAGS= $(INCLUDE_FLAGS) $(LTCFLAGS) -DLTDEPTHBUF $(TARGET_FLAGS) -Wall -pthread
 GPP=$(CROSS)$(LTCPP)
