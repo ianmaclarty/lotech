@@ -43,4 +43,6 @@
 - Allow recording of events and generated random numbers for deterministic
   replay.
 
-- Detect scene graph cycles.
+- Detect scene graph cycles (at least in devmode).
+
+- Integrate assimp for importing 3d models.
