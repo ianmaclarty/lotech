@@ -48,13 +48,21 @@ void LTBody::draw() {
     if (body != NULL) {
         b2Vec2 pos = body->GetPosition();
         LTfloat scale = world->scale;
-        ltScale(scale, scale, 1.0f);
-        ltTranslate(pos.x, pos.y, 0.0f);
-        ltRotate(body->GetAngle() * LT_DEGREES_PER_RADIAN, 0.0f, 0.0f, 1.0f);
+        LTbool debug = world->debug;
+
+        if (debug) ltPushMatrix();
+
         if (child != NULL) {
+            ltTranslate(pos.x * scale, pos.y * scale, 0.0f);
+            ltRotate(body->GetAngle() * LT_DEGREES_PER_RADIAN, 0.0f, 0.0f, 1.0f);
             child->draw();
         }
-        if (world->debug) {
+
+        if (debug) {
+            ltPopMatrix();
+            ltScale(scale, scale, 0.0f);
+            ltTranslate(pos.x, pos.y, 0.0f);
+            ltRotate(body->GetAngle() * LT_DEGREES_PER_RADIAN, 0.0f, 0.0f, 1.0f);
             b2Fixture *fixture = body->GetFixtureList();
             while (fixture != NULL) {
                 LTFixture *f = (LTFixture*)fixture->GetUserData();
@@ -484,7 +492,7 @@ static void set_body_y(LTObject *obj, LTfloat val) {
 static LTfloat get_body_angle(LTObject *obj) {
     LTBody *b = (LTBody*)obj;
     if (b->body != NULL) {
-        return b->body->GetAngle();
+        return b->body->GetAngle() * LT_DEGREES_PER_RADIAN;
     } else {
         return 0.0f;
     }
@@ -495,6 +503,7 @@ static void set_body_angle(LTObject *obj, LTfloat val) {
     if (b->body != NULL) {
         b2Vec2 pos = b->body->GetPosition();
         b->body->SetTransform(pos, val * LT_RADIANS_PER_DEGREE);
+        b->body->SetAwake(true);
     }
 }
 
@@ -619,9 +628,9 @@ static int destroy_body(lua_State *L) {
     if (b != NULL) {
         LTWorld *world = body->world;
         body->destroy();
-        ltLuaGetRef(L, 1, body->world_ref);
-        ltLuaDelRef(L, -1, 1); // Remove reference from world to body
-                               // so body can be GC'd.
+        ltLuaGetNamedRef(L, 1, "world"); // push world
+        ltLuaDelRef(L, -1, body->world_ref); // Remove reference from world to body
+                                             // so body can be GC'd.
         lua_pop(L, 1);
         body->world_ref = LUA_NOREF;
         world->body_refs.erase(body);
@@ -767,8 +776,8 @@ static int destroy_fixture(lua_State *L) {
     LTFixture *fixture = lt_expect_LTFixture(L, 1);
     if (fixture->fixture != NULL) {
         fixture->destroy();
-        ltLuaGetRef(L, 1, fixture->body_ref);
-        ltLuaDelRef(L, -1, 1); // Remove ref from body to fixture.
+        ltLuaGetNamedRef(L, 1, "body"); // push body
+        ltLuaDelRef(L, -1, fixture->body_ref); // Remove ref from body to fixture.
         lua_pop(L, 1);
         fixture->body_ref = LUA_NOREF;
     }
@@ -900,24 +909,26 @@ struct FixtureQueryCallBack : b2QueryCallback {
     FixtureQueryCallBack(lua_State *L, LTFixture *master) {
         FixtureQueryCallBack::L = L;
         FixtureQueryCallBack::master = master;
+        world = master->body->world;
         i = 1;
     }
 
     virtual bool ReportFixture(b2Fixture *f) {
         LTFixture *fixture = (LTFixture*)f->GetUserData();
-        if (fixture->body != NULL && fixture != master) {
-            if (b2TestOverlap(
+        if (fixture->body != NULL && fixture != master
+            && b2TestOverlap(
                 fixture->fixture->GetShape(), 0,
                 master->fixture->GetShape(), 0,
                 fixture->body->body->GetTransform(),
                 master->body->body->GetTransform()))
-            {
-                ltLuaGetRef(L, 1, fixture->body->world->body_refs[fixture->body]); // push body
-                ltLuaGetRef(L, -1, fixture->body_ref); // push fixture
-                lua_rawseti(L, -3, i);
-                lua_pop(L, 1); // pop body
-                i++;
-            }
+        {
+            ltLuaGetNamedRef(L, 1, "body"); // push master body
+            ltLuaGetNamedRef(L, -1, "world"); // push world
+            ltLuaGetRef(L, -1, world->body_refs[fixture->body]); // push fixture body
+            ltLuaGetRef(L, -1, fixture->body_ref); // push fixture
+            lua_rawseti(L, -5, i);
+            lua_pop(L, 3); // pop body, world, body
+            i++;
         }
         return true;
     }
@@ -968,4 +979,4 @@ LT_REGISTER_METHOD(LTBody, Circle, new_circle_fixture);
 LT_REGISTER_TYPE(LTFixture, "box2d.Fixture", "lt.SceneNode");
 LT_REGISTER_PROPERTY_OBJ(LTFixture, body, LTBody, get_fixture_body, NULL);
 LT_REGISTER_METHOD(LTFixture, Destroy, destroy_fixture);
-LT_REGISTER_METHOD(LTFixture, Overlapping, fixture_find_overlaps);
+LT_REGISTER_METHOD(LTFixture, Touching, fixture_find_overlaps);

@@ -225,6 +225,7 @@ typedef void        (*LTObjSetter)(LTObject*, LTObject*);
 void ltLuaInitFFI(lua_State *L);
 int ltLuaAddRef(lua_State *L, int obj, int val);
 void ltLuaAddNamedRef(lua_State *L, int obj, int val, const char* name);
+void ltLuaGetNamedRef(lua_State *L, int obj, const char* name);
 void ltLuaDelRef(lua_State *L, int obj, int ref);
 void ltLuaGetRef(lua_State *L, int obj, int ref);
 int ltLuaCheckNArgs(lua_State *L, int n);

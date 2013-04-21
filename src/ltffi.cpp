@@ -701,6 +701,13 @@ void ltLuaAddNamedRef(lua_State *L, int obj, int val, const char* name) {
     lua_pop(L, 1); // pop env table
 }
 
+void ltLuaGetNamedRef(lua_State *L, int obj, const char* name) {
+    obj = absidx(L, obj);
+    lua_getfenv(L, obj);
+    lua_getfield(L, -1, name);
+    lua_remove(L, -2); // remove env table
+}
+
 void ltLuaDelRef(lua_State *L, int obj, int ref) {
     lua_getfenv(L, obj);
     luaL_unref(L, -1, ref);

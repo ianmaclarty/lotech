@@ -29,9 +29,9 @@ Then do:
     make
 
 This will generate the executable ltclient, which you can use to run
-the samples.  E.g:
+games.  E.g:
 
-    ./ltclient samples/balls
+    ./ltclient -fullscreen samples/meteor
 
 # License
 
