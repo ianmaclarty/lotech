@@ -1,0 +1,38 @@
+# Lotech
+
+A game framework designed by and for Ian MacLarty suitable for small-scope
+games and experimentation.
+
+Runs on Linux, Windows (MinGW) and Mac OS X.
+
+Some features:
+
+    - Lua-based
+    - Rendering via scene graph
+    - Automatic sprite atlas generation
+    - Render-to-texture
+    - Basic lighting and material support
+    - Limited support for importing wavefront .obj files
+    - 2D particle effects
+    - Box2D integration
+
+# Building
+
+On Linux, first install glew, glfw, openal and opengl libraries and headers.
+
+On Windows, install MinGW and MSYS.
+
+On Mac OS X install the Apple dev tools and ensure gcc is in your PATH.
+
+Then do:
+    
+    make
+
+This will generate the executable ltclient, which you can use to run
+the samples.  E.g:
+
+    ./ltclient samples/balls
+
+# License
+
+Lotech is released under the MIT license.  See the file COPYRIGHT for details.
