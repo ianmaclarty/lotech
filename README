@@ -1,7 +1,7 @@
 # Lotech
 
-A game framework designed by and for Ian MacLarty suitable for small-scope
-games and experimentation.
+A game framework designed by and for Ian MacLarty,
+suitable for small-scope games and experimentation.
 
 Runs on Linux, Windows (MinGW) and Mac OS X.
 
