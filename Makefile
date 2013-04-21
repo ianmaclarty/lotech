@@ -7,6 +7,13 @@ LTCFLAGS=-O3 -DNDEBUG
 
 default: ltclient
 
+ifeq ($(TARGET_PLATFORM),ios)
+default: libs
+endif
+ifeq ($(TARGET_PLATFORM),android)
+default: libs
+endif
+
 ############################ iOS Target ##############################
 ifeq ($(TARGET_PLATFORM),ios)
 
@@ -87,8 +94,11 @@ endif
 ##########################################################
 ##########################################################
 
-ltclient: $(TARGET_DIR)/liblt.a deplibs headers
-	cd clients/$(TARGET_PLATFORM)/ && make && cp $@ ../../
+.PHONY: libs
+libs: $(TARGET_DIR)/liblt.a deplibs headers
+
+ltclient: libs
+	cd clients/glfw/ && make && cp $@ ../../
 
 
 ##########################################################

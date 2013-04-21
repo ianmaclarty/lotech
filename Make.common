@@ -14,6 +14,22 @@ TARGET_PLATFORM=osx
 endif
 endif
 
+ifeq ($(TARGET_PLATFORM),ios)
+LTCFLAGS+=-DLTIOS -DLTGLES1 -ObjC++
+endif
+ifeq ($(TARGET_PLATFORM),android)
+LTCFLAGS+=-DLTANDROID -DLTGLES1
+endif
+ifeq ($(TARGET_PLATFORM),osx)
+LTCFLAGS+=-DLTOSX -ObjC++
+endif
+ifeq ($(TARGET_PLATFORM),linux)
+LTCFLAGS+=-DLTLINUX
+endif
+ifeq ($(TARGET_PLATFORM),mingw)
+LTCFLAGS+=-DLTMINGW
+endif
+
 LUA=lua-5.1.4
 LUAJIT=luajit-2.0
 BOX2D=Box2D-2.2.1
