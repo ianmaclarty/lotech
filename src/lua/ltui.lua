@@ -1,4 +1,5 @@
--- Copyright 2011 Ian MacLarty
+-- Copyright (C) 2010-2013 Ian MacLarty. See Copyright Notice in ../lt.h
+-- Copyright (C) 2010-2013 Ian MacLarty. See Copyright Notice in ../lt.h
 local current_button_input
 -- node:Button(bbox, onDown, onUp) or
 -- node:Button(onDown, onUp) (node itself is the bbox)

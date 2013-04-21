@@ -1,5 +1,6 @@
-/* Copyright (C) 2010 Ian MacLarty */
-
+/* Copyright (C) 2010-2013 Ian MacLarty. See Copyright Notice in lt.h. */
+/* Copyright (C) 2010-2013 Ian MacLarty. See Copyright Notice in lt.h. */
+/* Copyright (C) 2010-2013 Ian MacLarty. See Copyright Notice in lt.h. */
 LT_INIT_DECL(lttext)
 
 // 1 byte = 1 glyph

@@ -46,3 +46,5 @@
 - Detect scene graph cycles (at least in devmode).
 
 - Integrate assimp for importing 3d models.
+
+- Clean up .lua files (lots of useless junk there).

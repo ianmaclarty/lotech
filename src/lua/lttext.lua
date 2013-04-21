@@ -1,4 +1,5 @@
--- Copyright 2011 Ian MacLarty
+-- Copyright (C) 2010-2013 Ian MacLarty. See Copyright Notice in ../lt.h
+-- Copyright (C) 2010-2013 Ian MacLarty. See Copyright Notice in ../lt.h
 function lt.Text(str, font, halign, valign)
     halign = halign or "left"
     valign = valign or "center"

@@ -1,4 +1,6 @@
-/* Copyright (C) 2011 Ian MacLarty */
+/* Copyright (C) 2010-2013 Ian MacLarty. See Copyright Notice in lt.h. */
+/* Copyright (C) 2010-2013 Ian MacLarty. See Copyright Notice in lt.h. */
+/* Copyright (C) 2010-2013 Ian MacLarty. See Copyright Notice in lt.h. */
 #ifdef LTIOS
 bool ltIsIPad();
 bool ltIsRetinaIPhone();

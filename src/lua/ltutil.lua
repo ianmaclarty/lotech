@@ -1,5 +1,5 @@
--- Copyright 2011-2012 Ian MacLarty
-
+-- Copyright (C) 2010-2013 Ian MacLarty. See Copyright Notice in ../lt.h
+-- Copyright (C) 2010-2013 Ian MacLarty. See Copyright Notice in ../lt.h
 function table.clone(t)
     local copy = {}
     for k, v in pairs(t) do

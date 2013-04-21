@@ -1,4 +1,6 @@
-/* Copyright (C) 2012 Ian MacLactionarty */
+/* Copyright (C) 2010-2013 Ian MacLarty. See Copyright Notice in lt.h. */
+/* Copyright (C) 2010-2013 Ian MacLarty. See Copyright Notice in lt.h. */
+/* Copyright (C) 2010-2013 Ian MacLarty. See Copyright Notice in lt.h. */
 #define LT_CONCAT_(a, b) a##b
 #define LT_CONCAT(a, b) LT_CONCAT_(a, b)
 #define ct_assert(e) enum { LT_CONCAT(assert_line_, __LINE__) = 1/(!!(e)) }
