@@ -268,10 +268,10 @@ ifeq ($(TARGET_PLATFORM),mingw)
 ############################ MinGW Targets ##############################
 
 liblua.a: rebuild
-	#cd $(LUA_DIR) && $(MAKE) mingw
-	#cp $(LUA_DIR)/src/liblua.a $@
-	cd $(LUAJIT_DIR) && $(MAKE) BUILDMODE=static
-	cp $(LUAJIT_DIR)/src/libluajit.a $@
+	cd $(LUA_DIR) && $(MAKE) mingw
+	cp $(LUA_DIR)/src/liblua.a $@
+	#cd $(LUAJIT_DIR) && $(MAKE) BUILDMODE=static
+	#cp $(LUAJIT_DIR)/src/libluajit.a $@
 
 libbox2d.a: rebuild
 	cd $(BOX2D_DIR) && $(MAKE) \
