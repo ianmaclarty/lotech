@@ -9,7 +9,6 @@ DIFF*
 PATCH*
 tags
 build/harness
-deps/
 tools/*.png
 tools/devserver
 tools/randtest
