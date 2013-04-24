@@ -78,6 +78,7 @@ THE SOFTWARE.
 #include <AL/al.h>
 #include <AL/alc.h>
 #elif LTMINGW
+#define AL_LIBTYPE_STATIC 1
 #include <AL/al.h>
 #include <AL/alc.h>
 #elif !defined(LTANDROID)

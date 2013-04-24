@@ -13,7 +13,7 @@ ifeq ($(TARGET_PLATFORM),android)
 #TARGETS+=libopenal.a openal_headers
 endif
 ifeq ($(TARGET_PLATFORM),mingw)
-TARGETS+=glfw_headers libglfw.a libOpenAL32.dll.a openal_headers glew32s.lib glew_headers
+TARGETS+=glfw_headers libglfw.a libOpenAL32.a openal_headers glew32s.lib glew_headers
 endif
 ifeq ($(TARGET_PLATFORM),osx)
 TARGETS+=glfw_headers libglfw.a libGLEW.a glew_headers
@@ -294,15 +294,15 @@ libpng.a: rebuild
 libglfw.a:
 	cp glfw-2.7.3.bin.WIN32/lib-mingw/libglfw.a .
 
-libOpenAL32.dll.a:
-	cp openal-soft-1.13-win32/lib/Win32/libOpenAL32.dll.a .
+libOpenAL32.a:
+	cp openal-soft/mingw/libOpenAL32.a .
 
 glew32s.lib:
 	cp glew-1.7.0-win32/lib/glew32s.lib .
 
 .PHONY: openal_headers
 openal_headers:
-	cp -r openal-soft-1.13-win32/include/* include/
+	cp -r openal-soft/include/* include/
 
 .PHONY: glfw_headers
 glfw_headers:
