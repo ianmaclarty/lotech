@@ -1,0 +1,66 @@
+This is commit 43b406ad9bb32ebde78d26255a2a4f4a09a29926
+of openal-soft from git://repo.or.cz/openal-soft.git.
+
+The following modifications have been made:
+
+diff --git a/OpenAL32/Include/alMain.h b/OpenAL32/Include/alMain.h
+index e6f45ac..e8d88cb 100644
+--- a/OpenAL32/Include/alMain.h
++++ b/OpenAL32/Include/alMain.h
+@@ -118,7 +118,7 @@ void *GetSymbol(void *handle, const char *name);
+ 
+ typedef void *volatile XchgPtr;
+ 
+-#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 1)) && !defined(__QNXNTO__)
++#if !defined(__MINGW32__) && defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 1)) && !defined(__QNXNTO__)
+ typedef ALuint RefCount;
+ static __inline RefCount IncrementRef(volatile RefCount *ptr)
+ { return __sync_add_and_fetch(ptr, 1); }
+diff --git a/deps/openal-soft/CMakeLists.txt b/deps/openal-soft/CMakeLists.txt
+index 81c0980..d279ace 100644
+--- a/deps/openal-soft/CMakeLists.txt
++++ b/deps/openal-soft/CMakeLists.txt
+@@ -138,18 +138,6 @@ IF(MSVC)
+     ADD_DEFINITIONS(-D_CRT_SECURE_NO_WARNINGS)
+     ADD_DEFINITIONS(-D_CRT_NONSTDC_NO_DEPRECATE)
+ 
+-    IF(NOT DXSDK_DIR)
+-        STRING(REGEX REPLACE "\\\\" "/" DXSDK_DIR "$ENV{DXSDK_DIR}")
+-    ELSE()
+-        STRING(REGEX REPLACE "\\\\" "/" DXSDK_DIR "${DXSDK_DIR}")
+-    ENDIF()
+-    IF(DXSDK_DIR)
+-        MESSAGE(STATUS "Using DirectX SDK directory: ${DXSDK_DIR}")
+-        SET(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} "${DXSDK_DIR}/Include")
+-        INCLUDE_DIRECTORIES("${DXSDK_DIR}/Include")
+-        LINK_DIRECTORIES("${DXSDK_DIR}/Lib")
+-    ENDIF()
+-
+     OPTION(FORCE_STATIC_VCRT "Force /MT for static VC runtimes" OFF)
+     IF(FORCE_STATIC_VCRT)
+         FOREACH(flag_var
+@@ -188,6 +176,20 @@ ELSE()
+                              int main() {return 0;}" HAVE_GCC_DESTRUCTOR)
+ ENDIF()
+ 
++IF(WIN32)
++    IF(NOT DXSDK_DIR)
++        STRING(REGEX REPLACE "\\\\" "/" DXSDK_DIR "$ENV{DXSDK_DIR}")
++    ELSE()
++        STRING(REGEX REPLACE "\\\\" "/" DXSDK_DIR "${DXSDK_DIR}")
++    ENDIF()
++    IF(DXSDK_DIR)
++        MESSAGE(STATUS "Using DirectX SDK directory: ${DXSDK_DIR}")
++        SET(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} "${DXSDK_DIR}/Include")
++        INCLUDE_DIRECTORIES("${DXSDK_DIR}/Include")
++        LINK_DIRECTORIES("${DXSDK_DIR}/Lib")
++    ENDIF()
++ENDIF()
++
+ # Set visibility/export options if available
+ IF(WIN32)
+     SET(EXPORT_DECL "__declspec(dllexport)")
+
+The script build_static_mingw.sh has been added for building the static
+version of the library on MinGW (this makes assumptions about where the
+DirectX SDK is installed).

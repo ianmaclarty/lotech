@@ -21,7 +21,6 @@ mingw/
 *.res
 ffitest
 target
-D*
 Make.params
 src/lua_scripts.h
 ltclient
