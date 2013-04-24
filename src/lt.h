@@ -156,7 +156,6 @@ extern "C" {
 #include "lttime.h"
 #include "lttween.h"
 #include "ltaudio.h"
-#include "ltmixer.h"
 #include "ltvector.h"
 #include "ltmesh.h"
 #include "ltrendertarget.h"

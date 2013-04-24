@@ -1,4 +1,6 @@
 /* Copyright (C) 2010-2013 Ian MacLarty. See Copyright Notice in lt.h. */
+
+/*
 #include "lt.h"
 #include <pthread.h>
 
@@ -40,3 +42,4 @@ void ltLockMutex(LTMutex *mutex) {
 void ltUnlockMutex(LTMutex *mutex) {
     pthread_mutex_unlock(mutex);
 }
+*/
