@@ -18,11 +18,9 @@ Some features:
 
 # Building
 
-On Linux, first install glew, glfw, openal and opengl libraries and headers.
+On Linux install glew, glfw, openal and opengl libraries and headers.
 
-On Windows, install MinGW, MSYS and the DirectX SDK.
-I'm using DirectX 9.0 SDK "Summer (2004)", but later versions should also work.
-Update the path to dsound.lib in client/glfw/Makefile.
+On Windows install MinGW and MSYS
 
 On Mac OS X install the Apple dev tools and ensure gcc is in your PATH.
 
