@@ -39,7 +39,7 @@ are reproduced below.
 - libpng 1.4.3
 - zlib 1.2.5
 - Cocos2D (for some of the particle effects code)
-- OpenAL-soft 1.13 
+- OpenAL-soft (dev version from git repo, see deps/openal-soft/README.lotech)
 
 ###############################################################################
 ###############################################################################
@@ -468,8 +468,9 @@ THE SOFTWARE.
 ###############################################################################
  
 
-## OpenAL-soft 1.13
+## OpenAL-soft
 
+ 
 		  GNU LIBRARY GENERAL PUBLIC LICENSE
 		       Version 2, June 1991
 
