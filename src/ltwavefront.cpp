@@ -2,23 +2,6 @@
 #include "lt.h"
 LT_INIT_IMPL(ltwavefront)
 
-struct t_vertex {
-    LTfloat x;
-    LTfloat y;
-    LTfloat z;
-};
-
-struct t_texture_coord {
-    LTfloat u;
-    LTfloat v;
-};
-
-struct t_normal {
-    LTfloat nx;
-    LTfloat ny;
-    LTfloat nz;
-};
-
 struct t_face_component {
     long v;
     long t;
@@ -48,9 +31,9 @@ bool ltReadWavefrontMesh(const char *filename, LTMesh *mesh) {
         // ltReadTextFile would have already emitted an error.
         return false;
     }
-    std::vector<t_vertex> vertices;
-    std::vector<t_texture_coord> texture_coords;
-    std::vector<t_normal> normals;
+    std::vector<LTVec3> vertices;
+    std::vector<LTTexCoord> texture_coords;
+    std::vector<LTVec3> normals;
     std::vector<t_face> faces;
 
     int line = 1;
@@ -65,7 +48,7 @@ bool ltReadWavefrontMesh(const char *filename, LTMesh *mesh) {
                     case ' ': {
                         str++;
                         // t_vertex
-                        t_vertex v;
+                        LTVec3 v;
                         v.x = strtof(str, &str);
                         v.y = strtof(str, &str);
                         v.z = strtof(str, &str);
@@ -75,7 +58,7 @@ bool ltReadWavefrontMesh(const char *filename, LTMesh *mesh) {
                     case 't': {
                         str++;
                         // texture coord
-                        t_texture_coord t;
+                        LTTexCoord t;
                         t.u = strtof(str, &str);
                         t.v = strtof(str, &str); // XXX assuming v component is present
                         texture_coords.push_back(t);
@@ -84,10 +67,10 @@ bool ltReadWavefrontMesh(const char *filename, LTMesh *mesh) {
                     case 'n': {
                         str++;
                         // t_normal
-                        t_normal n;
-                        n.nx = strtof(str, &str);
-                        n.ny = strtof(str, &str);
-                        n.nz = strtof(str, &str);
+                        LTVec3 n;
+                        n.x = strtof(str, &str);
+                        n.y = strtof(str, &str);
+                        n.z = strtof(str, &str);
                         normals.push_back(n); // XXX assuming t_normal is unit.
                         break;
                     }
@@ -167,8 +150,8 @@ bool ltReadWavefrontMesh(const char *filename, LTMesh *mesh) {
         stride += 4;
     }
 
-    void *data = malloc(stride * 3 * num_faces);
-    void *ptr = data;
+    LTVertData *vdata = new LTVertData[3 * num_faces];
+    int k = 0;
     for (int i = 0; i < num_faces; i++) {
         for (int j = 0; j < 3; j++) {
             int v = faces[i][j].v - 1;
@@ -187,29 +170,19 @@ bool ltReadWavefrontMesh(const char *filename, LTMesh *mesh) {
                 return false;
             }
 
-            LTfloat *fptr = (LTfloat*)ptr;
-            fptr[0] = vertices[v].x;
-            fptr[1] = vertices[v].y;
-            fptr[2] = vertices[v].z;
-            lt_incr_ptr(&ptr, 3 * 4);
+            vdata[k].xyz = vertices[v];
             if (n >= 0) {
-                LTbyte *bptr = (LTbyte*)ptr;
-                bptr[0] = (LTbyte)(normals[n].nx * 127.0f);
-                bptr[1] = (LTbyte)(normals[n].ny * 127.0f);
-                bptr[2] = (LTbyte)(normals[n].nz * 127.0f);
-                bptr[3] = '\0';
-                lt_incr_ptr(&ptr, 4);
+                vdata[k].normal = normals[n];
             }
             if (t >= 0) {
-                LTshort *sptr = (LTshort*)ptr;
-                sptr[0] = (LTshort)(texture_coords[t].u * (LTfloat)LT_MAX_TEX_COORD);
-                sptr[1] = (LTshort)(texture_coords[t].v * (LTfloat)LT_MAX_TEX_COORD);
-                lt_incr_ptr(&ptr, 4);
+                vdata[k].uv = texture_coords[t];
             }
+            k++;
         }
     }
+    assert(k == num_faces * 3);
 
-    mesh->~LTMesh(); // decontruct before constructing again.
-    new (mesh) LTMesh(3, false, has_normals, has_texture_coords, NULL, LT_DRAWMODE_TRIANGLES, data, num_faces * 3);
+    mesh->~LTMesh(); // deconstruct before constructing again.
+    new (mesh) LTMesh(3, false, has_normals, has_texture_coords, NULL, LT_DRAWMODE_TRIANGLES, vdata, num_faces * 3);
     return true;
 }

@@ -145,6 +145,8 @@ lt.config = {
 }
 
 function lt._Setup() 
+    lt.config.world_width = lt.config.world_right - lt.config.world_left
+    lt.config.world_height = lt.config.world_top - lt.config.world_bottom
     if not lt.config.short_name then
         error("lt.config.short_name not set.  Please set it in config.lua.")
     end

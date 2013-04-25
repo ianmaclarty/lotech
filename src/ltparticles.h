@@ -4,7 +4,7 @@ LT_INIT_DECL(ltparticles)
 // This is based on the Cocos2D particle system.
 
 struct LTParticle {
-    LTPoint pos;
+    LTVec2 pos;
     LTColor color;
     LTColor delta_color;
     LTfloat size;
@@ -12,14 +12,14 @@ struct LTParticle {
     LTdegrees rotation;
     LTdegrees delta_rotation;
     LTfloat time_to_live;
-    LTPoint dir;
+    LTVec2 dir;
     LTfloat radial_accel;
     LTfloat tangential_accel;
     LTfloat damping;
 };
 
 struct LTParticleVertexData {
-    LTPoint vertex;
+    LTVec2 vertex;
     LTCompactColor color;
     LTtexcoord tex_coord_x;
     LTtexcoord tex_coord_y;
@@ -36,11 +36,11 @@ struct LTParticleSystem : LTSceneNode {
     bool particles_active;
     LTfloat duration;
     LTfloat elapsed;
-    LTPoint source_position;
-    LTPoint source_position_variance;
+    LTVec2 source_position;
+    LTVec2 source_position_variance;
     LTdegrees angle;
     LTdegrees angle_variance;
-    LTPoint gravity;
+    LTVec2 gravity;
     LTfloat speed;
     LTfloat speed_variance;
     LTfloat tangential_accel;

@@ -4,7 +4,7 @@
 
 LT_INIT_IMPL(ltparticles)
 
-ct_assert(sizeof(LTPoint) == 8);
+ct_assert(sizeof(LTVec2) == 8);
 ct_assert(sizeof(LTCompactColor) == 4);
 
 struct LTParticleSystemAction : LTAction {
@@ -222,7 +222,7 @@ void LTParticleSystem::advance(LTfloat dt) {
         LTParticle *p = &particles[i];
         p->time_to_live -= dt;
         if (p->time_to_live > 0.0f) {
-            LTPoint tmp, radial, tangential;
+            LTVec2 tmp, radial, tangential;
             radial = p->pos;
             radial.normalize();
             tangential = radial;

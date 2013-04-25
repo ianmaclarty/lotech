@@ -2,16 +2,16 @@
 LT_INIT_DECL(ltgraphics)
 #define LT_MAX_TEX_COORD 8192
 
-struct LTPoint {
+struct LTVec2 {
     LTfloat x;
     LTfloat y;
 
-    LTPoint(LTfloat x, LTfloat y) {
-        LTPoint::x = x;
-        LTPoint::y = y;
+    LTVec2(LTfloat x, LTfloat y) {
+        LTVec2::x = x;
+        LTVec2::y = y;
     }
 
-    LTPoint() {
+    LTVec2() {
         x = 0.0f;
         y = 0.0f;
     }
@@ -29,18 +29,33 @@ struct LTPoint {
     }
 };
 
-struct LTPoint3D {
+struct LTTexCoord {
+    LTfloat u;
+    LTfloat v;
+
+    LTTexCoord(LTfloat u, LTfloat v) {
+        LTTexCoord::u = u;
+        LTTexCoord::v = v;
+    }
+
+    LTTexCoord() {
+        u = 0.0f;
+        v = 0.0f;
+    }
+};
+
+struct LTVec3 {
     LTfloat x;
     LTfloat y;
     LTfloat z;
 
-    LTPoint3D(LTfloat x, LTfloat y, LTfloat z) {
-        LTPoint3D::x = x;
-        LTPoint3D::y = y;
-        LTPoint3D::z = z;
+    LTVec3(LTfloat x, LTfloat y, LTfloat z) {
+        LTVec3::x = x;
+        LTVec3::y = y;
+        LTVec3::z = z;
     }
 
-    LTPoint3D() {
+    LTVec3() {
         x = 0.0f;
         y = 0.0f;
         z = 0.0f;
@@ -48,13 +63,43 @@ struct LTPoint3D {
 
     void normalize() {
         LTfloat l = len();
-        x /= l;
-        y /= l;
-        z /= l;
+        if (l != 0.0f) {
+            x /= l;
+            y /= l;
+            z /= l;
+        } else {
+            x = 0.0f;
+            y = 0.0f;
+            z = 0.0f;
+        }
     }
 
     LTfloat len() {
         return sqrtf(x * x + y * y + z * z);
+    }
+
+    LTVec3 operator+(LTVec3 v) {
+        return LTVec3(x + v.x, y + v.y, z + v.z);
+    }
+
+    void operator+=(LTVec3 v) {
+        x += v.x;
+        y += v.y;
+        z += v.z;
+    }
+
+    LTVec3 operator-(LTVec3 v) {
+        return LTVec3(x - v.x, y - v.y, z - v.z);
+    }
+
+    LTVec3 cross(LTVec3 v) {
+        return LTVec3(y * v.z - z * v.y, z * v.x - x * v.z, x * v.y - y * v.x);
+    }
+
+    void zero() {
+        x = 0.0f;
+        y = 0.0f;
+        z = 0.0f;
     }
 };
 

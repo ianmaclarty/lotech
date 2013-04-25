@@ -25,3 +25,4 @@ Make.params
 src/lua_scripts.h
 ltclient
 *.xcf
+.*.swp
