@@ -3,6 +3,10 @@ images = lt.LoadImages({
     "wall_inner"
 }, "nearest", "nearest")
 
+samples = lt.LoadSamples({
+    "laser"
+})
+
 import "bg"
 
 math.randomseed(os.time())
@@ -13,10 +17,15 @@ lt.FixGlobals()
 local main_layer = lt.Layer()
 lt.root:Insert(main_layer)
 
+local fire_laser
+
 -- Input
 local key_down = {}
 main_layer:KeyDown(function(event)
     key_down[event.key] = true
+    if event.key == "X" then
+        fire_laser()
+    end
 end)
 main_layer:KeyUp(function(event)
     key_down[event.key] = false
@@ -129,5 +138,63 @@ ship_body:Action(function(dt, b)
         end
     end
 end)
-
 main_layer:Insert(ship_body)
+
+function fire_laser()
+    local speed = 4
+    local x = ship_body.x
+    local y = ship_body.y
+    local laser_body = world:Body({type="kinematic", x = x, y = y})
+    local h = 0.05
+    local w = 0.1
+    local laser_fixture = laser_body:Polygon{-w, -h, -w, h, w, h, w, -h}
+    laser_body:Action(function(dt, b)
+        x = x + speed * dt
+        if x > 600 then
+            b:Destroy()
+            main_layer:Remove(b)
+        end
+        b.x = x
+        for _, f in ipairs(laser_fixture:Touching()) do
+            if f.cave_wall or f.enemy then
+                b:Destroy()
+                main_layer:Remove(b)
+            end
+            if f.enemy then
+                f.body:Destroy()
+                main_layer:Remove(f.body)
+            end
+        end
+    end)
+    main_layer:Insert(laser_body)
+    samples.laser:Play()
+end
+
+-- Enemies
+
+local
+function make_enemy()
+    local speed = 0.7
+    local x = 5
+    local y = 2
+    local enemy_body = world:Body({type="kinematic", x = x, y = y})
+    local enemy_fixture = enemy_body:Circle(0.1, 0, 0)
+    enemy_fixture.enemy = true
+    main_layer:Insert(enemy_body)
+    enemy_body:Action(function(dt, b)
+        x = x - speed * dt
+        if x < -1 then
+            b:Destroy()
+            main_layer:Remove(b)
+            return true
+        end
+        b.x = x
+    end)
+end
+
+main_layer:Action(coroutine.wrap(function(dt)
+    while true do
+        coroutine.yield(math.random() * 2 + 2)
+        make_enemy()
+    end
+end))

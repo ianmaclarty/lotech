@@ -347,6 +347,11 @@ static int particles_advance(lua_State *L) {
     return 0;
 }
 
+static LTbool get_is_finished(LTObject *obj) {
+    LTParticleSystem *p = (LTParticleSystem*)obj;
+    return !(p->particles_active || p->num_particles > 0);
+}
+
 LT_REGISTER_TYPE(LTParticleSystem, "lt.ParticleSystem", "lt.SceneNode")
 LT_REGISTER_METHOD(LTParticleSystem, Advance, particles_advance)
 LT_REGISTER_FIELD_OBJ(LTParticleSystem, img, LTImage)
@@ -396,3 +401,4 @@ LT_REGISTER_FIELD_FLOAT(LTParticleSystem, start_spin_variance)
 LT_REGISTER_FIELD_FLOAT(LTParticleSystem, end_spin)
 LT_REGISTER_FIELD_FLOAT(LTParticleSystem, end_spin_variance)
 LT_REGISTER_FIELD_OBJ(LTParticleSystem, fixture, LTFixture)
+LT_REGISTER_PROPERTY_BOOL(LTParticleSystem, finished, get_is_finished, NULL)

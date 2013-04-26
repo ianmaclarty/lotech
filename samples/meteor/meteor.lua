@@ -95,11 +95,13 @@ function make_meteor()
                 meteor_body:Destroy()
                 local explosion = meteor_explosion(images, angle + 180):Translate(x, y)
                 meteor_layer:Insert(explosion)
-                meteor_layer:Action(coroutine.wrap(function(dt)
-                    coroutine.yield(1)
-                    meteor_layer:Remove(explosion)
-                    return true
-                end))
+                meteor_layer:Action(function(dt)
+                    if explosion.finished then
+                        meteor_layer:Remove(explosion)
+                        log("explosion removed")
+                        return true
+                    end
+                end)
                 samples.meteor_explode:Play()
                 return true
             elseif f.ship then

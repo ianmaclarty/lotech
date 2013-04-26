@@ -692,28 +692,25 @@ static int new_polygon_fixture(lua_State *L) {
         if (!lua_istable(L, 2)) {
             return luaL_error(L, "Expecting an array in second argument");
         }
-        int i = 1;
-        int num_vertices = 0;
+        int len = lua_objlen(L, 2);
+        if (len & 1) {
+            return luaL_error(L, "Expecting an even number of elements in vertex array");
+        }
+        int num_vertices = len / 2;
+        if (num_vertices < 3) {
+            return luaL_error(L, "Need at least 3 vertices");
+        }
+        if (num_vertices > b2_maxPolygonVertices) {
+            return luaL_error(L, "Too many vertices (at most %d allowed)", b2_maxPolygonVertices);
+        }
         b2PolygonShape poly;
         b2Vec2 vertices[b2_maxPolygonVertices];
-        while (num_vertices < b2_maxPolygonVertices) {
-            lua_rawgeti(L, 2, i);
-            if (lua_isnil(L, -1)) {
-                lua_pop(L, 1);
-                break;
-            }
-            vertices[num_vertices].x = luaL_checknumber(L, -1);
-            lua_pop(L, 1);
-            i++;
-            lua_rawgeti(L, 2, i);
-            if (lua_isnil(L, -1)) {
-                lua_pop(L, 1);
-                break;
-            }
-            vertices[num_vertices].y = luaL_checknumber(L, -1);
-            lua_pop(L, 1);
-            i++;
-            num_vertices++;
+        for (int i = 0; i < num_vertices; i++) {
+            lua_rawgeti(L, 2, i * 2 + 1);
+            lua_rawgeti(L, 2, i * 2 + 2);
+            vertices[i].x = luaL_checknumber(L, -2);
+            vertices[i].y = luaL_checknumber(L, -1);
+            lua_pop(L, 2);
         }
         if (!ltCheckB2Poly(vertices, num_vertices)) {
             // Reverse vertices.
