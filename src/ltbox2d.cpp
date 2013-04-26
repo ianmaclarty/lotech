@@ -111,8 +111,13 @@ void LTFixture::draw() {
         switch (shape->m_type) {
             case b2Shape::e_edge:
                 break;
-            case b2Shape::e_chain:
+            case b2Shape::e_chain: {
+                b2ChainShape *chain = (b2ChainShape *)shape;
+                ltPushTint(1.0f, 1.0f, 1.0f, 1.0f);
+                ltDrawLineStrip((LTfloat *)chain->m_vertices, chain->m_count);
+                ltPopTint();
                 break;
+            }
             case b2Shape::e_circle: {
                 b2CircleShape *circle = (b2CircleShape *)shape;
                 ltPushMatrix();
@@ -735,7 +740,7 @@ static int new_polygon_fixture(lua_State *L) {
         fixture->body_ref = ltLuaAddRef(L, 1, -1); // Add reference from body to new fixture.
         ltLuaAddNamedRef(L, -1, 1, "body"); // Add reference from fixture to body.
     } else {
-        lua_pushnil(L);
+        return luaL_error(L, "Cannot add fixtures to destroyed body");
     }
     return 1;
 }
@@ -761,7 +766,51 @@ static int new_circle_fixture(lua_State *L) {
         fixture->body_ref = ltLuaAddRef(L, 1, -1); // Add reference from body to new fixture.
         ltLuaAddNamedRef(L, -1, 1, "body"); // Add reference from fixture to body.
     } else {
-        lua_pushnil(L);
+        return luaL_error(L, "Cannot add fixtures to destroyed body");
+    }
+    return 1;
+}
+
+static int new_chain_fixture(lua_State *L) {
+    int nargs = ltLuaCheckNArgs(L, 2);
+    LTBody *body = lt_expect_LTBody(L, 1);
+    if (body->body != NULL) {
+        // Second argument is array of chain vertices.
+        if (!lua_istable(L, 2)) {
+            return luaL_error(L, "Expecting an array in second argument");
+        }
+        int len = lua_objlen(L, 2);
+        if (len < 4) {
+            return luaL_error(L, "Chain requires at least 2 vertices");
+        }
+        if (len & 1) {
+            return luaL_error(L, "Vertex list should have even length");
+        }
+        int num_vertices = len / 2;
+        b2Vec2 *vertices = new b2Vec2[num_vertices];
+        for (int i = 0; i < num_vertices; i++) {
+            lua_rawgeti(L, 2, i * 2 + 1);
+            lua_rawgeti(L, 2, i * 2 + 2);
+            vertices[i].x = luaL_checknumber(L, -2);
+            vertices[i].y = luaL_checknumber(L, -1);
+            lua_pop(L, 2);
+        }
+        b2ChainShape chain;
+        chain.CreateChain(vertices, num_vertices);
+        delete[] vertices;
+
+        // Third argument is a table of fixture properties.
+        b2FixtureDef fixture_def;
+        fixture_def.density = 1.0f;
+        if (nargs >= 3) {
+            read_fixture_attributes(L, 3, &fixture_def);
+        }
+        fixture_def.shape = &chain;
+        LTFixture *fixture = new (lt_alloc_LTFixture(L)) LTFixture(body, &fixture_def);
+        fixture->body_ref = ltLuaAddRef(L, 1, -1); // Add reference from body to new fixture.
+        ltLuaAddNamedRef(L, -1, 1, "body"); // Add reference from fixture to body.
+    } else {
+        return luaL_error(L, "Cannot add fixtures to destroyed body");
     }
     return 1;
 }
@@ -915,20 +964,39 @@ struct FixtureQueryCallBack : b2QueryCallback {
 
     virtual bool ReportFixture(b2Fixture *f) {
         LTFixture *fixture = (LTFixture*)f->GetUserData();
-        if (fixture->body != NULL && fixture != master
-            && b2TestOverlap(
-                fixture->fixture->GetShape(), 0,
-                master->fixture->GetShape(), 0,
-                fixture->body->body->GetTransform(),
-                master->body->body->GetTransform()))
-        {
-            ltLuaGetNamedRef(L, 1, "body"); // push master body
-            ltLuaGetNamedRef(L, -1, "world"); // push world
-            ltLuaGetRef(L, -1, world->body_refs[fixture->body]); // push fixture body
-            ltLuaGetRef(L, -1, fixture->body_ref); // push fixture
-            lua_rawseti(L, -5, i);
-            lua_pop(L, 3); // pop body, world, body
-            i++;
+        if (fixture->body != NULL && fixture != master) {
+            bool is_overlap = false;
+            b2Shape *shape1 = fixture->fixture->GetShape();
+            b2Shape *shape2 = master->fixture->GetShape();
+            b2Transform transform1 = fixture->body->body->GetTransform();
+            b2Transform transform2 = master->body->body->GetTransform();
+            if (shape1->m_type == b2Shape::e_chain && shape2->m_type == b2Shape::e_chain) {
+                // At least one shape must have volume for overlap.
+                is_overlap = false;
+            } else if (shape1->m_type == b2Shape::e_chain) {
+                int n = shape1->GetChildCount();
+                for (int c = 0; c < n; c++) {
+                    is_overlap = b2TestOverlap(shape1, c, shape2, 0, transform1, transform2);
+                    if (is_overlap) break;
+                }
+            } else if (shape2->m_type == b2Shape::e_chain) {
+                int n = shape2->GetChildCount();
+                for (int c = 0; c < n; c++) {
+                    is_overlap = b2TestOverlap(shape1, 0, shape2, c, transform1, transform2);
+                    if (is_overlap) break;
+                }
+            } else {
+                is_overlap = b2TestOverlap(shape1, 0, shape2, 0, transform1, transform2);
+            }
+            if (is_overlap) {
+                ltLuaGetNamedRef(L, 1, "body"); // push master body
+                ltLuaGetNamedRef(L, -1, "world"); // push world
+                ltLuaGetRef(L, -1, world->body_refs[fixture->body]); // push fixture body
+                ltLuaGetRef(L, -1, fixture->body_ref); // push fixture
+                lua_rawseti(L, -5, i);
+                lua_pop(L, 3); // pop body, world, body
+                i++;
+            }
         }
         return true;
     }
@@ -975,6 +1043,7 @@ LT_REGISTER_METHOD(LTBody, AngularImpulse, body_apply_angular_impulse);
 LT_REGISTER_METHOD(LTBody, Destroy, destroy_body);
 LT_REGISTER_METHOD(LTBody, Polygon, new_polygon_fixture);
 LT_REGISTER_METHOD(LTBody, Circle, new_circle_fixture);
+LT_REGISTER_METHOD(LTBody, Chain, new_chain_fixture);
 
 LT_REGISTER_TYPE(LTFixture, "box2d.Fixture", "lt.SceneNode");
 LT_REGISTER_PROPERTY_OBJ(LTFixture, body, LTBody, get_fixture_body, NULL);

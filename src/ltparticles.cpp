@@ -55,20 +55,20 @@ void LTParticleSystem::init(lua_State *L) {
     texture_id = img->texture_id;
     img_left = img->world_vertices[0];
     img_right = img->world_vertices[2];
-    img_bottom = img->world_vertices[5];
-    img_top = img->world_vertices[1];
+    img_bottom = img->world_vertices[1];
+    img_top = img->world_vertices[5];
 
     quads = new LTParticleQuad[n];
 
     for (int i = 0; i < n; i++) {
-        quads[i].bottom_left.tex_coord_x  = img->tex_coords[6];
-        quads[i].bottom_left.tex_coord_y  = img->tex_coords[7];
-        quads[i].bottom_right.tex_coord_x = img->tex_coords[4];
-        quads[i].bottom_right.tex_coord_y = img->tex_coords[5];
-        quads[i].top_left.tex_coord_x     = img->tex_coords[0];
-        quads[i].top_left.tex_coord_y     = img->tex_coords[1];
-        quads[i].top_right.tex_coord_x    = img->tex_coords[2];
-        quads[i].top_right.tex_coord_y    = img->tex_coords[3];
+        quads[i].bottom_left.tex_coord_x  = img->tex_coords[0];
+        quads[i].bottom_left.tex_coord_y  = img->tex_coords[1];
+        quads[i].bottom_right.tex_coord_x = img->tex_coords[2];
+        quads[i].bottom_right.tex_coord_y = img->tex_coords[3];
+        quads[i].top_right.tex_coord_x    = img->tex_coords[4];
+        quads[i].top_right.tex_coord_y    = img->tex_coords[5];
+        quads[i].top_left.tex_coord_x     = img->tex_coords[6];
+        quads[i].top_left.tex_coord_y     = img->tex_coords[7];
     }
     indices = new LTushort[n * 6];
     for (int i = 0; i < n; i++) {

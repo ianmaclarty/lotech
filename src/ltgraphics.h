@@ -166,6 +166,7 @@ void ltSetMainFrameBuffer(LTframebuf fbo);
 void ltSetViewPort(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2);
 void ltSetScreenSize(int width, int height);
 void ltSetDesignScreenSize(LTfloat width, LTfloat height);
+void ltGetDesignScreenSize(LTfloat *width, LTfloat *height);
 void ltSetDisplayOrientation(LTDisplayOrientation orientation);
 void ltAdjustViewportAspectRatio();
 
@@ -205,6 +206,7 @@ void ltDrawUnitCircle();
 void ltDrawRect(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2);
 void ltDrawEllipse(LTfloat x, LTfloat y, LTfloat rx, LTfloat ry);
 void ltDrawPoly(LTfloat *vertices, int num_vertices); /* Must be convex */
+void ltDrawLineStrip(LTfloat *vertices, int num_vertices);
 
 void ltDrawConnectingOverlay();
 

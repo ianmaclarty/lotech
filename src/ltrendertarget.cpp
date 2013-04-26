@@ -84,10 +84,10 @@ static void setup_texture_coords(LTRenderTarget *target) {
     int texel_h = LT_MAX_TEX_COORD / target->tex_height;
     LTtexcoord tex_right = target->width * texel_w;
     LTtexcoord tex_top = target->height * texel_h;
-    target->tex_coords[0] = 0;          target->tex_coords[1] = tex_top;
-    target->tex_coords[2] = tex_right;  target->tex_coords[3] = tex_top;
-    target->tex_coords[4] = tex_right;  target->tex_coords[5] = 0;
-    target->tex_coords[6] = 0;          target->tex_coords[7] = 0;
+    target->tex_coords[0] = 0;          target->tex_coords[1] = 0;
+    target->tex_coords[2] = tex_right;  target->tex_coords[3] = 0;
+    target->tex_coords[4] = tex_right;  target->tex_coords[5] = tex_top;
+    target->tex_coords[6] = 0;          target->tex_coords[7] = tex_top;
     ltBindVertBuffer(target->texbuf);
     ltStaticVertBufferData(sizeof(LTtexcoord) * 8, target->tex_coords);
 }
@@ -108,10 +108,10 @@ void LTRenderTarget::setup() {
     setup_texture_coords(this);
 
     // Set up world vertices for drawing.
-    world_vertices[0] = wld_x1;  world_vertices[1] = wld_y2;
-    world_vertices[2] = wld_x2;  world_vertices[3] = wld_y2;
-    world_vertices[4] = wld_x2;  world_vertices[5] = wld_y1;
-    world_vertices[6] = wld_x1;  world_vertices[7] = wld_y1;
+    world_vertices[0] = wld_x1;  world_vertices[1] = wld_y1;
+    world_vertices[2] = wld_x2;  world_vertices[3] = wld_y1;
+    world_vertices[4] = wld_x2;  world_vertices[5] = wld_y2;
+    world_vertices[6] = wld_x1;  world_vertices[7] = wld_y2;
     vertbuf = ltGenVertBuffer();
     ltBindVertBuffer(vertbuf);
     ltStaticVertBufferData(sizeof(LTfloat) * 8, world_vertices);

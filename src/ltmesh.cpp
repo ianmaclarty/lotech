@@ -75,7 +75,7 @@ LTMesh::LTMesh(LTTexturedNode *img) {
     has_texture_coords = true;
     texture = img;
     texture_ref = LUA_NOREF;
-    draw_mode = LT_DRAWMODE_TRIANGLE_FAN;
+    draw_mode = LT_DRAWMODE_TRIANGLES;
 
     size = 4;
     vdata = new LTVertData[size];
@@ -89,19 +89,26 @@ LTMesh::LTMesh(LTTexturedNode *img) {
 
     vb_dirty = true;
 
+    num_indices = 6;
+    indices = new LTvertindex[num_indices];
+    indices[0] = 0;
+    indices[1] = 1;
+    indices[2] = 2;
+    indices[3] = 0;
+    indices[4] = 2;
+    indices[5] = 3;
+
+    indices_dirty = true;
+
     left = img->world_vertices[0];
     right = img->world_vertices[2];
-    bottom = img->world_vertices[5];
-    top = img->world_vertices[1];
+    bottom = img->world_vertices[1];
+    top = img->world_vertices[5];
     farz = 0;
     nearz = 0;
     bb_dirty = false;
 
     vertbuf = 0;
-
-    indices = NULL;
-    num_indices = 0;
-    indices_dirty = false;
 }
 
 LTMesh::LTMesh(int dims, bool has_col, bool has_norm, bool has_tex_coords, LTImage *tex, LTDrawMode mode, LTVertData* dat, int sz) {
@@ -335,6 +342,8 @@ void LTMesh::merge(LTMesh *mesh) {
     assert(draw_mode == LT_DRAWMODE_TRIANGLES); // XXX Need to add degenerated vertices for others?
     assert((mesh->indices == NULL) == (indices == NULL));
 
+    int orig_size = size;
+
     if (mesh->vdata != NULL) {
         LTVertData *tmp = new LTVertData[size + mesh->size];
         memcpy(tmp, vdata, sizeof(LTVertData) * size);
@@ -347,7 +356,9 @@ void LTMesh::merge(LTMesh *mesh) {
     if (mesh->indices != NULL) {
         LTvertindex *tmp = new LTvertindex[num_indices + mesh->num_indices];
         memcpy(tmp, indices, sizeof(LTvertindex) * num_indices);
-        memcpy(&tmp[num_indices], mesh->indices, sizeof(LTvertindex) * mesh->num_indices);
+        for (int i = 0; i < mesh->num_indices; i++) {
+            tmp[i + num_indices] = mesh->indices[i] + orig_size;
+        }
         delete[] indices;
         indices = tmp;
     }
@@ -364,90 +375,82 @@ void LTMesh::grid(int rows, int columns) {
     assert(has_texture_coords);
     assert(!has_colors);
     assert(!has_normals);
-    assert(indices == NULL);
+    
+    if (indices != NULL) {
+        delete[] indices;
+    }
+    num_indices = 6 * rows * columns;
+    indices = new LTvertindex[num_indices];
 
     draw_mode = LT_DRAWMODE_TRIANGLES;
 
     ensure_bb_uptodate();
 
-    int new_size = rows * columns * 6;
-    resize_data(new_size);
+    size = (rows + 1) * (columns + 1);
+    if (vdata != NULL) {
+        delete[] vdata;
+    }
+    vdata = new LTVertData[size];
 
     LTfloat col_width = (right - left) / (LTfloat)columns;
     LTfloat row_height = (top - bottom) / (LTfloat)rows;
 
     LTfloat tex_left = (LTfloat)texture->tex_coords[0] / (LTfloat)LT_MAX_TEX_COORD;
     LTfloat tex_right = (LTfloat)texture->tex_coords[2] / (LTfloat)LT_MAX_TEX_COORD;
-    LTfloat tex_bottom = (LTfloat)texture->tex_coords[5] / (LTfloat)LT_MAX_TEX_COORD;
-    LTfloat tex_top = (LTfloat)texture->tex_coords[1] / (LTfloat)LT_MAX_TEX_COORD;
+    LTfloat tex_bottom = (LTfloat)texture->tex_coords[1] / (LTfloat)LT_MAX_TEX_COORD;
+    LTfloat tex_top = (LTfloat)texture->tex_coords[5] / (LTfloat)LT_MAX_TEX_COORD;
     LTfloat tex_col_width = (tex_right - tex_left) / (LTfloat)columns;
     LTfloat tex_row_height = (tex_top - tex_bottom) / (LTfloat)rows;
 
-    LTfloat y1 = bottom;
-    LTfloat y2 = y1 + row_height;
-    LTfloat v1 = tex_bottom;
-    LTfloat v2 = v1 + tex_row_height;
+    LTfloat y = bottom;
+    LTfloat v = tex_bottom;
 
     int i = 0;
-    for (int row = 0; row < rows; row++) {
-        LTfloat x1 = left;
-        LTfloat x2 = x1 + col_width;
-        LTfloat u1 = tex_left;
-        LTfloat u2 = u1 + tex_col_width;
-        for (int col = 0; col < columns; col++) {
-            vdata[i].xyz.x = x1;
-            vdata[i].xyz.y = y1;
-            vdata[i].uv.u = u1;
-            vdata[i].uv.v = v1;
-            i++;
-            vdata[i].xyz.x = x1;
-            vdata[i].xyz.y = y2;
-            vdata[i].uv.u = u1;
-            vdata[i].uv.v = v2;
-            i++;
-            vdata[i].xyz.x = x2;
-            vdata[i].xyz.y = y1;
-            vdata[i].uv.u = u2;
-            vdata[i].uv.v = v1;
-            i++;
-            vdata[i].xyz.x = x1;
-            vdata[i].xyz.y = y2;
-            vdata[i].uv.u = u1;
-            vdata[i].uv.v = v2;
-            i++;
-            vdata[i].xyz.x = x2;
-            vdata[i].xyz.y = y2;
-            vdata[i].uv.u = u2;
-            vdata[i].uv.v = v2;
-            i++;
-            vdata[i].xyz.x = x2;
-            vdata[i].xyz.y = y1;
-            vdata[i].uv.u = u2;
-            vdata[i].uv.v = v1;
-            i++;
+    int j = 0;
+    for (int row = 0; row <= rows; row++) {
+        LTfloat x = left;
+        LTfloat u = tex_left;
+        for (int col = 0; col <= columns; col++) {
+            // Add vertex
+            vdata[i].xyz.x = x;
+            vdata[i].xyz.y = y;
+            vdata[i].uv.u = u;
+            vdata[i].uv.v = v;
 
-            x1 += col_width;
-            u1 += tex_col_width;
-            if (col == columns - 2) {
-                x2 = right;
-                u2 = tex_right;
-            } else {
-                x2 = x1 + col_width;
-                u2 = u1 + tex_col_width;
+            if (col < columns && row < rows) {
+                // Add indicies
+                indices[j + 0] = i;
+                indices[j + 1] = i + columns + 1;
+                indices[j + 2] = i + 1;
+                indices[j + 3] = i + 1;
+                indices[j + 4] = i + columns + 1;
+                indices[j + 5] = i + columns + 2;
+                j += 6;
+            }
+
+            i++;
+            
+            x += col_width;
+            u += tex_col_width;
+            if (col == columns - 1) {
+                // in case of rounding errors.
+                x = right;
+                u = tex_right;
             }
         }
-        y1 += row_height;
-        v1 += tex_row_height;
-        if (row == rows - 2) {
-            y2 = top;
-            v2 = tex_top;
-        } else {
-            y2 = y1 + row_height;
-            v2 = v1 + tex_row_height;
+        y += row_height;
+        v += tex_row_height;
+        if (row == rows - 1) {
+            y = top;
+            v = tex_top;
         }
     }
+    assert(j == num_indices);
+    assert(i == size);
 
     vb_dirty = true;
+    indices_dirty = true;
+    bb_dirty = true;
 }
 
 void LTMesh::ensure_vb_uptodate() {
@@ -505,8 +508,6 @@ void LTMesh::ensure_bb_uptodate() {
 }
 
 void LTMesh::print() {
-    /*
-    // XXX Show indices
     if (dimensions == 2) {
         printf("     X     Y");
     } else {
@@ -522,34 +523,38 @@ void LTMesh::print() {
         printf("     U     V");
     }
     printf("\n");
-    void *ptr = data;
-    if (data == NULL) return;
-    for (int i = 0; i < size; i++) {
-        LTfloat *vptr = (LTfloat*)ptr;
-        if (dimensions == 2) {
-            printf(" %5.2f %5.2f", (double)vptr[0], (double)vptr[1]);
-        } else {
-            printf(" %5.2f %5.2f %5.2f", (double)vptr[0], (double)vptr[1], (double)vptr[2]);
+    if (vdata == NULL) {
+        printf("NO DATA\n");
+    } else {
+        for (int i = 0; i < size; i++) {
+            LTVertData *vd = &vdata[i];
+            if (dimensions == 2) {
+                printf(" %5.2f %5.2f", vd->xyz.x, vd->xyz.y);
+            } else {
+                printf(" %5.2f %5.2f %5.2f", vd->xyz.x, vd->xyz.y, vd->xyz.z);
+            }
+            if (has_colors) {
+                printf(" %1.2f %1.2f %1.2f %1.2f", vd->color.red, vd->color.green, vd->color.blue,
+                    vd->color.alpha);
+            }
+            if (has_normals) {
+                printf(" %5.2f %5.2f %5.2f", vd->normal.x, vd->normal.y, vd->normal.y);
+            }
+            if (has_texture_coords) {
+                printf(" %5.2f %5.2f", vd->uv.u, vd->uv.v);
+            }
+            printf("\n");
         }
-        lt_incr_ptr(&ptr, dimensions * 4);
-        if (has_colors) {
-            LTubyte *cptr = (LTubyte*)ptr;
-            printf(" %2X %2X %2X %2X", cptr[0], cptr[1], cptr[2], cptr[3]);
-            lt_incr_ptr(&ptr, 4);
-        }
-        if (has_normals) {
-            LTbyte *nptr = (LTbyte*)ptr;
-            printf(" %5.2f %5.2f %5.2f", ((double)nptr[0])/127.0f, ((double)nptr[1])/127.0f, ((double)nptr[2])/127.0f);
-            lt_incr_ptr(&ptr, 4);
-        }
-        if (has_texture_coords) {
-            LTtexcoord *tptr = (LTtexcoord*)ptr;
-            printf(" %5.2f %5.2f", (double)tptr[0]/(double)LT_MAX_TEX_COORD, (double)tptr[1]/(double)LT_MAX_TEX_COORD);
-            lt_incr_ptr(&ptr, 4);
-        }
-        printf("\n");
     }
-    */
+    if (indices != NULL) {
+        printf("indices = [");
+        for (int i = 0; i < num_indices; i++) {
+            printf("%d, ", indices[i]);
+        }
+        printf("]\n");
+    } else {
+        printf("NO INDICES\n");
+    }
 }
 
 static int clone_mesh(lua_State *L) {
@@ -632,8 +637,6 @@ static int make_grid(lua_State *L) {
         return luaL_error(L, "Mesh may not have normals");
     } else if (!mesh->has_texture_coords) {
         return luaL_error(L, "Mesh must have a texture");
-    } else if (mesh->num_indices > 0) {
-        return luaL_error(L, "Mesh may not have indices");
     }
     int rows = luaL_checkinteger(L, 2);
     int columns = luaL_checkinteger(L, 3);
@@ -653,7 +656,7 @@ static int set_xys(lua_State *L) {
         return luaL_error(L, "table should have even length (in fact %d)", len);
     }
     int size = len / 2;
-    if (size > mesh->size) {
+    if (size != mesh->size) {
         mesh->resize_data(size);
     }
     LTVertData *ptr = mesh->vdata;
@@ -786,6 +789,12 @@ static int compute_normals(lua_State *L) {
     return 0;
 }
 
+static int print_mesh(lua_State *L) {
+    LTMesh *mesh = lt_expect_LTMesh(L, 1);
+    mesh->print();
+    return 0;
+}
+
 LT_REGISTER_TYPE(LTMesh, "lt.Mesh", "lt.SceneNode")
 LT_REGISTER_METHOD(LTMesh, Clone, clone_mesh)
 LT_REGISTER_METHOD(LTMesh, Stretch, stretch_mesh)
@@ -797,3 +806,4 @@ LT_REGISTER_METHOD(LTMesh, SetXYZs, set_xyzs)
 LT_REGISTER_METHOD(LTMesh, SetRGBs, set_rgbs)
 LT_REGISTER_METHOD(LTMesh, SetIndices, set_indices)
 LT_REGISTER_METHOD(LTMesh, ComputeNormals, compute_normals)
+LT_REGISTER_METHOD(LTMesh, Print, print_mesh)

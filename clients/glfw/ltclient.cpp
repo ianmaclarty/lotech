@@ -9,6 +9,9 @@
 
 #include "lt.h"
 
+#define SCALE 1
+#define MIN_HEIGHT 640
+
 static void key_handler(int key, int state);
 static void mouse_button_handler(int button, int action);
 static void mouse_pos_handler(int x, int y);
@@ -20,8 +23,11 @@ static bool toggle_fullscreen = false;
 static void process_args(int argc, const char **argv);
 static const char *dir = "";
 static const char *title = "";
+static int window_width = 960;
+static int window_height = 640;
 
 static void setup_window();
+static void compute_window_size();
 
 int main(int argc, const char **argv) {
 #ifdef LTOSX
@@ -36,6 +42,7 @@ int main(int argc, const char **argv) {
 
     ltLuaSetResourcePrefix(dir);
     ltLuaSetup();
+    compute_window_size();
 
     if (glfwInit() != GL_TRUE) {
         fprintf(stderr, "Failed to initialize glfw. Aborting.\n");
@@ -62,6 +69,7 @@ int main(int argc, const char **argv) {
     double t = t0;
     double t_debt = 0.0;
     double fps_t0 = 0.0;
+    double fps_max = 0.0;
     const double frame_time = 1.0 / 60.0;
     long long frame_count = 0;
 
@@ -111,14 +119,16 @@ int main(int argc, const char **argv) {
             t_debt = frame_time;
             first_time = false;
         }
+        fps_max = fmax(fps_max, t - t0);
         t0 = t;
 
         frame_count++;
 #ifdef FPS
         if (t - fps_t0 >= 2.0) {
             double fps = (double)frame_count / (t - fps_t0);
-            ltLog("%0.02f fps %d objs %d actions", fps, ltNumLiveObjects(), ltNumScheduledActions());
+            ltLog("%0.02f avg fps %0.003fs max %d objs %d actions", fps, fps_max, ltNumLiveObjects(), ltNumScheduledActions());
             fps_t0 = t0;
+            fps_max = 0.0;
             frame_count = 0;
         }
 #endif
@@ -140,11 +150,22 @@ int main(int argc, const char **argv) {
     return 0;
 }
 
-#define SCALE 1
+static void compute_window_size() {
+    LTfloat w;
+    LTfloat h;
+    ltGetDesignScreenSize(&w, &h);
+    if (h < MIN_HEIGHT) {
+        LTfloat r = w / h;
+        h = MIN_HEIGHT;
+        w = h * r;
+    }
+    window_width = (int)w;
+    window_height = (int)h;
+}
 
 static void setup_window() {
-    int w = 1138/SCALE;
-    int h = 640/SCALE;
+    int w = window_width/SCALE;
+    int h = window_height/SCALE;
     GLFWvidmode vidmode;
     int screen_mode = GLFW_WINDOW;
     if (fullscreen) {
@@ -162,7 +183,7 @@ static void setup_window() {
         fprintf(stderr, "Failed to create window\n");
         exit(EXIT_FAILURE);
     }
-    glfwSwapInterval(1);
+    glfwSwapInterval(0);
     glfwSetWindowTitle(title);
 
     ltLuaResizeWindow(vidmode.Width, vidmode.Height);

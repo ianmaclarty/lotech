@@ -481,6 +481,7 @@ static int lt_FillVectorColumnsWithImageQuads(lua_State *L) {
     LTfloat *data = vector->data + col;
     LTfloat *os_data = offsets->data + offsets_col;
     for (int i = 0; i < n; i++) {
+        // XXX This is broken
         data[0] = img->world_vertices[0] + os_data[0];
         data[1] = img->world_vertices[1] + os_data[1];
         data[2] = img->tex_coords[0];

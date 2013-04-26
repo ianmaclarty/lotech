@@ -679,25 +679,25 @@ static LTfloat get_wld_left(LTObject *obj) {
     return ((LTTexturedNode*)obj)->world_vertices[0];
 }
 static LTfloat get_wld_bottom(LTObject *obj) {
-    return ((LTTexturedNode*)obj)->world_vertices[5];
+    return ((LTTexturedNode*)obj)->world_vertices[1];
 }
 static LTfloat get_wld_right(LTObject *obj) {
     return ((LTTexturedNode*)obj)->world_vertices[2];
 }
 static LTfloat get_wld_top(LTObject *obj) {
-    return ((LTTexturedNode*)obj)->world_vertices[1];
+    return ((LTTexturedNode*)obj)->world_vertices[5];
 }
 static LTfloat get_tex_left(LTObject *obj) {
     return ((LTTexturedNode*)obj)->tex_coords[0];
 }
 static LTfloat get_tex_bottom(LTObject *obj) {
-    return ((LTTexturedNode*)obj)->tex_coords[5];
+    return ((LTTexturedNode*)obj)->tex_coords[1];
 }
 static LTfloat get_tex_right(LTObject *obj) {
     return ((LTTexturedNode*)obj)->tex_coords[2];
 }
 static LTfloat get_tex_top(LTObject *obj) {
-    return ((LTTexturedNode*)obj)->tex_coords[1];
+    return ((LTTexturedNode*)obj)->tex_coords[5];
 }
 
 LT_REGISTER_TYPE(LTTexturedNode, "lt.TexturedNode", "lt.SceneNode")
@@ -756,27 +756,28 @@ LTImage::LTImage(LTAtlas *atls, int atlas_w, int atlas_h, LTImagePacker *packer)
     LTfloat world_top = world_bottom + bb_height;
     LTfloat world_right = world_left + bb_width;
     world_vertices[0] = world_left;
-    world_vertices[1] = world_top;
+    world_vertices[1] = world_bottom;
     world_vertices[2] = world_right;
-    world_vertices[3] = world_top;
+    world_vertices[3] = world_bottom;
     world_vertices[4] = world_right;
-    world_vertices[5] = world_bottom;
+    world_vertices[5] = world_top;
     world_vertices[6] = world_left;
-    world_vertices[7] = world_bottom;
+    world_vertices[7] = world_top;
     vertbuf = ltGenVertBuffer();
     ltBindVertBuffer(vertbuf);
     ltStaticVertBufferData(sizeof(LTfloat) * 8, world_vertices);
 
     if (rotated) {
+        assert(false); // XXX This code is broken and should not be invoked
         tex_coords[0] = tex_left + tex_height;   tex_coords[1] = tex_bottom + tex_width;
         tex_coords[2] = tex_left + tex_height;   tex_coords[3] = tex_bottom;
         tex_coords[4] = tex_left;                tex_coords[5] = tex_bottom;
         tex_coords[6] = tex_left;                tex_coords[7] = tex_bottom + tex_width;
     } else {
-        tex_coords[0] = tex_left;                tex_coords[1] = tex_bottom + tex_height;
-        tex_coords[2] = tex_left + tex_width;    tex_coords[3] = tex_bottom + tex_height;
-        tex_coords[4] = tex_left + tex_width;    tex_coords[5] = tex_bottom;
-        tex_coords[6] = tex_left;                tex_coords[7] = tex_bottom;
+        tex_coords[0] = tex_left;                tex_coords[1] = tex_bottom;
+        tex_coords[2] = tex_left + tex_width;    tex_coords[3] = tex_bottom;
+        tex_coords[4] = tex_left + tex_width;    tex_coords[5] = tex_bottom + tex_height;
+        tex_coords[6] = tex_left;                tex_coords[7] = tex_bottom + tex_height;
     }
     texbuf = ltGenVertBuffer();
     ltBindVertBuffer(texbuf);

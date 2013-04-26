@@ -1,8 +1,8 @@
 local mesh = lt.Mesh()
 local xyzs = {}
 local indices = {}
-local n, m = 100, 50
-local w, d = 6000, 100
+local n, m = 80, 50
+local w, d = 4800, 100
 local shift = w / 2 - lt.config.world_width / 2
 local i = 1
 for x = 1, n do
@@ -32,7 +32,7 @@ mesh:Action(function(dt)
             local i = (x - 1) * m + z
             i = (i - 1) * 3 + 2
             xyzs[i] = 
-                (sin(((x - 1) / (n - 1)) * w * 35 + t * 100)
+                (sin(((x - 1) / (n - 1)) * w * 0.7 + t * 100)
                 + sin(((z - 1) / (m - 1)) * d * 10 + t * 100)) * amplitude
                 - 2 * amplitude
         end

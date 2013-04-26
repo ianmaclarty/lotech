@@ -329,6 +329,11 @@ void ltSetDesignScreenSize(LTfloat width, LTfloat height) {
     pixel_height = viewport_height / design_height;
 }
 
+void ltGetDesignScreenSize(LTfloat *width, LTfloat *height) {
+    *width = design_width;
+    *height = design_height;
+}
+
 void ltSetDisplayOrientation(LTDisplayOrientation orientation) {
     display_orientation = orientation;
 }
@@ -490,44 +495,27 @@ void ltPopTextureMode() {
 }
 
 void ltDrawUnitSquare() {
-    static bool initialized = false;
     static const LTfloat vertices[] = {-0.5f, 0.5f, -0.5f, -0.5f, 0.5f, -0.5f, 0.5f, 0.5f};
-    static LTvertbuf buffer_id;
-
-    if (!initialized) {
-        buffer_id = ltGenVertBuffer();
-        ltBindVertBuffer(buffer_id);
-        ltStaticVertBufferData(sizeof(LTfloat) * 8, vertices);
-        initialized = true;
-    }
 
     ltDisableTextures();
-    ltBindVertBuffer(buffer_id);
-    ltVertexPointer(2, LT_VERT_DATA_TYPE_FLOAT, 0, 0);
+    ltBindVertBuffer(0);
+    ltVertexPointer(2, LT_VERT_DATA_TYPE_FLOAT, 0, (void*)vertices);
     ltDrawArrays(LT_DRAWMODE_TRIANGLE_FAN, 0, 4);
 }
 
 void ltDrawUnitCircle() {
-    static bool initialized = false;
     static const int num_vertices = 128;
-    static LTfloat vertices[num_vertices * 2];
-    static LTvertbuf buffer_id;
+    LTfloat vertices[num_vertices * 2];
 
-    if (!initialized) {
-        for (int i = 0; i < num_vertices * 2; i += 2) {
-            float theta = ((float)i / (float)num_vertices) * 2.0f * LT_PI;
-            vertices[i] = (LTfloat)cosf(theta);
-            vertices[i + 1] = (LTfloat)sinf(theta);
-        }
-        buffer_id = ltGenVertBuffer();
-        ltBindVertBuffer(buffer_id);
-        ltStaticVertBufferData(sizeof(LTfloat) * num_vertices * 2, vertices);
-        initialized = true;
+    for (int i = 0; i < num_vertices * 2; i += 2) {
+        LTfloat theta = ((float)i / (float)num_vertices) * 2.0f * LT_PI;
+        vertices[i] = (LTfloat)cosf(theta);
+        vertices[i + 1] = (LTfloat)sinf(theta);
     }
 
     ltDisableTextures();
-    ltBindVertBuffer(buffer_id);
-    ltVertexPointer(2, LT_VERT_DATA_TYPE_FLOAT, 0, 0);
+    ltBindVertBuffer(0);
+    ltVertexPointer(2, LT_VERT_DATA_TYPE_FLOAT, 0, vertices);
     ltDrawArrays(LT_DRAWMODE_TRIANGLE_FAN, 0, num_vertices);
 }
 
@@ -560,4 +548,11 @@ void ltDrawPoly(LTfloat *vertices, int num_vertices) {
     ltBindVertBuffer(0);
     ltVertexPointer(2, LT_VERT_DATA_TYPE_FLOAT, 0, vertices);
     ltDrawArrays(LT_DRAWMODE_TRIANGLE_FAN, 0, num_vertices);
+}
+
+void ltDrawLineStrip(LTfloat *vertices, int num_vertices) {
+    ltDisableTextures();
+    ltBindVertBuffer(0);
+    ltVertexPointer(2, LT_VERT_DATA_TYPE_FLOAT, 0, vertices);
+    ltDrawArrays(LT_DRAWMODE_LINE_STRIP, 0, num_vertices);
 }
