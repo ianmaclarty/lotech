@@ -34,8 +34,6 @@ struct LTMesh : LTSceneNode {
         LTImage *tex, LTDrawMode mode, LTVertData *dat, int sz);
     virtual ~LTMesh();
 
-    virtual void init(lua_State *L);
-
     virtual void draw();
 
     void stretch(

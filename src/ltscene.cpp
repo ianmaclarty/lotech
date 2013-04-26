@@ -299,7 +299,9 @@ static void set_child(LTObject *obj, LTObject *val) {
         old_child->exit(wrap);
     }
     wrap->child = new_child;
-    new_child->enter(wrap);
+    if (new_child != NULL) {
+        new_child->enter(wrap);
+    }
     //check_scene_nodes();
 }
 

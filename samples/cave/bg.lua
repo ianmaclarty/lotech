@@ -5,6 +5,7 @@ function make_cave_wall_bg(top_verts, bottom_verts, scale)
     local fill = images.wall_inner:Mesh()
     local h = 27
     local offset = 5
+    local e = 0.01
     local noise = 3
     local divisions = 3
     local x = top_verts[1] * scale
@@ -31,10 +32,10 @@ function make_cave_wall_bg(top_verts, bottom_verts, scale)
             xx = x + x_inc
 
             edge:SetXYs{
-                x, y_top - offset,
-                xx, yy_top - offset,
-                xx, yy_top + h,
-                x, y_top + h,
+                x - e, y_top - offset,
+                xx + e, yy_top - offset,
+                xx + e, yy_top + h,
+                x - e, y_top + h,
             }
             mesh:Merge(edge)
 
@@ -44,19 +45,19 @@ function make_cave_wall_bg(top_verts, bottom_verts, scale)
                 y3 = y3 + h
                 y4 = y4 + h
                 fill:SetXYs{
-                    x, y3 - offset,
-                    xx, y4 - offset,
-                    xx, y4 + h,
-                    x, y3 + h,
+                    x - e, y3 - offset,
+                    xx + e, y4 - offset,
+                    xx + e, y4 + h,
+                    x - e, y3 + h,
                 }
                 mesh:Merge(fill)
             end
 
             edge:SetXYs{
-                xx, yy_bottom + offset,
-                x, y_bottom + offset,
-                x, y_bottom - h,
-                xx, yy_bottom - h,
+                xx + e, yy_bottom + offset,
+                x - e, y_bottom + offset,
+                x - e, y_bottom - h,
+                xx + e, yy_bottom - h,
             }
             mesh:Merge(edge)
 
@@ -66,10 +67,10 @@ function make_cave_wall_bg(top_verts, bottom_verts, scale)
                 y3 = y3 - h
                 y4 = y4 - h
                 fill:SetXYs{
-                    x, y3 + offset,
-                    xx, y4 + offset,
-                    xx, y4 - h,
-                    x, y3 - h,
+                    x - e, y3 + offset,
+                    xx + e, y4 + offset,
+                    xx + e, y4 - h,
+                    x - e, y3 - h,
                 }
                 mesh:Merge(fill)
             end

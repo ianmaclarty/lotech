@@ -7,7 +7,7 @@ struct LTTweenAction;
 
 struct LTTweenOnDone {
     virtual ~LTTweenOnDone() {};
-    virtual void done(LTTweenAction *action) = 0;
+    virtual void done(LTAction *action) = 0;
     virtual void on_cancel() {};
 };
 
@@ -28,6 +28,28 @@ struct LTTweenAction : LTAction {
         LTfloat target_val, LTfloat time, LTfloat delay, LTEaseFunc ease,
         LTTweenOnDone *on_done);
     virtual ~LTTweenAction();
+    virtual void on_cancel();
+
+    virtual bool doAction(LTfloat dt);
+};
+
+struct LTIntTweenAction : LTAction {
+    LTIntGetter getter;
+    LTIntSetter setter;
+    LTfloat t;
+    LTfloat initial_val;
+    LTfloat target_val;
+    LTfloat distance;
+    LTfloat time;
+    LTfloat delay;
+    LTEaseFunc ease;
+    LTTweenOnDone *on_done;
+
+    LTIntTweenAction(LTSceneNode *node, 
+        LTIntGetter getter, LTIntSetter setter,
+        LTfloat target_val, LTfloat time, LTfloat delay, LTEaseFunc ease,
+        LTTweenOnDone *on_done);
+    virtual ~LTIntTweenAction();
     virtual void on_cancel();
 
     virtual bool doAction(LTfloat dt);

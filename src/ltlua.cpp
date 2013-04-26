@@ -1592,7 +1592,7 @@ struct LTLuaTweenOnDone : LTTweenOnDone {
         lua_pop(g_L, 1);
         cancelled = true;
     }
-    virtual void done(LTTweenAction *action) {
+    virtual void done(LTAction *action) {
         assert(action->node == node);
         assert(!executed);
         assert(!cancelled);
@@ -1614,13 +1614,22 @@ static int lt_AddTween(lua_State *L) {
         return luaL_error(L, "Field %s does not exist, or object not a scene node", lua_tostring(L, 2));
     }
     LTSceneNode *node = (LTSceneNode*)lua_touserdata(L, -1);
-    LTFloatGetter getter;
-    LTFloatSetter setter;
+    bool is_int = false;
+    LTFloatGetter getter = NULL;
+    LTFloatSetter setter = NULL;
+    LTIntGetter igetter = NULL;
+    LTIntSetter isetter = NULL;
     ltLuaGetFloatGetterAndSetter(L, -1, 2, &getter, &setter);
     if (getter == NULL) {
-        return luaL_error(L, "Field %s is not a float", lua_tostring(L, 2));
-    }
-    if (setter == NULL) {
+        ltLuaGetIntGetterAndSetter(L, -1, 2, &igetter, &isetter);
+        if (igetter == NULL) {
+            return luaL_error(L, "Field %s is not a number", lua_tostring(L, 2));
+        }
+        if (isetter == NULL) {
+            return luaL_error(L, "Field %s is read-only", lua_tostring(L, 2));
+        }
+        is_int = true;
+    } else if (setter == NULL) {
         return luaL_error(L, "Field %s is read-only", lua_tostring(L, 2));
     }
     LTfloat target_val = luaL_checknumber(L, 3);
@@ -1670,7 +1679,12 @@ static int lt_AddTween(lua_State *L) {
     } else if (!lua_isnil(L, 7)) {
         return luaL_error(L, "Argument 7 not a function or nil");
     }
-    LTTweenAction *action = new LTTweenAction(node, getter, setter, target_val, time, delay, ease_func, on_done);
+    LTAction *action;
+    if (is_int) {
+        action = new LTIntTweenAction(node, igetter, isetter, target_val, time, delay, ease_func, on_done);
+    } else {
+        action = new LTTweenAction(node, getter, setter, target_val, time, delay, ease_func, on_done);
+    }
     node->add_action(action);
     return 0;
 }

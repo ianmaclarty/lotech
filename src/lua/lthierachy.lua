@@ -47,6 +47,7 @@ mt_add("lt.SceneNode", "Light", lt.Light)
 mt_add("lt.SceneNode", "Material", lt.Material)
 mt_add("lt.SceneNode", "CullFace", lt.CullFace)
 mt_add("lt.SceneNode", "Hidden", lt.Hidden)
+mt_add("lt.SceneNode", "RenderTarget", lt.RenderTarget)
 
 mt_add("lt.SceneNode", "Event", lt.AddEventHandler)
 mt_add("lt.SceneNode", "Mouse", lt.AddMouseHandler)

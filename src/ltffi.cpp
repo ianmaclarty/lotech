@@ -271,27 +271,32 @@ static inline void set_field_val(lua_State *L, LTObject *obj, LTFieldInfo *field
             break;
         }
         case LT_FIELD_KIND_OBJECT: {
-            LTObject *val = (LTObject*)lua_touserdata(L, val_index);
-            if (val == NULL) {
-                const char *field_name = lua_tostring(L, field_index);
-                luaL_error(L, "Attempt to assign non-userdata value to field '%s'", field_name);
+            LTObject *val;
+            if (lua_isnil(L, val_index)) {
+                val = NULL;
+            } else {
+                val = (LTObject*)lua_touserdata(L, val_index);
+                if (val == NULL) {
+                    const char *field_name = lua_tostring(L, field_index);
+                    luaL_error(L, "Attempt to assign non-userdata value to field '%s'", field_name);
+                }
+                // Check val has the right type by searching for the 
+                // LTTypeDef pointer in the metatable (this would have
+                // been added when the metatable was created).
+                if (!lua_getmetatable(L, val_index)) {
+                    const char *field_name = lua_tostring(L, field_index);
+                    luaL_error(L, "Field '%s' expects a value of type '%s' (value has no metatable)",
+                        field_name, field->value_type->lua_name);
+                }
+                lua_pushlightuserdata(L, (void*)field->value_type);
+                lua_rawget(L, -2);
+                if (lua_isnil(L, -1)) {
+                    lua_pop(L, 2); // pop nil and metatable.
+                    const char *field_name = lua_tostring(L, field_index);
+                    luaL_error(L, "Field '%s' expects a value of type '%s'", field_name, field->value_type->lua_name);
+                }
+                lua_pop(L, 2); // pop value and metatable
             }
-            // Check val has the right type by searching for the 
-            // LTTypeDef pointer in the metatable (this would have
-            // been added when the metatable was created).
-            if (!lua_getmetatable(L, val_index)) {
-                const char *field_name = lua_tostring(L, field_index);
-                luaL_error(L, "Field '%s' expects a value of type '%s' (value has no metatable)",
-                    field_name, field->value_type->lua_name);
-            }
-            lua_pushlightuserdata(L, (void*)field->value_type);
-            lua_rawget(L, -2);
-            if (lua_isnil(L, -1)) {
-                lua_pop(L, 2); // pop nil and metatable.
-                const char *field_name = lua_tostring(L, field_index);
-                luaL_error(L, "Field '%s' expects a value of type '%s'", field_name, field->value_type->lua_name);
-            }
-            lua_pop(L, 2); // pop value and metatable
             // Type ok
             LTObjSetter setter = (LTObjSetter)field->setter;
             setter(obj, val);
@@ -750,6 +755,23 @@ void ltLuaGetFloatGetterAndSetter(lua_State *L, int obj_index, int field_index, 
     if (field->kind == LT_FIELD_KIND_FLOAT) {
         *getter = (LTFloatGetter)field->getter;
         *setter = (LTFloatSetter)field->setter;
+    } else {
+        *getter = NULL;
+        *setter = NULL;
+    }
+}
+
+void ltLuaGetIntGetterAndSetter(lua_State *L, int obj_index, int field_index, LTIntGetter *getter, LTIntSetter *setter) {
+    obj_index = absidx(L, obj_index);
+    field_index = absidx(L, field_index);
+    lua_getmetatable(L, obj_index);
+    lua_pushvalue(L, field_index);
+    lua_rawget(L, -2);
+    LTFieldInfo *field = (LTFieldInfo*)lua_touserdata(L, -1);
+    lua_pop(L, 2); // pop field info and metatable.
+    if (field->kind == LT_FIELD_KIND_INT) {
+        *getter = (LTIntGetter)field->getter;
+        *setter = (LTIntSetter)field->setter;
     } else {
         *getter = NULL;
         *setter = NULL;

@@ -15,7 +15,10 @@ lt.FixGlobals()
 --------------------------------------
 
 local main_layer = lt.Layer()
-lt.root:Insert(main_layer)
+local rt = main_layer
+    :RenderTarget(240, 160, 0, 0, 480, 320, 0, 0, 480, 320, "nearest", "nearest")
+local top = rt:BlendMode("off")
+lt.root:Insert(top)
 
 local fire_laser
 
@@ -69,7 +72,7 @@ do
     cave_wall_body:Action(function(dt, b)
         curr_x = curr_x - scroll_speed * dt
         b.x = curr_x
-        walls.x = curr_x * wscale
+        walls.x = math.floor(curr_x * wscale * 0.5) * 2
         if curr_x < -w2 then
             top_fixture:Destroy()
             bottom_fixture:Destroy()
@@ -108,8 +111,11 @@ local
 function die()
     main_layer:Remove(ship_body)
     ship_body:Destroy()
-    lt.root:Remove(main_layer)
-    import "gameover"
+
+    rt:Tween{pwidth = 2, pheight = 1, time = 2, easing = "zoomout", action = function()
+        lt.root:Remove(top)
+        import "main"
+    end}
 end
 
 local ship_speed = 1.8
@@ -141,6 +147,9 @@ end)
 main_layer:Insert(ship_body)
 
 function fire_laser()
+    if not ship_body then
+        return
+    end
     local speed = 4
     local x = ship_body.x
     local y = ship_body.y
@@ -150,7 +159,7 @@ function fire_laser()
     local laser_fixture = laser_body:Polygon{-w, -h, -w, h, w, h, w, -h}
     laser_body:Action(function(dt, b)
         x = x + speed * dt
-        if x > 600 then
+        if x > 6 then
             b:Destroy()
             main_layer:Remove(b)
         end

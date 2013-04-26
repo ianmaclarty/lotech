@@ -3,11 +3,26 @@
 
 LT_INIT_IMPL(ltrendertarget)
 
+struct LTRenderTargetAction : LTAction {
+    LTRenderTarget *rt;
+    LTRenderTargetAction(LTSceneNode *node) : LTAction(node) {
+        rt = (LTRenderTarget*)node;
+    };
+    virtual bool doAction(LTfloat dt) {
+        if (rt->child != NULL) {
+            LTColor clear_color(0, 0, 0, 0);
+            rt->renderNode(rt->child, &clear_color);
+        }
+        return false;
+    }
+};
+
 LTRenderTarget::LTRenderTarget() {
     minfilter = LT_TEXTURE_FILTER_LINEAR;
     magfilter = LT_TEXTURE_FILTER_LINEAR;
     depthbuf_enabled = false;
     initialized = false;
+    add_action(new LTRenderTargetAction(this));
 }
 
 void LTRenderTarget::init(lua_State *L) {
@@ -141,7 +156,31 @@ static void set_pheight(LTObject *obj, LTint val) {
     }
 }
 
+void LTRenderTarget::visit_children(LTSceneNodeVisitor *v, bool reverse) {
+    if (child != NULL) {
+        v->visit(child);
+    }
+}
+
+static LTObject *get_child(LTObject *obj) {
+    return ((LTRenderTarget*)obj)->child;
+}
+
+static void set_child(LTObject *obj, LTObject *val) {
+    LTRenderTarget *rt = (LTRenderTarget*)obj;
+    LTSceneNode *old_child =rt->child;
+    LTSceneNode *new_child = (LTSceneNode*)val;
+    if (old_child != NULL) {
+        old_child->exit(rt);
+    }
+    rt->child = new_child;
+    if (new_child != NULL) {
+        new_child->enter(rt);
+    }
+}
+
 LT_REGISTER_TYPE(LTRenderTarget, "lt.RenderTarget", "lt.TexturedNode")
+LT_REGISTER_PROPERTY_OBJ(LTRenderTarget, child, LTSceneNode, get_child, set_child);
 LT_REGISTER_PROPERTY_INT(LTRenderTarget, pwidth, &get_pwidth, &set_pwidth);
 LT_REGISTER_PROPERTY_INT(LTRenderTarget, pheight, &get_pheight, &set_pheight);
 LT_REGISTER_FIELD_FLOAT(LTRenderTarget, vp_x1)

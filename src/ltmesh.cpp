@@ -27,9 +27,6 @@ LTMesh::LTMesh() {
     indices_dirty = false;
 }
 
-void LTMesh::init(lua_State *L) {
-}
-
 LTMesh::LTMesh(LTMesh *mesh) {
     dimensions = mesh->dimensions;
     has_colors = mesh->has_colors;

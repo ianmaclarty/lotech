@@ -31,10 +31,13 @@ struct LTRenderTarget : LTTexturedNode {
 
     bool initialized;
 
+    LTSceneNode *child;
+
     LTRenderTarget();
     virtual ~LTRenderTarget();
 
     virtual void init(lua_State *L);
+    virtual void visit_children(LTSceneNodeVisitor *v, bool reverse);
 
     // Render a scene node to this rendertarget, optionally clearing to
     // the given color first (clear_color may be NULL).

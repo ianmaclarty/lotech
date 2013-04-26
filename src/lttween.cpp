@@ -55,6 +55,58 @@ bool LTTweenAction::doAction(LTfloat dt) {
     }
 }
 
+LTIntTweenAction::LTIntTweenAction(LTSceneNode *node,
+    LTIntGetter getter, LTIntSetter setter,
+    LTfloat target_val, LTfloat time,
+    LTfloat delay, LTEaseFunc ease,
+    LTTweenOnDone *on_done) : LTAction(node)
+{
+    LTIntTweenAction::getter = getter;
+    LTIntTweenAction::setter = setter;
+    LTIntTweenAction::t = 0.0f;
+    LTIntTweenAction::initial_val = (LTfloat)getter(node);
+    LTIntTweenAction::target_val = target_val;
+    LTIntTweenAction::time = time;
+    LTIntTweenAction::delay = delay;
+    LTIntTweenAction::ease = ease;
+    LTIntTweenAction::on_done = on_done;
+    LTIntTweenAction::distance = target_val - initial_val;
+    LTIntTweenAction::action_id = (void*)getter;
+    LTIntTweenAction::no_dups = true;
+}
+
+LTIntTweenAction::~LTIntTweenAction() {
+    if (on_done != NULL) {
+        delete on_done;
+    }
+}
+
+void LTIntTweenAction::on_cancel() {
+    if (on_done != NULL) {
+        on_done->on_cancel();
+    }
+}
+
+bool LTIntTweenAction::doAction(LTfloat dt) {
+    if (delay > 0) {
+        delay -= dt;
+        return false;
+    }
+    LTfloat inc = dt / time;
+    t += inc;
+    if (t < 1.0f - inc) {
+        LTfloat v = initial_val + distance * ease(t);
+        setter(node, (LTint)roundf(v));
+        return false;
+    } else {
+        setter(node, (LTint)target_val);
+        if (on_done != NULL) {
+            on_done->done(this);
+        }
+        return true;
+    }
+}
+
 LTTweenSet::LTTweenSet() {
     LTTweenSet::capacity = 4;
     LTTweenSet::occupants = 0;
