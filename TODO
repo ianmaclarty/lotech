@@ -1,3 +1,5 @@
+- Action priorities
+
 - Use Boehm GC for both lua and C/C++ memory management?
 
 - Gecode integration? Might be useful for puzzle/level generation.

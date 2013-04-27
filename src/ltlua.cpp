@@ -216,6 +216,13 @@ static int lt_SetDesignScreenSize(lua_State *L) {
     return 0;
 }
 
+static int lt_SetRefreshParams(lua_State *L) {
+    ltLuaCheckNArgs(L, 2);
+    lt_vsync = lua_toboolean(L, 1) ? true : false;
+    lt_fixed_update_time = luaL_checknumber(L, 2);
+    return 0;
+}
+
 static int lt_SetOrientation(lua_State *L) {
     ltLuaCheckNArgs(L, 1);
     const char *orientation_str = lua_tostring(L, 1);
@@ -1925,6 +1932,7 @@ static const luaL_Reg ltlib[] = {
     {"SetStartScript",                  lt_SetStartScript},
     {"SetViewPort",                     lt_SetViewPort},
     {"SetDesignScreenSize",             lt_SetDesignScreenSize},
+    {"SetRefreshParams",                lt_SetRefreshParams},
     {"SetOrientation",                  lt_SetOrientation},
     {"PushTint",                        lt_PushTint},
     {"PopTint",                         lt_PopTint},

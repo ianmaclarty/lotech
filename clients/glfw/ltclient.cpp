@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include <string.h>
+
 #ifdef LTMINGW
 #define GLEW_STATIC 1
 #define AL_LIBTYPE_STATIC 1
 #endif
+
 #include <GL/glew.h>
 #include <GL/glfw.h>
 
@@ -30,15 +32,16 @@ static void setup_window();
 static void compute_window_size();
 
 int main(int argc, const char **argv) {
+
 #ifdef LTOSX
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 #endif
 
     process_args(argc, argv);
 
-    #ifdef LTDEVMODE
+#ifdef LTDEVMODE
     ltClientInit();
-    #endif
+#endif
 
     ltLuaSetResourcePrefix(dir);
     ltLuaSetup();
@@ -70,7 +73,7 @@ int main(int argc, const char **argv) {
     double t_debt = 0.0;
     double fps_t0 = 0.0;
     double fps_max = 0.0;
-    const double frame_time = 1.0 / 60.0;
+    double dt;
     long long frame_count = 0;
 
     while (!quit) {
@@ -90,52 +93,57 @@ int main(int argc, const char **argv) {
         ltLuaRender();
         glfwSwapBuffers();
 
-        // There seems to be a bug where the framerate skyrockets when the
+#ifdef LTOSX
+        // There seems to be a bug on Mac OS X where the framerate skyrockets when the
         // window is inactive.  This works around that (except that
         // it doesn't always work, because glfwGetWindowParam returns
         // incorrect results - see below).
         if (!glfwGetWindowParam(GLFW_ACTIVE)) {
             usleep(16000);
         }
-
-        while (t_debt > 0.0) {
-            ltLuaAdvance(frame_time);
-            t_debt -= frame_time;
-        }
+#endif
 
         t = glfwGetTime();
-        if (!first_time) {
-            double dt = fmin(0.1, t - t0); // Max of 0.1s in case process was suspended
-            t_debt += dt;
-            // Sleep for a bit to try and avoid the skyrocketing framerate
-            // problem described above.
-            if (dt < frame_time * 0.5) {
-                useconds_t sleep_time = (int)((frame_time - dt) * 500000.0);
-                //fprintf(stderr, "sleeping for %d\n", sleep_time);
-                usleep(sleep_time);
-            }
+        dt = fmin(1.0/15.0, t - t0); // fmin in case process was suspended, or last frame took very long
+        t_debt += dt;
 
+        if (lt_fixed_update_time > 0.0) {
+            while (t_debt > 0.0) {
+                ltLuaAdvance(lt_fixed_update_time);
+                t_debt -= lt_fixed_update_time;
+            }
         } else {
-            t_debt = frame_time;
-            first_time = false;
+            ltLuaAdvance(dt);
         }
-        fps_max = fmax(fps_max, t - t0);
+
+#ifdef LTOSX
+        // Sleep for a bit to try and avoid the skyrocketing framerate
+        // problem described above.
+        if (dt < frame_time_0 * 0.5) {
+            useconds_t sleep_time = (int)((frame_time_0 - dt) * 500000.0);
+            //fprintf(stderr, "sleeping for %d\n", sleep_time);
+            usleep(sleep_time);
+        }
+#endif
+
+        fps_max = fmax(fps_max, dt);
         t0 = t;
 
         frame_count++;
+
 #ifdef FPS
         if (t - fps_t0 >= 2.0) {
             double fps = (double)frame_count / (t - fps_t0);
-            ltLog("%0.02f avg fps %0.003fs max %d objs %d actions", fps, fps_max, ltNumLiveObjects(), ltNumScheduledActions());
+            ltLog("%0.02ffps (%0.003fs max) | %6d objs %4d actions", fps, fps_max, ltNumLiveObjects(), ltNumScheduledActions());
             fps_t0 = t0;
             fps_max = 0.0;
             frame_count = 0;
         }
 #endif
-    #ifdef LTDEVMODE
-    ltClientStep();
-    #endif
 
+#ifdef LTDEVMODE
+        ltClientStep();
+#endif
     }
 
     ltSaveState();
@@ -144,9 +152,11 @@ int main(int argc, const char **argv) {
         fprintf(stderr, "ERROR: num live objects not zero (%d in fact)\n", ltNumLiveObjects());
     }
     glfwTerminate();
+
 #ifdef LTOSX
     [pool release];
 #endif
+
     return 0;
 }
 
@@ -183,7 +193,7 @@ static void setup_window() {
         fprintf(stderr, "Failed to create window\n");
         exit(EXIT_FAILURE);
     }
-    glfwSwapInterval(0);
+    glfwSwapInterval(lt_vsync ? 1 : 0);
     glfwSetWindowTitle(title);
 
     ltLuaResizeWindow(vidmode.Width, vidmode.Height);
