@@ -13,6 +13,7 @@
 
 #define SCALE 1
 #define MIN_HEIGHT 640
+#define MIN_UPDATE_TIME (1.0/400.0)
 
 static void key_handler(int key, int state);
 static void mouse_button_handler(int button, int action);
@@ -23,7 +24,7 @@ static bool quit = false;
 static bool fullscreen = false;
 static bool toggle_fullscreen = false;
 static void process_args(int argc, const char **argv);
-static const char *dir = "";
+static const char *dir = "data";
 static const char *title = "";
 static int window_width = 960;
 static int window_height = 640;
@@ -113,7 +114,10 @@ int main(int argc, const char **argv) {
                 t_debt -= lt_fixed_update_time;
             }
         } else {
-            ltLuaAdvance(dt);
+            if (t_debt > MIN_UPDATE_TIME) {
+                ltLuaAdvance(t_debt);
+                t_debt = 0.0;
+            }
         }
 
 #ifdef LTOSX
