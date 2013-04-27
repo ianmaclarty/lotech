@@ -41,6 +41,8 @@ static LTfloat get_gain(LTObject *obj) { return 0.0f; }
 static void set_gain(LTObject *obj, LTfloat val) { }
 static LTfloat get_pitch(LTObject *obj) { return 0.0f; }
 static void set_pitch(LTObject *obj, LTfloat val) { }
+static LTbool get_loop(LTObject *obj) { return false; }
+static void set_loop(LTObject *obj, LTbool val) { }
 #else
 
 static LTfloat master_gain = 1.0f;
@@ -395,6 +397,10 @@ void LTTrack::setLoop(bool loop) {
     source->set_looping(loop);
 }
 
+bool LTTrack::getLoop() {
+    return source->get_looping();
+}
+
 
 int LTTrack::numSamples() {
     return source->num_samples();
@@ -430,6 +436,14 @@ static LTfloat get_pitch(LTObject *obj) {
 
 static void set_pitch(LTObject *obj, LTfloat val) {
     ((LTTrack*)obj)->source->set_pitch(val);
+}
+
+static LTbool get_loop(LTObject *obj) {
+    return ((LTTrack*)obj)->getLoop();
+}
+
+static void set_loop(LTObject *obj, LTbool val) {
+    ((LTTrack*)obj)->setLoop(val);
 }
 
 void ltAudioSuspend() {
@@ -633,4 +647,5 @@ LTAudioSample *ltReadAudioSample(lua_State *L, const char *path, const char *nam
 LT_REGISTER_TYPE(LTTrack, "lt.Track", "lt.SceneNode")
 LT_REGISTER_PROPERTY_FLOAT(LTTrack, gain, &get_gain, &set_gain)
 LT_REGISTER_PROPERTY_FLOAT(LTTrack, pitch, &get_pitch, &set_pitch)
+LT_REGISTER_PROPERTY_BOOL(LTTrack, loop, &get_loop, &set_loop)
 

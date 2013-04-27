@@ -47,6 +47,7 @@ struct LTTrack : LTSceneNode {
 
     void queueSample(LTAudioSample *sample, int ref);
     void setLoop(bool loop);
+    bool getLoop();
     void play();
     void pause();
     void stop();

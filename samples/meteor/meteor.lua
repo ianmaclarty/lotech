@@ -145,7 +145,7 @@ function make_ship()
     ship_fixture.ship = true
 
     local thrust_track = lt.Track()
-    thrust_track:SetLoop(true)
+    thrust_track.loop = true
     thrust_track:Queue(samples.ship_thrust)
 
     local key = {}
