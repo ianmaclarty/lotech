@@ -506,6 +506,12 @@ void ltAudioGC() {
     buffers_gc();
 }
 
+static void skip_bytes(LTResource *rsc, int n) {
+    void* buf = malloc(n);
+    ltReadResource(rsc, buf, n);
+    free(buf);
+}
+
 static int read_4_byte_little_endian_int(LTResource *rsc) {
     int val = 0;
     ltReadResource(rsc, &val, 4);
@@ -588,8 +594,13 @@ LTAudioSample *ltReadAudioSample(lua_State *L, const char *path, const char *nam
     int bytes_per_sample = bits_per_sample / 8;
 
     ltReadResource(rsc, chunkid, 4);
+    if (strcmp(chunkid, "LIST") == 0) {
+        chunksize = read_4_byte_little_endian_int(rsc);
+        skip_bytes(rsc, chunksize);
+    }
+    ltReadResource(rsc, chunkid, 4);
     if (strcmp(chunkid, "data") != 0) {
-        ltLog("Data chunk not found in %s", path);
+        ltLog("Data chunk not found in %s (found %s instead)", path, chunkid);
         ltCloseResource(rsc);
         return NULL;
     }
@@ -648,4 +659,3 @@ LT_REGISTER_TYPE(LTTrack, "lt.Track", "lt.SceneNode")
 LT_REGISTER_PROPERTY_FLOAT(LTTrack, gain, &get_gain, &set_gain)
 LT_REGISTER_PROPERTY_FLOAT(LTTrack, pitch, &get_pitch, &set_pitch)
 LT_REGISTER_PROPERTY_BOOL(LTTrack, loop, &get_loop, &set_loop)
-
