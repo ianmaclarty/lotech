@@ -85,6 +85,26 @@ void LTBody::draw() {
 //    return false;
 //}
 
+bool LTBody::inverse_transform(LTfloat *x, LTfloat *y) {
+    b2Body *b = body;
+    if (b != NULL) {
+        LTfloat angle = b->GetAngle();
+        b2Vec2 pos = b->GetPosition();
+        *x = *x - pos.x;
+        *y = *y - pos.y;
+        LTfloat x1, y1;
+        LTfloat s = sinf(angle);
+        LTfloat c = cosf(angle);
+        x1 = c * (*x) - s * (*y);
+        y1 = s * (*x) + c * (*y);
+        *x = x1;
+        *y = y1;
+        return true;
+    } else {
+        return false;
+    }
+}
+
 LTFixture::LTFixture(LTBody *body, const b2FixtureDef *def) {
     LTFixture::body = body;
     if (body->body != NULL) {
@@ -299,11 +319,13 @@ void *lt_alloc_LTBody(lua_State *L);
 void *lt_alloc_LTFixture(lua_State *L);
 
 static LTfloat get_world_gx(LTObject *obj) {
-    return ((LTWorld*)obj)->world->GetGravity().x;
+    LTWorld *w = (LTWorld*)obj;
+    return w->world->GetGravity().x;
 }
 
 static LTfloat get_world_gy(LTObject *obj) {
-    return ((LTWorld*)obj)->world->GetGravity().y;
+    LTWorld *w = (LTWorld*)obj;
+    return w->world->GetGravity().y;
 }
 
 static void set_world_gx(LTObject *obj, LTfloat val) {
@@ -347,6 +369,7 @@ static int world_step(lua_State *L) {
 static int new_body(lua_State *L) {
     ltLuaCheckNArgs(L, 2);
     LTWorld *world = lt_expect_LTWorld(L, 1);
+    LTfloat scale = world->scale;
 
     // Second argument is a table of body properties.
     b2BodyDef body_def;
@@ -370,12 +393,12 @@ static int new_body(lua_State *L) {
 
     lua_getfield(L, 2, "x");
     if (!lua_isnil(L, -1)) {
-        body_def.position.x = luaL_checknumber(L, -1);
+        body_def.position.x = luaL_checknumber(L, -1) / scale;
     }
     lua_pop(L, 1);
     lua_getfield(L, 2, "y");
     if (!lua_isnil(L, -1)) {
-        body_def.position.y = luaL_checknumber(L, -1);
+        body_def.position.y = luaL_checknumber(L, -1) / scale;
     }
     lua_pop(L, 1);
 
@@ -387,12 +410,12 @@ static int new_body(lua_State *L) {
 
     lua_getfield(L, 2, "vx");
     if (!lua_isnil(L, -1)) {
-        body_def.linearVelocity.x = luaL_checknumber(L, -1);
+        body_def.linearVelocity.x = luaL_checknumber(L, -1) / scale;
     }
     lua_pop(L, 1);
     lua_getfield(L, 2, "vy");
     if (!lua_isnil(L, -1)) {
-        body_def.linearVelocity.y = luaL_checknumber(L, -1);
+        body_def.linearVelocity.y = luaL_checknumber(L, -1) / scale;
     }
     lua_pop(L, 1);
 
@@ -459,7 +482,7 @@ static LTObject* get_body_world(LTObject* obj) {
 static LTfloat get_body_x(LTObject *obj) {
     LTBody *b = (LTBody*)obj;
     if (b->body != NULL) {
-        return b->body->GetPosition().x;
+        return b->body->GetPosition().x * b->world->scale;
     } else {
         return 0.0f;
     }
@@ -470,7 +493,7 @@ static void set_body_x(LTObject *obj, LTfloat val) {
     if (b->body != NULL) {
         b2Vec2 pos = b->body->GetPosition();
         LTfloat angle = b->body->GetAngle();
-        b->body->SetTransform(b2Vec2(val, pos.y), angle);
+        b->body->SetTransform(b2Vec2(val / b->world->scale, pos.y), angle);
         b->body->SetAwake(true);
     }
 }
@@ -478,7 +501,7 @@ static void set_body_x(LTObject *obj, LTfloat val) {
 static LTfloat get_body_y(LTObject *obj) {
     LTBody *b = (LTBody*)obj;
     if (b->body != NULL) {
-        return b->body->GetPosition().y;
+        return b->body->GetPosition().y * b->world->scale;
     } else {
         return 0.0f;
     }
@@ -489,7 +512,7 @@ static void set_body_y(LTObject *obj, LTfloat val) {
     if (b->body != NULL) {
         b2Vec2 pos = b->body->GetPosition();
         LTfloat angle = b->body->GetAngle();
-        b->body->SetTransform(b2Vec2(pos.x, val), angle);
+        b->body->SetTransform(b2Vec2(pos.x, val / b->world->scale), angle);
         b->body->SetAwake(true);
     }
 }
@@ -515,7 +538,7 @@ static void set_body_angle(LTObject *obj, LTfloat val) {
 static LTfloat get_body_vx(LTObject *obj) {
     LTBody *b = (LTBody*)obj;
     if (b->body != NULL) {
-        return b->body->GetLinearVelocity().x;
+        return b->body->GetLinearVelocity().x * b->world->scale;
     } else {
         return 0.0f;
     }
@@ -525,7 +548,7 @@ static void set_body_vx(LTObject *obj, LTfloat val) {
     LTBody *b = (LTBody*)obj;
     if (b->body != NULL) {
         b2Vec2 v = b->body->GetLinearVelocity();
-        b->body->SetLinearVelocity(b2Vec2(val, v.y));
+        b->body->SetLinearVelocity(b2Vec2(val / b->world->scale, v.y));
         b->body->SetAwake(true);
     }
 }
@@ -533,7 +556,7 @@ static void set_body_vx(LTObject *obj, LTfloat val) {
 static LTfloat get_body_vy(LTObject *obj) {
     LTBody *b = (LTBody*)obj;
     if (b->body != NULL) {
-        return b->body->GetLinearVelocity().y;
+        return b->body->GetLinearVelocity().y * b->world->scale;
     } else {
         return 0.0f;
     }
@@ -543,7 +566,7 @@ static void set_body_vy(LTObject *obj, LTfloat val) {
     LTBody *b = (LTBody*)obj;
     if (b->body != NULL) {
         b2Vec2 v = b->body->GetLinearVelocity();
-        b->body->SetLinearVelocity(b2Vec2(v.x, val));
+        b->body->SetLinearVelocity(b2Vec2(v.x, val / b->world->scale));
         b->body->SetAwake(true);
     }
 }
@@ -688,6 +711,7 @@ static int new_polygon_fixture(lua_State *L) {
     int nargs = ltLuaCheckNArgs(L, 2);
     LTBody *body = lt_expect_LTBody(L, 1);
     if (body->body != NULL) {
+        LTfloat scale = body->world->scale;
         // Second argument is array of polygon vertices.
         if (!lua_istable(L, 2)) {
             return luaL_error(L, "Expecting an array in second argument");
@@ -708,8 +732,8 @@ static int new_polygon_fixture(lua_State *L) {
         for (int i = 0; i < num_vertices; i++) {
             lua_rawgeti(L, 2, i * 2 + 1);
             lua_rawgeti(L, 2, i * 2 + 2);
-            vertices[i].x = luaL_checknumber(L, -2);
-            vertices[i].y = luaL_checknumber(L, -1);
+            vertices[i].x = luaL_checknumber(L, -2) / scale;
+            vertices[i].y = luaL_checknumber(L, -1) / scale;
             lua_pop(L, 2);
         }
         if (!ltCheckB2Poly(vertices, num_vertices)) {
@@ -746,9 +770,10 @@ static int new_circle_fixture(lua_State *L) {
     int nargs = ltLuaCheckNArgs(L, 4);
     LTBody *body = lt_expect_LTBody(L, 1);
     if (body->body != NULL) {
-        LTfloat radius = luaL_checknumber(L, 2);
-        LTfloat x = luaL_checknumber(L, 3);
-        LTfloat y = luaL_checknumber(L, 4);
+        LTfloat scale = body->world->scale;
+        LTfloat radius = luaL_checknumber(L, 2) / scale;
+        LTfloat x = luaL_checknumber(L, 3) / scale;
+        LTfloat y = luaL_checknumber(L, 4) / scale;
         b2CircleShape circle;
         circle.m_radius = radius;
         circle.m_p.Set(x, y);
@@ -772,6 +797,7 @@ static int new_chain_fixture(lua_State *L) {
     int nargs = ltLuaCheckNArgs(L, 2);
     LTBody *body = lt_expect_LTBody(L, 1);
     if (body->body != NULL) {
+        LTfloat scale = body->world->scale;
         // Second argument is array of chain vertices.
         if (!lua_istable(L, 2)) {
             return luaL_error(L, "Expecting an array in second argument");
@@ -788,8 +814,8 @@ static int new_chain_fixture(lua_State *L) {
         for (int i = 0; i < num_vertices; i++) {
             lua_rawgeti(L, 2, i * 2 + 1);
             lua_rawgeti(L, 2, i * 2 + 2);
-            vertices[i].x = luaL_checknumber(L, -2);
-            vertices[i].y = luaL_checknumber(L, -1);
+            vertices[i].x = luaL_checknumber(L, -2) / scale;
+            vertices[i].y = luaL_checknumber(L, -1) / scale;
             lua_pop(L, 2);
         }
         b2ChainShape chain;
@@ -856,10 +882,11 @@ struct RayCastCallback : public b2RayCastCallback {
 static int world_ray_cast(lua_State *L) {
     ltLuaCheckNArgs(L, 5);
     LTWorld *world = lt_expect_LTWorld(L, 1);
-    LTfloat x1 = luaL_checknumber(L, 2);
-    LTfloat y1 = luaL_checknumber(L, 3);
-    LTfloat x2 = luaL_checknumber(L, 4);
-    LTfloat y2 = luaL_checknumber(L, 5);
+    LTfloat scale = world->scale;
+    LTfloat x1 = luaL_checknumber(L, 2) / scale;
+    LTfloat y1 = luaL_checknumber(L, 3) / scale;
+    LTfloat x2 = luaL_checknumber(L, 4) / scale;
+    LTfloat y2 = luaL_checknumber(L, 5) / scale;
     
     RayCastCallback cb;
     world->world->RayCast(&cb, b2Vec2(x1, y1), b2Vec2(x2, y2));
@@ -878,9 +905,9 @@ static int world_ray_cast(lua_State *L) {
             lua_pop(L, 1); // pop body
         }
 
-        lua_pushnumber(L, it->second.point.x);
+        lua_pushnumber(L, it->second.point.x * scale);
         lua_setfield(L, -2, "x");
-        lua_pushnumber(L, it->second.point.y);
+        lua_pushnumber(L, it->second.point.y * scale);
         lua_setfield(L, -2, "y");
         lua_pushnumber(L, it->second.normal.x);
         lua_setfield(L, -2, "normal_x");
@@ -921,10 +948,11 @@ struct AABBQueryCallBack : b2QueryCallback {
 static int world_find_fixtures_in(lua_State *L) {
     ltLuaCheckNArgs(L, 5);
     LTWorld *world = lt_expect_LTWorld(L, 1);
-    LTfloat x1 = (LTfloat)luaL_checknumber(L, 2);
-    LTfloat y1 = (LTfloat)luaL_checknumber(L, 3);
-    LTfloat x2 = (LTfloat)luaL_checknumber(L, 4);
-    LTfloat y2 = (LTfloat)luaL_checknumber(L, 5);
+    LTfloat scale = world->scale;
+    LTfloat x1 = (LTfloat)luaL_checknumber(L, 2) / scale;
+    LTfloat y1 = (LTfloat)luaL_checknumber(L, 3) / scale;
+    LTfloat x2 = (LTfloat)luaL_checknumber(L, 4) / scale;
+    LTfloat y2 = (LTfloat)luaL_checknumber(L, 5) / scale;
     b2AABB aabb;
     if (x1 > x2) {
         aabb.upperBound.x = x1;

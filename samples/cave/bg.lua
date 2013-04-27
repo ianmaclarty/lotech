@@ -1,4 +1,4 @@
-function make_cave_wall_bg(top_verts, bottom_verts, scale)
+function make_cave_wall_bg(top_verts, bottom_verts)
     local mesh = images.wall_edge:Mesh()
     mesh:SetXYs{}
     local edge = images.wall_edge:Mesh()
@@ -8,17 +8,17 @@ function make_cave_wall_bg(top_verts, bottom_verts, scale)
     local e = 0.01
     local noise = 3
     local divisions = 3
-    local x = top_verts[1] * scale
-    local y_top = top_verts[2] * scale
-    local y_bottom = bottom_verts[2] * scale
+    local x = top_verts[1]
+    local y_top = top_verts[2]
+    local y_bottom = bottom_verts[2]
     local xx, yy_top, yy_bottom
     for i = 1, #top_verts - 3, 2 do
-        local x1 = top_verts[i] * scale
-        local y1_top = top_verts[i + 1] * scale
-        local y1_bottom = bottom_verts[i + 1] * scale
-        local x2 = top_verts[i + 2] * scale
-        local y2_top = top_verts[i + 3] * scale
-        local y2_bottom = bottom_verts[i + 3] * scale
+        local x1 = top_verts[i]
+        local y1_top = top_verts[i + 1]
+        local y1_bottom = bottom_verts[i + 1]
+        local x2 = top_verts[i + 2]
+        local y2_top = top_verts[i + 3]
+        local y2_bottom = bottom_verts[i + 3]
         local d = x2 - x1
         local g_top = (y2_top - y1_top) / d
         local g_bottom = (y2_bottom - y1_bottom) / d

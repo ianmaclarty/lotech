@@ -30,6 +30,7 @@ struct LTBody : LTWrapNode {
 
     virtual void draw();
     //virtual bool containsPoint(LTfloat x, LTfloat y);
+    virtual bool inverse_transform(LTfloat *x, LTfloat *y);
 };
 
 struct LTFixture : LTSceneNode {

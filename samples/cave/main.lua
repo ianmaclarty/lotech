@@ -44,18 +44,18 @@ world.debug = true
 local cave_wall_body = world:Body{type="kinematic"}
 local ship_start_y
 do
-    local scroll_speed = 1.4
+    local scroll_speed = 140
     local top_fixture, bottom_fixture
     local top_verts, bottom_verts = {}, {}
-    local w = 10
+    local w = 1000
     local w2 = w/2
-    local dx = 0.8
+    local dx = 80
     local
     function regen_walls()
         local x = top_verts[#top_verts - 1] or -dx
         while x < w do
-            local top_y = math.random() * 1 + 2
-            local bottom_y = top_y - (math.random() * 1 + 1)
+            local top_y = math.random() * 100 + 200
+            local bottom_y = top_y - (math.random() * 100 + 100)
             x = x + dx
             table.append(top_verts, {x, top_y})
             table.append(bottom_verts, {x, bottom_y})
@@ -67,12 +67,12 @@ do
     end
     regen_walls()
     ship_start_y = (top_verts[2] - bottom_verts[2]) / 2 + bottom_verts[2]
-    local walls = make_cave_wall_bg(top_verts, bottom_verts, wscale):Translate(0, 0)
+    local walls = make_cave_wall_bg(top_verts, bottom_verts):Translate(0, 0)
     local curr_x = 0
     cave_wall_body:Action(function(dt, b)
         curr_x = curr_x - scroll_speed * dt
         b.x = curr_x
-        walls.x = math.floor(curr_x * wscale * 0.5) * 2
+        walls.x = math.floor(curr_x * 0.5) * 2
         if curr_x < -w2 then
             top_fixture:Destroy()
             bottom_fixture:Destroy()
@@ -94,7 +94,7 @@ do
             bottom_verts = new_bottom_verts
             regen_walls()
             main_layer:Remove(walls)
-            walls = make_cave_wall_bg(top_verts, bottom_verts, wscale):Translate(curr_x, 0)
+            walls = make_cave_wall_bg(top_verts, bottom_verts):Translate(curr_x, 0)
             main_layer:InsertBelow(cave_wall_body, walls)
         end
     end)
@@ -104,8 +104,8 @@ end
 main_layer:Insert(cave_wall_body)
 
 -- Ship
-local ship_body = world:Body{type="kinematic", x = 0.1, y = ship_start_y}
-local ship_fixture = ship_body:Polygon{-0.1, -0.1, -0.1, 0.1, 0.1, 0}
+local ship_body = world:Body{type="kinematic", x = 10, y = ship_start_y}
+local ship_fixture = ship_body:Polygon{-10, -10, -10, 10, 10, 0}
 
 local
 function die()
@@ -118,7 +118,7 @@ function die()
     end}
 end
 
-local ship_speed = 1.8
+local ship_speed = 180
 ship_body:Action(function(dt, b)
     if key_down["up"] then
         b.y = b.y + ship_speed * dt
@@ -132,10 +132,10 @@ ship_body:Action(function(dt, b)
     if key_down["right"] then
         b.x = b.x + ship_speed * dt
     end
-    if b.x < 0.1 then
-        b.x = 0.1
-    elseif b.x > 4 then
-        b.x = 4
+    if b.x < 10 then
+        b.x = 10
+    elseif b.x > 400 then
+        b.x = 400
     end
     for i, fixture in ipairs(ship_fixture:Touching()) do
         if fixture.cave_wall then
@@ -150,16 +150,16 @@ function fire_laser()
     if not ship_body then
         return
     end
-    local speed = 4
+    local speed = 400
     local x = ship_body.x
     local y = ship_body.y
     local laser_body = world:Body({type="kinematic", x = x, y = y})
-    local h = 0.05
-    local w = 0.1
+    local h = 5
+    local w = 10
     local laser_fixture = laser_body:Polygon{-w, -h, -w, h, w, h, w, -h}
     laser_body:Action(function(dt, b)
         x = x + speed * dt
-        if x > 6 then
+        if x > 500 then
             b:Destroy()
             main_layer:Remove(b)
         end
@@ -183,16 +183,16 @@ end
 
 local
 function make_enemy()
-    local speed = 0.7
-    local x = 5
-    local y = 2
+    local speed = 70
+    local x = 500
+    local y = 200
     local enemy_body = world:Body({type="kinematic", x = x, y = y})
-    local enemy_fixture = enemy_body:Circle(0.1, 0, 0)
+    local enemy_fixture = enemy_body:Circle(10, 0, 0)
     enemy_fixture.enemy = true
     main_layer:Insert(enemy_body)
     enemy_body:Action(function(dt, b)
         x = x - speed * dt
-        if x < -1 then
+        if x < -20 then
             b:Destroy()
             main_layer:Remove(b)
             return true
