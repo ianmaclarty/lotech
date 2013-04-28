@@ -23,4 +23,4 @@ mesh:Action(function(dt)
     return 0.5
 end)
 
-lt.root:Insert(mesh)
+lt.root.child = mesh

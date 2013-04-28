@@ -18,7 +18,7 @@ local main_layer = lt.Layer()
 local rt = main_layer
     :RenderTarget(240, 160, 0, 0, 480, 320, 0, 0, 480, 320, "nearest", "nearest")
 local top = rt:BlendMode("off")
-lt.root:Insert(top)
+lt.root.child = top
 
 local fire_laser
 
@@ -113,7 +113,6 @@ function die()
     ship_body:Destroy()
 
     rt:Tween{pwidth = 2, pheight = 1, time = 2, easing = "zoomout", action = function()
-        lt.root:Remove(top)
         import "main"
     end}
 end

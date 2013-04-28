@@ -115,7 +115,6 @@ function make_meteor()
                     images.font, "center", "center"):Scale(1.5)
                 gameover_text:KeyUp(function(event)
                     if event.key == "enter" then
-                        lt.root:Remove(main_layer)
                         import "meteor"
                     end
                 end)
@@ -250,7 +249,7 @@ main_layer:Insert(survivors_layer)
 main_layer:Insert(ship_layer)
 main_layer:Insert(score_text)
 
-lt.root:Insert(main_layer)
+lt.root.child = main_layer
 
 -- Used to find world coordinates during development
 --main_layer:MouseDown(function(event)

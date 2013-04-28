@@ -1,5 +1,5 @@
 -- Copyright (C) 2010-2013 Ian MacLarty. See Copyright Notice in ../lt.h
-lt.root = lt.Layer()
+lt.root = lt.Wrap(nil)
 lt.root:Activate()
 
 function lt.Render()

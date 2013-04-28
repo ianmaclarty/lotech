@@ -62,4 +62,4 @@ light:Action(function(dt, l)
     return 1
 end)
 
-lt.root:Insert(light:Lighting():Perspective(1, 25, 200))
+lt.root.child = light:Lighting():Perspective(1, 25, 200)

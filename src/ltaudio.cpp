@@ -597,8 +597,8 @@ LTAudioSample *ltReadAudioSample(lua_State *L, const char *path, const char *nam
     if (strcmp(chunkid, "LIST") == 0) {
         chunksize = read_4_byte_little_endian_int(rsc);
         skip_bytes(rsc, chunksize);
+        ltReadResource(rsc, chunkid, 4);
     }
-    ltReadResource(rsc, chunkid, 4);
     if (strcmp(chunkid, "data") != 0) {
         ltLog("Data chunk not found in %s (found %s instead)", path, chunkid);
         ltCloseResource(rsc);
