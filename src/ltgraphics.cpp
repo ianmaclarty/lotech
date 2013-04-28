@@ -195,7 +195,7 @@ void ltAdjustViewportAspectRatio() {
     LTfloat h0 = design_height;
     LTfloat w1 = (LTfloat)screen_width;
     LTfloat h1 = (LTfloat)screen_height;
-    #ifdef LTENVELOPE
+    if (lt_envelope) {
         LTfloat sy = h1 / h0;
         LTfloat dx = (w1 - w0 * sy) / (2.0f * w1);
         LTfloat sx = w1 / w0;
@@ -216,7 +216,7 @@ void ltAdjustViewportAspectRatio() {
                 screen_viewport_height = screen_height;
             }
         }
-    #else
+    } else {
         LTfloat sy = h1 / h0;
         LTfloat dx = (w1 - w0 * sy) / (2.0f * w0 * sy);
         LTfloat sx = w1 / w0;
@@ -239,7 +239,7 @@ void ltAdjustViewportAspectRatio() {
         }
         viewport_width = viewport_right - viewport_left;
         viewport_height = viewport_top - viewport_bottom;
-    #endif
+    }
 
     // Make space for ads.
     #ifdef LTADS

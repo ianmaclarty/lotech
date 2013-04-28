@@ -220,6 +220,7 @@ static int lt_SetRefreshParams(lua_State *L) {
     ltLuaCheckNArgs(L, 2);
     lt_vsync = lua_toboolean(L, 1) ? true : false;
     lt_fixed_update_time = luaL_checknumber(L, 2);
+    lt_envelope = lua_toboolean(L, 3) ? true : false;
     return 0;
 }
 

@@ -5,4 +5,5 @@ LT_INIT_IMPL(ltconfig)
 
 const char *lt_app_short_name = NULL;
 bool lt_vsync = true;
+bool lt_envelope = false;
 double lt_fixed_update_time = 1.0/60.0;
