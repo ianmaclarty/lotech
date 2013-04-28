@@ -20,9 +20,7 @@ static void mouse_button_handler(int button, int action);
 static void mouse_pos_handler(int x, int y);
 static void resize_handler(int w, int h);
 static LTKey convert_key(int key);
-static bool quit = false;
-static bool fullscreen = false;
-static bool toggle_fullscreen = false;
+static bool fullscreen = lt_fullscreen;
 static void process_args(int argc, const char **argv);
 static const char *dir = "data";
 static const char *title = "";
@@ -77,18 +75,17 @@ int main(int argc, const char **argv) {
     double dt;
     long long frame_count = 0;
 
-    while (!quit) {
+    while (!lt_quit) {
         if (!glfwGetWindowParam(GLFW_OPENED)) {
-            quit = true;
+            lt_quit = true;
         }
 
-        if (toggle_fullscreen) {
+        if (lt_fullscreen != fullscreen) {
             ltSaveState();
             glfwCloseWindow();
-            fullscreen = !fullscreen;
+            fullscreen = lt_fullscreen;
             setup_window();
             ltLuaReset();
-            toggle_fullscreen = false;
         }
 
         ltLuaRender();
@@ -211,13 +208,13 @@ static void key_handler(int key, int state) {
     LTKey ltkey = convert_key(key);
     if (state == GLFW_PRESS) {
         if (key == GLFW_KEY_ESC) {
-            quit = true;
+            lt_quit = true;
         }
         if (key == 'F'
             && (glfwGetKey(GLFW_KEY_LCTRL) == GLFW_PRESS
             || glfwGetKey(GLFW_KEY_RCTRL) == GLFW_PRESS))
         {
-            toggle_fullscreen = true;
+            lt_fullscreen = !lt_fullscreen;
         } else {
             ltLuaKeyDown(ltkey);
         }
@@ -320,6 +317,7 @@ static void process_args(int argc, const char **argv) {
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-fullscreen") == 0) {
             fullscreen = true;
+            lt_fullscreen = true;
         } else {
             dir = argv[i];
         }

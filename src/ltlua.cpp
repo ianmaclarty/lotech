@@ -224,6 +224,22 @@ static int lt_SetRefreshParams(lua_State *L) {
     return 0;
 }
 
+static int lt_Quit(lua_State *L) {
+    lt_quit = true;
+    return 0;
+}
+
+static int lt_SetFullScreen(lua_State *L) {
+    ltLuaCheckNArgs(L, 1);
+    lt_fullscreen = lua_toboolean(L, 1);
+    return 0;
+}
+
+static int lt_IsFullScreen(lua_State *L) {
+    lua_pushboolean(L, lt_fullscreen);
+    return 1;
+}
+
 static int lt_SetOrientation(lua_State *L) {
     ltLuaCheckNArgs(L, 1);
     const char *orientation_str = lua_tostring(L, 1);
@@ -1935,6 +1951,9 @@ static const luaL_Reg ltlib[] = {
     {"SetDesignScreenSize",             lt_SetDesignScreenSize},
     {"SetRefreshParams",                lt_SetRefreshParams},
     {"SetOrientation",                  lt_SetOrientation},
+    {"SetFullScreen",                   lt_SetFullScreen},
+    {"IsFullScreen",                    lt_IsFullScreen},
+    {"Quit",                            lt_Quit},
     {"PushTint",                        lt_PushTint},
     {"PopTint",                         lt_PopTint},
     {"PushMatrix",                      lt_PushMatrix},
