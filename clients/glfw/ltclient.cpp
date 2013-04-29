@@ -22,7 +22,7 @@ static void resize_handler(int w, int h);
 static LTKey convert_key(int key);
 static bool fullscreen = lt_fullscreen;
 static void process_args(int argc, const char **argv);
-static const char *dir = "data";
+static const char *dir = "";
 static const char *title = "";
 static int window_width = 960;
 static int window_height = 640;
@@ -120,8 +120,8 @@ int main(int argc, const char **argv) {
 #ifdef LTOSX
         // Sleep for a bit to try and avoid the skyrocketing framerate
         // problem described above.
-        if (dt < frame_time_0 * 0.5) {
-            useconds_t sleep_time = (int)((frame_time_0 - dt) * 500000.0);
+        if (dt < 1.0/120.0) {
+            useconds_t sleep_time = (int)((1.0/60.0 - dt) * 100000.0);
             //fprintf(stderr, "sleeping for %d\n", sleep_time);
             usleep(sleep_time);
         }
@@ -314,11 +314,18 @@ static LTKey convert_key(int key) {
 }
 
 static void process_args(int argc, const char **argv) {
+    bool in_osx_bundle = false;
+#ifdef LTOSX
+    NSString *bundleIdentifier = [[NSBundle mainBundle] bundleIdentifier];
+    in_osx_bundle = (bundleIdentifier != nil);
+#endif
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-fullscreen") == 0) {
             fullscreen = true;
             lt_fullscreen = true;
-        } else {
+        } else if (!in_osx_bundle) {
+            // Do not set dir if in an OSX bundle as extra argument may
+            // be sent to the executable in that case.
             dir = argv[i];
         }
     }

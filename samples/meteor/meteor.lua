@@ -98,7 +98,6 @@ function make_meteor()
                 meteor_layer:Action(function(dt)
                     if explosion.finished then
                         meteor_layer:Remove(explosion)
-                        log("explosion removed")
                         return true
                     end
                 end)
