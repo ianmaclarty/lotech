@@ -1,6 +1,7 @@
 DIR := $(dir $(lastword $(MAKEFILE_LIST)))
 TARGET_PLATFORM:=$(shell if [ -e $(DIR)/target ]; then cat $(DIR)/target; fi)
 
+EXE_EXT=
 ifeq ($(TARGET_PLATFORM),)
 UNAME=$(shell uname -s)
 ifneq (,$(findstring Linux,$(UNAME)))
@@ -8,6 +9,7 @@ TARGET_PLATFORM=linux
 endif
 ifneq (,$(findstring W32,$(UNAME)))
 TARGET_PLATFORM=mingw
+EXE_EXT=.exe
 endif
 ifneq (,$(findstring Darwin,$(UNAME)))
 TARGET_PLATFORM=osx

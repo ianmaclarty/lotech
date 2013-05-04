@@ -136,7 +136,7 @@ clean:
 	cd clients/glfw && $(MAKE) clean
 	rm -rf $(TARGET_DIR)/*
 	rm -f src/lua_scripts.h
-	rm ltclient
+	rm -f ltclient$(EXE_EXT)
 
 .PHONY: tags
 tags:

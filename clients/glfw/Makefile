@@ -29,7 +29,7 @@ ifeq ($(TARGET_PLATFORM),mingw)
 LIBFLAGS= -static -static-libstdc++ -static-libgcc -llt \
 		-llua -lpng -lz -lbox2d \
 		 -lOpenAL32 -lwinmm -lole32 -ldsound \
-		-lglew32s -lglfw -lopengl32
+		-lglew32 -lglfw -lopengl32
 endif
 
 .PHONY: ltclient
@@ -39,5 +39,5 @@ ltclient: ltclient.cpp $(EXTRA_PREREQS)
 
 .PHONY: clean
 clean:
-	rm ltclient
+	rm -f ltclient$(EXE_EXT)
 	rm -f *.o

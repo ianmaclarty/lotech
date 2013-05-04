@@ -93,13 +93,13 @@ msys-install: win32-msys
 
 win32-msys:
 	cd lib/win32 && $(MAKE) -f Makefile.win32.msys
-	cd examples  && $(MAKE) -f Makefile.win32.msys
-	cd tests     && $(MAKE) -f Makefile.win32.msys
+	#cd examples  && $(MAKE) -f Makefile.win32.msys
+	#cd tests     && $(MAKE) -f Makefile.win32.msys
 
 msys-clean:
 	cd lib/win32 && $(MAKE) -f Makefile.win32.msys clean
-	cd examples  && $(MAKE) -f Makefile.win32.msys clean
-	cd tests     && $(MAKE) -f Makefile.win32.msys clean
+	#cd examples  && $(MAKE) -f Makefile.win32.msys clean
+	#cd tests     && $(MAKE) -f Makefile.win32.msys clean
 
 
 ###########################################################################
