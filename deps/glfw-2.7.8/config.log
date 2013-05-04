@@ -1,0 +1,57 @@
+This file contains any messages produced by compilers while
+running ./compile.sh, to aid debugging if ./compile.sh makes a mistake.
+
+./compile.sh: checking whether we are using GNU C
+./compile.sh: cc -E conftest.c
+./compile.sh: Checking for X11 RandR support
+./compile.sh: cc -c  conftest.c 1>&5
+conftest.c:2:35: fatal error: X11/extensions/Xrandr.h: No such file or directory
+compilation terminated.
+./compile.sh: failed program was:
+#include <X11/Xlib.h>
+#include <X11/extensions/Xrandr.h>
+
+int main() {; return 0;}
+./compile.sh: Checking for X11 VidMode support
+./compile.sh: cc -c  conftest.c 1>&5
+conftest.c:2:38: fatal error: X11/extensions/xf86vmode.h: No such file or directory
+compilation terminated.
+./compile.sh: failed program was:
+#include <X11/Xlib.h>
+#include <X11/extensions/xf86vmode.h>
+
+#if defined(__APPLE_CC__)
+#error Not supported under Mac OS X
+#endif
+
+int main() {; return 0;}
+./compile.sh: Checking for pthread support
+./compile.sh: cc -o conftest  -pthread conftest.c  -lGL -pthread 1>&5
+./compile.sh: Checking for sched_yield
+./compile.sh: cc -c  -pthread conftest.c 1>&5
+./compile.sh: Checking for clock_gettime
+./compile.sh: cc -o conftest  -pthread conftest.c  1>&5
+/tmp/cc9LU4VK.o: In function `main':
+conftest.c:(.text+0xf): undefined reference to `clock_gettime'
+collect2: ld returned 1 exit status
+./compile.sh: failed program was:
+#include <time.h>
+#include <unistd.h>
+int main() {
+#if defined( CLOCK_MONOTONIC )
+clock_gettime(0, 0);
+#else
+#error "clock_gettime support not detected"
+#endif
+return 0;}
+./compile.sh: cc -o conftest  -pthread conftest.c -lrt 1>&5
+./compile.sh: Checking for glXGetProcAddress variants
+./compile.sh: cc -o conftest  -pthread conftest.c  -lGL -pthread 1>&5
+./compile.sh: Checking for sysconf
+./compile.sh: cc -o conftest  -pthread conftest.c  -lGL -pthread 1>&5
+./compile.sh: Checking for sysctl support
+./compile.sh: cc -E conftest.c
+./compile.sh: Creating ./lib/x11/Makefile.x11
+./compile.sh: Creating ./examples/Makefile.x11
+./compile.sh: Creating ./tests/Makefile.x11
+./compile.sh: Creating ./lib/x11/libglfw.pc.in

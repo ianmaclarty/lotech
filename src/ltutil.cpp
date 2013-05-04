@@ -84,14 +84,17 @@ const char *ltHomeDir() {
     // Non-windows
     const char *homedir;
     homedir = getenv("HOME");
+    /*
+     * Commented out to avoid warnings when statically linking.
     if (homedir == NULL) {
         struct passwd *pw = getpwuid(getuid());
         if (pw != NULL) {
             homedir = pw->pw_dir;
         }
     }
+    */
     if (homedir == NULL) {
-        ltLog("Unable to get home directory.");
+        ltLog("Unable to find your home directory. Please set the HOME env var.");
         ltAbort();
     }
     if (!ltFileExists(homedir)) {

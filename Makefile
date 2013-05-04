@@ -133,8 +133,10 @@ $(TARGET_DIR):
 clean:
 	rm -rf buildtmp.$(TARGET_PLATFORM)*
 	cd deps && $(MAKE) clean
+	cd clients/glfw && $(MAKE) clean
 	rm -rf $(TARGET_DIR)/*
 	rm -f src/lua_scripts.h
+	rm ltclient
 
 .PHONY: tags
 tags:

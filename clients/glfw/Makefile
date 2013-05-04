@@ -3,14 +3,28 @@ LTDIR=../..
 -include $(LTDIR)/Make.params
 include ../../Make.common
 
+default: ltclient
+
+EXTRA_PREREQS=
+
 ifeq ($(TARGET_PLATFORM),osx)
 LIBFLAGS= -llt -lpng -lz -llua -lbox2d -lGLEW -lglfw -framework OpenGL \
 		-framework OpenAL -framework Cocoa \
 		-pagezero_size 10000 -image_base 100000000
 endif
+
 ifeq ($(TARGET_PLATFORM),linux)
-LIBFLAGS= -llt -lpng -lz -llua -lbox2d -lglfw -lGLEW -lopenal -lX11 -lGL
+EXTRA_PREREQS=wrap_memcpy.o
+LIBFLAGS=-static-libstdc++ -static-libgcc \
+	$(LTDIR)/linux/liblt.a $(LTDIR)/linux/libpng.a $(LTDIR)/linux/libz.a \
+	$(LTDIR)/linux/liblua.a \
+	$(LTDIR)/linux/libbox2d.a $(LTDIR)/linux/libglfw.a \
+	$(LTDIR)/linux/libGLEW.a $(LTDIR)/linux/libopenal.a \
+	-lX11 -lGL wrap_memcpy.o -Wl,--wrap=memcpy
+wrap_memcpy.o:
+	gcc -c wrap_memcpy.c
 endif
+
 ifeq ($(TARGET_PLATFORM),mingw)
 LIBFLAGS= -static -static-libstdc++ -static-libgcc -llt \
 		-llua -lpng -lz -lbox2d \
@@ -19,10 +33,11 @@ LIBFLAGS= -static -static-libstdc++ -static-libgcc -llt \
 endif
 
 .PHONY: ltclient
-ltclient: ltclient.cpp
+ltclient: ltclient.cpp $(EXTRA_PREREQS)
 	g++ $(LTCFLAGS) -I$(LTDIR)/$(TARGET_PLATFORM)/include -L$(LTDIR)/$(TARGET_PLATFORM) ltclient.cpp \
 		-o ltclient $(LIBFLAGS)
 
 .PHONY: clean
 clean:
 	rm ltclient
+	rm -f *.o

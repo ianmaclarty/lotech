@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#ifdef LTMINGW
+#if defined(LTMINGW) || defined(LTLINUX)
 #define GLEW_STATIC 1
 #define AL_LIBTYPE_STATIC 1
 #endif

@@ -35,8 +35,8 @@ LUAJIT=luajit-2.0
 BOX2D=Box2D-2.2.1
 ZLIB=zlib-1.2.5
 LIBPNG=libpng-1.4.3
-GLEW=glew-1.7.0
-GLFW=glfw-2.7.3
+GLEW=glew-1.9.0
+GLFW=glfw-2.7.8
 
 # iOS settings
 

@@ -1,4 +1,5 @@
 #!/bin/sh
+mkdir -p build
 rm -rf build/*
 export DXSDK_DIR=C:/Program\ Files\ \(x86\)/Microsoft\ DirectX\ 9.0\ SDK\ \(Summer\ 2004\)
 cd build

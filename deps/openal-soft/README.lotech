@@ -63,4 +63,5 @@ index 81c0980..d279ace 100644
 
 The script build_static_mingw.sh has been added for building the static
 version of the library on MinGW (this makes assumptions about where the
-DirectX SDK is installed).
+DirectX SDK is installed).  A similar script has been added for building
+the static library on Linux.

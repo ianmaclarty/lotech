@@ -75,6 +75,7 @@ THE SOFTWARE.
 
 // OpenAL
 #ifdef LTLINUX
+#define AL_LIBTYPE_STATIC 1
 #include <AL/al.h>
 #include <AL/alc.h>
 #elif LTMINGW
