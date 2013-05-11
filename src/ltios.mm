@@ -25,6 +25,10 @@ static void audio_interrupt(void *ud, UInt32 state) {
 }
 
 void ltIOSInit() {
+    // Turn off orientation change animations initially
+    // to avoid an orientation change animation after loading.
+    [UIView setAnimationsEnabled:NO];
+
     #ifdef LTDEVMODE
     ltClientInit();
     #endif
@@ -63,6 +67,8 @@ void ltIOSResize(int width, int height) {
     ltResizeScreen(width, height);
 }
 
+static int frames_since_disable_animations = 0;
+
 void ltIOSRender() {
     ltLuaAdvance(1.0f/60.0f);
     ltLuaRender();
@@ -70,6 +76,11 @@ void ltIOSRender() {
     #ifdef LTDEVMODE
     ltClientStep();
     #endif
+
+    if (frames_since_disable_animations == 100) {
+        [UIView setAnimationsEnabled:YES];
+    }
+    frames_since_disable_animations++;
 }
 
 void ltIOSGarbageCollect() {
