@@ -448,14 +448,11 @@ static void set_loop(LTObject *obj, LTbool val) {
 
 void ltAudioSuspend() {
     if (!audio_is_suspended) {
-        for (unsigned i = 0; i < sources.size(); i++) {
-            LTAudioSource *s = sources[i];
-            if (s->is_playing()) {
-                s->play_on_resume = true;
-                s->pause();
-            } else {
-                s->play_on_resume = false;
-            }
+        if (audio_context != NULL) {
+            alcMakeContextCurrent(NULL);
+            check_for_errors
+            alcSuspendContext(audio_context);
+            check_for_errors
         }
         audio_is_suspended = true;
     }
@@ -463,12 +460,11 @@ void ltAudioSuspend() {
 
 void ltAudioResume() {
     if (audio_is_suspended) {
-        for (unsigned i = 0; i < sources.size(); i++) {
-            LTAudioSource *s = sources[i];
-            if (s->play_on_resume) {
-                s->play();
-                s->play_on_resume = false;
-            }
+        if (audio_context != NULL) {
+            alcMakeContextCurrent(audio_context);
+            check_for_errors
+            alcProcessContext(audio_context);
+            check_for_errors
         }
         audio_is_suspended = false;
     }

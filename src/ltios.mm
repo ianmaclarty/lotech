@@ -1,5 +1,6 @@
 /* Copyright (C) 2010-2013 Ian MacLarty. See Copyright Notice in lt.h. */
 #ifdef LTIOS
+#import <AudioToolbox/AudioServices.h>
 #include "lt.h"
 
 static UIViewController *view_controller = nil;
@@ -7,10 +8,30 @@ static UIViewController *view_controller = nil;
 // The following is required for converting UITouch objects to input_ids.
 ct_assert(sizeof(UITouch*) == sizeof(int));
 
+static void set_audio_category() {
+    UInt32 category = kAudioSessionCategory_AmbientSound;
+    AudioSessionSetProperty(kAudioSessionProperty_AudioCategory, sizeof(category), &category);
+}
+
+static void audio_interrupt(void *ud, UInt32 state) {
+    if (state == kAudioSessionBeginInterruption) {
+        AudioSessionSetActive(NO);
+        ltAudioSuspend(); 
+    } else if (state == kAudioSessionEndInterruption) {
+        set_audio_category();
+        AudioSessionSetActive(YES);
+        ltAudioResume(); 
+    }
+}
+
 void ltIOSInit() {
     #ifdef LTDEVMODE
     ltClientInit();
     #endif
+
+    AudioSessionInitialize(NULL, NULL, audio_interrupt, NULL);
+    set_audio_category();
+    AudioSessionSetActive(true);
 
     ltLuaSetup();
 }
