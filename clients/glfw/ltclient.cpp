@@ -189,7 +189,7 @@ static void setup_window() {
         vidmode.Height = h;
     }
     //glfwOpenWindowHint(GLFW_OPENGL_PROFILE, 0);
-    if (!glfwOpenWindow(vidmode.Width, vidmode.Height, vidmode.RedBits, vidmode.GreenBits, vidmode.BlueBits, 0, 16, 0, screen_mode)) {
+    if (!glfwOpenWindow(vidmode.Width, vidmode.Height, vidmode.RedBits, vidmode.GreenBits, vidmode.BlueBits, 0, 24, 0, screen_mode)) {
         glfwTerminate();
         fprintf(stderr, "Failed to create window\n");
         exit(EXIT_FAILURE);
