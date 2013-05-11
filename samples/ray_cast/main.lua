@@ -45,4 +45,4 @@ layer:Action(function(dt)
     static.angle = angle * 0.1
 end)
 
-lt.root:Insert(layer)
+lt.root.child = layer
