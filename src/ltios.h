@@ -1,6 +1,8 @@
 /* Copyright (C) 2010-2013 Ian MacLarty. See Copyright Notice in lt.h. */
 #ifdef LTIOS
 
+int ltIOSMain(int argc, char *argv[]);
+
 void ltIOSInit();
 void ltIOSSetViewController(UIViewController *view_c);
 void ltIOSTeardown();
