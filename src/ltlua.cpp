@@ -1943,6 +1943,21 @@ static int log(lua_State *L) {
     return 0;
 }
 
+/************************ Accelerometer *****************************/
+
+static int lt_SampleAccelerometer(lua_State *L) {
+    LTdouble x, y, z;
+#ifdef LTIOS
+    ltIOSSampleAccelerometer(&x, &y, &z);
+#else
+    x = 0.0; y = 0.0; z = 0.0;
+#endif
+    lua_pushnumber(L, x);
+    lua_pushnumber(L, y);
+    lua_pushnumber(L, z);
+    return 3;
+}
+
 /************************************************************/
 
 static const luaL_Reg ltlib[] = {
@@ -2087,6 +2102,8 @@ static const luaL_Reg ltlib[] = {
 //    {"NextRandomBool",                  lt_NextRandomBool},
 
     {"SetAppShortName",                 lt_SetAppShortName},
+
+    {"SampleAccelerometer",             lt_SampleAccelerometer},
 
     {NULL, NULL}
 };

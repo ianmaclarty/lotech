@@ -7,6 +7,7 @@
 #import <QuartzCore/QuartzCore.h>
 #import <UIKit/UIKit.h>
 #import <AudioToolbox/AudioServices.h>
+#import <CoreMotion/CoreMotion.h>
 
 int ltIOSMain(int argc, char *argv[])
 {
@@ -83,6 +84,12 @@ void ltIOSResize(int width, int height) {
     ltResizeScreen(width, height);
 }
 
+// This is used to decide whether rotations should
+// be animated (we don't want to animate the initial
+// rotation after app launch), as well as whether to
+// disable rotations altogether when the app is using
+// the accelerometer for input (we want to however
+// allow the initial rotation).
 static int frames_since_disable_animations = 0;
 
 void ltIOSRender() {
@@ -93,7 +100,7 @@ void ltIOSRender() {
     ltClientStep();
     #endif
 
-    if (frames_since_disable_animations == 100) {
+    if (frames_since_disable_animations == 60) {
         [UIView setAnimationsEnabled:YES];
     }
     frames_since_disable_animations++;
@@ -153,6 +160,7 @@ void ltIOSBecomeActive() {
 #ifdef LTDEVMODE
     ltClientInit();
 #endif
+    frames_since_disable_animations = 0;
 }
 
 
@@ -274,8 +282,6 @@ void ltIOSBecomeActive() {
     glGetRenderbufferParameterivOES(GL_RENDERBUFFER_OES, GL_RENDERBUFFER_WIDTH_OES, &backingWidth);
     glGetRenderbufferParameterivOES(GL_RENDERBUFFER_OES, GL_RENDERBUFFER_HEIGHT_OES, &backingHeight);
     
-    fprintf(stderr, "%d %d\n", backingWidth, backingHeight);
-    
 #ifdef LTDEPTHBUF
     if (depthRenderbuffer) {
         glDeleteRenderbuffersOES(1, &depthRenderbuffer);
@@ -386,6 +392,8 @@ void ltIOSBecomeActive() {
 @end
 
 
+static CMMotionManager *motionManager = nil;
+
 
 @interface LTViewController : UIViewController { }
 @end
@@ -405,12 +413,14 @@ void ltIOSBecomeActive() {
                 screen_w = screen_h;
                 screen_h = tmp;
             }
+            break;
         case LT_DISPLAY_ORIENTATION_LANDSCAPE:
             if (screen_w < screen_h) {
                 CGFloat tmp = screen_w;
                 screen_w = screen_h;
                 screen_h = tmp;
             }
+            break;
     }
     CGRect frame = CGRectMake(0, 0, screen_w, screen_h);
     lt_view = [[[LTView alloc] initWithFrame:frame] autorelease];
@@ -435,21 +445,34 @@ void ltIOSBecomeActive() {
     [super viewDidUnload];
 }
 
+static UIInterfaceOrientation last_orientation = UIInterfaceOrientationPortrait;
+static bool has_rotated = false;
+
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
+    BOOL res = NO;
+    if (has_rotated && motionManager != nil && frames_since_disable_animations > 60) {
+        // Prevent screen rotation if using motion input.
+        return interfaceOrientation == last_orientation;
+    }
     switch (ltGetDisplayOrientation()) {
         case LT_DISPLAY_ORIENTATION_PORTRAIT:
-            return (interfaceOrientation == UIInterfaceOrientationPortrait
+            res = (interfaceOrientation == UIInterfaceOrientationPortrait
                     || interfaceOrientation == UIInterfaceOrientationPortraitUpsideDown);
+            break;
         case LT_DISPLAY_ORIENTATION_LANDSCAPE:
-            return (interfaceOrientation == UIInterfaceOrientationLandscapeRight
+            res = (interfaceOrientation == UIInterfaceOrientationLandscapeRight
                     || interfaceOrientation == UIInterfaceOrientationLandscapeLeft);
+            break;
     }
-    return NO;
+    if (res == YES) {
+        has_rotated = true;
+        last_orientation = interfaceOrientation;
+    }
+    return res;
 }
 
 @end
-
 
 
 @interface LTAppDelegate : NSObject <UIApplicationDelegate> { }
@@ -500,8 +523,53 @@ void ltIOSBecomeActive() {
 - (void)dealloc
 {
     [super dealloc];
+    if (motionManager != nil) {
+        [motionManager release];
+    }
 }
 
 @end
+
+void ltIOSSampleAccelerometer(LTdouble *x, LTdouble *y, LTdouble *z) {
+    *x = 0.0;
+    *y = 0.0;
+    *z = 0.0;
+    if (motionManager == nil) {
+        motionManager = [[CMMotionManager alloc] init];
+    }
+    if (!motionManager.accelerometerAvailable) return;
+    if (!motionManager.accelerometerActive) {
+        [motionManager startAccelerometerUpdates];
+    }
+    CMAccelerometerData *data = motionManager.accelerometerData;
+    if (data == nil) return;
+    CMAcceleration accel = data.acceleration;
+
+    *z = accel.z;
+
+    if (has_rotated) {
+        switch (last_orientation) {
+            case UIInterfaceOrientationPortrait:
+                *x = accel.x;
+                *y = accel.y;
+                break;
+            case UIInterfaceOrientationPortraitUpsideDown:
+                *x = -accel.x;
+                *y = -accel.y;
+                break;
+            case UIInterfaceOrientationLandscapeLeft:
+                *x = accel.y;
+                *y = -accel.x;
+                break;
+            case UIInterfaceOrientationLandscapeRight:
+                *x = -accel.y;
+                *y = accel.x;
+                break;
+        }
+    } else {
+        *x = accel.x;
+        *y = accel.y;
+    }
+}
 
 #endif // LTIOS

@@ -155,6 +155,7 @@ function lt._Setup()
     lt.SetAppShortName(lt.config.short_name)
     lt.SetDesignScreenSize(lt.config.design_width, lt.config.design_height)
     lt.config.orientation = lt.config.design_width > lt.config.design_height and "landscape" or "portrait"
+    log("orientation = " .. lt.config.orientation)
     lt.SetOrientation(lt.config.orientation)
 
     lt.SetViewPort(lt.config.world_left, lt.config.world_bottom, lt.config.world_right, lt.config.world_top)

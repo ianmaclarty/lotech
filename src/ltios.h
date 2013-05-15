@@ -25,4 +25,6 @@ UIViewController *ltIOSGetViewController();
 void ltIOSResignActive();
 void ltIOSBecomeActive();
 
+void ltIOSSampleAccelerometer(LTdouble *x, LTdouble *y, LTdouble *z);
+
 #endif
