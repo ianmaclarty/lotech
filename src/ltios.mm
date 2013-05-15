@@ -536,6 +536,7 @@ void ltIOSSampleAccelerometer(LTdouble *x, LTdouble *y, LTdouble *z) {
     *z = 0.0;
     if (motionManager == nil) {
         motionManager = [[CMMotionManager alloc] init];
+        [[UIApplication sharedApplication] setIdleTimerDisabled: YES];
     }
     if (!motionManager.accelerometerAvailable) return;
     if (!motionManager.accelerometerActive) {
