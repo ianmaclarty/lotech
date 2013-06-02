@@ -1053,7 +1053,7 @@ LT_REGISTER_METHOD(LTWorld, RayCast, world_ray_cast);
 LT_REGISTER_METHOD(LTWorld, FixturesIn, world_find_fixtures_in);
 
 LT_REGISTER_TYPE(LTBody, "box2d.Body", "lt.Wrap");
-LT_REGISTER_PROPERTY_OBJ(LTBody, body, LTWorld, get_body_world, NULL);
+LT_REGISTER_PROPERTY_OBJ(LTBody, world, LTWorld, get_body_world, NULL);
 LT_REGISTER_PROPERTY_FLOAT(LTBody, x, get_body_x, set_body_x);
 LT_REGISTER_PROPERTY_FLOAT(LTBody, y, get_body_y, set_body_y);
 LT_REGISTER_PROPERTY_FLOAT(LTBody, angle, get_body_angle, set_body_angle);
