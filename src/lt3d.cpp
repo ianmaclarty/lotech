@@ -113,16 +113,16 @@ void LTFog::draw() {
     if (child != NULL) {
         ltEnableFog();
         ltFogColor(red, green, blue);
-        ltFogStart(start);
-        ltFogEnd(end);
+        ltFogStart(fstart);
+        ltFogEnd(fend);
         child->draw();
         ltDisableFog();
     }
 }
 
 LT_REGISTER_TYPE(LTFog, "lt.Fog", "lt.Wrap")
-LT_REGISTER_FIELD_FLOAT(LTFog, start)
-LT_REGISTER_FIELD_FLOAT(LTFog, end)
+LT_REGISTER_FIELD_FLOAT(LTFog, fstart)
+LT_REGISTER_FIELD_FLOAT(LTFog, fend)
 LT_REGISTER_FIELD_FLOAT(LTFog, red)
 LT_REGISTER_FIELD_FLOAT(LTFog, green)
 LT_REGISTER_FIELD_FLOAT(LTFog, blue)

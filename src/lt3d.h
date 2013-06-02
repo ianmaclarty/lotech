@@ -40,8 +40,8 @@ struct LTPitch : LTWrapNode {
 };
 
 struct LTFog : LTWrapNode {
-    LTfloat start;
-    LTfloat end;
+    LTfloat fstart;
+    LTfloat fend;
     LTfloat red, green, blue;
 
     virtual void draw();
