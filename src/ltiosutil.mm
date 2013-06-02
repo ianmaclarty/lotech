@@ -1,6 +1,7 @@
 /* Copyright (C) 2010-2013 Ian MacLarty. See Copyright Notice in lt.h. */
 #ifdef LTIOS
 #include "lt.h"
+#include <mach/mach_time.h>
 
 LTfloat ltIOSScaling() {
     float scale = 1.0f;
@@ -205,6 +206,13 @@ bool ltIOSSupportsES2() {
     bool isSGX = testContext ? true : false;
     [testContext release];
     return isSGX;
+}
+
+double ltIOSGetTime() {
+    uint64_t t = mach_absolute_time();
+    mach_timebase_info_data_t timebase;
+    mach_timebase_info(&timebase);
+    return (double)t * (double)timebase.numer / (double)timebase.denom / 1e9;
 }
 
 #endif //LTIOS

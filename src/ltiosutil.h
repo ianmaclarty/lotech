@@ -38,4 +38,6 @@ void ltIOSSyncStore();
 void ltIOSLaunchURL(const char *url);
 
 bool ltIOSSupportsES2();
+
+double ltIOSGetTime();
 #endif

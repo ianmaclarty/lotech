@@ -93,6 +93,11 @@ void ltIOSResize(int width, int height) {
 static int frames_since_disable_animations = 0;
 
 void ltIOSRender() {
+#ifdef FPS
+    static double t0 = 0.0;
+    static int frame_count = 0;
+#endif
+
     ltLuaAdvance(1.0f/60.0f);
     ltLuaRender();
 
@@ -104,6 +109,20 @@ void ltIOSRender() {
         [UIView setAnimationsEnabled:YES];
     }
     frames_since_disable_animations++;
+
+#ifdef FPS
+    double t = ltIOSGetTime();
+    if (t0 == 0.0) {
+        t0 = t;
+    } else {
+        frame_count++;
+        if (t - t0 > 2.0) {
+            ltLog("FPS: %.2f", (double)frame_count / 2.0);
+            frame_count = 0;
+            t0 = t;
+        }
+    }
+#endif
 }
 
 void ltIOSGarbageCollect() {
