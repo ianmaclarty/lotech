@@ -65,7 +65,7 @@ struct LTParticleSystem : LTSceneNode {
     LTfloat end_spin_variance;
     LTfloat emission_rate;
     int max_particles_init;
-    LTImage *img;
+    LTTexturedNode *img;
 
     int max_particles;
     int num_particles;

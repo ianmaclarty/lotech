@@ -36,6 +36,33 @@ LTParticleSystem::LTParticleSystem() {
     add_action(new LTParticleSystemAction(this));
 }
 
+static void setup_img(LTParticleSystem *p) {
+    p->texture_id = p->img->texture_id;
+    p->img_left = p->img->world_vertices[0];
+    p->img_right = p->img->world_vertices[2];
+    p->img_bottom = p->img->world_vertices[1];
+    p->img_top = p->img->world_vertices[5];
+
+    if (p->quads != NULL) {
+        delete[] p->quads;
+    }
+
+    int n = p->max_particles;
+
+    p->quads = new LTParticleQuad[n];
+
+    for (int i = 0; i < n; i++) {
+        p->quads[i].bottom_left.tex_coord_x  = p->img->tex_coords[0];
+        p->quads[i].bottom_left.tex_coord_y  = p->img->tex_coords[1];
+        p->quads[i].bottom_right.tex_coord_x = p->img->tex_coords[2];
+        p->quads[i].bottom_right.tex_coord_y = p->img->tex_coords[3];
+        p->quads[i].top_right.tex_coord_x    = p->img->tex_coords[4];
+        p->quads[i].top_right.tex_coord_y    = p->img->tex_coords[5];
+        p->quads[i].top_left.tex_coord_x     = p->img->tex_coords[6];
+        p->quads[i].top_left.tex_coord_y     = p->img->tex_coords[7];
+    }
+}
+
 void LTParticleSystem::init(lua_State *L) {
     max_particles = max_particles_init;
     if (max_particles <= 0) {
@@ -52,24 +79,9 @@ void LTParticleSystem::init(lua_State *L) {
 
     int n = max_particles;
     particles = new LTParticle[n];
-    texture_id = img->texture_id;
-    img_left = img->world_vertices[0];
-    img_right = img->world_vertices[2];
-    img_bottom = img->world_vertices[1];
-    img_top = img->world_vertices[5];
 
-    quads = new LTParticleQuad[n];
+    setup_img(this);
 
-    for (int i = 0; i < n; i++) {
-        quads[i].bottom_left.tex_coord_x  = img->tex_coords[0];
-        quads[i].bottom_left.tex_coord_y  = img->tex_coords[1];
-        quads[i].bottom_right.tex_coord_x = img->tex_coords[2];
-        quads[i].bottom_right.tex_coord_y = img->tex_coords[3];
-        quads[i].top_right.tex_coord_x    = img->tex_coords[4];
-        quads[i].top_right.tex_coord_y    = img->tex_coords[5];
-        quads[i].top_left.tex_coord_x     = img->tex_coords[6];
-        quads[i].top_left.tex_coord_y     = img->tex_coords[7];
-    }
     indices = new LTushort[n * 6];
     for (int i = 0; i < n; i++) {
         int i6 = i * 6;
@@ -352,9 +364,25 @@ static LTbool get_is_finished(LTObject *obj) {
     return !(p->particles_active || p->num_particles > 0);
 }
 
+static LTObject* get_img(LTObject *o) {
+    return ((LTParticleSystem*)o)->img;
+}
+
+static void set_img(LTObject *o, LTObject *v) {
+    LTParticleSystem* p = (LTParticleSystem*)o;
+    LTTexturedNode *img = (LTTexturedNode*)v;
+    if (p->img == NULL) {
+        // First time, setup_img will be called in init.
+        p->img = img;
+    } else {
+        p->img = img;
+        setup_img(p);
+    }
+}
+
 LT_REGISTER_TYPE(LTParticleSystem, "lt.ParticleSystem", "lt.SceneNode")
 LT_REGISTER_METHOD(LTParticleSystem, Advance, particles_advance)
-LT_REGISTER_FIELD_OBJ(LTParticleSystem, img, LTImage)
+LT_REGISTER_PROPERTY_OBJ(LTParticleSystem, img, LTTexturedNode, get_img, set_img);
 LT_REGISTER_FIELD_INT_AS(LTParticleSystem, max_particles_init, "max_particles")
 LT_REGISTER_FIELD_FLOAT(LTParticleSystem, duration)
 LT_REGISTER_FIELD_FLOAT(LTParticleSystem, life)
