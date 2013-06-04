@@ -201,7 +201,11 @@ static void setup_window() {
     glfwSetKeyCallback(key_handler);
     glfwSetMouseButtonCallback(mouse_button_handler);
     glfwSetMousePosCallback(mouse_pos_handler);
-    glfwSetWindowSizeCallback(resize_handler);
+    if (fullscreen) {
+        glfwSetWindowSizeCallback(NULL);
+    } else {
+        glfwSetWindowSizeCallback(resize_handler);
+    }
 }
 
 static void key_handler(int key, int state) {
