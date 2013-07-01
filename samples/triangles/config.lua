@@ -1,4 +1,4 @@
-lt.config.short_name = "meshtest"
+lt.config.short_name = "triangles"
 
 lt.config.design_width = 960
 lt.config.design_height = 640

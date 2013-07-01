@@ -689,12 +689,13 @@ LTAudioSample *read_ogg_file(lua_State *L, const char *path, const char *name) {
     int num_channels;
     short *data;
     unsigned int sample_rate;
-    int data_size = stb_vorbis_decode_memory((unsigned char*)rbuf, size, &num_channels, &sample_rate, &data);
+    int samples_decoded = stb_vorbis_decode_memory((unsigned char*)rbuf, size, &num_channels, &sample_rate, &data);
     free(rbuf);
-    if (data_size <= 0) {
+    if (samples_decoded <= 0) {
         ltLog("Unable to decode vorbis file %s", path);
         return NULL;
     }
+    int data_size = samples_decoded * 2 * num_channels;
 
     ALuint buf_id;
     ALenum format;
