@@ -9,6 +9,8 @@ LTCFLAGS+=$(LT_PLATFLAGS)
 
 OBJC_FLAGS=
 ifeq ($(TARGET_PLATFORM),ios)
+IPHONEOS_DEPLOYMENT_TARGET=3.1.2
+export IPHONEOS_DEPLOYMENT_TARGET
 default: libs
 OBJC_FLAGS=-ObjC++
 endif
@@ -16,6 +18,8 @@ ifeq ($(TARGET_PLATFORM),android)
 default: libs
 endif
 ifeq ($(TARGET_PLATFORM),osx)
+MACOSX_DEPLOYMENT_TARGET=10.5
+export MACOSX_DEPLOYMENT_TARGET
 default: ltclient
 OBJC_FLAGS=-ObjC++
 endif
