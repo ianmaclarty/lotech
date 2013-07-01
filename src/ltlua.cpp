@@ -1054,11 +1054,16 @@ static int lt_TrackNumPending(lua_State *L) {
 }
 
 static int lt_TrackDequeuePlayed(lua_State *L) {
-    ltLuaCheckNArgs(L, 2);
+    int nargs = ltLuaCheckNArgs(L, 1);
     LTTrack *track = lt_expect_LTTrack(L, 1);
-    int n = (int)luaL_checkinteger(L, 2);
     int processed = track->numProcessedSamples();
-    if (n > processed) {
+    int n;
+    if (nargs > 1) {
+        n = (int)luaL_checkinteger(L, 2);
+        if (n > processed) {
+            n = processed;
+        }
+    } else {
         n = processed;
     }
     track->dequeueSamples(L, 1, n);
