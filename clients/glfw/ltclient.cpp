@@ -196,18 +196,26 @@ static void setup_window() {
     }
     glfwSwapInterval(lt_vsync ? 1 : 0);
     glfwSetWindowTitle(title);
+    glfwEnable(GLFW_MOUSE_CURSOR);
 
     ltLuaResizeWindow(vidmode.Width, vidmode.Height);
     glfwSetKeyCallback(key_handler);
     glfwSetMouseButtonCallback(mouse_button_handler);
     glfwSetMousePosCallback(mouse_pos_handler);
-    glfwSetWindowSizeCallback(resize_handler);
+    if (fullscreen) {
+        glfwSetWindowSizeCallback(NULL);
+    } else {
+        glfwSetWindowSizeCallback(resize_handler);
+    }
 }
 
 static void key_handler(int key, int state) {
     LTKey ltkey = convert_key(key);
     if (state == GLFW_PRESS) {
-        if (key == GLFW_KEY_ESC) {
+        if (key == GLFW_KEY_ESC
+            && (glfwGetKey(GLFW_KEY_LCTRL) == GLFW_PRESS
+            || glfwGetKey(GLFW_KEY_RCTRL) == GLFW_PRESS))
+        {
             lt_quit = true;
         }
         if (key == 'F'
