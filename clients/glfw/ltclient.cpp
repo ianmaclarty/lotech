@@ -11,7 +11,7 @@
 
 #include "lt.h"
 
-#define SCALE 1
+#define SCALE 2
 #define MIN_HEIGHT 640
 #define MIN_UPDATE_TIME (1.0/400.0)
 

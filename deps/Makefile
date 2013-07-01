@@ -5,10 +5,12 @@ LUAJIT_DIR=$(LUAJIT)
 BOX2D_DIR=$(BOX2D)
 ZLIB_DIR=$(ZLIB)
 LIBPNG_DIR=$(LIBPNG)
+VORBIS_DIR=$(VORBIS)
+FREETYPE_DIR=$(FREETYPE)
 GLEW_DIR=$(GLEW)
 GLFW_DIR=$(GLFW)
 
-TARGETS=liblua.a libbox2d.a libz.a libpng.a headers
+TARGETS=liblua.a libbox2d.a libz.a libpng.a libft2.a libvorbis.a headers
 ifeq ($(TARGET_PLATFORM),android)
 #TARGETS+=libopenal.a openal_headers
 endif
@@ -116,6 +118,25 @@ libpng.a: rebuild
 	cp $(LIBPNG_DIR)/libpng.a libpng-armv7.a
 	lipo -create libpng-armv*.a -output libpng.a
 	rm libpng-armv*.a
+
+libvorbis.a: rebuild
+	cd $(VORBIS_DIR) && $(MAKE) \
+		CROSS=$(ISDKP)/ \
+		LTCC=$(IOS_CC) \
+		TARGET_FLAGS="$(IOS_ARMv6_OPTS) -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
+		LTCFLAGS="$(LTCFLAGS)" \
+		clean all
+	cp $(VORBIS_DIR)/libvorbis.a libvorbis-armv6.a
+	cd $(VORBIS_DIR) && $(MAKE) \
+		CROSS=$(ISDKP)/ \
+		LTCC=$(IOS_CC) \
+		TARGET_FLAGS="$(IOS_ARMv7_OPTS) -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
+		LTCFLAGS="$(LTCFLAGS)" \
+		clean all
+	cp $(VORBIS_DIR)/libvorbis.a libvorbis-armv7.a
+	lipo -create libvorbis-armv*.a -output libvorbis.a
+	rm libvorbis-armv*.a
+
 endif
 
 ifeq ($(TARGET_PLATFORM),android)
@@ -152,6 +173,14 @@ libpng.a: rebuild
 		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(LIBPNG_DIR)/libpng.a .
+
+libvorbis.a: rebuild
+	cd $(VORBIS_DIR) && $(MAKE) \
+		CROSS=$(NDKP) \
+		TARGET_FLAGS="--sysroot $(NDKSYSROOT) -marm" \
+		LTCFLAGS="$(LTCFLAGS)" \
+		clean all
+	cp $(VORBIS_DIR)/libvorbis.a .
 
 #libopenal.a: rebuild.openal
 #	cd openal-android && $(MAKE) \
@@ -194,6 +223,13 @@ libpng.a: rebuild
 		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(LIBPNG_DIR)/libpng.a .
+
+libvorbis.a: rebuild
+	cd $(VORBIS_DIR) && $(MAKE) \
+		TARGET_FLAGS="-m64 -arch x86_64" \
+		LTCFLAGS="$(LTCFLAGS)" \
+		clean all
+	cp $(VORBIS_DIR)/libvorbis.a .
 
 libGLEW.a: rebuild
 	cd $(GLEW_DIR) && $(MAKE) \
@@ -243,6 +279,18 @@ libpng.a: rebuild
 		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(LIBPNG_DIR)/libpng.a .
+
+libvorbis.a: rebuild
+	cd $(VORBIS_DIR) && $(MAKE) \
+		LTCFLAGS="$(LTCFLAGS)" \
+		clean all
+	cp $(VORBIS_DIR)/libvorbis.a .
+
+libft2.a: rebuild
+	cd $(FREETYPE_DIR) && $(MAKE) \
+		LTCFLAGS="$(LTCFLAGS)" \
+		clean all
+	cp $(FREETYPE_DIR)/libft2.a .
 
 libopenal.a:
 	cp openal-soft/linux64/libopenal.a .
@@ -299,6 +347,12 @@ libpng.a: rebuild
 		clean all
 	cp $(LIBPNG_DIR)/libpng.a .
 
+libvorbis.a: rebuild
+	cd $(VORBIS_DIR) && $(MAKE) \
+		LTCFLAGS="$(LTCFLAGS)" \
+		clean all
+	cp $(VORBIS_DIR)/libvorbis.a .
+
 libglfw.a: rebuild
 	cd $(GLFW_DIR) && $(MAKE) \
 		win32-msys
@@ -348,6 +402,8 @@ headers: rebuild
 	cp $(LIBPNG_DIR)/pngconf.h include/
 	cp $(ZLIB_DIR)/zlib.h include/
 	cp $(ZLIB_DIR)/zconf.h include/
+	cp $(VORBIS_DIR)/stb_vorbis.h include/
+	cp -r $(FREETYPE_DIR)/include/freetype include/
 
 .PHONY: clean
 clean:
