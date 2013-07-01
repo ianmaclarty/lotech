@@ -12,6 +12,9 @@ O_FILES=$(CPP_O_FILES)
 ifeq ($(TARGET_PLATFORM),ios)
 O_FILES+=$(MM_O_FILES)
 endif
+ifeq ($(TARGET_PLATFORM),iossim)
+O_FILES+=$(MM_O_FILES)
+endif
 ifeq ($(TARGET_PLATFORM),osx)
 O_FILES+=$(MM_O_FILES)
 endif

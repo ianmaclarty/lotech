@@ -19,6 +19,9 @@ endif
 ifeq ($(TARGET_PLATFORM),ios)
 LT_PLATFLAGS+=-DLTIOS -DLTGLES1
 endif
+ifeq ($(TARGET_PLATFORM),iossim)
+LT_PLATFLAGS+=-DLTIOS -DLTIOSSIM -DLTGLES1
+endif
 ifeq ($(TARGET_PLATFORM),android)
 LT_PLATFLAGS+=-DLTANDROID -DLTGLES1
 endif
@@ -44,9 +47,16 @@ VORBIS=vorbis
 
 # iOS settings
 
-ISDK=/Developer/Platforms/iPhoneOS.platform/Developer
-ISDKVER=iPhoneOS4.3.sdk
+#ISDK=/Developer/Platforms/iPhoneOS.platform/Developer
+#ISDKVER=iPhoneOS4.3.sdk
+ISDK=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer
+ISDKVER=iPhoneOS6.1.sdk
 ISDKP=$(ISDK)/usr/bin/
+
+ifeq ($(TARGET_PLATFORM),iossim)
+ISDK:=$(subst iPhoneOS,iPhoneSimulator,$(ISDK))
+ISDKVER:=$(subst iPhoneOS,iPhoneSimulator,$(ISDKVER))
+endif
 
 IOS_ARMv6_OPTS=-arch armv6 -mno-thumb -mfloat-abi=softfp -mfpu=vfp
 IOS_ARMv7_OPTS=-arch armv7 -mfloat-abi=softfp -mcpu=cortex-a8
@@ -56,6 +66,8 @@ IOS_CC=gcc
 IOS_CPP=g++
 #IOS_CC=clang
 #IOS_CPP=clang++
+#IOS_CC=llvm-gcc
+#IOS_CPP=llvm-g++
 
 # Android settings
 

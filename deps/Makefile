@@ -139,6 +139,46 @@ libvorbis.a: rebuild
 
 endif
 
+ifeq ($(TARGET_PLATFORM),iossim)
+############################ iPhone Simulator Targets ##############################
+
+liblua.a: rebuild
+	cd $(LUA_DIR) && $(MAKE) -f Makefile.custom \
+		CROSS=$(ISDKP)/ \
+		LTCC=$(IOS_CC) \
+		TARGET_FLAGS="-arch i386 -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
+		LTCFLAGS="$(LTCFLAGS)" \
+		clean all
+	cp $(LUA_DIR)/liblua.a $@
+
+libbox2d.a: rebuild
+	cd $(BOX2D_DIR) && $(MAKE) \
+		CROSS=$(ISDKP)/ \
+		LTCPP=$(IOS_CPP) \
+		TARGET_FLAGS="-arch i386 -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
+		LTCFLAGS="$(LTCFLAGS)" \
+		clean all
+	cp $(BOX2D_DIR)/libbox2d.a $@
+
+libz.a: rebuild
+	cd $(ZLIB_DIR) && $(MAKE) \
+		CROSS=$(ISDKP)/ \
+		LTCC=$(IOS_CC) \
+		TARGET_FLAGS="-arch i386 -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
+		LTCFLAGS="$(LTCFLAGS)" \
+		clean all
+	cp $(ZLIB_DIR)/libz.a $@
+
+libpng.a: rebuild
+	cd $(LIBPNG_DIR) && $(MAKE) \
+		CROSS=$(ISDKP)/ \
+		LTCC=$(IOS_CC) \
+		TARGET_FLAGS="-arch i386 -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
+		LTCFLAGS="$(LTCFLAGS)" \
+		clean all
+	cp $(LIBPNG_DIR)/libpng.a $@
+endif
+
 ifeq ($(TARGET_PLATFORM),android)
 ############################ Android Targets ##############################
 

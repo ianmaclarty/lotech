@@ -7,9 +7,15 @@ LT_INIT_IMPL(ltopengl)
 #define GLEXT(f) f##OES
 #define GL_EXT(f) f##_OES
 #define glBlendEquation glBlendEquationOES
+#ifndef GL_FUNC_ADD
 #define GL_FUNC_ADD GL_FUNC_ADD_OES
+#endif
+#ifndef GL_FUNC_SUBTRACT
 #define GL_FUNC_SUBTRACT GL_FUNC_SUBTRACT_OES
+#endif
+#ifndef GL_FUNC_REVERSE_SUBTRACT
 #define GL_FUNC_REVERSE_SUBTRACT GL_FUNC_REVERSE_SUBTRACT_OES
+#endif
 #else
 #define GLEXT(f) f##EXT
 #define GL_EXT(f) f##_EXT

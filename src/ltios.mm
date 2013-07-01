@@ -417,6 +417,46 @@ static CMMotionManager *motionManager = nil;
 @interface LTViewController : UIViewController { }
 @end
 
+static UIInterfaceOrientation last_orientation = UIInterfaceOrientationPortrait;
+static bool has_rotated = false;
+
+static BOOL handle_orientation(UIInterfaceOrientation orientation) {
+    BOOL res = NO;
+    switch (orientation) {
+        case UIInterfaceOrientationPortrait:
+            ltLog("portrait");
+            break;
+        case UIInterfaceOrientationPortraitUpsideDown:
+            ltLog("portrait");
+            break;
+        case UIInterfaceOrientationLandscapeRight:
+            ltLog("landscape");
+            break;
+        case UIInterfaceOrientationLandscapeLeft:
+            ltLog("landscape");
+            break;
+    }
+    if (has_rotated && motionManager != nil && frames_since_disable_animations > 60) {
+        // Prevent screen rotation if using motion input.
+        return orientation == last_orientation;
+    }
+    switch (ltGetDisplayOrientation()) {
+        case LT_DISPLAY_ORIENTATION_PORTRAIT:
+            res = (orientation == UIInterfaceOrientationPortrait
+                    || orientation == UIInterfaceOrientationPortraitUpsideDown);
+            break;
+        case LT_DISPLAY_ORIENTATION_LANDSCAPE:
+            res = (orientation == UIInterfaceOrientationLandscapeRight
+                    || orientation == UIInterfaceOrientationLandscapeLeft);
+            break;
+    }
+    if (res == YES) {
+        has_rotated = true;
+        last_orientation = orientation;
+    }
+    return res;
+}
+
 @implementation LTViewController
 
 - (void)loadView {
@@ -464,53 +504,46 @@ static CMMotionManager *motionManager = nil;
     [super viewDidUnload];
 }
 
-static UIInterfaceOrientation last_orientation = UIInterfaceOrientationPortrait;
-static bool has_rotated = false;
-
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
+- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)orientation
 {
-    BOOL res = NO;
-    if (has_rotated && motionManager != nil && frames_since_disable_animations > 60) {
-        // Prevent screen rotation if using motion input.
-        return interfaceOrientation == last_orientation;
-    }
-    switch (ltGetDisplayOrientation()) {
-        case LT_DISPLAY_ORIENTATION_PORTRAIT:
-            res = (interfaceOrientation == UIInterfaceOrientationPortrait
-                    || interfaceOrientation == UIInterfaceOrientationPortraitUpsideDown);
-            break;
-        case LT_DISPLAY_ORIENTATION_LANDSCAPE:
-            res = (interfaceOrientation == UIInterfaceOrientationLandscapeRight
-                    || interfaceOrientation == UIInterfaceOrientationLandscapeLeft);
-            break;
-    }
-    if (res == YES) {
-        has_rotated = true;
-        last_orientation = interfaceOrientation;
-    }
-    return res;
+    return handle_orientation(orientation);
+}
+
+- (BOOL)shouldAutorotate {
+    /*
+    UIInterfaceOrientation orientation = [[UIDevice currentDevice] orientation];
+    return handle_orientation(orientation);
+    */
+    return YES;
+}
+
+-(NSUInteger)supportedInterfaceOrientations
+{
+    return UIInterfaceOrientationMaskLandscapeRight | UIInterfaceOrientationMaskLandscapeLeft;
 }
 
 @end
 
 
+static UIWindow *window;
+static LTViewController *viewController;
+
 @interface LTAppDelegate : NSObject <UIApplicationDelegate> { }
-@property (nonatomic, retain) UIWindow *window;
-@property (nonatomic, retain) LTViewController *viewController;
 @end
 
 @implementation LTAppDelegate
-@synthesize window;
-@synthesize viewController;
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
     [[UIApplication sharedApplication] setStatusBarHidden:YES animated:NO];
 
-    self.window = [[[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]] autorelease];
-    self.viewController = [[[LTViewController alloc] init] autorelease];
+    window = [[[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]] autorelease];
+    [window retain];
+    viewController = [[[LTViewController alloc] init] autorelease];
+    [viewController retain];
     [window addSubview:viewController.view];
+    window.rootViewController = viewController;
     [window makeKeyAndVisible];
-    ltIOSSetViewController(self.viewController);
+    ltIOSSetViewController(viewController);
     return YES;
 }
 

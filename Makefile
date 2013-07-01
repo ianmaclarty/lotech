@@ -14,6 +14,10 @@ export IPHONEOS_DEPLOYMENT_TARGET
 default: libs
 OBJC_FLAGS=-ObjC++
 endif
+ifeq ($(TARGET_PLATFORM),iossim)
+default: libs
+OBJC_FLAGS=-ObjC++ -fobjc-legacy-dispatch -fobjc-abi-version=2
+endif
 ifeq ($(TARGET_PLATFORM),android)
 default: libs
 endif
@@ -52,6 +56,22 @@ $(TARGET_DIR)/liblt.a: headers | $(TARGET_DIR)
 		LTCFLAGS="$(LTCFLAGS) $(OBJC_FLAGS)" \
 		all
 	lipo -create buildtmp.ios.armv6/liblt.a buildtmp.ios.armv7/liblt.a -output $@
+endif
+
+############################ iPhone Simulator Target ##############################
+ifeq ($(TARGET_PLATFORM),iossim)
+
+.PHONY: $(TARGET_DIR)/liblt.a
+$(TARGET_DIR)/liblt.a: headers | $(TARGET_DIR)
+	mkdir -p buildtmp.iossim
+	cd src && $(MAKE) \
+		CROSS=$(ISDKP)/ \
+		LTCPP=$(IOS_CPP) \
+		TARGET_FLAGS="-arch i386 -isysroot $(ISDK)/SDKs/$(ISDKVER) -mno-thumb" \
+		OUT_DIR=$(PWD)/buildtmp.iossim \
+		LTCFLAGS="$(LTCFLAGS) $(OBJC_FLAGS)" \
+		all
+	cp buildtmp.iossim/liblt.a $(TARGET_DIR)/
 endif
 
 ############################ Android Target ##############################
