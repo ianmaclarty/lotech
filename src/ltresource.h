@@ -17,6 +17,8 @@ struct LTResource {
 // Returns NULL on failure.
 LTResource *ltOpenResource(const char* filename);
 
+bool ltResourceExists(const char* filename);
+
 // Returns bytes read, < 0 on error.
 int ltReadResource(LTResource *rsc, void* buf, int count);
 
@@ -24,3 +26,5 @@ void ltCloseResource(LTResource *rsc);
 
 // Free with free()
 char* ltReadTextResource(const char *filename);
+void* ltReadResourceAll(LTResource *rsc, int *size);
+

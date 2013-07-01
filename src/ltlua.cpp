@@ -180,7 +180,13 @@ static const char *image_path(const char *name) {
 }
 
 static const char *sound_path(const char *name) {
-    return resource_path(name, ".wav");
+    const char *path = resource_path(name, ".wav"); 
+    if (ltResourceExists(path)) {
+        return path;
+    } else {
+        delete[] path;
+        return resource_path(name, ".ogg");
+    }
 }
 
 static const char *model_path(const char *name) {

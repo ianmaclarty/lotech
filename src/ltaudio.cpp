@@ -520,7 +520,31 @@ static int read_2_byte_little_endian_int(LTResource *rsc) {
     return val;
 }
 
+static
+LTAudioSample *read_wav_file(lua_State *L, const char *path, const char *name);
+static
+LTAudioSample *read_ogg_file(lua_State *L, const char *path, const char *name);
+
 LTAudioSample *ltReadAudioSample(lua_State *L, const char *path, const char *name) {
+    char ext[4];
+    int len = strlen(path);
+    if (len < 5) {
+        ltLog("Filename %s too short", path);
+        return NULL;
+    }
+    strcpy(ext, path + len - 4);
+    if (strcmp(ext, ".wav") == 0) {
+        return read_wav_file(L, path, name);
+    } else if (strcmp(ext, ".ogg") == 0) {
+        return read_ogg_file(L, path, name);
+    } else {
+        ltLog("Unrecognised audio file extension: %s", path);
+        return NULL;
+    }
+}
+
+static
+LTAudioSample *read_wav_file(lua_State *L, const char *path, const char *name) {
     char chunkid[5];
     memset(chunkid, 0, 5);
 
@@ -649,6 +673,50 @@ LTAudioSample *ltReadAudioSample(lua_State *L, const char *path, const char *nam
     LTAudioSample *buf = new (lt_alloc_LTAudioSample(L)) LTAudioSample(buf_id, name);
     return buf;
 }
+
+static
+LTAudioSample *read_ogg_file(lua_State *L, const char *path, const char *name) {
+    LTResource *rsc = ltOpenResource(path);
+    if (rsc == NULL) {
+        ltLog("Unable to open resource %s", path);
+        return NULL;
+    }
+
+    int size;
+    void *rbuf = ltReadResourceAll(rsc, &size);
+    ltCloseResource(rsc);
+
+    int num_channels;
+    short *data;
+    unsigned int sample_rate;
+    int data_size = stb_vorbis_decode_memory((unsigned char*)rbuf, size, &num_channels, &sample_rate, &data);
+    free(rbuf);
+    if (data_size <= 0) {
+        ltLog("Unable to decode vorbis file %s", path);
+        return NULL;
+    }
+
+    ALuint buf_id;
+    ALenum format;
+    alGenBuffers(1, &buf_id);
+    if (num_channels == 1) {
+        format = AL_FORMAT_MONO16;
+    } else {
+        format = AL_FORMAT_STEREO16;
+    }
+    alBufferData(buf_id, format, data, data_size, sample_rate);
+    free(data);
+
+    ALenum err = alGetError();
+    if (err != AL_NO_ERROR) {
+        ltLog("alBufferData returned error %x", err);
+        return NULL;
+    }
+    
+    LTAudioSample *buf = new (lt_alloc_LTAudioSample(L)) LTAudioSample(buf_id, name);
+    return buf;
+}
+
 #endif
 
 LT_REGISTER_TYPE(LTTrack, "lt.Track", "lt.SceneNode")

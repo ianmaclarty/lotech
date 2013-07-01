@@ -8,7 +8,7 @@ default: ltclient
 EXTRA_PREREQS=
 
 ifeq ($(TARGET_PLATFORM),osx)
-LIBFLAGS= -llt -lpng -lz -llua -lbox2d -lGLEW -lglfw -framework OpenGL \
+LIBFLAGS= -llt -lpng -lvorbis -lz -llua -lbox2d -lGLEW -lglfw -framework OpenGL \
 		-framework OpenAL -framework Cocoa -framework IOKit \
 		-pagezero_size 10000 -image_base 100000000
 endif
@@ -17,7 +17,7 @@ ifeq ($(TARGET_PLATFORM),linux)
 EXTRA_PREREQS=wrap_memcpy.o
 LIBFLAGS=-static-libstdc++ -static-libgcc \
 	$(LTDIR)/linux/liblt.a $(LTDIR)/linux/libpng.a $(LTDIR)/linux/libz.a \
-	$(LTDIR)/linux/liblua.a \
+	$(LTDIR)/linux/liblua.a $(LTDIR)/linux/libvorbis.a \
 	$(LTDIR)/linux/libbox2d.a $(LTDIR)/linux/libglfw.a \
 	$(LTDIR)/linux/libGLEW.a $(LTDIR)/linux/libopenal.a \
 	-lX11 -lGL wrap_memcpy.o -Wl,--wrap=memcpy
@@ -27,7 +27,7 @@ endif
 
 ifeq ($(TARGET_PLATFORM),mingw)
 LIBFLAGS= -static -static-libstdc++ -static-libgcc -llt \
-		-llua -lpng -lz -lbox2d \
+		-llua -lpng -lvorbis -lz -lbox2d \
 		 -lOpenAL32 -lwinmm -lole32 -ldsound \
 		-lglew32 -lglfw -lopengl32
 endif

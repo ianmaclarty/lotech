@@ -34,6 +34,10 @@ void ltCloseResource(LTResource *rsc) {
     delete rsc;
 }
 
+bool *ltResourceExists(const char* filename) {
+    return true; // XXX NYI
+}
+
 #else
 
 LTResource *ltOpenResource(const char* filename) {
@@ -64,6 +68,10 @@ void ltCloseResource(LTResource *rsc) {
     delete rsc;
 }
 
+bool ltResourceExists(const char* filename) {
+    return ltFileExists(filename);
+}
+
 #endif
 
 char* ltReadTextResource(const char *path) {
@@ -89,6 +97,28 @@ char* ltReadTextResource(const char *path) {
         } else {
             // error
             ltCloseResource(rsc);
+            return NULL;
+        }
+    }
+}
+
+void* ltReadResourceAll(LTResource *rsc, int *size) {
+    int capacity = 1024;
+    char *buf = (char*)malloc(capacity);
+    char *ptr = buf;
+    int total = 0;
+    while (true) {
+        int n = ltReadResource(rsc, ptr, capacity - total);
+        total += n;
+        if (n >= 0 && n < capacity - total) {
+            *size = total;
+            return buf;
+        } else if (n >= 0) {
+            capacity *= 2;
+            buf = (char*)realloc(buf, capacity);
+            ptr = buf + total;
+        } else {
+            // error
             return NULL;
         }
     }

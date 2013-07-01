@@ -96,6 +96,11 @@ extern "C" {
 #include "pngconf.h"
 }
 
+// vorbis
+extern "C" {
+#include "stb_vorbis.h"
+}
+
 // Lua.
 extern "C" {
 #include "lua.h"

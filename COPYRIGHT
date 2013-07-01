@@ -40,6 +40,7 @@ are reproduced below.
 - zlib 1.2.5
 - Cocos2D (for some of the particle effects code)
 - OpenAL-soft (dev version from git repo, see deps/openal-soft/README.lotech)
+- Freetype 2.5.0.1
 
 ###############################################################################
 ###############################################################################
