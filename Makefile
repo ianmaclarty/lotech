@@ -15,6 +15,8 @@ default: libs
 OBJC_FLAGS=-ObjC++
 endif
 ifeq ($(TARGET_PLATFORM),iossim)
+IPHONEOS_DEPLOYMENT_TARGET=4.3
+export IPHONEOS_DEPLOYMENT_TARGET
 default: libs
 OBJC_FLAGS=-ObjC++ -fobjc-legacy-dispatch -fobjc-abi-version=2
 endif

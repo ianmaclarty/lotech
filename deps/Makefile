@@ -137,6 +137,23 @@ libvorbis.a: rebuild
 	lipo -create libvorbis-armv*.a -output libvorbis.a
 	rm libvorbis-armv*.a
 
+libft2.a: rebuild
+	cd $(FREETYPE_DIR) && $(MAKE) \
+		CROSS=$(ISDKP)/ \
+		LTCC=$(IOS_CC) \
+		TARGET_FLAGS="$(IOS_ARMv6_OPTS) -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
+		LTCFLAGS="$(LTCFLAGS)" \
+		clean all
+	cp $(FREETYPE_DIR)/libft2.a libft2-armv6.a
+	cd $(FREETYPE_DIR) && $(MAKE) \
+		CROSS=$(ISDKP)/ \
+		LTCC=$(IOS_CC) \
+		TARGET_FLAGS="$(IOS_ARMv7_OPTS) -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
+		LTCFLAGS="$(LTCFLAGS)" \
+		clean all
+	cp $(FREETYPE_DIR)/libft2.a libft2-armv7.a
+	lipo -create libft2-armv*.a -output libft2.a
+	rm libft2-armv*.a
 endif
 
 ifeq ($(TARGET_PLATFORM),iossim)
@@ -177,6 +194,25 @@ libpng.a: rebuild
 		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(LIBPNG_DIR)/libpng.a $@
+
+libvorbis.a: rebuild
+	cd $(VORBIS_DIR) && $(MAKE) \
+		CROSS=$(ISDKP)/ \
+		LTCC=$(IOS_CC) \
+		TARGET_FLAGS="-arch i386 -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
+		LTCFLAGS="$(LTCFLAGS)" \
+		clean all
+	cp $(VORBIS_DIR)/libvorbis.a $@
+
+libft2.a: rebuild
+	cd $(FREETYPE_DIR) && $(MAKE) \
+		CROSS=$(ISDKP)/ \
+		LTCC=$(IOS_CC) \
+		TARGET_FLAGS="-arch i386 -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
+		LTCFLAGS="$(LTCFLAGS)" \
+		clean all
+	cp $(FREETYPE_DIR)/libft2.a $@
+
 endif
 
 ifeq ($(TARGET_PLATFORM),android)
@@ -213,6 +249,14 @@ libpng.a: rebuild
 		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(LIBPNG_DIR)/libpng.a .
+
+libft2.a: rebuild
+	cd $(FREETYPE_DIR) && $(MAKE) \
+		CROSS=$(NDKP) \
+		TARGET_FLAGS="--sysroot $(NDKSYSROOT) -marm" \
+		LTCFLAGS="$(LTCFLAGS)" \
+		clean all
+	cp $(FREETYPE_DIR)/libft2.a .
 
 libvorbis.a: rebuild
 	cd $(VORBIS_DIR) && $(MAKE) \
@@ -270,6 +314,13 @@ libvorbis.a: rebuild
 		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(VORBIS_DIR)/libvorbis.a .
+
+libft2.a: rebuild
+	cd $(FREETYPE_DIR) && $(MAKE) \
+		TARGET_FLAGS="-m64 -arch x86_64" \
+		LTCFLAGS="$(LTCFLAGS)" \
+		clean all
+	cp $(FREETYPE_DIR)/libft2.a .
 
 libGLEW.a: rebuild
 	cd $(GLEW_DIR) && $(MAKE) \
@@ -387,6 +438,12 @@ libpng.a: rebuild
 		clean all
 	cp $(LIBPNG_DIR)/libpng.a .
 
+libft2.a: rebuild
+	cd $(FREETYPE_DIR) && $(MAKE) \
+		LTCFLAGS="$(LTCFLAGS)" \
+		clean all
+	cp $(FREETYPE_DIR)/libft2.a .
+
 libvorbis.a: rebuild
 	cd $(VORBIS_DIR) && $(MAKE) \
 		LTCFLAGS="$(LTCFLAGS)" \
@@ -452,6 +509,8 @@ clean:
 	cd $(BOX2D_DIR) && $(MAKE) clean
 	cd $(ZLIB_DIR) && $(MAKE) clean
 	cd $(LIBPNG_DIR) && $(MAKE) clean
+	cd $(FREETYPE_DIR) && $(MAKE) clean
+	cd $(VORBIS_DIR) && $(MAKE) clean
 	rm -rf *.a
 	rm -rf *.lib
 	rm -rf include/*
