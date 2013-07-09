@@ -196,7 +196,11 @@ static void setup_window() {
     }
     glfwSwapInterval(lt_vsync ? 1 : 0);
     glfwSetWindowTitle(title);
-    glfwEnable(GLFW_MOUSE_CURSOR);
+    if (lt_show_mouse_cursor) {
+        glfwEnable(GLFW_MOUSE_CURSOR);
+    } else {
+        glfwDisable(GLFW_MOUSE_CURSOR);
+    }
 
     ltLuaResizeWindow(vidmode.Width, vidmode.Height);
     glfwSetKeyCallback(key_handler);

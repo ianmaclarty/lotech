@@ -246,6 +246,12 @@ static int lt_IsFullScreen(lua_State *L) {
     return 1;
 }
 
+static int lt_SetShowMouseCursor(lua_State *L) {
+    ltLuaCheckNArgs(L, 1);
+    lt_show_mouse_cursor = lua_toboolean(L, 1);
+    return 0;
+}
+
 static int lt_SetOrientation(lua_State *L) {
     ltLuaCheckNArgs(L, 1);
     const char *orientation_str = lua_tostring(L, 1);
@@ -1979,6 +1985,7 @@ static const luaL_Reg ltlib[] = {
     {"SetOrientation",                  lt_SetOrientation},
     {"SetFullScreen",                   lt_SetFullScreen},
     {"IsFullScreen",                    lt_IsFullScreen},
+    {"SetShowMouseCursor",              lt_SetShowMouseCursor},
     {"Quit",                            lt_Quit},
     {"PushTint",                        lt_PushTint},
     {"PopTint",                         lt_PopTint},

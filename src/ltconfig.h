@@ -4,6 +4,7 @@ LT_INIT_DECL(ltconfig)
 extern const char *lt_app_short_name;
 extern bool lt_vsync;
 extern bool lt_fullscreen;
+extern bool lt_show_mouse_cursor;
 extern bool lt_quit;
 extern bool lt_envelope;
 extern double lt_fixed_update_time;
