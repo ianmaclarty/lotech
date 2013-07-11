@@ -1933,7 +1933,7 @@ static int lt_SetAppShortName(lua_State *L) {
         strcpy(tmp, short_name);
         lt_app_short_name = tmp;
     } else {
-        luaL_error(L, "Expecting one string argument");
+        return luaL_error(L, "Expecting one string argument");
     }
     return 0;
 }
@@ -1973,6 +1973,100 @@ static int lt_SampleAccelerometer(lua_State *L) {
     lua_pushnumber(L, y);
     lua_pushnumber(L, z);
     return 3;
+}
+
+/************************ Gamepad *****************************/
+
+static int lt_ReadGamePadState(lua_State *L) {
+    ltLuaCheckNArgs(L, 2);
+    int gamepad = lua_tointeger(L, 1);
+    const char *statestr = lua_tostring(L, 2);
+    if (statestr == NULL) {
+        return luaL_error(L, "Expecting a string argument");
+    }
+#ifdef LTGLFW
+    int joy;
+    unsigned char buttons[LT_GAMEPAD_NUM_BUTTONS];
+    float axes[LT_GAMEPAD_NUM_AXES];
+    switch (gamepad) {
+        case 1: joy = GLFW_JOYSTICK_1; break;
+        case 2: joy = GLFW_JOYSTICK_2; break;
+        case 3: joy = GLFW_JOYSTICK_3; break;
+        case 4: joy = GLFW_JOYSTICK_4; break;
+        default: return luaL_error(L, "First arg must be 1-4");
+    }
+    if (strcmp(statestr, "present") == 0) {
+        lua_pushboolean(L, glfwGetJoystickParam(joy, GLFW_PRESENT));
+    } else if (strcmp(statestr, "lstick_x") == 0) {
+        glfwGetJoystickPos(joy, axes, LT_GAMEPAD_NUM_AXES);
+        lua_pushnumber(L, axes[LT_GAMEPAD_LSTICK_X]);
+    } else if (strcmp(statestr, "lstick_y") == 0) {
+        glfwGetJoystickPos(joy, axes, LT_GAMEPAD_NUM_AXES);
+        lua_pushnumber(L, axes[LT_GAMEPAD_LSTICK_Y]);
+    } else if (strcmp(statestr, "rstick_x") == 0) {
+        glfwGetJoystickPos(joy, axes, LT_GAMEPAD_NUM_AXES);
+        lua_pushnumber(L, axes[LT_GAMEPAD_RSTICK_Y]);
+    } else if (strcmp(statestr, "rstick_y") == 0) {
+        glfwGetJoystickPos(joy, axes, LT_GAMEPAD_NUM_AXES);
+        lua_pushnumber(L, axes[LT_GAMEPAD_RSTICK_Y]);
+    } else if (strcmp(statestr, "LT") == 0) {
+        glfwGetJoystickPos(joy, axes, LT_GAMEPAD_NUM_AXES);
+        lua_pushnumber(L, axes[LT_GAMEPAD_LT]);
+    } else if (strcmp(statestr, "RT") == 0) {
+        glfwGetJoystickPos(joy, axes, LT_GAMEPAD_NUM_AXES);
+        lua_pushnumber(L, -axes[LT_GAMEPAD_RT]);
+    } else if (strcmp(statestr, "up") == 0) {
+        glfwGetJoystickButtons(joy, buttons, LT_GAMEPAD_NUM_BUTTONS);
+        lua_pushboolean(L, buttons[LT_GAMEPAD_UP]);
+    } else if (strcmp(statestr, "down") == 0) {
+        glfwGetJoystickButtons(joy, buttons, LT_GAMEPAD_NUM_BUTTONS);
+        lua_pushboolean(L, buttons[LT_GAMEPAD_DOWN]);
+    } else if (strcmp(statestr, "left") == 0) {
+        glfwGetJoystickButtons(joy, buttons, LT_GAMEPAD_NUM_BUTTONS);
+        lua_pushboolean(L, buttons[LT_GAMEPAD_LEFT]);
+    } else if (strcmp(statestr, "right") == 0) {
+        glfwGetJoystickButtons(joy, buttons, LT_GAMEPAD_NUM_BUTTONS);
+        lua_pushboolean(L, buttons[LT_GAMEPAD_RIGHT]);
+    } else if (strcmp(statestr, "start") == 0) {
+        glfwGetJoystickButtons(joy, buttons, LT_GAMEPAD_NUM_BUTTONS);
+        lua_pushboolean(L, buttons[LT_GAMEPAD_START]);
+    } else if (strcmp(statestr, "back") == 0) {
+        glfwGetJoystickButtons(joy, buttons, LT_GAMEPAD_NUM_BUTTONS);
+        lua_pushboolean(L, buttons[LT_GAMEPAD_BACK]);
+    } else if (strcmp(statestr, "lstick_button") == 0) {
+        glfwGetJoystickButtons(joy, buttons, LT_GAMEPAD_NUM_BUTTONS);
+        lua_pushboolean(L, buttons[LT_GAMEPAD_LSTICK_BUTTON]);
+    } else if (strcmp(statestr, "rstick_button") == 0) {
+        glfwGetJoystickButtons(joy, buttons, LT_GAMEPAD_NUM_BUTTONS);
+        lua_pushboolean(L, buttons[LT_GAMEPAD_RSTICK_BUTTON]);
+    } else if (strcmp(statestr, "LB") == 0) {
+        glfwGetJoystickButtons(joy, buttons, LT_GAMEPAD_NUM_BUTTONS);
+        lua_pushboolean(L, buttons[LT_GAMEPAD_LB]);
+    } else if (strcmp(statestr, "RB") == 0) {
+        glfwGetJoystickButtons(joy, buttons, LT_GAMEPAD_NUM_BUTTONS);
+        lua_pushboolean(L, buttons[LT_GAMEPAD_RB]);
+    } else if (strcmp(statestr, "home") == 0) {
+        glfwGetJoystickButtons(joy, buttons, LT_GAMEPAD_NUM_BUTTONS);
+        lua_pushboolean(L, buttons[LT_GAMEPAD_HOME]);
+    } else if (strcmp(statestr, "A") == 0) {
+        glfwGetJoystickButtons(joy, buttons, LT_GAMEPAD_NUM_BUTTONS);
+        lua_pushboolean(L, buttons[LT_GAMEPAD_A]);
+    } else if (strcmp(statestr, "B") == 0) {
+        glfwGetJoystickButtons(joy, buttons, LT_GAMEPAD_NUM_BUTTONS);
+        lua_pushboolean(L, buttons[LT_GAMEPAD_B]);
+    } else if (strcmp(statestr, "X") == 0) {
+        glfwGetJoystickButtons(joy, buttons, LT_GAMEPAD_NUM_BUTTONS);
+        lua_pushboolean(L, buttons[LT_GAMEPAD_X]);
+    } else if (strcmp(statestr, "Y") == 0) {
+        glfwGetJoystickButtons(joy, buttons, LT_GAMEPAD_NUM_BUTTONS);
+        lua_pushboolean(L, buttons[LT_GAMEPAD_Y]);
+    } else {
+        return luaL_error(L, "Unknown state: %s", statestr);
+    }
+#else
+    lua_pushnil(L);
+#endif
+    return 1;
 }
 
 /************************************************************/
@@ -2122,6 +2216,7 @@ static const luaL_Reg ltlib[] = {
     {"SetAppShortName",                 lt_SetAppShortName},
 
     {"SampleAccelerometer",             lt_SampleAccelerometer},
+    {"ReadGamePadState",                lt_ReadGamePadState},
 
     {NULL, NULL}
 };

@@ -1,5 +1,6 @@
 /* Copyright (C) 2010-2013 Ian MacLarty. See Copyright Notice in lt.h. */
 LT_INIT_DECL(ltinput)
+
 enum LTKey {
     LT_KEY_UNKNOWN,
     LT_KEY_0,
@@ -59,3 +60,36 @@ enum LTKey {
     LT_KEY_DEL,
     LT_KEY_ESC,
 };
+
+enum LTGamePadButton {
+    LT_GAMEPAD_UP = 0,
+    LT_GAMEPAD_DOWN,
+    LT_GAMEPAD_LEFT,
+    LT_GAMEPAD_RIGHT,
+    LT_GAMEPAD_START,
+    LT_GAMEPAD_BACK,
+    LT_GAMEPAD_LSTICK_BUTTON,
+    LT_GAMEPAD_RSTICK_BUTTON,
+    LT_GAMEPAD_LB,
+    LT_GAMEPAD_RB,
+    LT_GAMEPAD_HOME,
+    LT_GAMEPAD_A,
+    LT_GAMEPAD_B,
+    LT_GAMEPAD_X,
+    LT_GAMEPAD_Y,
+    LT_GAMEPAD_NUM_BUTTONS
+};
+
+enum LTGamePadAxis {
+    LT_GAMEPAD_LSTICK_X = 0,
+    LT_GAMEPAD_LSTICK_Y,
+    LT_GAMEPAD_RSTICK_X,
+    LT_GAMEPAD_RSTICK_Y,
+    LT_GAMEPAD_LT,
+    LT_GAMEPAD_RT,
+    LT_GAMEPAD_NUM_AXES
+};
+
+#define LT_MAX_GAMEPADS 4
+
+extern LTbool lt_gamepad_button_state[LT_MAX_GAMEPADS][LT_GAMEPAD_NUM_BUTTONS];

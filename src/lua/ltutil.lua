@@ -145,7 +145,7 @@ lt.config = {
     envelope = false,
     fixed_update_time = 1/60,
     fullscreen = false,
-    show_mousr_cursor = true,
+    show_mouse_cursor = true,
 }
 
 function lt._Setup() 

@@ -48,6 +48,7 @@ static void init_core_modules() {
         ltmesh_init();
         ltwavefront_init();
         ltlighting_init();
+        ltinput_init();
         init_done = true;
     }
 }

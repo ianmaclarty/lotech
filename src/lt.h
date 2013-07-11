@@ -132,6 +132,12 @@ extern "C" {
 #include <windows.h>
 #endif
 
+// GLFW
+#if defined(LTLINUX) || defined(LTMINGW) || defined(LTOSX)
+#define LTGLFW
+#include <GL/glfw.h>
+#endif
+
 #if defined(LTDEVMODE) && (defined(LTOSX) || defined(LTLINUX) || defined(LTMINGW))
 #define LTMEMTRACK 1
 #endif
