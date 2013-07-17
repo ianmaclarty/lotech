@@ -118,7 +118,7 @@ const char *ltAppDataDir() {
         ltLog("lt_app_short_name not set");
         ltAbort();
     }
-#ifdef LTLINUX
+#if defined(LTLINUX) || defined(LTOSX)
     static char appdata_dir[1024];
     static bool initialized = false;
     if (!initialized) {
