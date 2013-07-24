@@ -50,3 +50,7 @@
 - Integrate assimp for importing 3d models.
 
 - Clean up .lua files (lots of useless junk there).
+
+- Add emscripten backend.
+
+- Add FlasCC backend
