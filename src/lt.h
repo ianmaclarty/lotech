@@ -138,6 +138,9 @@ extern "C" {
 #include <GL/glfw.h>
 #endif
 
+// Curl
+#include <curl/curl.h>
+
 #if defined(LTDEVMODE) && (defined(LTOSX) || defined(LTLINUX) || defined(LTMINGW))
 #define LTMEMTRACK 1
 #endif
@@ -177,6 +180,7 @@ extern "C" {
 #include "ltfilestore.h"
 #include "ltwavefront.h"
 #include "ltlighting.h"
+#include "lthttp.h"
 
 #include "ltgamecenter.h"
 #include "ltios.h"

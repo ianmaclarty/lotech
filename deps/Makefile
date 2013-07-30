@@ -22,7 +22,7 @@ ifeq ($(TARGET_PLATFORM),osx)
 TARGETS+=glfw_headers libglfw.a libGLEW.a glew_headers
 endif
 ifeq ($(TARGET_PLATFORM),linux)
-TARGETS+=glfw_headers libglfw.a libGLEW.a glew_headers openal_headers libopenal.a libcurl.a
+TARGETS+=glfw_headers libglfw.a libGLEW.a glew_headers openal_headers libopenal.a curl_headers libcurl.a
 endif
 
 all: $(TARGETS)
@@ -389,6 +389,10 @@ libcurl.a: rebuild
 		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(CURL_DIR)/libcurl.a .
+
+.PHONY: curl_headers
+curl_headers:
+	cp -r $(CURL_DIR)/include/* include/
 
 libopenal.a:
 	cp openal-soft/linux64/libopenal.a .

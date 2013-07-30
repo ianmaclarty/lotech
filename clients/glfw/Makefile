@@ -20,6 +20,7 @@ LIBFLAGS=-static-libstdc++ -static-libgcc \
 	$(LTDIR)/linux/liblua.a $(LTDIR)/linux/libvorbis.a \
 	$(LTDIR)/linux/libbox2d.a $(LTDIR)/linux/libglfw.a \
 	$(LTDIR)/linux/libGLEW.a $(LTDIR)/linux/libopenal.a \
+	$(LTDIR)/linux/libcurl.a \
 	-lX11 -lGL wrap_memcpy.o -Wl,--wrap=memcpy
 wrap_memcpy.o:
 	gcc -c wrap_memcpy.c
