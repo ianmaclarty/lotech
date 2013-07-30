@@ -7,6 +7,7 @@ ZLIB_DIR=$(ZLIB)
 LIBPNG_DIR=$(LIBPNG)
 VORBIS_DIR=$(VORBIS)
 FREETYPE_DIR=$(FREETYPE)
+CURL_DIR=$(CURL)
 GLEW_DIR=$(GLEW)
 GLFW_DIR=$(GLFW)
 
@@ -21,7 +22,7 @@ ifeq ($(TARGET_PLATFORM),osx)
 TARGETS+=glfw_headers libglfw.a libGLEW.a glew_headers
 endif
 ifeq ($(TARGET_PLATFORM),linux)
-TARGETS+=glfw_headers libglfw.a libGLEW.a glew_headers openal_headers libopenal.a
+TARGETS+=glfw_headers libglfw.a libGLEW.a glew_headers openal_headers libopenal.a libcurl.a
 endif
 
 all: $(TARGETS)
@@ -382,6 +383,12 @@ libft2.a: rebuild
 		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(FREETYPE_DIR)/libft2.a .
+
+libcurl.a: rebuild
+	cd $(CURL_DIR) && $(MAKE) \
+		LTCFLAGS="$(LTCFLAGS)" \
+		clean all
+	cp $(CURL_DIR)/libcurl.a .
 
 libopenal.a:
 	cp openal-soft/linux64/libopenal.a .

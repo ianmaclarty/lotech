@@ -43,6 +43,7 @@ LIBPNG=libpng-1.4.3
 GLEW=glew-1.9.0
 GLFW=glfw-2.7.8
 FREETYPE=freetype-2.5.0.1
+CURL=curl-7.31.0
 VORBIS=vorbis
 
 # iOS settings

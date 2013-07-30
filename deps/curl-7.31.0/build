@@ -1,0 +1,47 @@
+#!/bin/sh
+CC="gcc -DHAVE_CONFIG_H -I../include -c"
+$CC base64.c
+$CC bundles.c
+$CC conncache.c
+$CC connect.c
+$CC curl_addrinfo.c
+$CC curl_rand.c
+$CC easy.c
+$CC escape.c
+$CC fileinfo.c
+$CC formdata.c
+$CC getenv.c
+$CC getinfo.c
+$CC hash.c
+$CC hostip4.c
+$CC hostip6.c
+$CC hostip.c
+$CC hostsyn.c
+$CC http_chunks.c
+$CC http.c
+$CC if2ip.c
+$CC llist.c
+$CC mprintf.c
+$CC multi.c
+$CC netrc.c
+$CC nonblock.c
+$CC parsedate.c
+$CC pipeline.c
+$CC progress.c
+$CC rawstr.c
+$CC select.c
+$CC sendf.c
+$CC share.c
+$CC slist.c
+$CC speedcheck.c
+$CC splay.c
+$CC sslgen.c
+$CC strequal.c
+$CC strerror.c
+$CC test.c
+$CC timeval.c
+$CC transfer.c
+$CC url.c
+$CC warnless.c
+$CC wildcard.c
+gcc *.o -lrt -o test
