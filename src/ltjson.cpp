@@ -117,7 +117,9 @@ static int parse_string(lua_State *L, parse_state *state) {
                 case 'r': *tptr = '\r'; break;
                 case 't': *tptr = '\t'; break;
                 case 'b': *tptr = '\b'; break;
+                case 'f': *tptr = '\f'; break;
                 case '\\': *tptr = '\\'; break;
+                case '/': *tptr = '/'; break;
                 case '"': *tptr = '"'; break;
                 case '\'': *tptr = '\''; break;
                 default:
@@ -402,6 +404,7 @@ static void append_value(lua_State *L, write_state *state) {
                     case '\r': appends("\\r", state); break;
                     case '\t': appends("\\t", state); break;
                     case '\b': appends("\\b", state); break;
+                    case '\f': appends("\\f", state); break;
                     case '\\': appends("\\\\", state); break;
                     case '\"': appends("\\\"", state); break;
                     default: appendc(*s, state); break;
