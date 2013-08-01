@@ -1,6 +1,8 @@
 /* Copyright (C) 2010-2013 Ian MacLarty. See Copyright Notice in lt.h. */
 #include "lt.h"
 
+LT_INIT_IMPL(lthttp)
+
 LTHTTPRequest::LTHTTPRequest() {
     url = NULL;
     post_data = NULL;
@@ -79,26 +81,11 @@ int static progress_func(void *clientp, double dltotal, double dlnow, double ult
 }
 
 void LTHTTPRequest::init(lua_State *L) {
-    const char *tmps;
-    int nargs = ltLuaCheckNArgs(L, 1);
-
-    tmps = lua_tostring(L, 1);
-    if (tmps == NULL) {
-        luaL_error(L, "First arg must be a URL");
-    }
-    url = new char[strlen(tmps) + 1];
-    strcpy(url, tmps);
-
-    if (nargs > 1) {
-        tmps = lua_tostring(L, 2);
-        if (tmps == NULL) {
-            luaL_error(L, "Second arg must be post data as a string");
-        }
-        post_data = new char[strlen(tmps) + 1];
-        strcpy(post_data, tmps);
-    }
-
     ensure_curl_global_init();
+
+    if (url == NULL) {
+        luaL_error(L, "missing URL");
+    }
 
     mcurl = curl_multi_init();
     if (mcurl == NULL) {
@@ -140,6 +127,89 @@ void LTHTTPRequest::poll() {
     }
 }
 
+LT_REGISTER_TYPE(LTHTTPRequest, "lt.HTTPRequest", "lt.Object")
+
 void LTHTTPRequest::cancel() {
-    cleanup_handles(this);
+    if (!is_done) {
+        cleanup_handles(this);
+        is_done = true;
+        strcpy(err_buf, "request cancelled");
+    }
 }
+
+static int do_poll(lua_State *L) {
+    LTHTTPRequest *req = lt_expect_LTHTTPRequest(L, 1);
+    req->poll();
+    return 0;
+}
+
+static int do_cancel(lua_State *L) {
+    LTHTTPRequest *req = lt_expect_LTHTTPRequest(L, 1);
+    req->cancel();
+    return 0;
+}
+
+static LTbool get_success(LTObject *obj) {
+    LTHTTPRequest *req = (LTHTTPRequest*)obj;
+    return req->is_done && req->err_buf[0] == 0;
+}
+
+static LTbool get_failure(LTObject *obj) {
+    LTHTTPRequest *req = (LTHTTPRequest*)obj;
+    return req->is_done && req->err_buf[0] != 0;
+}
+
+static LTstring get_response(LTObject *obj) {
+    LTHTTPRequest *req = (LTHTTPRequest*)obj;
+    return req->write_buf;
+}
+
+static LTstring get_error(LTObject *obj) {
+    LTHTTPRequest *req = (LTHTTPRequest*)obj;
+    return req->err_buf;
+}
+
+static LTstring get_url(LTObject *obj) {
+    LTHTTPRequest *req = (LTHTTPRequest*)obj;
+    return req->url;
+}
+
+static void set_url(LTObject *obj, LTstring url) {
+    LTHTTPRequest *req = (LTHTTPRequest*)obj;
+    if (req->url != NULL) {
+        return; // Can't set url twice.
+    }
+    if (url == NULL) {
+        req->url = NULL;
+    } else {
+        req->url = new char[strlen(url) + 1];
+        strcpy(req->url, url);
+    }
+}
+
+static LTstring get_data(LTObject *obj) {
+    LTHTTPRequest *req = (LTHTTPRequest*)obj;
+    return req->post_data;
+}
+
+static void set_data(LTObject *obj, LTstring data) {
+    LTHTTPRequest *req = (LTHTTPRequest*)obj;
+    if (req->post_data != NULL) {
+        return; // Can't set post data twice.
+    }
+    if (data == NULL) {
+        req->post_data = NULL;
+    } else {
+        req->post_data = new char[strlen(data) + 1];
+        strcpy(req->post_data, data);
+    }
+}
+
+LT_REGISTER_PROPERTY_STRING(LTHTTPRequest, url, get_url, set_url)
+LT_REGISTER_PROPERTY_STRING(LTHTTPRequest, data, get_data, set_data)
+LT_REGISTER_METHOD(LTHTTPRequest, Poll, do_poll)
+LT_REGISTER_METHOD(LTHTTPRequest, Cancel, do_cancel)
+LT_REGISTER_PROPERTY_BOOL_NOCONS(LTHTTPRequest, success, get_success, NULL)
+LT_REGISTER_PROPERTY_BOOL_NOCONS(LTHTTPRequest, failure, get_failure, NULL)
+LT_REGISTER_PROPERTY_STRING_NOCONS(LTHTTPRequest, response, get_response, NULL)
+LT_REGISTER_PROPERTY_STRING_NOCONS(LTHTTPRequest, error, get_error, NULL)

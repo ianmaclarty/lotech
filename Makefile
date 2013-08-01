@@ -166,4 +166,4 @@ clean:
 
 .PHONY: tags
 tags:
-	ctags `find . -name "*.h"` `find . -name "*.cpp"` `find . -name "*.c"` src/*.mm
+	ctags `find src -name "*.h"` `find src -name "*.cpp"` `find src -name "*.mm"` `find deps -name "*.c"` `find deps -name "*.cpp"` `find deps -name "*.h"`

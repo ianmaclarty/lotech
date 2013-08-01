@@ -11,9 +11,8 @@ static inline int absidx(lua_State *L, int index) {
     }
 }
 
-static bool init_done = false;
-
 static void init_core_modules() {
+    static bool init_done = false;
     if (!init_done) {
         // This ensures the static initializers in each translation unit are run.
         lt3d_init();
@@ -49,6 +48,8 @@ static void init_core_modules() {
         ltwavefront_init();
         ltlighting_init();
         ltinput_init();
+        ltjson_init();
+        lthttp_init();
         init_done = true;
     }
 }
@@ -213,6 +214,16 @@ static inline int push_field_val(lua_State *L, LTObject *obj, LTFieldInfo *field
             lua_rawgeti(L, -1, val + 1);
             break;
         }
+        case LT_FIELD_KIND_STRING: {
+            LTStringGetter getter = (LTStringGetter)field->getter;
+            LTstring str = getter(obj);
+            if (str == NULL) {
+                lua_pushnil(L);
+            } else {
+                lua_pushstring(L, getter(obj));
+            }
+            break;
+        }
         case LT_FIELD_KIND_OBJECT:
             // Value will be recorded in env table, so just look it up.
             lua_getfenv(L, 1);
@@ -269,6 +280,11 @@ static inline void set_field_val(lua_State *L, LTObject *obj, LTFieldInfo *field
                 lua_pop(L, 3); // pop val, enum values table and metatable.
                 setter(obj, val);
             }
+            break;
+        }
+        case LT_FIELD_KIND_STRING: {
+            LTStringSetter setter = (LTStringSetter)field->setter;
+            setter(obj, (LTstring)lua_tostring(L, val_index));
             break;
         }
         case LT_FIELD_KIND_OBJECT: {

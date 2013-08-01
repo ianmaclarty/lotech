@@ -17,8 +17,8 @@ struct LTHTTPRequest : LTObject {
     CURLM* mcurl; 
     CURL*  curl;
 
-    LTdouble download_total; // may be 0 if total not yet known.
-    LTdouble download_now;
+    LTfloat download_total; // may be 0 if total not yet known.
+    LTfloat download_now;
     LTbool is_done;
 
     virtual void init(lua_State *L);

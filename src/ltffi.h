@@ -62,6 +62,12 @@ LT_INIT_DECL(ltffi)
             (void*)getter, (void*)setter, NULL, __LINE__, true}; \
     static LTRegisterField LT_CONCAT(lt_register_field_, __LINE__)(LT_CONCAT(&lt_field_def_, __LINE__));
 
+#define LT_REGISTER_PROPERTY_BOOL_NOCONS(cpp_type, field_name, getter, setter) \
+    static LTFieldDef LT_CONCAT(lt_field_def_, __LINE__) = \
+        {#cpp_type, #field_name, LT_FIELD_KIND_BOOL, NULL, \
+            (void*)getter, (void*)setter, NULL, __LINE__, false}; \
+    static LTRegisterField LT_CONCAT(lt_register_field_, __LINE__)(LT_CONCAT(&lt_field_def_, __LINE__));
+
 #define LT_REGISTER_FIELD_INT(cpp_type, field_name) \
     static LTint LT_CONCAT(lt_field_getter_, __LINE__)(LTObject *obj) { \
         return ((cpp_type*)obj)->field_name; \
@@ -145,6 +151,18 @@ LT_INIT_DECL(ltffi)
             (void*)getter, (void*)setter, NULL, __LINE__, false}; \
     static LTRegisterField LT_CONCAT(lt_register_field_, __LINE__)(LT_CONCAT(&lt_field_def_, __LINE__));
 
+#define LT_REGISTER_PROPERTY_STRING(cpp_type, field_name, getter, setter) \
+    static LTFieldDef LT_CONCAT(lt_field_def_, __LINE__) = \
+        {#cpp_type, #field_name, LT_FIELD_KIND_STRING, NULL, \
+            (void*)getter, (void*)setter, NULL, __LINE__, true}; \
+    static LTRegisterField LT_CONCAT(lt_register_field_, __LINE__)(LT_CONCAT(&lt_field_def_, __LINE__));
+
+#define LT_REGISTER_PROPERTY_STRING_NOCONS(cpp_type, field_name, getter, setter) \
+    static LTFieldDef LT_CONCAT(lt_field_def_, __LINE__) = \
+        {#cpp_type, #field_name, LT_FIELD_KIND_STRING, NULL, \
+            (void*)getter, (void*)setter, NULL, __LINE__, false}; \
+    static LTRegisterField LT_CONCAT(lt_register_field_, __LINE__)(LT_CONCAT(&lt_field_def_, __LINE__));
+
 #define LT_REGISTER_FIELD_OBJ(cpp_type, field_name, value_type) \
     static LTObject* LT_CONCAT(lt_field_getter_, __LINE__)(LTObject *obj) { \
         return ((cpp_type*)obj)->field_name; \
@@ -176,6 +194,7 @@ enum LTFieldKind {
     LT_FIELD_KIND_INT,
     LT_FIELD_KIND_BOOL,
     LT_FIELD_KIND_ENUM,
+    LT_FIELD_KIND_STRING,
     LT_FIELD_KIND_OBJECT,
     LT_FIELD_KIND_METHOD,
 };
@@ -219,6 +238,8 @@ typedef LTint       (*LTIntGetter)(LTObject*);
 typedef void        (*LTIntSetter)(LTObject*, LTint);
 typedef LTbool      (*LTBoolGetter)(LTObject*);
 typedef void        (*LTBoolSetter)(LTObject*, LTbool);
+typedef LTstring    (*LTStringGetter)(LTObject*);
+typedef void        (*LTStringSetter)(LTObject*, LTstring);
 typedef LTObject*   (*LTObjGetter)(LTObject*);
 typedef void        (*LTObjSetter)(LTObject*, LTObject*);
 

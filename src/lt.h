@@ -180,6 +180,7 @@ extern "C" {
 #include "ltfilestore.h"
 #include "ltwavefront.h"
 #include "ltlighting.h"
+#include "ltjson.h"
 #include "lthttp.h"
 
 #include "ltgamecenter.h"

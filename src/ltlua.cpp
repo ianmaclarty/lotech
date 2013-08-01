@@ -2218,6 +2218,8 @@ static const luaL_Reg ltlib[] = {
     {"SampleAccelerometer",             lt_SampleAccelerometer},
     {"ReadGamePadState",                lt_ReadGamePadState},
 
+    {"FromJSON",                        ltLuaParseJSON},
+    {"ToJSON",                          ltLuaToJSON},
     {NULL, NULL}
 };
 

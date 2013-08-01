@@ -31,6 +31,7 @@ typedef unsigned char   LTubyte;
 typedef unsigned int    LTuint32;
 typedef uintptr_t       LTuintptr;
 typedef intptr_t        LTintptr;
+typedef char*           LTstring;
 
 typedef float           LTsecs;
 typedef float           LTdegrees;
