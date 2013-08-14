@@ -526,7 +526,7 @@ static
 LTAudioSample *read_ogg_file(lua_State *L, const char *path, const char *name);
 
 LTAudioSample *ltReadAudioSample(lua_State *L, const char *path, const char *name) {
-    char ext[4];
+    char ext[5];
     int len = strlen(path);
     if (len < 5) {
         ltLog("Filename %s too short", path);
