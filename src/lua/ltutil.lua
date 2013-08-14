@@ -144,7 +144,6 @@ lt.config = {
     vsync = true,
     envelope = false,
     fixed_update_time = 1/60,
-    fullscreen = false,
     show_mouse_cursor = true,
 }
 
@@ -159,7 +158,6 @@ function lt._Setup()
     lt.config.orientation = lt.config.design_width > lt.config.design_height and "landscape" or "portrait"
     lt.SetOrientation(lt.config.orientation)
 
-    lt.SetFullScreen(lt.config.fullscreen)
     lt.SetShowMouseCursor(lt.config.show_mouse_cursor)
     lt.SetViewPort(lt.config.world_left, lt.config.world_bottom, lt.config.world_right, lt.config.world_top)
     lt.SetStartScript(lt.config.start_script)
