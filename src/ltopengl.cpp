@@ -228,8 +228,12 @@ void ltBlendMode(LTBlendMode new_mode) {
             case LT_BLEND_MODE_NORMAL:
                 glEnable(GL_BLEND);
                 glBlendEquation(GL_FUNC_ADD);
-                glBlendEquation(GL_FUNC_ADD);
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                break;
+            case LT_BLEND_MODE_INVERT:
+                glEnable(GL_BLEND);
+                glBlendEquation(GL_FUNC_ADD);
+                glBlendFunc(GL_ONE_MINUS_SRC_COLOR, GL_ONE_MINUS_SRC_ALPHA);
                 break;
             case LT_BLEND_MODE_ADD:
                 glEnable(GL_BLEND);

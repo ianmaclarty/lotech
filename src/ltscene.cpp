@@ -609,6 +609,7 @@ void LTBlendModeNode::draw() {
 
 static const LTEnumConstant BlendMode_enum_vals[] = {
     {"normal", LT_BLEND_MODE_NORMAL},
+    {"invert", LT_BLEND_MODE_INVERT},
     {"add", LT_BLEND_MODE_ADD},
     {"subtract", LT_BLEND_MODE_SUBTRACT},
     //{"diff", LT_BLEND_MODE_DIFF},
