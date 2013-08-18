@@ -31,7 +31,21 @@
  */
 
 #include "curlver.h"         /* libcurl version defines   */
-#include "curlbuild.h"       /* libcurl build definitions */
+
+#if defined(LTLINUX)
+#   include "curlbuild_linux.h"
+#elif defined(LTOSX)
+#   include "curlbuild_osx.h"
+#elif defined(LTMINGW)
+#   include "curlbuild_mingw.h"
+#elif defined(LTIOS)
+#   include "curlbuild_ios.h"
+#elif defined(LTANDROID)
+#   include "curlbuild_android.h"
+#else
+#   error "target not supported"
+#endif
+
 #include "curlrules.h"       /* libcurl rules enforcement */
 
 /*

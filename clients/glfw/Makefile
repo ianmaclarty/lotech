@@ -28,7 +28,7 @@ endif
 
 ifeq ($(TARGET_PLATFORM),mingw)
 LIBFLAGS= -static -static-libstdc++ -static-libgcc -llt \
-		-llua -lpng -lvorbis -lz -lbox2d \
+		-lcurl -lws2_32 -llua -lpng -lvorbis -lz -lbox2d \
 		 -lOpenAL32 -lwinmm -lole32 -ldsound \
 		-lglew32 -lglfw -lopengl32
 endif

@@ -164,8 +164,6 @@ static int parse_boolean(lua_State *L, parse_state *state) {
 }
 
 static int parse_null(lua_State *L, parse_state *state) {
-    const char *ptr = state->ptr;
-    assert(*ptr == 'n');
     if (parse_word(L, state, "null", "expected 'null'")) {
         lua_pushnil(L);
         return 1;

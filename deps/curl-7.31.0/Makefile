@@ -21,6 +21,8 @@ C_FILES:=	\
 	src/http_chunks.c  \
 	src/http.c  \
 	src/if2ip.c  \
+	src/inet_ntop.c \
+	src/inet_pton.c \
 	src/llist.c  \
 	src/mprintf.c  \
 	src/multi.c  \
@@ -39,6 +41,7 @@ C_FILES:=	\
 	src/sslgen.c  \
 	src/strequal.c  \
 	src/strerror.c  \
+	src/strtok.c  \
 	src/timeval.c  \
 	src/transfer.c  \
 	src/url.c  \
@@ -51,7 +54,7 @@ ifndef LTCC
 LTCC=gcc
 endif
 
-GCC_FLAGS=-Iinclude -I. $(LTCFLAGS) $(TARGET_FLAGS)
+GCC_FLAGS=-Iinclude -I. $(LTCFLAGS) $(TARGET_FLAGS) -DCURL_STATICLIB
 GCC=$(CROSS)$(LTCC)
 AR=$(CROSS)ar rcus
 

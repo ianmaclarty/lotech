@@ -139,6 +139,7 @@ extern "C" {
 #endif
 
 // Curl
+#define CURL_STATICLIB 1
 #include <curl/curl.h>
 
 #if defined(LTDEVMODE) && (defined(LTOSX) || defined(LTLINUX) || defined(LTMINGW))

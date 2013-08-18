@@ -16,13 +16,13 @@ ifeq ($(TARGET_PLATFORM),android)
 #TARGETS+=libopenal.a openal_headers
 endif
 ifeq ($(TARGET_PLATFORM),mingw)
-TARGETS+=glfw_headers libglfw.a libOpenAL32.a openal_headers libglew32.a glew_headers
+TARGETS+=glfw_headers libglfw.a libOpenAL32.a openal_headers libglew32.a glew_headers libcurl.a
 endif
 ifeq ($(TARGET_PLATFORM),osx)
 TARGETS+=glfw_headers libglfw.a libGLEW.a glew_headers
 endif
 ifeq ($(TARGET_PLATFORM),linux)
-TARGETS+=glfw_headers libglfw.a libGLEW.a glew_headers openal_headers libopenal.a curl_headers libcurl.a
+TARGETS+=glfw_headers libglfw.a libGLEW.a glew_headers openal_headers libopenal.a libcurl.a
 endif
 
 all: $(TARGETS)
@@ -390,10 +390,6 @@ libcurl.a: rebuild
 		clean all
 	cp $(CURL_DIR)/libcurl.a .
 
-.PHONY: curl_headers
-curl_headers:
-	cp -r $(CURL_DIR)/include/* include/
-
 libopenal.a:
 	cp openal-soft/linux64/libopenal.a .
 
@@ -455,6 +451,12 @@ libft2.a: rebuild
 		clean all
 	cp $(FREETYPE_DIR)/libft2.a .
 
+libcurl.a: rebuild
+	cd $(CURL_DIR) && $(MAKE) \
+		LTCFLAGS="$(LTCFLAGS)" \
+		clean all
+	cp $(CURL_DIR)/libcurl.a .
+
 libvorbis.a: rebuild
 	cd $(VORBIS_DIR) && $(MAKE) \
 		LTCFLAGS="$(LTCFLAGS)" \
@@ -512,6 +514,7 @@ headers: rebuild
 	cp $(ZLIB_DIR)/zconf.h include/
 	cp $(VORBIS_DIR)/stb_vorbis.h include/
 	cp -r $(FREETYPE_DIR)/include/freetype include/
+	cp -r $(CURL_DIR)/include/curl include/
 
 .PHONY: clean
 clean:

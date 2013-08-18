@@ -92,7 +92,19 @@
  * and might also include required system header files to define them.
  */
 
-#include <curl/curlbuild.h>
+#if defined(LTLINUX)
+#   include <curl/curlbuild_linux.h>
+#elif defined(LTOSX)
+#   include <curl/curlbuild_osx.h>
+#elif defined(LTMINGW)
+#   include <curl/curlbuild_mingw.h>
+#elif defined(LTIOS)
+#   include <curl/curlbuild_ios.h>
+#elif defined(LTANDROID)
+#   include <curl/curlbuild_android.h>
+#else
+#   error "target not supported"
+#endif
 
 /*
  * Compile time sanity checks must also be done when building the library.
