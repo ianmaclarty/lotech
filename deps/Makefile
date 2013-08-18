@@ -19,7 +19,7 @@ ifeq ($(TARGET_PLATFORM),mingw)
 TARGETS+=glfw_headers libglfw.a libOpenAL32.a openal_headers libglew32.a glew_headers libcurl.a
 endif
 ifeq ($(TARGET_PLATFORM),osx)
-TARGETS+=glfw_headers libglfw.a libGLEW.a glew_headers
+TARGETS+=glfw_headers libglfw.a libGLEW.a glew_headers libcurl.a
 endif
 ifeq ($(TARGET_PLATFORM),linux)
 TARGETS+=glfw_headers libglfw.a libGLEW.a glew_headers openal_headers libopenal.a libcurl.a
@@ -322,6 +322,12 @@ libft2.a: rebuild
 		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(FREETYPE_DIR)/libft2.a .
+
+libcurl.a: rebuild
+	cd $(CURL_DIR) && $(MAKE) \
+		LTCFLAGS="$(LTCFLAGS)" \
+		clean all
+	cp $(CURL_DIR)/libcurl.a .
 
 libGLEW.a: rebuild
 	cd $(GLEW_DIR) && $(MAKE) \
