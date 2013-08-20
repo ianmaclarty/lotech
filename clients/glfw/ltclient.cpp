@@ -317,6 +317,7 @@ static LTKey convert_key(int key) {
         case 'Y': return LT_KEY_Y;
         case 'Z': return LT_KEY_Z;
         case GLFW_KEY_DEL: return LT_KEY_DEL;
+        case GLFW_KEY_BACKSPACE: return LT_KEY_DEL;
         case GLFW_KEY_UP: return LT_KEY_UP;
         case GLFW_KEY_DOWN: return LT_KEY_DOWN;
         case GLFW_KEY_RIGHT: return LT_KEY_RIGHT;
