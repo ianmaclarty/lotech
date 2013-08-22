@@ -8,7 +8,7 @@ default: ltclient
 EXTRA_PREREQS=
 
 ifeq ($(TARGET_PLATFORM),osx)
-LIBFLAGS= -llt -lcurl -lidn -lpng -lvorbis -lz -llua -lbox2d -lGLEW -lglfw -framework OpenGL \
+LIBFLAGS= -llt -lcurl -lpng -lvorbis -lz -llua -lbox2d -lGLEW -lglfw -framework OpenGL \
 		-framework OpenAL -framework Cocoa -framework IOKit \
 		-pagezero_size 10000 -image_base 100000000
 endif

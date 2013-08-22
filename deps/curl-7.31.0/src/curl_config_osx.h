@@ -293,13 +293,13 @@
 /* #undef HAVE_GSSMIT */
 
 /* Define to 1 if you have the `idna_strerror' function. */
-#define HAVE_IDNA_STRERROR 1
+/* #undef HAVE_IDNA_STRERROR */
 
 /* Define to 1 if you have the `idn_free' function. */
-#define HAVE_IDN_FREE 1
+/* #undef HAVE_IDN_FREE */
 
 /* Define to 1 if you have the <idn-free.h> header file. */
-#define HAVE_IDN_FREE_H 1
+/* #undef HAVE_IDN_FREE_H */
 
 /* Define to 1 if you have the <ifaddrs.h> header file. */
 #define HAVE_IFADDRS_H 1
@@ -384,7 +384,7 @@
 #define HAVE_LIBGEN_H 1
 
 /* Define to 1 if you have the `idn' library (-lidn). */
-#define HAVE_LIBIDN 1
+/* #undef HAVE_LIBIDN */
 
 /* Define to 1 if you have the `resolv' library (-lresolv). */
 /* #undef HAVE_LIBRESOLV */
@@ -733,10 +733,10 @@
 #define HAVE_TIME_H 1
 
 /* Define to 1 if you have the <tld.h> header file. */
-#define HAVE_TLD_H 1
+/* #undef HAVE_TLD_H */
 
 /* Define to 1 if you have the `tld_strerror' function. */
-#define HAVE_TLD_STRERROR 1
+/* #undef HAVE_TLD_STRERROR */
 
 /* Define to 1 if you have the `uname' function. */
 #define HAVE_UNAME 1
