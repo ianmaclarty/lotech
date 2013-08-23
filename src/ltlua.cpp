@@ -1103,6 +1103,13 @@ static int lt_SampleLength(lua_State *L) {
     return 1;
 }
 
+/************************* State **************************/
+
+static int lt_SaveState(lua_State *L) {
+    ltSaveState();
+    return 0;
+}
+
 /************************* Box2D **************************/
 
 /*
@@ -2160,10 +2167,7 @@ static const luaL_Reg ltlib[] = {
     {"SampleFrequency",                 lt_SampleFrequency},
     {"SampleLength",                    lt_SampleLength},
     
-    /*
-    {"Store",                           lt_Store},
-    {"Retrieve",                        lt_Retrieve},
-    */
+    {"SaveState",                       lt_SaveState},
 
 //    {"World",                           lt_World},
 //    {"FixtureContainsPoint",            lt_FixtureContainsPoint},
