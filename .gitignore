@@ -26,3 +26,4 @@ src/lua_scripts.h
 ltclient
 *.xcf
 .*.swp
+D.*
