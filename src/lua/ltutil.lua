@@ -142,7 +142,6 @@ lt.config = {
     world_left = -1.5,
     world_right = 1.5,
     vsync = true,
-    envelope = false,
     fixed_update_time = 1/60,
     show_mouse_cursor = true,
 }
@@ -162,5 +161,8 @@ function lt._Setup()
     lt.SetViewPort(lt.config.world_left, lt.config.world_bottom, lt.config.world_right, lt.config.world_top)
     lt.SetStartScript(lt.config.start_script)
 
-    lt.SetRefreshParams(lt.config.vsync, lt.config.fixed_update_time, lt.config.envelope);
+    if lt.config.letterbox ~= nil then
+        lt.SetLetterBox(lt.config.letterbox);
+    end
+    lt.SetRefreshParams(lt.config.vsync, lt.config.fixed_update_time);
 end

@@ -222,11 +222,16 @@ static int lt_SetDesignScreenSize(lua_State *L) {
     return 0;
 }
 
+static int lt_SetLetterBox(lua_State *L) {
+    ltLuaCheckNArgs(L, 1);
+    lt_letterbox = lua_toboolean(L, 1) ? true : false;
+    return 0;
+}
+
 static int lt_SetRefreshParams(lua_State *L) {
     ltLuaCheckNArgs(L, 2);
     lt_vsync = lua_toboolean(L, 1) ? true : false;
     lt_fixed_update_time = luaL_checknumber(L, 2);
-    lt_envelope = lua_toboolean(L, 3) ? true : false;
     return 0;
 }
 
@@ -2083,6 +2088,7 @@ static const luaL_Reg ltlib[] = {
     {"SetViewPort",                     lt_SetViewPort},
     {"SetDesignScreenSize",             lt_SetDesignScreenSize},
     {"SetRefreshParams",                lt_SetRefreshParams},
+    {"SetLetterBox",                    lt_SetLetterBox},
     {"SetOrientation",                  lt_SetOrientation},
     {"SetFullScreen",                   lt_SetFullScreen},
     {"IsFullScreen",                    lt_IsFullScreen},

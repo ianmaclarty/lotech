@@ -6,5 +6,5 @@ extern bool lt_vsync;
 extern bool lt_fullscreen;
 extern bool lt_show_mouse_cursor;
 extern bool lt_quit;
-extern bool lt_envelope;
+extern bool lt_letterbox;
 extern double lt_fixed_update_time;

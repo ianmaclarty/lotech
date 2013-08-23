@@ -16,7 +16,7 @@ static int screen_viewport_width = 480;
 static int screen_viewport_height = 320;
 
 // Screen dimensions used to compute size of pixels in loaded
-// images and the aspect ration when using an envelope.
+// images and the aspect ration when letterboxing.
 // These don't have to match the actual screen dimensions.
 static LTfloat design_width = 960.0f;
 static LTfloat design_height = 640.0f;
@@ -195,7 +195,7 @@ void ltAdjustViewportAspectRatio() {
     LTfloat h0 = design_height;
     LTfloat w1 = (LTfloat)screen_width;
     LTfloat h1 = (LTfloat)screen_height;
-    if (lt_envelope) {
+    if (lt_letterbox) {
         LTfloat sy = h1 / h0;
         LTfloat dx = (w1 - w0 * sy) / (2.0f * w1);
         LTfloat sx = w1 / w0;

@@ -8,5 +8,5 @@ bool lt_vsync = true;
 bool lt_fullscreen = false;
 bool lt_show_mouse_cursor = true;
 bool lt_quit = false;
-bool lt_envelope = false;
+bool lt_letterbox = false;
 double lt_fixed_update_time = 1.0/60.0;
