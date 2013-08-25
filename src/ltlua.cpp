@@ -2388,9 +2388,9 @@ void ltLuaSetup() {
     setup_wref_ref(g_L);
     set_globals(g_L);
     strcpy(g_start_script, "main");
+    ltRestoreState();
     run_lua_file(g_L, "config");
     call_lt_func(g_L, "_Setup");
-    ltRestoreState();
 }
 
 void ltLuaSetResourcePrefix(const char *prefix) {
