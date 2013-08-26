@@ -1115,6 +1115,11 @@ static int lt_SaveState(lua_State *L) {
     return 0;
 }
 
+static int lt_RestoreState(lua_State *L) {
+    ltRestoreState();
+    return 0;
+}
+
 /************************* Box2D **************************/
 
 /*
@@ -2174,6 +2179,7 @@ static const luaL_Reg ltlib[] = {
     {"SampleLength",                    lt_SampleLength},
     
     {"SaveState",                       lt_SaveState},
+    {"RestoreState",                    lt_RestoreState},
 
 //    {"World",                           lt_World},
 //    {"FixtureContainsPoint",            lt_FixtureContainsPoint},
@@ -2388,7 +2394,6 @@ void ltLuaSetup() {
     setup_wref_ref(g_L);
     set_globals(g_L);
     strcpy(g_start_script, "main");
-    ltRestoreState();
     run_lua_file(g_L, "config");
     call_lt_func(g_L, "_Setup");
 }

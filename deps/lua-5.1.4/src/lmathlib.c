@@ -180,11 +180,11 @@ static int math_max (lua_State *L) {
 
 static int math_random (lua_State *L) {
   /* the `%' avoids the (rare) case of r==1, and is needed also because on
-     some systems (SunOS!) `rand()' may return a value larger than RAND_MAX */
+     some systems (SunOS! and Windows!) `rand()' may return a value larger than RAND_MAX */
   #ifdef _WIN32
-  lua_Number r = (lua_Number)(rand()) / (lua_Number)RAND_MAX;
+  lua_Number r = (lua_Number)(rand()%RAND_MAX) / (lua_Number)RAND_MAX;
   #else
-  lua_Number r = (lua_Number)(random()) / (lua_Number)RAND_MAX;
+  lua_Number r = (lua_Number)(random()%RAND_MAX) / (lua_Number)RAND_MAX;
   #endif
   switch (lua_gettop(L)) {  /* check number of arguments */
     case 0: {  /* no arguments */
