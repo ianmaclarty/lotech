@@ -83,9 +83,9 @@ int main(int argc, const char **argv) {
 
         if (lt_fullscreen != fullscreen) {
             ltSaveState();
+            ltLuaReset();
             glfwCloseWindow();
             fullscreen = lt_fullscreen;
-            ltLuaReset();
             setup_window();
         }
 
