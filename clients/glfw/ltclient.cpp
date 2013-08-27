@@ -44,6 +44,7 @@ int main(int argc, const char **argv) {
 
     ltLuaSetResourcePrefix(dir);
     ltLuaSetup();
+    fullscreen = lt_fullscreen;
     compute_window_size();
 
     if (glfwInit() != GL_TRUE) {
@@ -202,7 +203,17 @@ static void setup_window() {
         glfwDisable(GLFW_MOUSE_CURSOR);
     }
 
-    ltLuaResizeWindow(vidmode.Width, vidmode.Height);
+    // We need the following so glfwGetWindowSize
+    // returns correct results.  No idea why.
+    for (int i = 0; i < 5; i++) {
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glfwSwapBuffers();
+        usleep(100000);
+    }
+
+    glfwGetWindowSize(&w, &h);
+    //ltLog("w = %d, h = %d", w, h);
+    ltLuaResizeWindow(w, h);
     glfwSetKeyCallback(key_handler);
     glfwSetMouseButtonCallback(mouse_button_handler);
     glfwSetMousePosCallback(mouse_pos_handler);
