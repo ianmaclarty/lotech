@@ -74,19 +74,6 @@ struct LTEventVisitor : LTSceneNodeVisitor {
             // Ignore paused nodes and their children.
             return;
         }
-        LTfloat old_x = 0, old_y = 0, old_prev_x = 0, old_prev_y = 0;
-        if (LT_EVENT_MATCH(event->event, LT_EVENT_POINTER)) { 
-            old_x = event->x;
-            old_y = event->y;
-            old_prev_x = event->prev_x;
-            old_prev_y = event->prev_y;
-            if (!node->inverse_transform(&event->prev_x, &event->prev_y)) {
-                return;
-            }
-            if (!node->inverse_transform(&event->x, &event->y)) {
-                return;
-            }
-        }
         bool prev_allowed = events_allowed;
         if (exclusive_node != NULL && node == exclusive_node) {
             events_allowed = true;
@@ -111,15 +98,28 @@ struct LTEventVisitor : LTSceneNodeVisitor {
             }
         }
         if (!consumed) {
+            LTfloat old_x = 0, old_y = 0, old_prev_x = 0, old_prev_y = 0;
+            if (LT_EVENT_MATCH(event->event, LT_EVENT_POINTER)) { 
+                old_x = event->x;
+                old_y = event->y;
+                old_prev_x = event->prev_x;
+                old_prev_y = event->prev_y;
+                if (!node->inverse_transform(&event->prev_x, &event->prev_y)) {
+                    return;
+                }
+                if (!node->inverse_transform(&event->x, &event->y)) {
+                    return;
+                }
+            }
             node->visit_children(this, true);
+            if (LT_EVENT_MATCH(event->event, LT_EVENT_POINTER)) { 
+                event->x = old_x;
+                event->y = old_y;
+                event->prev_x = old_prev_x;
+                event->prev_y = old_prev_y;
+            }
         }
         events_allowed = prev_allowed;
-        if (LT_EVENT_MATCH(event->event, LT_EVENT_POINTER)) { 
-            event->x = old_x;
-            event->y = old_y;
-            event->prev_x = old_prev_x;
-            event->prev_y = old_prev_y;
-        }
     }
 };
 
