@@ -180,12 +180,12 @@ static const char *image_path(const char *name) {
 }
 
 static const char *sound_path(const char *name) {
-    const char *path = resource_path(name, ".wav"); 
+    const char *path = resource_path(name, ".ogg"); 
     if (ltResourceExists(path)) {
         return path;
     } else {
         delete[] path;
-        return resource_path(name, ".ogg");
+        return resource_path(name, ".wav");
     }
 }
 

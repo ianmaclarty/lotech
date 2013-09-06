@@ -11,18 +11,18 @@ CURL_DIR=$(CURL)
 GLEW_DIR=$(GLEW)
 GLFW_DIR=$(GLFW)
 
-TARGETS=liblua.a libbox2d.a libz.a libpng.a libft2.a libvorbis.a headers
+TARGETS=liblua.a libbox2d.a libz.a libpng.a libft2.a libvorbis.a libcurl.a headers
 ifeq ($(TARGET_PLATFORM),android)
 #TARGETS+=libopenal.a openal_headers
 endif
 ifeq ($(TARGET_PLATFORM),mingw)
-TARGETS+=glfw_headers libglfw.a libOpenAL32.a openal_headers libglew32.a glew_headers libcurl.a
+TARGETS+=glfw_headers libglfw.a libOpenAL32.a openal_headers libglew32.a glew_headers
 endif
 ifeq ($(TARGET_PLATFORM),osx)
-TARGETS+=glfw_headers libglfw.a libGLEW.a glew_headers libcurl.a
+TARGETS+=glfw_headers libglfw.a libGLEW.a glew_headers
 endif
 ifeq ($(TARGET_PLATFORM),linux)
-TARGETS+=glfw_headers libglfw.a libGLEW.a glew_headers openal_headers libopenal.a libcurl.a
+TARGETS+=glfw_headers libglfw.a libGLEW.a glew_headers openal_headers libopenal.a
 endif
 
 all: $(TARGETS)
@@ -155,6 +155,25 @@ libft2.a: rebuild
 	cp $(FREETYPE_DIR)/libft2.a libft2-armv7.a
 	lipo -create libft2-armv*.a -output libft2.a
 	rm libft2-armv*.a
+
+libcurl.a: rebuild
+	cd $(CURL_DIR) && $(MAKE) \
+		CROSS=$(ISDKP)/ \
+		LTCC=$(IOS_CC) \
+		TARGET_FLAGS="$(IOS_ARMv6_OPTS) -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
+		LTCFLAGS="$(LTCFLAGS)" \
+		clean all
+	cp $(CURL_DIR)/libcurl.a libcurl-armv6.a
+	cd $(CURL_DIR) && $(MAKE) \
+		CROSS=$(ISDKP)/ \
+		LTCC=$(IOS_CC) \
+		TARGET_FLAGS="$(IOS_ARMv7_OPTS) -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
+		LTCFLAGS="$(LTCFLAGS)" \
+		clean all
+	cp $(CURL_DIR)/libcurl.a libcurl-armv7.a
+	lipo -create libcurl-armv*.a -output libcurl.a
+	rm libcurl-armv*.a
+
 endif
 
 ifeq ($(TARGET_PLATFORM),iossim)
