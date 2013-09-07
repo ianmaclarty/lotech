@@ -424,16 +424,12 @@ static BOOL handle_orientation(UIInterfaceOrientation orientation) {
     BOOL res = NO;
     switch (orientation) {
         case UIInterfaceOrientationPortrait:
-            ltLog("portrait");
             break;
         case UIInterfaceOrientationPortraitUpsideDown:
-            ltLog("portrait");
             break;
         case UIInterfaceOrientationLandscapeRight:
-            ltLog("landscape");
             break;
         case UIInterfaceOrientationLandscapeLeft:
-            ltLog("landscape");
             break;
     }
     if (has_rotated && motionManager != nil && frames_since_disable_animations > 60) {
