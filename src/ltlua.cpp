@@ -157,26 +157,124 @@ static const char *resource_path(const char *resource, const char *suffix) {
     return path;
 }
 
+static LTfloat compute_ideal_scaling() {
+    int sw, sh;
+    LTfloat dw, dh;
+    ltGetScreenSize(&sw, &sh);
+    ltGetDesignScreenSize(&dw, &dh);
+    LTfloat sr = (LTfloat)sw / (LTfloat)sh;
+    LTfloat dr = dw / dh;
+
+    if (sr > dr) {
+        // screen wider than design width, so scale by height
+        return (LTfloat) sh / dh;
+    } else {
+        // scale by width
+        return (LTfloat) sw / dw;
+    }
+}
+
+#define LT_SCALING_8X      0
+#define LT_SCALING_4X      1
+#define LT_SCALING_2X      2
+#define LT_SCALING_1X      3
+#define LT_SCALING_05X     4
+#define LT_SCALING_025X    5
+
+static int compute_integral_scaling(LTfloat ideal_scaling) {
+    LTfloat err = 1.1f;
+    if (ideal_scaling > 4.0f * err) {
+        return LT_SCALING_8X;
+    } else if  (ideal_scaling > 2.0f * err) {
+        return LT_SCALING_4X;
+    } else if  (ideal_scaling > 1.0f * err) {
+        return LT_SCALING_2X;
+    } else if  (ideal_scaling > 0.5f * err) {
+        return LT_SCALING_1X;
+    } else if  (ideal_scaling > 0.25f * err) {
+        return LT_SCALING_05X;
+    } else {
+        return LT_SCALING_025X;
+    }
+}
+
+static const char* find_image_file(const char *name, const char *scaling_suffix) {
+    char suffix[20];
+    const char *path;
+    assert(strlen(scaling_suffix) < 10);
+    snprintf(suffix, 20, "%s.png", scaling_suffix);
+    path = resource_path(name, suffix);
+    ltLog("trying %s", path);
+    if (ltFileExists(path)) {
+        return path;
+    } else {
+        delete[] path;
+    }
+    snprintf(suffix, 20, "%s.png_", scaling_suffix);
+    path = resource_path(name, suffix);
+    ltLog("trying %s", path);
+    if (ltFileExists(path)) {
+        return path;
+    } else {
+        delete[] path;
+    }
+    return NULL;
+}
+
 static const char *image_path(const char *name) {
-    #ifdef LTIOS
-        const char *path;
-        if (ltIsIPad() || ltIsRetinaIPhone()) {
-            path = ltIOSBundlePath(name, ".png2x");
-            if (ltFileExists(path)) {
-                return path;
-            }
-            delete[] path;
-        }
-        path = ltIOSBundlePath(name, ".png1x");
-        if (ltFileExists(path)) {
-            return path;
-        } else {
-            delete[] path;
-            return ltIOSBundlePath(name, ".png");
-        }
-    #else
-        return resource_path(name, ".png");
-    #endif
+    int scaling = compute_integral_scaling(compute_ideal_scaling());
+    const char *path;
+    
+    // Look for matching or smaller image.
+    switch (scaling) {
+        case LT_SCALING_8X:
+            path = find_image_file(name, "_8x");
+            if (path != NULL) return path;
+        case LT_SCALING_4X:
+            path = find_image_file(name, "_4x");
+            if (path != NULL) return path;
+        case LT_SCALING_2X:
+            path = find_image_file(name, "_2x");
+            if (path != NULL) return path;
+        case LT_SCALING_1X:
+            path = find_image_file(name, "");
+            if (path != NULL) return path;
+            path = find_image_file(name, "_1x");
+            if (path != NULL) return path;
+        case LT_SCALING_05X:
+            path = find_image_file(name, "_05x");
+            if (path != NULL) return path;
+        case LT_SCALING_025X:
+            path = find_image_file(name, "_025x");
+            if (path != NULL) return path;
+    }
+
+    // Matching or smaller image not found, look for larger image.
+    switch (scaling) {
+        case LT_SCALING_025X:
+            path = find_image_file(name, "_025x");
+            if (path != NULL) return path;
+        case LT_SCALING_05X:
+            path = find_image_file(name, "_05x");
+            if (path != NULL) return path;
+        case LT_SCALING_1X:
+            path = find_image_file(name, "");
+            if (path != NULL) return path;
+            path = find_image_file(name, "_1x");
+            if (path != NULL) return path;
+        case LT_SCALING_2X:
+            path = find_image_file(name, "_2x");
+            if (path != NULL) return path;
+        case LT_SCALING_4X:
+            path = find_image_file(name, "_4x");
+            if (path != NULL) return path;
+        case LT_SCALING_8X:
+            path = find_image_file(name, "_8x");
+            if (path != NULL) return path;
+    }
+
+    ltLog("WARNING: no suitable images found for %s", name);
+    return resource_path(name, ".png");
 }
 
 static const char *sound_path(const char *name) {

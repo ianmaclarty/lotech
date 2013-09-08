@@ -140,6 +140,23 @@ static void lt_png_read_fn(png_structp png_ptr, png_bytep data, png_size_t lengt
     }
 }
 
+static LTfloat get_img_scaling(const char *path) {
+    if (strstr(path, "_025x.") != NULL) {
+        return 0.25f;
+    } else if (strstr(path, "_05x.") != NULL) {
+        return 0.5f;
+    } else if (strstr(path, "_1x.") != NULL) {
+        return 1.0f;
+    } else if (strstr(path, "_2x.") != NULL) {
+        return 2.0f;
+    } else if (strstr(path, "_4x.") != NULL) {
+        return 4.0f;
+    } else if (strstr(path, "_8x.") != NULL) {
+        return 8.0f;
+    }
+    return 1.0f;
+}
+
 LTImageBuffer *ltReadImage(const char *path, const char *name) {
     LTResource *in;
     png_structp png_ptr; 
@@ -226,9 +243,7 @@ LTImageBuffer *ltReadImage(const char *path, const char *name) {
     rows = png_get_rows(png_ptr, info_ptr);
 
     LTImageBuffer *imgbuf = new LTImageBuffer(name);
-    if (strcmp(path + strlen(path) - 2, "1x") == 0) {
-        imgbuf->scaling = 0.5f;
-    }
+    imgbuf->scaling = get_img_scaling(path);
 
     // Check for bounding box chunk.
     png_get_text(png_ptr, info_ptr, &text_ptr, &num_txt_chunks);

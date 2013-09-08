@@ -165,6 +165,7 @@ void ltSetMainFrameBuffer(LTframebuf fbo);
 // The following functions should be called only once.
 void ltSetViewPort(LTfloat x1, LTfloat y1, LTfloat x2, LTfloat y2);
 void ltSetScreenSize(int width, int height);
+void ltGetScreenSize(int *width, int *height);
 void ltSetDesignScreenSize(LTfloat width, LTfloat height);
 void ltGetDesignScreenSize(LTfloat *width, LTfloat *height);
 void ltSetDisplayOrientation(LTDisplayOrientation orientation);

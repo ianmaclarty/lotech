@@ -322,6 +322,11 @@ void ltSetScreenSize(int width, int height) {
     screen_viewport_height = height;
 }
 
+void ltGetScreenSize(int *width, int *height) {
+    *width = screen_width;
+    *height = screen_height;
+}
+
 void ltSetDesignScreenSize(LTfloat width, LTfloat height) {
     design_width = width;
     design_height = height;
