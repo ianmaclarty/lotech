@@ -1627,6 +1627,17 @@ static int lt_SubmitScore(lua_State *L) {
     return 0;
 }
 
+static int lt_SubmitAchievement(lua_State *L) {
+    ltLuaCheckNArgs(L, 1);
+    const char *achievement = lua_tostring(L, 1);
+    if (achievement != NULL) {
+        #ifdef LTGAMECENTER
+        ltIOSSubmitGameCenterAchievement(achievement);
+        #endif
+    }
+    return 0;
+}
+
 static int lt_ShowLeaderboard(lua_State *L) {
     ltLuaCheckNArgs(L, 1);
     const char *leaderboard = lua_tostring(L, 1);
@@ -2318,6 +2329,7 @@ static const luaL_Reg ltlib[] = {
 
     {"GameCenterAvailable",             lt_GameCenterAvailable},
     {"SubmitScore",                     lt_SubmitScore},
+    {"SubmitAchievement",               lt_SubmitAchievement},
     {"ShowLeaderboard",                 lt_ShowLeaderboard},
 
     {"OpenURL",                         lt_OpenURL},

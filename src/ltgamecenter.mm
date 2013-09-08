@@ -38,6 +38,7 @@ static GameCenterDelegate *gamecenter_delegate = nil;
 @end
 
 @implementation GameCenterSubmitter
+
 +(void)submitScore:(id)data{
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
     int score = [[data objectForKey:@"score"] intValue];
@@ -54,6 +55,23 @@ static GameCenterDelegate *gamecenter_delegate = nil;
     [data release];
     [pool release];
 }
+
++(void)submitAchievement:(id)data{
+    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+    NSString *name = [data objectForKey:@"achievement"];
+    GKAchievement *achievement = [[[GKAchievement alloc] initWithIdentifier:name] autorelease];
+    achievement.percentComplete = 100.0;
+    [achievement reportAchievementWithCompletionHandler:^(NSError *error)
+       {
+           if (error) {
+                NSLog(@"Game Center Achievement Error: %@", [error localizedDescription]);
+           }
+       }
+    ];
+    [data release];
+    [pool release];
+}
+
 @end
 
 void ltIOSInitGameCenter() {
@@ -104,6 +122,17 @@ void ltIOSSubmitGameCenterScore(int score, const char *leaderboard) {
             initWithObjectsAndKeys:[NSNumber numberWithInt:score], @"score",
             [NSString stringWithUTF8String:leaderboard], @"category", nil];
         [NSThread detachNewThreadSelector:@selector(submitScore:) toTarget:[GameCenterSubmitter class] withObject:data];
+    }
+    #endif
+}
+
+void ltIOSSubmitGameCenterAchievement(const char *achievement) {
+    #ifdef LTGAMECENTER
+    if (game_center_available) {
+        NSDictionary* data = [[NSDictionary alloc]
+            initWithObjectsAndKeys:
+            [NSString stringWithUTF8String:achievement], @"achievement", nil];
+        [NSThread detachNewThreadSelector:@selector(submitAchievement:) toTarget:[GameCenterSubmitter class] withObject:data];
     }
     #endif
 }

@@ -4,6 +4,7 @@
 void ltIOSInitGameCenter(); 
 void ltIOSTeardownGameCenter();
 void ltIOSSubmitGameCenterScore(int score, const char *leaderboard);
+void ltIOSSubmitGameCenterAchievement(const char *achievement);
 void ltIOSShowGameCenterLeaderBoard(const char *leaderboard);
 bool ltIOSGameCenterIsAvailable();
 
