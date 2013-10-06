@@ -1,0 +1,11 @@
+export NDK=$HOME/muheyo/android-ndk-r7
+export NDKABI=9
+export NDKVER=$NDK/toolchains/arm-linux-androideabi-4.4.3
+export NDKP=$NDKVER/prebuilt/darwin-x86/bin/arm-linux-androideabi-
+export NDKSYSROOT=$NDK/platforms/android-$NDKABI/arch-arm
+export NDKSTL="-I$NDK/sources/cxx-stl/gnu-libstdc++/include -I$NDK/sources/cxx-stl/gnu-libstdc++/libs/armeabi/include"
+export CC=${NDKP}gcc
+export CFLAGS="-isysroot $NDKSYSROOT --sysroot $NDKSYSROOT -marm"
+export LDFLAGS="-isysroot $NDKSYSROOT --sysroot $NDKSYSROOT -marm"
+export C_INCLUDE_PATH=$NDKSYSROOT/usr/include
+./configure --disable-shared --enable-static --disable-dependency-tracking `cat opts` --host="arm-linux-androideabi"

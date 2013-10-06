@@ -144,6 +144,10 @@ static const char *resource_path(const char *resource, const char *suffix) {
             path = new char[len];
             snprintf((char*)path, len, "%s%s%s%s", resource_prefix, slash, resource, suffix);
         }
+    #elif LTANDROID
+        int len = strlen(resource) + strlen(suffix) + 1;
+        path = new char[len];
+        snprintf((char*)path, len, "%s%s", resource, suffix);
     #else
         int len = strlen(resource_prefix) + strlen(resource) + strlen(suffix) + 3;
         const char *slash = "";
@@ -205,7 +209,7 @@ static const char* find_image_file(const char *name, const char *scaling_suffix)
     snprintf(suffix, 20, "%s.png", scaling_suffix);
     path = resource_path(name, suffix);
     ltLog("trying %s", path);
-    if (ltFileExists(path)) {
+    if (ltResourceExists(path)) {
         return path;
     } else {
         delete[] path;
@@ -213,7 +217,7 @@ static const char* find_image_file(const char *name, const char *scaling_suffix)
     snprintf(suffix, 20, "%s.png_", scaling_suffix);
     path = resource_path(name, suffix);
     ltLog("trying %s", path);
-    if (ltFileExists(path)) {
+    if (ltResourceExists(path)) {
         return path;
     } else {
         delete[] path;

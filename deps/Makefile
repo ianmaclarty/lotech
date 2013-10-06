@@ -239,13 +239,19 @@ ifeq ($(TARGET_PLATFORM),android)
 ############################ Android Targets ##############################
 
 liblua.a: rebuild
-	cd $(LUAJIT_DIR) && $(MAKE) \
-		HOST_CC="gcc -m32 -arch i386" \
+#	cd $(LUAJIT_DIR) && $(MAKE) \
+#		HOST_CC="gcc -m32 -arch i386" \
+#		CROSS=$(NDKP) \
+#		TARGET_FLAGS="--sysroot $(NDKSYSROOT)" \
+#		TARGET=arm TARGET_SYS=Linux \
+#		clean all
+#	cp $(LUAJIT_DIR)/src/libluajit.a $@
+	cd $(LUA_DIR) && $(MAKE) -f Makefile.custom \
 		CROSS=$(NDKP) \
-		TARGET_FLAGS="--sysroot $(NDKSYSROOT)" \
-		TARGET=arm TARGET_SYS=Linux \
+		TARGET_FLAGS="--sysroot $(NDKSYSROOT) -marm" \
+		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
-	cp $(LUAJIT_DIR)/src/libluajit.a $@
+	cp $(LUA_DIR)/liblua.a $@
 
 libbox2d.a: rebuild
 	cd $(BOX2D_DIR) && $(MAKE) \
@@ -285,6 +291,14 @@ libvorbis.a: rebuild
 		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(VORBIS_DIR)/libvorbis.a .
+
+libcurl.a: rebuild
+	cd $(CURL_DIR) && $(MAKE) \
+		CROSS=$(NDKP) \
+		TARGET_FLAGS="--sysroot $(NDKSYSROOT) -marm" \
+		LTCFLAGS="$(LTCFLAGS)" \
+		clean all
+	cp $(CURL_DIR)/libcurl.a libcurl.a
 
 #libopenal.a: rebuild.openal
 #	cd openal-android && $(MAKE) \

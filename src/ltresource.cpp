@@ -34,8 +34,15 @@ void ltCloseResource(LTResource *rsc) {
     delete rsc;
 }
 
-bool *ltResourceExists(const char* filename) {
-    return true; // XXX NYI
+bool ltResourceExists(const char* filename) {
+    // XXX What's the overhead of this?
+    AAsset* asset = AAssetManager_open(asset_mgr, filename, AASSET_MODE_STREAMING);
+    if (asset != NULL) {
+        AAsset_close(asset);
+        return true;
+    } else {
+        return false;
+    }
 }
 
 #else

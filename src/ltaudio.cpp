@@ -28,6 +28,7 @@ void LTTrack::setLoop(bool loop) { }
 void LTTrack::play() { }
 void LTTrack::pause() { }
 void LTTrack::stop() { } 
+void LTTrack::rewind() { } 
 int  LTTrack::numSamples() { return 0; }
 int  LTTrack::numProcessedSamples() { return 0; }
 int  LTTrack::numPendingSamples() { return 0; } 

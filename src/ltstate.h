@@ -6,3 +6,5 @@ void ltSaveState();
 
 // Restore the lt.state lua table from persistent storage.
 void ltRestoreState();
+
+void ltSetAndroidUnpickler(LTUnpickler *unpickler);
