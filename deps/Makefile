@@ -13,7 +13,7 @@ GLFW_DIR=$(GLFW)
 
 TARGETS=liblua.a libbox2d.a libz.a libpng.a libft2.a libvorbis.a libcurl.a headers
 ifeq ($(TARGET_PLATFORM),android)
-#TARGETS+=libopenal.a openal_headers
+TARGETS+=libopenal.a openal_headers
 endif
 ifeq ($(TARGET_PLATFORM),mingw)
 TARGETS+=glfw_headers libglfw.a libOpenAL32.a openal_headers libglew32.a glew_headers
@@ -308,9 +308,12 @@ libcurl.a: rebuild
 #		clean all
 #	cp openal-android/libopenal.a .
 
-#.PHONY: openal_headers
-#openal_headers:
-#	cp -r openal-android/include/AL include/OpenAL
+libopenal.a:
+	cp openal-soft/android/libopenal.a .
+
+.PHONY: openal_headers
+openal_headers:
+	cp -r openal-soft/include/* include/
 
 endif
 

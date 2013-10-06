@@ -82,7 +82,11 @@ THE SOFTWARE.
 #define AL_LIBTYPE_STATIC 1
 #include <AL/al.h>
 #include <AL/alc.h>
-#elif !defined(LTANDROID)
+#elif LTANDROID
+#define AL_LIBTYPE_STATIC 1
+#include <AL/al.h>
+#include <AL/alc.h>
+#else
 #include <OpenAL/al.h>
 #include <OpenAL/alc.h>
 #endif

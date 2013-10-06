@@ -5,7 +5,7 @@ LT_INIT_IMPL(ltaudio)
 
 LT_REGISTER_TYPE(LTAudioSample, "lt.Sample", "lt.Object")
 
-#ifdef LTANDROID
+#if 0
 void ltAudioInit() { }
 void ltAudioTeardown() { }
 void ltAudioSuspend() { }
