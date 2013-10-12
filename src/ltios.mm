@@ -518,6 +518,11 @@ static BOOL handle_orientation(UIInterfaceOrientation orientation) {
     return UIInterfaceOrientationMaskLandscapeRight | UIInterfaceOrientationMaskLandscapeLeft;
 }
 
+-(BOOL)prefersStatusBarHidden
+{
+    return YES;
+}
+
 @end
 
 
@@ -530,8 +535,6 @@ static LTViewController *viewController;
 @implementation LTAppDelegate
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
-    [[UIApplication sharedApplication] setStatusBarHidden:YES animated:NO];
-
     window = [[[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]] autorelease];
     [window retain];
     viewController = [[[LTViewController alloc] init] autorelease];
