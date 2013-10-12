@@ -54,3 +54,5 @@
 - Add emscripten backend.
 
 - Add FlasCC backend
+
+- Windows 8 + Mac retina display support.
