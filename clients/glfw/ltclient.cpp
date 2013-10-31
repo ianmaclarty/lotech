@@ -15,6 +15,14 @@
 #define MIN_HEIGHT 640
 #define MIN_UPDATE_TIME (1.0/400.0)
 
+#ifndef LTDATADIR
+#define LTDATADIR data
+#endif
+
+#ifndef LTTITLE
+#define LTTITLE Lotech Client
+#endif
+
 static void key_handler(int key, int state);
 static void mouse_button_handler(int button, int action);
 static void mouse_pos_handler(int x, int y);
@@ -22,8 +30,8 @@ static void resize_handler(int w, int h);
 static LTKey convert_key(int key);
 static bool fullscreen = lt_fullscreen;
 static void process_args(int argc, const char **argv);
-static const char *dir = "";
-static const char *title = "";
+static const char *dir = STR(LTDATADIR);
+static const char *title = STR(LTTITLE);
 static int window_width = 960;
 static int window_height = 640;
 
