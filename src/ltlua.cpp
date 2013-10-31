@@ -208,7 +208,7 @@ static const char* find_image_file(const char *name, const char *scaling_suffix)
     assert(strlen(scaling_suffix) < 10);
     snprintf(suffix, 20, "%s.png", scaling_suffix);
     path = resource_path(name, suffix);
-    ltLog("trying %s", path);
+    //ltLog("trying %s", path);
     if (ltResourceExists(path)) {
         return path;
     } else {
@@ -216,7 +216,7 @@ static const char* find_image_file(const char *name, const char *scaling_suffix)
     }
     snprintf(suffix, 20, "%s.png_", scaling_suffix);
     path = resource_path(name, suffix);
-    ltLog("trying %s", path);
+    //ltLog("trying %s", path);
     if (ltResourceExists(path)) {
         return path;
     } else {
