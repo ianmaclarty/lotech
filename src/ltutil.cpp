@@ -8,6 +8,10 @@ LT_INIT_IMPL(ltutil)
 #include <shlobj.h>
 #endif
 
+#ifdef LTANDROID
+const char *lt_android_data_dir = NULL;
+#endif
+
 void ltAbortImpl(const char *file, int line) {
     ltLog("%s:%d: ABORTING", file, line);
     exit(1);
@@ -146,6 +150,8 @@ const char *ltAppDataDir() {
         initialized = true;
     }
     return appdata_dir;
+#elif LTANDROID
+    return lt_android_data_dir;
 #else
     ltLog("ltAppDataDir NYI");
     ltAbort();

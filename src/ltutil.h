@@ -1,6 +1,10 @@
 /* Copyright (C) 2010-2013 Ian MacLarty. See Copyright Notice in lt.h. */
 LT_INIT_DECL(ltutil)
 
+#ifdef LTANDROID
+extern const char *lt_android_data_dir;
+#endif
+
 #define LT_TRACE ltLog("%s:%d %s", __FILE__, __LINE__, __PRETTY_FUNCTION__)
 
 #define ltAbort() ltAbortImpl(__FILE__, __LINE__)
