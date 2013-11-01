@@ -268,6 +268,20 @@ static int lt_SetStartScript(lua_State *L) {
     return 0;
 }
 
+/************************* Secret **************************/
+
+static int lt_Secret(lua_State *L) {
+    ltLuaCheckNArgs(L, 1);
+    const char *str = lua_tostring(L, 1);
+    if (str == NULL) {
+        return luaL_error(L, "Expecting a string");
+    }
+    char *secret = ltSecret(str);
+    lua_pushstring(L, secret);
+    delete[] secret;
+    return 1;
+}
+
 /************************* Graphics **************************/
 
 static int lt_SetViewPort(lua_State *L) {
@@ -2167,6 +2181,7 @@ static int lt_ReadGamePadState(lua_State *L) {
 
 static const luaL_Reg ltlib[] = {
     {"SetStartScript",                  lt_SetStartScript},
+    {"Secret",                          lt_Secret},
     {"SetViewPort",                     lt_SetViewPort},
     {"SetDesignScreenSize",             lt_SetDesignScreenSize},
     {"SetRefreshParams",                lt_SetRefreshParams},

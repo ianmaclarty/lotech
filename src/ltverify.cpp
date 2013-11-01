@@ -9,7 +9,7 @@
 #endif
 
 #ifndef LTVERIFYSECRET
-#define LTVERIFYSECRET {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+#define LTVERIFYSECRET {0, 0, 0, 0, 0, 0, 0, 0}
 #endif
 
 const char    *lt_verify_modules[] = LTVERIFYMODULES;
@@ -42,13 +42,31 @@ void ltDoVerify() {
 #ifdef LTDEVMODE
         printf("SHA1 validation failed!\n");
 #else
-        for (int i = 0; i < 20; i++) {
-            lt_verify_secret[i] = i;
+        for (int i = 0; i < 8; i++) {
+            lt_verify_secret[i] = 0;
         }
 #endif
     } else {
+        lt_verify_secret[0]++;
 #ifdef LTDEVMODE
         printf("SHA1 validation succeeded\n");
 #endif
     }
+}
+
+char *ltSecret(const char *txt) {
+    int l = strlen(txt) + 200;
+    char *tmp = (char*)malloc(l);
+    snprintf(tmp, l, "%s-%d%d%d%d%d%d%d%d\n",
+        txt,
+        lt_verify_secret[0],
+        lt_verify_secret[1],
+        lt_verify_secret[2],
+        lt_verify_secret[3],
+        lt_verify_secret[4],
+        lt_verify_secret[5],
+        lt_verify_secret[6],
+        lt_verify_secret[7]);
+    LTSHA1Digest digest = ltSHA1(tmp, strlen(tmp));
+    return digest.tostr();
 }

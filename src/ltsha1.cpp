@@ -267,22 +267,15 @@ static void SHA1_Final(SHA1_CTX* context, uint8_t digest[SHA1_DIGEST_SIZE])
 }
 
 
+/***********************************************************/
 
-
-char* ltSHA1(const char *data, size_t len) {
-    uint8_t digest[SHA1_DIGEST_SIZE];
+LTSHA1Digest ltSHA1(const char *data, size_t len) {
+    LTSHA1Digest digest;
     SHA1_CTX ctx;
     SHA1_Init(&ctx);
     SHA1_Update(&ctx, (uint8_t*)data, len);
-    SHA1_Final(&ctx, digest);
-    char *hex = new char[SHA1_DIGEST_SIZE * 2 + 1];
-    char *ptr = hex;
-    for (int i = 0; i < SHA1_DIGEST_SIZE; i++) {
-        snprintf(ptr, 3, "%2x", digest[i]);
-        ptr += 2;
-    }
-    hex[SHA1_DIGEST_SIZE] = 0;
-    return hex;
+    SHA1_Final(&ctx, (uint8_t*)&digest.digest[0]);
+    return digest;
 }
 
 LTSHA1Digest ltSHA1_lua_modules(const char **modules, int num_modules) {
@@ -305,8 +298,19 @@ LTSHA1Digest ltSHA1_lua_modules(const char **modules, int num_modules) {
 
 void LTSHA1Digest::print_c() {
     printf("{{");
-    for (int i = 0; i < 20; i++) {
-        printf("%d,", (int)digest[i]);
+    for (int i = 0; i < 19; i++) {
+        printf("%u,", (unsigned int)digest[i]);
     }
+    printf("%d", (int)digest[19]);
     printf("}}\n");
+}
+
+char* LTSHA1Digest::tostr() {
+    char *str = new char[41];
+    char *ptr = str;
+    for (int i = 0; i < 20; i++) {
+        snprintf(ptr, 3, "%02x", digest[i]);
+        ptr += 2;
+    }
+    return str;
 }
