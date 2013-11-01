@@ -25,6 +25,10 @@ int ltReadResource(LTResource *rsc, void* buf, int count);
 void ltCloseResource(LTResource *rsc);
 
 // Free with free()
-char* ltReadTextResource(const char *filename);
+char* ltReadTextResource(const char *filename, int *len);
 void* ltReadResourceAll(LTResource *rsc, int *size);
+
+const char *ltResourcePath(const char *resource, const char *suffix);
+
+void ltSetResourcePrefix(const char *prefix);
 

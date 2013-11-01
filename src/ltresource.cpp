@@ -3,6 +3,8 @@
 
 LT_INIT_IMPL(ltresource)
 
+static const char* resource_prefix = "";
+
 #ifdef LTANDROID
 
 static AAssetManager *asset_mgr = NULL;
@@ -81,7 +83,7 @@ bool ltResourceExists(const char* filename) {
 
 #endif
 
-char* ltReadTextResource(const char *path) {
+char* ltReadTextResource(const char *path, int *len) {
     LTResource *rsc = ltOpenResource(path);
     if (rsc == NULL) {
         return NULL;
@@ -89,18 +91,18 @@ char* ltReadTextResource(const char *path) {
     int capacity = 1024;
     char *buf = (char*)malloc(capacity);
     char *ptr = buf;
-    int total = 0;
+    *len = 0;
     while (true) {
-        int n = ltReadResource(rsc, ptr, capacity - total);
-        total += n;
-        if (n >= 0 && n < capacity - total) {
-            buf[total] = '\0';
+        int n = ltReadResource(rsc, ptr, capacity - *len);
+        *len += n;
+        if (n >= 0 && n < capacity - *len) {
+            buf[*len] = '\0';
             ltCloseResource(rsc);
             return buf;
         } else if (n >= 0) {
             capacity *= 2;
             buf = (char*)realloc(buf, capacity);
-            ptr = buf + total;
+            ptr = buf + *len;
         } else {
             // error
             ltCloseResource(rsc);
@@ -129,4 +131,42 @@ void* ltReadResourceAll(LTResource *rsc, int *size) {
             return NULL;
         }
     }
+}
+
+void ltSetResourcePrefix(const char *prefix) {
+    resource_prefix = prefix;
+}
+
+const char *ltResourcePath(const char *resource, const char *suffix) {
+    const char *path;
+    #ifdef LTIOS
+        path = ltIOSBundlePath(resource, suffix);
+    #elif LTOSX
+        if (strlen(resource_prefix) == 0) {
+            path = ltOSXBundlePath(resource, suffix);
+        } else {
+            int len = strlen(resource_prefix) + strlen(resource) + strlen(suffix) + 3;
+            const char *slash = "";
+            if (resource_prefix[strlen(resource_prefix) - 1] != '/') {
+                len += 1;
+                slash = "/";
+            }
+            path = new char[len];
+            snprintf((char*)path, len, "%s%s%s%s", resource_prefix, slash, resource, suffix);
+        }
+    #elif LTANDROID
+        int len = strlen(resource) + strlen(suffix) + 1;
+        path = new char[len];
+        snprintf((char*)path, len, "%s%s", resource, suffix);
+    #else
+        int len = strlen(resource_prefix) + strlen(resource) + strlen(suffix) + 3;
+        const char *slash = "";
+        if (resource_prefix[strlen(resource_prefix) - 1] != '/') {
+            len += 1;
+            slash = "/";
+        }
+        path = new char[len];
+        snprintf((char*)path, len, "%s%s%s%s", resource_prefix, slash, resource, suffix);
+    #endif
+    return path;
 }

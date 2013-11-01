@@ -50,7 +50,7 @@ int main(int argc, const char **argv) {
     ltClientInit();
 #endif
 
-    ltLuaSetResourcePrefix(dir);
+    ltSetResourcePrefix(dir);
     ltLuaSetup();
     fullscreen = lt_fullscreen;
     compute_window_size();

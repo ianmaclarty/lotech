@@ -125,42 +125,6 @@ static void del_weak_ref(lua_State *L, int ref) {
 
 /************************** Resolve paths ****************/
 
-static const char* resource_prefix = "";
-
-static const char *resource_path(const char *resource, const char *suffix) {
-    const char *path;
-    #ifdef LTIOS
-        path = ltIOSBundlePath(resource, suffix);
-    #elif LTOSX
-        if (strlen(resource_prefix) == 0) {
-            path = ltOSXBundlePath(resource, suffix);
-        } else {
-            int len = strlen(resource_prefix) + strlen(resource) + strlen(suffix) + 3;
-            const char *slash = "";
-            if (resource_prefix[strlen(resource_prefix) - 1] != '/') {
-                len += 1;
-                slash = "/";
-            }
-            path = new char[len];
-            snprintf((char*)path, len, "%s%s%s%s", resource_prefix, slash, resource, suffix);
-        }
-    #elif LTANDROID
-        int len = strlen(resource) + strlen(suffix) + 1;
-        path = new char[len];
-        snprintf((char*)path, len, "%s%s", resource, suffix);
-    #else
-        int len = strlen(resource_prefix) + strlen(resource) + strlen(suffix) + 3;
-        const char *slash = "";
-        if (resource_prefix[strlen(resource_prefix) - 1] != '/') {
-            len += 1;
-            slash = "/";
-        }
-        path = new char[len];
-        snprintf((char*)path, len, "%s%s%s%s", resource_prefix, slash, resource, suffix);
-    #endif
-    return path;
-}
-
 static LTfloat compute_ideal_scaling() {
     int sw, sh;
     LTfloat dw, dh;
@@ -207,7 +171,7 @@ static const char* find_image_file(const char *name, const char *scaling_suffix)
     const char *path;
     assert(strlen(scaling_suffix) < 10);
     snprintf(suffix, 20, "%s.png", scaling_suffix);
-    path = resource_path(name, suffix);
+    path = ltResourcePath(name, suffix);
     //ltLog("trying %s", path);
     if (ltResourceExists(path)) {
         return path;
@@ -215,7 +179,7 @@ static const char* find_image_file(const char *name, const char *scaling_suffix)
         delete[] path;
     }
     snprintf(suffix, 20, "%s.png_", scaling_suffix);
-    path = resource_path(name, suffix);
+    path = ltResourcePath(name, suffix);
     //ltLog("trying %s", path);
     if (ltResourceExists(path)) {
         return path;
@@ -278,21 +242,21 @@ static const char *image_path(const char *name) {
     }
 
     ltLog("WARNING: no suitable images found for %s", name);
-    return resource_path(name, ".png");
+    return ltResourcePath(name, ".png");
 }
 
 static const char *sound_path(const char *name) {
-    const char *path = resource_path(name, ".ogg"); 
+    const char *path = ltResourcePath(name, ".ogg"); 
     if (ltResourceExists(path)) {
         return path;
     } else {
         delete[] path;
-        return resource_path(name, ".wav");
+        return ltResourcePath(name, ".wav");
     }
 }
 
 static const char *model_path(const char *name) {
-    return resource_path(name, ".obj");
+    return ltResourcePath(name, ".obj");
 }
 
 /************************* Start script **************************/
@@ -2029,7 +1993,7 @@ static int import(lua_State *L) {
         return luaL_error(L, "The import function requires a string argument.");
     }
     const char *path;
-    path = resource_path(module, ".lua");
+    path = ltResourcePath(module, ".lua");
     LTResource *rsc = ltOpenResource(path);
     if (rsc != NULL) {
         int r = loadfile(L, rsc);
@@ -2380,7 +2344,7 @@ static void call_lt_func(lua_State *L, const char *func) {
 
 static void run_lua_file(lua_State *L, const char *file) {
     if (!g_suspended) {
-        const char *f = resource_path(file, ".lua");
+        const char *f = ltResourcePath(file, ".lua");
         LTResource *r = ltOpenResource(f);
         if (r != NULL) {
             check_status(L, loadfile(L, r));
@@ -2490,6 +2454,7 @@ static void set_globals(lua_State *L) {
 }
 
 void ltLuaSetup() {
+    ltDoVerify();
     ltAudioInit();
     g_L = luaL_newstate();
     if (g_L == NULL) {
@@ -2510,10 +2475,6 @@ void ltLuaSetup() {
     strcpy(g_start_script, "main");
     run_lua_file(g_L, "config");
     call_lt_func(g_L, "_Setup");
-}
-
-void ltLuaSetResourcePrefix(const char *prefix) {
-    resource_prefix = prefix;
 }
 
 void ltLuaTeardown() {

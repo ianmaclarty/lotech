@@ -118,7 +118,6 @@ const char *ltHomeDir() {
 }
 
 const char *ltAppDataDir() {
-    const char *short_name = lt_app_short_name;
     if (lt_app_short_name == NULL || strlen(lt_app_short_name) == 0) {
 #ifdef LTDEVMODE
         lt_app_short_name = "ltclient";

@@ -187,6 +187,8 @@ extern "C" {
 #include "ltlighting.h"
 #include "ltjson.h"
 #include "lthttp.h"
+#include "ltsha1.h"
+#include "ltverify.h"
 
 #include "ltgamecenter.h"
 #include "ltios.h"
