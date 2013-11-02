@@ -16,7 +16,11 @@
 #define MIN_UPDATE_TIME (1.0/400.0)
 
 #ifndef LTDATADIR
+#ifdef LTOSX
+#define LTDATADIR
+#else
 #define LTDATADIR data
+#endif
 #endif
 
 #ifndef LTTITLE

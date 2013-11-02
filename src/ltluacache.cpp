@@ -1,11 +1,14 @@
 #include "lt.h"
 
-static bool scmp(char *a, char *b) {
-    return strcmp(a, b) < 0;
-}
+#define CACHET std::map<char *, char *, CstrCmp>
 
-#define CACHET std::map<char *, char *, bool (&)(char*, char*)>
-static CACHET cache(scmp);
+struct CstrCmp {
+    bool operator()(char* a, char* b) {
+            return strcmp(a, b) < 0;
+    }
+};
+
+static CACHET cache;
 
 void ltLuaCacheAdd(const char *path, const char *data) {
     char *path_copy = new char[strlen(path) + 1];
