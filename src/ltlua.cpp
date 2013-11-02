@@ -1978,6 +1978,16 @@ static const char *getF (lua_State *L, void *ud, size_t *size) {
     return (*size > 0) ? lf->buff : NULL;
 }
 
+static int loadstring (lua_State *L, const char *path, const char *str) {
+  const char *basename = strrchr(path, '/');
+  if (basename == NULL) {
+    basename = path;
+  } else {
+    basename++;
+  }
+
+  return luaL_loadbuffer(L, str, strlen(str), basename);
+}
 
 static int loadfile (lua_State *L, LTResource *rsc) {
   LoadF lf;
@@ -2008,24 +2018,29 @@ static int import(lua_State *L) {
     }
     const char *path;
     path = ltResourcePath(module, ".lua");
-    LTResource *rsc = ltOpenResource(path);
-    if (rsc != NULL) {
-        int r = loadfile(L, rsc);
-        delete[] path;
-        ltCloseResource(rsc);
-        if (r != 0) {
-            const char *msg = lua_tostring(L, -1);
-            lua_pop(L, 1);
-            return luaL_error(L, "%s", msg);
-        }
-        for (int i = 2; i <= nargs; i++) {
-            lua_pushvalue(L, i);
-        }
-        lua_call(L, nargs - 1, LUA_MULTRET);
-        return lua_gettop(L) - top;
+    const char *cached = ltLuaReadCache(path);
+    int r;
+
+    if (cached != NULL) {
+        r = loadstring(L, path, cached);
+        //ltLog("Cache hit: %s", path);
     } else {
-        return luaL_error(L, "File %s does no exist", path);
+        LTResource *rsc = ltOpenResource(path);
+        if (rsc == NULL) return luaL_error(L, "File %s does no exist", path);
+        r = loadfile(L, rsc);
+        ltCloseResource(rsc);
     }
+    delete[] path;
+    if (r != 0) {
+        const char *msg = lua_tostring(L, -1);
+        lua_pop(L, 1);
+        return luaL_error(L, "%s", msg);
+    }
+    for (int i = 2; i <= nargs; i++) {
+        lua_pushvalue(L, i);
+    }
+    lua_call(L, nargs - 1, LUA_MULTRET);
+    return lua_gettop(L) - top;
 }
 
 /************************ Configuration *****************************/

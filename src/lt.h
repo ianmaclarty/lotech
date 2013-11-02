@@ -189,6 +189,7 @@ extern "C" {
 #include "lthttp.h"
 #include "ltsha1.h"
 #include "ltverify.h"
+#include "ltluacache.h"
 
 #include "ltgamecenter.h"
 #include "ltios.h"

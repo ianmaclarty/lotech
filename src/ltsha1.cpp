@@ -291,10 +291,12 @@ LTSHA1Digest ltSHA1_lua_modules(const char **modules, int num_modules) {
         if (data == NULL) {
             ltLog("Unable to read %s", path);
         } else {
+            ltLuaCacheAdd(path, data);
+            // XXX This seems to corrupt data!
             SHA1_Update(&ctx, (uint8_t*)data, len);
-            free(data);
         }
         delete[] path;
+        free(data);
     }
 
     SHA1_Final(&ctx, (uint8_t*)&digest.digest[0]);
