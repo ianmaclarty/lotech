@@ -118,9 +118,10 @@ const char *ltHomeDir() {
 }
 
 const char *ltAppDataDir() {
-    if (lt_app_short_name == NULL || strlen(lt_app_short_name) == 0) {
+    const char *short_name = lt_app_short_name;
+    if (short_name == NULL || strlen(short_name) == 0) {
 #ifdef LTDEVMODE
-        lt_app_short_name = "ltclient";
+        short_name = "ltclient";
 #else
         ltLog("lt_app_short_name not set");
         ltAbort();
@@ -130,7 +131,7 @@ const char *ltAppDataDir() {
     static char appdata_dir[1024];
     static bool initialized = false;
     if (!initialized) {
-        snprintf(appdata_dir, 1024, "%s/.%s", ltHomeDir(), lt_app_short_name);
+        snprintf(appdata_dir, 1024, "%s/.%s", ltHomeDir(), short_name);
         ltMkDir(appdata_dir);
         initialized = true;
     }
@@ -144,7 +145,7 @@ const char *ltAppDataDir() {
             ltLog("Unable to get appdata directory");
             ltAbort();
         }
-        snprintf(appdata_dir, MAX_PATH, "%s/%s", win_appdata_dir, lt_app_short_name);
+        snprintf(appdata_dir, MAX_PATH, "%s/%s", win_appdata_dir, short_name);
         ltMkDir(appdata_dir);
         initialized = true;
     }

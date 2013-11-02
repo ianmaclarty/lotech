@@ -2505,6 +2505,9 @@ void ltLuaTeardown() {
         g_L = NULL;
     }
     ltAudioTeardown();
+    if (lt_app_short_name != NULL) {
+        delete[] lt_app_short_name;
+    }
 }
 
 void ltLuaReset() {

@@ -288,6 +288,7 @@ LTSHA1Digest ltSHA1_lua_modules(const char **modules, int num_modules) {
         const char *path = ltResourcePath(module, ".lua");
         int len;
         char* data = ltReadTextResource(path, &len);
+        delete[] path;
         SHA1_Update(&ctx, (uint8_t*)data, len);
         free(data);
     }
