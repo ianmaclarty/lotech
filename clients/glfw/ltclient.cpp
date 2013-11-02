@@ -303,6 +303,7 @@ static LTKey convert_key(int key) {
         case '5': return LT_KEY_5;
         case '6': return LT_KEY_6;
         case '7': return LT_KEY_7;
+        case '8': return LT_KEY_8;
         case '9': return LT_KEY_9;
         case ';': return LT_KEY_SEMI_COLON;
         case '[': return LT_KEY_LEFT_BRACKET;
