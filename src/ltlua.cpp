@@ -1985,8 +1985,10 @@ static int loadstring (lua_State *L, const char *path, const char *str) {
   } else {
     basename++;
   }
+  char chunkid[255];
+  snprintf(chunkid, 255, "@%s", basename);
 
-  return luaL_loadbuffer(L, str, strlen(str), basename);
+  return luaL_loadbuffer(L, str, strlen(str), chunkid);
 }
 
 static int loadfile (lua_State *L, LTResource *rsc) {
@@ -2039,7 +2041,7 @@ static int import(lua_State *L) {
     for (int i = 2; i <= nargs; i++) {
         lua_pushvalue(L, i);
     }
-    lua_call(L, nargs - 1, LUA_MULTRET);
+    docall(L, nargs - 1, LUA_MULTRET);
     return lua_gettop(L) - top;
 }
 
@@ -2070,7 +2072,7 @@ static int log(lua_State *L) {
     lua_getinfo(L, "nSl", &ar);
     int line = ar.currentline;
     const char *source = ar.source;
-    const char *filename = "<<string>>";
+    const char *filename = source;
     if (source[0] == '@') {
         filename = &source[1];
     }
