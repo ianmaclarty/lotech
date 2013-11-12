@@ -2524,6 +2524,7 @@ void ltLuaTeardown() {
     ltAudioTeardown();
     if (lt_app_short_name != NULL) {
         delete[] lt_app_short_name;
+        lt_app_short_name = NULL;
     }
 }
 
@@ -2533,6 +2534,7 @@ void ltLuaReset() {
     g_suspended = false;
     g_initialized = false;
     g_gamecenter_initialized = false;
+    lt_quit = false;
     ltLuaSetup();
 }
 

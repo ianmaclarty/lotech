@@ -214,6 +214,7 @@ static const LTEnumConstant key_enum_vals[] = {
     {"`", LT_KEY_TICK},
     {"del", LT_KEY_DEL},
     {"esc", LT_KEY_ESC},
+    {"back", LT_KEY_BACK},
     {NULL, 0}};
 LT_REGISTER_FIELD_ENUM(LTEvent, key, LTKey, key_enum_vals)
 

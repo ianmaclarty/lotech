@@ -9,7 +9,7 @@
 #endif
 
 #ifndef LTVERIFYSECRET
-#define LTVERIFYSECRET {0, 0, 0, 0, 0, 0, 0, 0}
+#define LTVERIFYSECRET {1, 0, 0, 0, 0, 0, 0, 0}
 #endif
 
 const char    *lt_verify_modules[] = LTVERIFYMODULES;

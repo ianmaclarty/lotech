@@ -59,6 +59,8 @@ enum LTKey {
     LT_KEY_TICK,
     LT_KEY_DEL,
     LT_KEY_ESC,
+
+    LT_KEY_BACK, // Android back button
 };
 
 enum LTGamePadButton {
