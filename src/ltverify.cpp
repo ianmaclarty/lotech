@@ -1,7 +1,7 @@
 #include "lt.h"
 
 #ifndef LTVERIFYMODULES
-#define LTVERIFYMODULES NULL
+#define LTVERIFYMODULES {NULL}
 #endif
 
 #ifndef LTVERIFYDIGEST
