@@ -3,7 +3,7 @@
 A game framework designed by and for Ian MacLarty,
 suitable for small-scope games and experimentation.
 
-Runs on Linux, Windows (MinGW) and Mac OS X.
+Runs on Linux, Windows (MinGW), Mac OS X, Android and iOS.
 
 Some features:
 
@@ -18,9 +18,9 @@ Some features:
 
 # Building
 
-On Linux install glew, glfw, openal and opengl libraries and headers.
+On Linux install OpenGL libraries and headers.
 
-On Windows install MinGW and MSYS
+On Windows install MinGW and MSYS.
 
 On Mac OS X install the Apple dev tools and ensure gcc is in your PATH.
 

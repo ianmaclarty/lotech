@@ -22,6 +22,13 @@ THE SOFTWARE.
 
 (end of COPYRIGHT)
 
+###############################################################################
+###############################################################################
+
+# Source code
+
+You may obtain the source code for the Lotech engine at the following
+URL: https://github.com/ianmaclarty/lotech.
 
 ###############################################################################
 ###############################################################################
@@ -39,7 +46,7 @@ are reproduced below.
 - libpng 1.4.3
 - zlib 1.2.5
 - Cocos2D (some of the particle effects code is based on Cocos2D)
-- OpenAL-soft (used on Windows, Linux and Mac OS X; dev version from git repo, see deps/openal-soft/README.lotech)
+- OpenAL-soft (used on Windows, Linux and Android; dev version from git repo, see deps/openal-soft/README.lotech)
 - Freetype 2.5.0.1 (not currently used)
 - Sean Barrett's public domain Vorbis decoder (http://www.nothings.org/stb_vorbis/)
 - curl-7.31.0
