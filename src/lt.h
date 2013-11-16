@@ -72,6 +72,10 @@ THE SOFTWARE.
     #include <GLES/gl.h>
     #include <GLES/glext.h>
 #endif
+#ifdef LTTIZEN
+#include <FGraphicsOpengl.h>
+using namespace Tizen::Graphics::Opengl;
+#endif
 
 // OpenAL
 #ifdef LTLINUX
@@ -84,6 +88,9 @@ THE SOFTWARE.
 #include <AL/alc.h>
 #elif LTANDROID
 #define AL_LIBTYPE_STATIC 1
+#include <AL/al.h>
+#include <AL/alc.h>
+#elif LTTIZEN
 #include <AL/al.h>
 #include <AL/alc.h>
 #else

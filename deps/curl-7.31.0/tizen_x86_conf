@@ -1,0 +1,11 @@
+export TIZHOME=$HOME/tizen/sdk
+export TIZSYSROOT=$TIZHOME/platforms/tizen2.2/rootstraps/tizen-emulator-2.2.native
+export CC=${TIZHOME}/tools/i386-linux-gnueabi-gcc-4.5/bin/i386-linux-gnueabi-gcc
+export CFLAGS="--sysroot ${TIZSYSROOT} -march=i386 -fPIE"
+export LDFLAGS="--sysroot ${TIZSYSROOT} -march=i386 -fPIE"
+export C_INCLUDE_PATH=$TIZSYSROOT/usr/include:$TIZSYSROOT/usr/include/osp
+cd orig-dist
+./configure --disable-shared --enable-static --disable-dependency-tracking `cat ../opts` --host="i386-linux-gnueabi"
+cd ..
+cp orig-dist/lib/curl_config.h src/curl_config_tizen_x86.h
+cp orig-dist/include/curl/curlbuild.h include/curl/curlbuild_tizen_x86.h

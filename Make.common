@@ -25,6 +25,9 @@ endif
 ifeq ($(TARGET_PLATFORM),android)
 LT_PLATFLAGS+=-DLTANDROID -DLTGLES1
 endif
+ifeq ($(TARGET_PLATFORM),tizen-x86)
+LT_PLATFLAGS+=-DLTTIZEN -DLTTIZENX86 -DLTGLES1
+endif
 ifeq ($(TARGET_PLATFORM),osx)
 LT_PLATFLAGS+=-DLTOSX
 endif
@@ -34,6 +37,8 @@ endif
 ifeq ($(TARGET_PLATFORM),mingw)
 LT_PLATFLAGS+=-DLTMINGW
 endif
+
+
 
 LUA=lua-5.1.4
 LUAJIT=luajit-2.0
@@ -81,3 +86,10 @@ NDKVER=$(NDK)/toolchains/arm-linux-androideabi-4.4.3
 NDKP=$(NDKVER)/prebuilt/darwin-x86/bin/arm-linux-androideabi-
 NDKSYSROOT=$(NDK)/platforms/android-$(NDKABI)/arch-arm
 NDKSTL=-I$(NDK)/sources/cxx-stl/gnu-libstdc++/include -I$(NDK)/sources/cxx-stl/gnu-libstdc++/libs/armeabi/include
+
+# Tizen settings
+
+TIZHOME=$(HOME)/tizen/sdk
+TIZSYSROOTX86=$(TIZHOME)/platforms/tizen2.2/rootstraps/tizen-emulator-2.2.native
+TDKPX86=$(TIZHOME)/tools/i386-linux-gnueabi-gcc-4.5/bin/i386-linux-gnueabi-
+TIZEN_TARGET_FLAGS_X86=--sysroot $(TIZSYSROOTX86) -march=i386 -fPIE

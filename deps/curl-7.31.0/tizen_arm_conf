@@ -1,0 +1,12 @@
+export TIZHOME=$HOME/tizen/sdk
+export TIZSYSROOT=$TIZHOME/platforms/tizen2.2/rootstraps/tizen-device-2.2.native
+export CC=${TIZHOME}/tools/arm-linux-gnueabi-gcc-4.5/bin/arm-linux-gnueabi-gcc
+ARM_OPTS="-march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16 -mtune=cortex-a8"
+export CFLAGS="--sysroot ${TIZSYSROOT} -fPIE $ARM_OPTS"
+export LDFLAGS="--sysroot ${TIZSYSROOT} -fPIE $ARM_OPTS"
+export C_INCLUDE_PATH=$TIZSYSROOT/usr/include:$TIZSYSROOT/usr/include/osp
+cd orig-dist
+./configure --disable-shared --enable-static --disable-dependency-tracking `cat ../opts` --host="arm-linux-gnueabi"
+cd ..
+cp orig-dist/lib/curl_config.h src/curl_config_tizen_arm.h
+cp orig-dist/include/curl/curlbuild.h include/curl/curlbuild_tizen_arm.h

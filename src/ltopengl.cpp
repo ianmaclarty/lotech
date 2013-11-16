@@ -6,7 +6,12 @@ LT_INIT_IMPL(ltopengl)
 #ifdef LTGLES1
 #define GLEXT(f) f##OES
 #define GL_EXT(f) f##_OES
+#ifndef LTTIZEN
 #define glBlendEquation glBlendEquationOES
+#else
+// XXX glBlendEquation not available in Tizen (and I suspect some android devices too).
+#define glBlendEquation(arg) 
+#endif
 #ifndef GL_FUNC_ADD
 #define GL_FUNC_ADD GL_FUNC_ADD_OES
 #endif

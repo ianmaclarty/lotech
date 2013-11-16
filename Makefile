@@ -35,6 +35,9 @@ endif
 ifeq ($(TARGET_PLATFORM),mingw)
 default: ltclient
 endif
+ifeq ($(TARGET_PLATFORM),tizen-x86)
+default: libs
+endif
 
 ############################ iOS Target ##############################
 ifeq ($(TARGET_PLATFORM),ios)
@@ -127,6 +130,22 @@ $(TARGET_DIR)/liblt.a: headers | $(TARGET_DIR)
 		LTCFLAGS="$(LTCFLAGS)" \
 		all
 	cp buildtmp.mingw/liblt.a $(TARGET_DIR)/
+endif
+
+############################ Tizen x86 target ##############################
+ifeq ($(TARGET_PLATFORM),tizen-x86)
+LTCFLAGS+=-I$(TIZSYSROOTX86)/usr/include/osp
+
+.PHONY: $(TARGET_DIR)/liblt.a
+$(TARGET_DIR)/liblt.a: headers | $(TARGET_DIR)
+	mkdir -p buildtmp.tizen-x86
+	cd src && $(MAKE) \
+		CROSS=$(TDKPX86) \
+		TARGET_FLAGS="$(TIZEN_TARGET_FLAGS_X86)" \
+		OUT_DIR=$(PWD)/buildtmp.tizen-x86 \
+		LTCFLAGS="$(LTCFLAGS)" \
+		all
+	cp buildtmp.tizen-x86/liblt.a $(TARGET_DIR)/
 endif
 
 ##########################################################

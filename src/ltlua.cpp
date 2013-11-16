@@ -2432,6 +2432,8 @@ static void set_globals(lua_State *L) {
             lua_pushstring(L, "osx");
         #elif defined(LTANDROID)
             lua_pushstring(L, "android");
+        #elif defined(LTTIZEN)
+            lua_pushstring(L, "tizen");
         #elif defined(LTMINGW)
             lua_pushstring(L, "windows");
         #elif defined(LTLINUX)
@@ -2450,6 +2452,9 @@ static void set_globals(lua_State *L) {
         #elif defined(LTANDROID)
             // XXX Could be tablet.
             lua_pushstring(L, "phone");
+        #elif defined(LTTIZEN)
+            // XXX Not necessarily
+            lua_pushstring(L, "phone");
         #elif defined(LTMINGW) || defined(LTOSX) || defined(LTLINUX)
             lua_pushstring(L, "desktop");
         #else
@@ -2464,6 +2469,8 @@ static void set_globals(lua_State *L) {
                 lua_pushinteger(L, 1);
             }
         #elif defined(LTANDROID)
+            lua_pushinteger(L, 5);
+        #elif defined(LTTIZEN)
             lua_pushinteger(L, 5);
         #elif defined(LTMINGW) || defined(LTOSX) || defined(LTLINUX)
             lua_pushinteger(L, 20);

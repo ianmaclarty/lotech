@@ -42,6 +42,10 @@
 #   include "curlbuild_ios.h"
 #elif defined(LTANDROID)
 #   include "curlbuild_android.h"
+#elif defined(LTTIZENX86)
+#   include "curlbuild_tizen_x86.h"
+#elif defined(LTTIZENARM)
+#   include "curlbuild_tizen_arm.h"
 #else
 #   error "target not supported"
 #endif
