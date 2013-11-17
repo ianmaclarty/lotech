@@ -125,6 +125,12 @@ extern "C" {
 #include <android/log.h>
 #endif
 
+// Tizen specific
+#ifdef LTTIZEN
+#include <FBase.h>
+#include <FApp.h> 
+#endif
+
 // OSX specific
 #ifdef LTOSX
 #import <AppKit/AppKit.h>

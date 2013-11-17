@@ -158,6 +158,22 @@ const char *ltResourcePath(const char *resource, const char *suffix) {
         int len = strlen(resource) + strlen(suffix) + 1;
         path = new char[len];
         snprintf((char*)path, len, "%s%s", resource, suffix);
+    #elif LTTIZEN
+        Tizen::App::App *app = Tizen::App::App::GetInstance();
+        Tizen::Base::String str = app->GetAppResourcePath();
+        Tizen::Base::ByteBuffer *bb = Tizen::Base::Utility::StringUtil::StringToUtf8N(str);
+        const char *ptr = (const char*)bb->GetPointer();
+        if (ptr == NULL) {
+            ltLog("Error: GetAppResourcePath returned NULL");
+            ltAbort();
+        }
+        char *dir = new char[strlen(ptr) + 1];
+        strcpy(dir, ptr);
+        delete bb;
+        int len = strlen(dir) + 1 + strlen(resource) + strlen(suffix) + 1;
+        path = new char[len];
+        snprintf((char*)path, len, "%s/%s%s", dir, resource, suffix);
+        delete[] dir;
     #else
         int len = strlen(resource_prefix) + strlen(resource) + strlen(suffix) + 3;
         const char *slash = "";
