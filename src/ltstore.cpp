@@ -8,6 +8,8 @@ void ltStorePickledData(const char *key, LTPickler *pickler) {
         ltIOSStorePickledData(key, pickler);
     #elif LTANDROID
         ltStorePickledDataFile(key, pickler);
+    #elif LTTIZEN
+        ltStorePickledDataFile(key, pickler);
     #elif LTOSX
         // Doesn't persist on 10.7 for some reason.
         //ltOSXStorePickledData(key, pickler); 
@@ -23,6 +25,8 @@ LTUnpickler* ltRetrievePickledData(const char *key) {
     #ifdef LTIOS
         return ltIOSRetrievePickledData(key);
     #elif LTANDROID
+        return ltRetrievePickledDataFile(key);
+    #elif LTTIZEN
         return ltRetrievePickledDataFile(key);
     #elif LTOSX
         //return ltOSXRetrievePickledData(key);
