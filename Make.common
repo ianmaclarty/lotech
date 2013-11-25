@@ -28,6 +28,9 @@ endif
 ifeq ($(TARGET_PLATFORM),tizen-x86)
 LT_PLATFLAGS+=-DLTTIZEN -DLTTIZENX86 -DLTGLES1
 endif
+ifeq ($(TARGET_PLATFORM),tizen-arm)
+LT_PLATFLAGS+=-DLTTIZEN -DLTTIZENARM -DLTGLES1
+endif
 ifeq ($(TARGET_PLATFORM),osx)
 LT_PLATFLAGS+=-DLTOSX
 endif
@@ -90,6 +93,11 @@ NDKSTL=-I$(NDK)/sources/cxx-stl/gnu-libstdc++/include -I$(NDK)/sources/cxx-stl/g
 # Tizen settings
 
 TIZHOME=$(HOME)/tizen/sdk
+
 TIZSYSROOTX86=$(TIZHOME)/platforms/tizen2.2/rootstraps/tizen-emulator-2.2.native
 TDKPX86=$(TIZHOME)/tools/i386-linux-gnueabi-gcc-4.5/bin/i386-linux-gnueabi-
 TIZEN_TARGET_FLAGS_X86=--sysroot $(TIZSYSROOTX86) -march=i386 -fPIE
+
+TIZSYSROOTARM=$(TIZHOME)/platforms/tizen2.2/rootstraps/tizen-device-2.2.native
+TDKPARM=$(TIZHOME)/tools/arm-linux-gnueabi-gcc-4.5/bin/arm-linux-gnueabi-
+TIZEN_TARGET_FLAGS_ARM=--sysroot $(TIZSYSROOTARM) -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16 -mtune=cortex-a8 -fPIE

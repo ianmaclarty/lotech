@@ -38,6 +38,9 @@ endif
 ifeq ($(TARGET_PLATFORM),tizen-x86)
 default: libs
 endif
+ifeq ($(TARGET_PLATFORM),tizen-arm)
+default: libs
+endif
 
 ############################ iOS Target ##############################
 ifeq ($(TARGET_PLATFORM),ios)
@@ -146,6 +149,22 @@ $(TARGET_DIR)/liblt.a: headers | $(TARGET_DIR)
 		LTCFLAGS="$(LTCFLAGS)" \
 		all
 	cp buildtmp.tizen-x86/liblt.a $(TARGET_DIR)/
+endif
+
+############################ Tizen ARM target ##############################
+ifeq ($(TARGET_PLATFORM),tizen-arm)
+LTCFLAGS+=-I$(TIZSYSROOTARM)/usr/include/osp
+
+.PHONY: $(TARGET_DIR)/liblt.a
+$(TARGET_DIR)/liblt.a: headers | $(TARGET_DIR)
+	mkdir -p buildtmp.tizen-arm
+	cd src && $(MAKE) \
+		CROSS=$(TDKPARM) \
+		TARGET_FLAGS="$(TIZEN_TARGET_FLAGS_ARM)" \
+		OUT_DIR=$(PWD)/buildtmp.tizen-arm \
+		LTCFLAGS="$(LTCFLAGS)" \
+		all
+	cp buildtmp.tizen-arm/liblt.a $(TARGET_DIR)/
 endif
 
 ##########################################################
