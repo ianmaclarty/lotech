@@ -304,12 +304,12 @@ LTSHA1Digest ltSHA1_lua_modules(const char **modules, int num_modules) {
 }
 
 void LTSHA1Digest::print_c() {
-    printf("{{");
+    fprintf(stderr, "{{");
     for (int i = 0; i < 19; i++) {
-        printf("%u,", (unsigned int)digest[i]);
+        fprintf(stderr, "%u,", (unsigned int)digest[i]);
     }
-    printf("%d", (int)digest[19]);
-    printf("}}\n");
+    fprintf(stderr, "%d", (int)digest[19]);
+    fprintf(stderr, "}}\n");
 }
 
 char* LTSHA1Digest::tostr() {

@@ -75,7 +75,6 @@ struct LTAudioSource {
     ALuint source_id;
     bool is_free;
     bool is_temp;
-    bool play_on_resume;
     ALint curr_state;
     ALint new_state;
     bool was_stop;
@@ -87,7 +86,6 @@ struct LTAudioSource {
         // XXX recycle if error.
         is_free = true;
         is_temp = false;
-        play_on_resume = false;
         curr_state = AL_STOPPED;
         new_state = AL_STOPPED;
         gain = 1.0f;
@@ -101,7 +99,6 @@ struct LTAudioSource {
         check_for_errors
         curr_state = AL_STOPPED;
         new_state = AL_STOPPED;
-        play_on_resume = false;
         is_free = true;
         is_temp = false;
         set_pitch(1.0f);
@@ -203,6 +200,7 @@ struct LTAudioSource {
 };
 
 static std::vector<LTAudioSource*> sources;
+static std::vector<LTAudioSource*> suspended_sources;
 static std::vector<ALuint> buffers_to_delete;
 
 static LTAudioSource* aquire_source(bool is_temp);
@@ -450,6 +448,17 @@ static void set_loop(LTObject *obj, LTbool val) {
 void ltAudioSuspend() {
     if (!audio_is_suspended) {
         if (audio_context != NULL) {
+
+            std::vector<LTAudioSource*>::iterator it;
+            for (it = sources.begin(); it != sources.end(); ++it) {
+                LTAudioSource *src = *it;
+                if (src->is_playing()) {
+                    src->pause();
+                    suspended_sources.push_back(src);
+                    src->update_state();
+                }
+            }
+
             alcMakeContextCurrent(NULL);
             check_for_errors
             alcSuspendContext(audio_context);
@@ -462,10 +471,19 @@ void ltAudioSuspend() {
 void ltAudioResume() {
     if (audio_is_suspended) {
         if (audio_context != NULL) {
+
             alcMakeContextCurrent(audio_context);
             check_for_errors
             alcProcessContext(audio_context);
             check_for_errors
+
+            std::vector<LTAudioSource*>::iterator it;
+            for (it = suspended_sources.begin(); it != suspended_sources.end(); ++it) {
+                LTAudioSource *src = *it;
+                src->play();
+                src->update_state();
+            }
+            suspended_sources.clear();
         }
         audio_is_suspended = false;
     }
