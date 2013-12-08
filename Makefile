@@ -84,7 +84,7 @@ endif
 
 ############################ Android Target ##############################
 ifeq ($(TARGET_PLATFORM),android)
-LTCFLAGS+=-mno-thumb
+#LTCFLAGS+=-mno-thumb
 
 .PHONY: $(TARGET_DIR)/liblt.a
 $(TARGET_DIR)/liblt.a: headers | $(TARGET_DIR)

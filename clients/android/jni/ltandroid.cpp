@@ -143,6 +143,19 @@ static void engine_term_display(struct engine* engine) {
     engine->initialized = false;
 }
 
+enum button {
+    D_LEFT,
+    D_RIGHT,
+    D_UP,
+    D_DOWN,
+    LS_LEFT,
+    LS_RIGHT,
+    LS_UP,
+    LS_DOWN,
+};
+
+static bool button_down[64];
+
 /**
  * Process the next input event.
  */
@@ -151,26 +164,162 @@ static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) 
     if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION) {
         int32_t actioncode = AMotionEvent_getAction(event);
         int action = AMOTION_EVENT_ACTION_MASK & actioncode;
-        int pointer_index = (actioncode & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
+        int pointer_index = (actioncode & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK)
+            >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
         int pointer_id = AMotionEvent_getPointerId(event, pointer_index);
+
+        float v;
+
+        v = AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_HAT_X, pointer_index);
+        if (v < -0.5) {
+            if (button_down[D_RIGHT]) {
+                button_down[D_RIGHT] = false;
+                ltLuaKeyUp(LT_KEY_RIGHT);
+            }
+            if (!button_down[D_LEFT]) {
+                button_down[D_LEFT] = true;
+                ltLuaKeyDown(LT_KEY_LEFT);
+            }
+        } else if (v > 0.5) {
+            if (button_down[D_LEFT]) {
+                button_down[D_LEFT] = false;
+                ltLuaKeyUp(LT_KEY_LEFT);
+            }
+            if (!button_down[D_RIGHT]) {
+                button_down[D_RIGHT] = true;
+                ltLuaKeyDown(LT_KEY_RIGHT);
+            }
+        } else {
+            if (button_down[D_LEFT]) {
+                button_down[D_LEFT] = false;
+                ltLuaKeyUp(LT_KEY_LEFT);
+            }
+            if (button_down[D_RIGHT]) {
+                button_down[D_RIGHT] = false;
+                ltLuaKeyUp(LT_KEY_RIGHT);
+            }
+        }
+
+        v = AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_HAT_Y, pointer_index);
+        if (v < -0.5) {
+            if (button_down[D_DOWN]) {
+                button_down[D_DOWN] = false;
+                ltLuaKeyUp(LT_KEY_DOWN);
+            }
+            if (!button_down[D_UP]) {
+                button_down[D_UP] = true;
+                ltLuaKeyDown(LT_KEY_UP);
+            }
+        } else if (v > 0.5) {
+            if (button_down[D_UP]) {
+                button_down[D_UP] = false;
+                ltLuaKeyUp(LT_KEY_UP);
+            }
+            if (!button_down[D_DOWN]) {
+                button_down[D_DOWN] = true;
+                ltLuaKeyDown(LT_KEY_DOWN);
+            }
+        } else {
+            if (button_down[D_UP]) {
+                button_down[D_UP] = false;
+                ltLuaKeyUp(LT_KEY_UP);
+            }
+            if (button_down[D_DOWN]) {
+                button_down[D_DOWN] = false;
+                ltLuaKeyUp(LT_KEY_DOWN);
+            }
+        }
+
+        v = AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_X, pointer_index);
+        if (v < -0.5) {
+            if (button_down[LS_RIGHT]) {
+                button_down[LS_RIGHT] = false;
+                ltLuaKeyUp(LT_KEY_RIGHT);
+            }
+            if (!button_down[LS_LEFT]) {
+                button_down[LS_LEFT] = true;
+                ltLuaKeyDown(LT_KEY_LEFT);
+            }
+        } else if (v > 0.5) {
+            if (button_down[LS_LEFT]) {
+                button_down[LS_LEFT] = false;
+                ltLuaKeyUp(LT_KEY_LEFT);
+            }
+            if (!button_down[LS_RIGHT]) {
+                button_down[LS_RIGHT] = true;
+                ltLuaKeyDown(LT_KEY_RIGHT);
+            }
+        } else {
+            if (button_down[LS_LEFT]) {
+                button_down[LS_LEFT] = false;
+                ltLuaKeyUp(LT_KEY_LEFT);
+            }
+            if (button_down[LS_RIGHT]) {
+                button_down[LS_RIGHT] = false;
+                ltLuaKeyUp(LT_KEY_RIGHT);
+            }
+        }
+
+        v = AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_Y, pointer_index);
+        if (v < -0.5) {
+            if (button_down[LS_DOWN]) {
+                button_down[LS_DOWN] = false;
+                ltLuaKeyUp(LT_KEY_DOWN);
+            }
+            if (!button_down[LS_UP]) {
+                button_down[LS_UP] = true;
+                ltLuaKeyDown(LT_KEY_UP);
+            }
+        } else if (v > 0.5) {
+            if (button_down[LS_UP]) {
+                button_down[LS_UP] = false;
+                ltLuaKeyUp(LT_KEY_UP);
+            }
+            if (!button_down[LS_DOWN]) {
+                button_down[LS_DOWN] = true;
+                ltLuaKeyDown(LT_KEY_DOWN);
+            }
+        } else {
+            if (button_down[LS_UP]) {
+                button_down[LS_UP] = false;
+                ltLuaKeyUp(LT_KEY_UP);
+            }
+            if (button_down[LS_DOWN]) {
+                button_down[LS_DOWN] = false;
+                ltLuaKeyUp(LT_KEY_DOWN);
+            }
+        }
+
+        /*
         float x = AMotionEvent_getX(event, pointer_index);
         float y = AMotionEvent_getY(event, pointer_index);
-        if (action == AMOTION_EVENT_ACTION_POINTER_DOWN || action == AMOTION_EVENT_ACTION_DOWN) {
+        if (action == AMOTION_EVENT_ACTION_POINTER_DOWN
+            || action == AMOTION_EVENT_ACTION_DOWN)
+        {
             ltLuaTouchDown(pointer_id, x, y);
-        } else if (action == AMOTION_EVENT_ACTION_POINTER_UP || action == AMOTION_EVENT_ACTION_UP || action == AMOTION_EVENT_ACTION_CANCEL) {
+        } else if (action == AMOTION_EVENT_ACTION_POINTER_UP
+            || action == AMOTION_EVENT_ACTION_UP
+            || action == AMOTION_EVENT_ACTION_CANCEL)
+        {
             ltLuaTouchUp(pointer_id, x, y);
-        } else if (action == AMOTION_EVENT_ACTION_MOVE || action == AMOTION_EVENT_ACTION_OUTSIDE) {
+        } else if (action == AMOTION_EVENT_ACTION_MOVE
+            || action == AMOTION_EVENT_ACTION_OUTSIDE)
+        {
             ltLuaTouchMove(pointer_id, x, y);
         }
+        ltLog("motion: %d", action);
         engine->animating = 1;
+        */
         return 1;
     } else if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_KEY) {
         int key = AKeyEvent_getKeyCode(event);
+        int32_t actioncode = AKeyEvent_getAction(event);
+        int32_t repeats = AKeyEvent_getRepeatCount(event);
+        //ltLog("KEY: %d %d (%d)", key, actioncode, repeats);
         LTKey ltkey = to_lt_key(key);
         if (ltkey == LT_KEY_UNKNOWN) {
             return 0; // use default key handler.
-        } else {
-            int32_t actioncode = AKeyEvent_getAction(event);
+        } else if (repeats == 0) {
             switch (actioncode) {
                 case AKEY_EVENT_ACTION_DOWN: ltLuaKeyDown(ltkey); break;
                 case AKEY_EVENT_ACTION_UP: ltLuaKeyUp(ltkey); break;
@@ -333,9 +482,15 @@ static void set_data_dir(struct android_app *state) {
  */
 void android_main(struct android_app* state) {
     double t0, t;
+    double fps_t = 0.0;
+    int frames = 0;
     double t_debt = 0.0;
     double t_debt_payment = 1.0/60.0;
     struct engine engine;
+
+    for (int i = 0; i < 64; i++) {
+        button_down[i] = false;
+    }
 
     //ltLog("*********************************   starting   **********************************");
 
@@ -406,6 +561,13 @@ void android_main(struct android_app* state) {
                 ltLuaAdvance((float)t_debt_payment);
                 t_debt -= t_debt_payment;
             }
+
+            frames++;
+            if (t > fps_t) {
+                ltLog("FPS: %d", frames);
+                frames = 0;
+                fps_t = t + 1.0;
+            }
         }
     }
 }
@@ -451,6 +613,12 @@ static LTKey to_lt_key(int key) {
        case AKEYCODE_X: return LT_KEY_X;
        case AKEYCODE_Y: return LT_KEY_Y;
        case AKEYCODE_Z: return LT_KEY_Z;
+
+       case AKEYCODE_BUTTON_L1: return LT_KEY_LEFT;
+       case AKEYCODE_BUTTON_R1: return LT_KEY_RIGHT;
+       case AKEYCODE_BUTTON_A: return LT_KEY_ESC;
+       case AKEYCODE_BUTTON_X: return LT_KEY_ENTER;
+
        default: return LT_KEY_UNKNOWN;
     }
 }

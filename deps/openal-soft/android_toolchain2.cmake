@@ -1,6 +1,6 @@
 # Adapted from http://code.google.com/p/android-cmake/
 
-set(ANDROID_API_LEVEL 9)
+set(ANDROID_API_LEVEL 16)
 set(CMAKE_SYSTEM_NAME Linux)
 set(CMAKE_SYSTEM_VERSION 1)
 
@@ -14,8 +14,8 @@ set(APPLE true)
 set(UNIX true)
 
 set(ANDROID_NDK_DEFAULT_SEARCH_PATH /Users/ian/muheyo/android-ndk)
-set(ANDROID_NDK_SUPPORTED_VERSIONS -r8 -r7 -r6 -r5c -r5b -r5 "")
-set(ANDROID_NDK_TOOLCHAIN_DEFAULT_SEARCH_PATH /Users/ian/muheyo/android-ndk-r7/toolchains/arm-linux-androideabi-4.4.3)
+set(ANDROID_NDK_SUPPORTED_VERSIONS -r9b -r8 -r7 -r6 -r5c -r5b -r5 "")
+set(ANDROID_NDK_TOOLCHAIN_DEFAULT_SEARCH_PATH /Users/ian/muheyo/android-ndk-r9b/toolchains/arm-linux-androideabi-4.8)
 set(TOOL_OS_SUFFIX "")
 
 if(NOT DEFINED ANDROID_NDK)
@@ -39,7 +39,7 @@ endif()
 
 if(EXISTS "${ANDROID_NDK}")
         if(APPLE)
-                set(ANDROID_TOOLCHAIN_SYSTEM "darwin-x86")
+                set(ANDROID_TOOLCHAIN_SYSTEM "darwin-x86_64")
         elseif(WIN32)
                 set(ANDROID_TOOLCHAIN_SYSTEM "windows")
                 set(TOOL_OS_SUFFIX ".exe")
@@ -70,7 +70,7 @@ if(EXISTS "${ANDROID_NDK}")
         endif()
 
         if (NOT DEFINED ANDROID_TOOLCHAIN_VERSION)
-                set(SUPPORTED_TOOLCHAIN_VERSIONS 4.4.0 4.4.3 4.6.0 4.6.1 4.6.2 4.6.3)
+                set(SUPPORTED_TOOLCHAIN_VERSIONS 4.8 4.4.0 4.4.3 4.6.0 4.6.1 4.6.2 4.6.3)
                 foreach(gcc_version ${SUPPORTED_TOOLCHAIN_VERSIONS})
                         if (EXISTS "${ANDROID_NDK}/toolchains/${ANDROID_TOOLCHAIN_NAME}-${gcc_version}")
                                 set(ANDROID_TOOLCHAIN_VERSION ${gcc_version})
@@ -100,6 +100,8 @@ set(CMAKE_OBJCOPY      "${ANDROID_NDK_TOOLCHAIN_ROOT}/bin/${ANDROID_TOOLCHAIN_PR
 set(CMAKE_OBJDUMP      "${ANDROID_NDK_TOOLCHAIN_ROOT}/bin/${ANDROID_TOOLCHAIN_PREFIX}-objdump${TOOL_OS_SUFFIX}" CACHE PATH "objdump" FORCE)
 set(CMAKE_STRIP        "${ANDROID_NDK_TOOLCHAIN_ROOT}/bin/${ANDROID_TOOLCHAIN_PREFIX}-strip${TOOL_OS_SUFFIX}"   CACHE PATH "strip" FORCE)
 set(CMAKE_RANLIB       "${ANDROID_NDK_TOOLCHAIN_ROOT}/bin/${ANDROID_TOOLCHAIN_PREFIX}-ranlib${TOOL_OS_SUFFIX}"  CACHE PATH "ranlib" FORCE)
+
+set(NDK_CPU_ARM_V7A, true)
 
 if(NDK_CPU_X86)
         set(ANDROID_NDK_CPU_NAME "x86")
