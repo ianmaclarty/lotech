@@ -154,6 +154,19 @@ enum button {
     LS_DOWN,
 };
 
+static void quit(struct android_app *state) {
+    JNIEnv* jni;
+    state->activity->vm->AttachCurrentThread(&jni, NULL);
+
+    jclass activityClass = jni->GetObjectClass(state->activity->clazz);
+    jmethodID quitMethod = jni->GetMethodID(activityClass, "quit", "()V");
+    jobject pathObject = jni->CallObjectMethod(state->activity->clazz, quitMethod);
+
+    jni->DeleteLocalRef(activityClass);
+
+    state->activity->vm->DetachCurrentThread();
+}
+
 static bool button_down[64];
 
 /**
@@ -315,40 +328,18 @@ static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) 
         int key = AKeyEvent_getKeyCode(event);
         int32_t actioncode = AKeyEvent_getAction(event);
         int32_t repeats = AKeyEvent_getRepeatCount(event);
-        //ltLog("KEY: %d %d (%d)", key, actioncode, repeats);
+        ltLog("KEY: %d %d (%d)", key, actioncode, repeats);
         LTKey ltkey = to_lt_key(key);
-        if (ltkey == LT_KEY_UNKNOWN) {
-            return 0; // use default key handler.
-        } else if (repeats == 0) {
+        if (repeats == 0) {
             switch (actioncode) {
                 case AKEY_EVENT_ACTION_DOWN: ltLuaKeyDown(ltkey); break;
                 case AKEY_EVENT_ACTION_UP: ltLuaKeyUp(ltkey); break;
             }
-            // Do default behaviour if lt.Quit() called.
-            // This will do what we expect if the key pressed was the back
-            // key. We handle quitting this way, because calling
-            //   ANativeActivity_finish(engine.app->activity);
-            // from the main loop does not have the desired effect -
-            // it quits the app, but then when you try to start it again
-            // you get a "Duplicate finish request for HistoryRecord" error.
-            if (lt_quit) return 0; 
+            if (lt_quit) quit(app);
         }
         return 1;
     }
     return 0; // use default key handler.
-}
-
-static void quit(struct android_app *state) {
-    JNIEnv* jni;
-    state->activity->vm->AttachCurrentThread(&jni, NULL);
-
-    jclass activityClass = jni->GetObjectClass(state->activity->clazz);
-    jmethodID quitMethod = jni->GetMethodID(activityClass, "quit", "()V");
-    jobject pathObject = jni->CallObjectMethod(state->activity->clazz, quitMethod);
-
-    jni->DeleteLocalRef(activityClass);
-
-    state->activity->vm->DetachCurrentThread();
 }
 
 /**
@@ -376,7 +367,7 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
             // re-initialise the display. Do a hard restart
             // seems to be more reliable the re-initializing
             // with an already running app.
-            quit(app);
+            //quit(app);
             break;
         case APP_CMD_GAINED_FOCUS:
             ltLog("APP_CMD_GAINED_FOCUS");
@@ -576,48 +567,11 @@ static LTKey to_lt_key(int key) {
     switch (key) {
        case AKEYCODE_BACK: return LT_KEY_ESC;
 
-       case AKEYCODE_0: return LT_KEY_0;
-       case AKEYCODE_1: return LT_KEY_1;
-       case AKEYCODE_2: return LT_KEY_2;
-       case AKEYCODE_3: return LT_KEY_3;
-       case AKEYCODE_4: return LT_KEY_4;
-       case AKEYCODE_5: return LT_KEY_5;
-       case AKEYCODE_6: return LT_KEY_6;
-       case AKEYCODE_7: return LT_KEY_7;
-       case AKEYCODE_8: return LT_KEY_8;
-       case AKEYCODE_9: return LT_KEY_9;
-
-       case AKEYCODE_A: return LT_KEY_A;
-       case AKEYCODE_B: return LT_KEY_B;
-       case AKEYCODE_C: return LT_KEY_C;
-       case AKEYCODE_D: return LT_KEY_D;
-       case AKEYCODE_E: return LT_KEY_E;
-       case AKEYCODE_F: return LT_KEY_F;
-       case AKEYCODE_G: return LT_KEY_G;
-       case AKEYCODE_H: return LT_KEY_H;
-       case AKEYCODE_I: return LT_KEY_I;
-       case AKEYCODE_J: return LT_KEY_J;
-       case AKEYCODE_K: return LT_KEY_K;
-       case AKEYCODE_L: return LT_KEY_L;
-       case AKEYCODE_M: return LT_KEY_M;
-       case AKEYCODE_N: return LT_KEY_N;
-       case AKEYCODE_O: return LT_KEY_O;
-       case AKEYCODE_P: return LT_KEY_P;
-       case AKEYCODE_Q: return LT_KEY_Q;
-       case AKEYCODE_R: return LT_KEY_R;
-       case AKEYCODE_S: return LT_KEY_S;
-       case AKEYCODE_T: return LT_KEY_T;
-       case AKEYCODE_U: return LT_KEY_U;
-       case AKEYCODE_V: return LT_KEY_V;
-       case AKEYCODE_W: return LT_KEY_W;
-       case AKEYCODE_X: return LT_KEY_X;
-       case AKEYCODE_Y: return LT_KEY_Y;
-       case AKEYCODE_Z: return LT_KEY_Z;
-
        case AKEYCODE_BUTTON_L1: return LT_KEY_LEFT;
        case AKEYCODE_BUTTON_R1: return LT_KEY_RIGHT;
-       case AKEYCODE_BUTTON_A: return LT_KEY_ESC;
-       case AKEYCODE_BUTTON_X: return LT_KEY_ENTER;
+       case AKEYCODE_BUTTON_A: return LT_KEY_ENTER;
+       case AKEYCODE_BUTTON_B: return LT_KEY_ESC;
+       case AKEYCODE_BUTTON_START: return LT_KEY_P;
 
        default: return LT_KEY_UNKNOWN;
     }
