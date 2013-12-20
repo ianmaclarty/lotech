@@ -40,8 +40,9 @@ endif
 ifeq ($(TARGET_PLATFORM),mingw)
 LT_PLATFLAGS+=-DLTMINGW
 endif
-
-
+ifeq ($(TARGET_PLATFORM),js)
+LT_PLATFLAGS+=-DLTJS
+endif
 
 LUA=lua-5.1.4
 LUAJIT=luajit-2.0

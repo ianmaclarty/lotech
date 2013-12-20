@@ -73,8 +73,12 @@ THE SOFTWARE.
     #include <GLES/glext.h>
 #endif
 #ifdef LTTIZEN
-#include <FGraphicsOpengl.h>
-using namespace Tizen::Graphics::Opengl;
+    #include <FGraphicsOpengl.h>
+    using namespace Tizen::Graphics::Opengl;
+#endif
+#ifdef LTJS
+    #include <GL/glew.h>
+    #include <GL/glfw.h>
 #endif
 
 // OpenAL
@@ -91,6 +95,9 @@ using namespace Tizen::Graphics::Opengl;
 #include <AL/al.h>
 #include <AL/alc.h>
 #elif LTTIZEN
+#include <AL/al.h>
+#include <AL/alc.h>
+#elif LTJS
 #include <AL/al.h>
 #include <AL/alc.h>
 #else
@@ -156,8 +163,10 @@ extern "C" {
 #endif
 
 // Curl
+#ifndef LTJS
 #define CURL_STATICLIB 1
 #include <curl/curl.h>
+#endif
 
 #if defined(LTDEVMODE) && (defined(LTOSX) || defined(LTLINUX) || defined(LTMINGW))
 #define LTMEMTRACK 1

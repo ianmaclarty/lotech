@@ -66,6 +66,7 @@ int main(int argc, const char **argv) {
 
     setup_window();
 
+#ifndef LTNOGLEW
     GLenum err = glewInit();
     if (GLEW_OK != err)
     {
@@ -78,6 +79,7 @@ int main(int argc, const char **argv) {
         fprintf(stderr, "Sorry, OpenGL 1.5 is required.\n");
         return 1;
     }
+#endif
 
     bool first_time = true;
     double t0 = glfwGetTime();
@@ -196,11 +198,16 @@ static void setup_window() {
         screen_mode = GLFW_FULLSCREEN;
     }
 
+#ifndef LTJS
     glfwGetDesktopMode(&vidmode);
     if (!fullscreen) {
         vidmode.Width = w;
         vidmode.Height = h;
     }
+#else
+    vidmode.Width = w;
+    vidmode.Height = h;
+#endif
     //glfwOpenWindowHint(GLFW_OPENGL_PROFILE, 0);
     if (!glfwOpenWindow(vidmode.Width, vidmode.Height, vidmode.RedBits, vidmode.GreenBits, vidmode.BlueBits, 0, 24, 0, screen_mode)) {
         glfwTerminate();

@@ -152,21 +152,26 @@ const char *ltAppDataDir() {
     return appdata_dir;
 #elif LTANDROID
     return lt_android_data_dir;
+#elif LTJS
+    return ".";
 #elif LTTIZEN
-    Tizen::App::App *app = Tizen::App::App::GetInstance();
-    Tizen::Base::String path = app->GetAppDataPath();
-    Tizen::Base::ByteBuffer *bb = Tizen::Base::Utility::StringUtil::StringToUtf8N(path);
-    const char *ptr = (const char*)bb->GetPointer();
-    if (ptr == NULL) {
-        ltLog("Error: GetAppDataPath returned NULL");
-        ltAbort();
-        return NULL;
-    } else {
-        char *dir = new char[strlen(ptr) + 1];
-        strcpy(dir, ptr);
-        delete bb;
-        return dir;
+    static char appdata_dir[1024];
+    static bool initialized = false;
+    if (!initialized) {
+        Tizen::App::App *app = Tizen::App::App::GetInstance();
+        Tizen::Base::String path = app->GetAppDataPath();
+        Tizen::Base::ByteBuffer *bb = Tizen::Base::Utility::StringUtil::StringToUtf8N(path);
+        const char *ptr = (const char*)bb->GetPointer();
+        if (ptr == NULL) {
+            ltLog("Error: GetAppDataPath returned NULL");
+            ltAbort();
+        } else {
+            strncpy(appdata_dir, ptr, 1024);
+            appdata_dir[1023] = 0;
+            delete bb;
+        }
     }
+    return appdata_dir;
 #else
     ltLog("ltAppDataDir NYI");
     ltAbort();

@@ -2377,6 +2377,7 @@ static void call_lt_func(lua_State *L, const char *func) {
 static void run_lua_file(lua_State *L, const char *file) {
     if (!g_suspended) {
         const char *f = ltResourcePath(file, ".lua");
+        ltLog(f);
         LTResource *r = ltOpenResource(f);
         if (r != NULL) {
             check_status(L, loadfile(L, r));
@@ -2438,6 +2439,8 @@ static void set_globals(lua_State *L) {
             lua_pushstring(L, "windows");
         #elif defined(LTLINUX)
             lua_pushstring(L, "linux");
+        #elif defined(LTJS)
+            lua_pushstring(L, "html");
         #else
             #error Unknown OS
         #endif
@@ -2455,7 +2458,7 @@ static void set_globals(lua_State *L) {
         #elif defined(LTTIZEN)
             // XXX Not necessarily
             lua_pushstring(L, "phone");
-        #elif defined(LTMINGW) || defined(LTOSX) || defined(LTLINUX)
+        #elif defined(LTMINGW) || defined(LTOSX) || defined(LTLINUX) || defined(LTJS)
             lua_pushstring(L, "desktop");
         #else
             #error Unknown OS
@@ -2471,6 +2474,8 @@ static void set_globals(lua_State *L) {
         #elif defined(LTANDROID)
             lua_pushinteger(L, 5);
         #elif defined(LTTIZEN)
+            lua_pushinteger(L, 5);
+        #elif defined(LTJS)
             lua_pushinteger(L, 5);
         #elif defined(LTMINGW) || defined(LTOSX) || defined(LTLINUX)
             lua_pushinteger(L, 20);

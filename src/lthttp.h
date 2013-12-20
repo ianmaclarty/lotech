@@ -1,6 +1,8 @@
 /* Copyright (C) 2013 Ian MacLarty. See Copyright Notice in lt.h. */
 LT_INIT_DECL(lthttp)
 
+#ifndef LTJS
+
 struct LTHTTPRequest : LTObject {
     LTHTTPRequest();
     virtual ~LTHTTPRequest();
@@ -25,3 +27,16 @@ struct LTHTTPRequest : LTObject {
     void poll();
     void cancel();
 };
+
+#else
+
+struct LTHTTPRequest : LTObject {
+    LTHTTPRequest();
+    virtual ~LTHTTPRequest();
+
+    virtual void init(lua_State *L);
+    void poll();
+    void cancel();
+};
+
+#endif

@@ -1,5 +1,7 @@
 #include "lt.h"
 
+#ifndef LTJS
+
 #define CACHET std::map<char *, char *, CstrCmp>
 
 struct CstrCmp {
@@ -26,3 +28,14 @@ const char *ltLuaReadCache(const char *path) {
         return it->second;
     }
 }
+
+#else
+
+void ltLuaCacheAdd(const char *path, const char *data) {
+}
+
+const char *ltLuaReadCache(const char *path) {
+    return NULL;
+}
+
+#endif

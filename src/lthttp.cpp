@@ -3,6 +3,8 @@
 
 LT_INIT_IMPL(lthttp)
 
+#ifndef LTJS
+
 LTHTTPRequest::LTHTTPRequest() {
     url = NULL;
     post_data = NULL;
@@ -204,6 +206,68 @@ static void set_data(LTObject *obj, LTstring data) {
         strcpy(req->post_data, data);
     }
 }
+
+#else
+
+LTHTTPRequest::LTHTTPRequest() {
+}
+
+static void cleanup_handles(LTHTTPRequest *req) {
+}
+
+LTHTTPRequest::~LTHTTPRequest() {
+}
+
+void LTHTTPRequest::init(lua_State *L) {
+}
+
+void LTHTTPRequest::poll() {
+}
+
+LT_REGISTER_TYPE(LTHTTPRequest, "lt.HTTPRequest", "lt.Object")
+
+void LTHTTPRequest::cancel() {
+}
+
+static int do_poll(lua_State *L) {
+    return 0;
+}
+
+static int do_cancel(lua_State *L) {
+    return 0;
+}
+
+static LTbool get_success(LTObject *obj) {
+    return false;
+}
+
+static LTbool get_failure(LTObject *obj) {
+    return true;
+}
+
+static LTstring get_response(LTObject *obj) {
+    return NULL;
+}
+
+static LTstring get_error(LTObject *obj) {
+    return NULL;
+}
+
+static LTstring get_url(LTObject *obj) {
+    return NULL;
+}
+
+static void set_url(LTObject *obj, LTstring url) {
+}
+
+static LTstring get_data(LTObject *obj) {
+    return NULL;
+}
+
+static void set_data(LTObject *obj, LTstring data) {
+}
+
+#endif
 
 LT_REGISTER_PROPERTY_STRING(LTHTTPRequest, url, get_url, set_url)
 LT_REGISTER_PROPERTY_STRING(LTHTTPRequest, data, get_data, set_data)

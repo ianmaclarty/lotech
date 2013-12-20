@@ -26,7 +26,11 @@ endif
 INCLUDE_FLAGS=-I. -I../$(TARGET_PLATFORM)/include
 GPP_FLAGS= $(INCLUDE_FLAGS) $(LTCFLAGS) -DLTDEPTHBUF $(TARGET_FLAGS) -Wall
 GPP=$(CROSS)$(LTCPP)
+ifndef LTAR
 AR=$(CROSS)ar rcus
+else
+AR=$(LTAR)
+endif
 
 $(CPP_O_FILES): $(OUT_DIR)/%.o: %.cpp lt*.h
 	@echo CPP   `basename $@`

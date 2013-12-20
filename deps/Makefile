@@ -11,18 +11,30 @@ CURL_DIR=$(CURL)
 GLEW_DIR=$(GLEW)
 GLFW_DIR=$(GLFW)
 
-TARGETS=liblua.a libbox2d.a libz.a libpng.a libft2.a libvorbis.a libcurl.a headers
+TARGETS=liblua.a libbox2d.a libz.a libpng.a libft2.a libvorbis.a headers
 ifeq ($(TARGET_PLATFORM),android)
-TARGETS+=libopenal.a openal_headers
+TARGETS+=libopenal.a libcurl.a openal_headers
 endif
 ifeq ($(TARGET_PLATFORM),mingw)
-TARGETS+=glfw_headers libglfw.a libOpenAL32.a openal_headers libglew32.a glew_headers
+TARGETS+=glfw_headers libglfw.a libOpenAL32.a libcurl.a openal_headers libglew32.a glew_headers
 endif
 ifeq ($(TARGET_PLATFORM),osx)
-TARGETS+=glfw_headers libglfw.a libGLEW.a glew_headers
+TARGETS+=glfw_headers libglfw.a libGLEW.a libcurl.a glew_headers
 endif
 ifeq ($(TARGET_PLATFORM),linux)
-TARGETS+=glfw_headers libglfw.a libGLEW.a glew_headers openal_headers libopenal.a
+TARGETS+=glfw_headers libglfw.a libGLEW.a libcurl.a glew_headers openal_headers libopenal.a
+endif
+ifeq ($(TARGET_PLATFORM),ios)
+TARGETS+=libcurl.a
+endif
+ifeq ($(TARGET_PLATFORM),iossim)
+TARGETS+=libcurl.a
+endif
+ifeq ($(TARGET_PLATFORM),tizen-arm)
+TARGETS+=libcurl.a
+endif
+ifeq ($(TARGET_PLATFORM),tizen-x86)
+TARGETS+=libcurl.a
 endif
 
 all: $(TARGETS)
@@ -257,6 +269,7 @@ libbox2d.a: rebuild
 	cd $(BOX2D_DIR) && $(MAKE) \
 		CROSS=$(NDKP) \
 		TARGET_FLAGS="$(NDKSTL) --sysroot $(NDKSYSROOT) -marm" \
+		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(BOX2D_DIR)/libbox2d.a .
 
@@ -535,7 +548,7 @@ endif
 
 
 ifeq ($(TARGET_PLATFORM),tizen-x86)
-############################ Tizen ##############################
+############################ Tizen (x86) ##############################
 
 liblua.a: rebuild
 	cd $(LUA_DIR) && $(MAKE) -f Makefile.custom \
@@ -549,6 +562,7 @@ libbox2d.a: rebuild
 	cd $(BOX2D_DIR) && $(MAKE) \
 		CROSS=$(TDKPX86) \
 		TARGET_FLAGS="$(TIZEN_TARGET_FLAGS_X86)" \
+		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(BOX2D_DIR)/libbox2d.a .
 
@@ -595,7 +609,7 @@ libcurl.a: rebuild
 endif
 
 ifeq ($(TARGET_PLATFORM),tizen-arm)
-############################ Tizen ##############################
+############################ Tizen (arm) ##############################
 
 liblua.a: rebuild
 	cd $(LUA_DIR) && $(MAKE) -f Makefile.custom \
@@ -609,6 +623,7 @@ libbox2d.a: rebuild
 	cd $(BOX2D_DIR) && $(MAKE) \
 		CROSS=$(TDKPARM) \
 		TARGET_FLAGS="$(TIZEN_TARGET_FLAGS_ARM)" \
+		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(BOX2D_DIR)/libbox2d.a .
 
@@ -654,6 +669,65 @@ libcurl.a: rebuild
 
 endif
 
+ifeq ($(TARGET_PLATFORM),js)
+############################ JavaScript ##############################
+
+liblua.a: rebuild
+	cd $(LUA_DIR) && $(MAKE) -f Makefile.custom \
+		LTCC=emcc \
+		LTCPP=em++ \
+		LTAR="emar rcus" \
+		LTCFLAGS="$(LTCFLAGS)" \
+		clean all
+	cp $(LUA_DIR)/liblua.a $@
+
+libbox2d.a: rebuild
+	cd $(BOX2D_DIR) && $(MAKE) \
+		LTCC=emcc \
+		LTCPP=em++ \
+		LTAR="emar rcus" \
+		LTCFLAGS="$(LTCFLAGS)" \
+		clean all
+	cp $(BOX2D_DIR)/libbox2d.a .
+
+libz.a: rebuild
+	cd $(ZLIB_DIR) && $(MAKE) \
+		LTCC=emcc \
+		LTCPP=em++ \
+		LTAR="emar rcus" \
+		LTCFLAGS="$(LTCFLAGS)" \
+		clean all
+	cp $(ZLIB_DIR)/libz.a .
+
+libpng.a: rebuild
+	cd $(LIBPNG_DIR) && $(MAKE) \
+		LTCC=emcc \
+		LTCPP=em++ \
+		LTAR="emar rcus" \
+		LTCFLAGS="$(LTCFLAGS)" \
+		clean all
+	cp $(LIBPNG_DIR)/libpng.a .
+
+libft2.a: rebuild
+	cd $(FREETYPE_DIR) && $(MAKE) \
+		LTCC=emcc \
+		LTCPP=em++ \
+		LTAR="emar rcus" \
+		LTCFLAGS="$(LTCFLAGS)" \
+		clean all
+	cp $(FREETYPE_DIR)/libft2.a .
+
+libvorbis.a: rebuild
+	cd $(VORBIS_DIR) && $(MAKE) \
+		LTCC=emcc \
+		LTCPP=em++ \
+		LTAR="emar rcus" \
+		LTCFLAGS="$(LTCFLAGS)" \
+		clean all
+	cp $(VORBIS_DIR)/libvorbis.a .
+
+endif
+
 ##########################################################
 ##########################################################
 
@@ -688,6 +762,7 @@ clean:
 	cd $(LIBPNG_DIR) && $(MAKE) clean
 	cd $(FREETYPE_DIR) && $(MAKE) clean
 	cd $(VORBIS_DIR) && $(MAKE) clean
+	cd $(CURL_DIR) && $(MAKE) clean
 	rm -rf *.a
 	rm -rf *.lib
 	rm -rf include/*

@@ -8,38 +8,50 @@ LTCFLAGS+=$(LT_PLATFLAGS)
 
 
 OBJC_FLAGS=
+
 ifeq ($(TARGET_PLATFORM),ios)
 IPHONEOS_DEPLOYMENT_TARGET=4.3
 export IPHONEOS_DEPLOYMENT_TARGET
 default: libs
 OBJC_FLAGS=-ObjC++
 endif
+
 ifeq ($(TARGET_PLATFORM),iossim)
 IPHONEOS_DEPLOYMENT_TARGET=4.3
 export IPHONEOS_DEPLOYMENT_TARGET
 default: libs
 OBJC_FLAGS=-ObjC++ -fobjc-legacy-dispatch -fobjc-abi-version=2
 endif
+
 ifeq ($(TARGET_PLATFORM),android)
 default: libs
 endif
+
 ifeq ($(TARGET_PLATFORM),osx)
 MACOSX_DEPLOYMENT_TARGET=10.5
 export MACOSX_DEPLOYMENT_TARGET
 default: ltclient
 OBJC_FLAGS=-ObjC++
 endif
+
 ifeq ($(TARGET_PLATFORM),linux)
 default: ltclient
 endif
+
 ifeq ($(TARGET_PLATFORM),mingw)
 default: ltclient
 endif
+
 ifeq ($(TARGET_PLATFORM),tizen-x86)
 default: libs
 endif
+
 ifeq ($(TARGET_PLATFORM),tizen-arm)
 default: libs
+endif
+
+ifeq ($(TARGET_PLATFORM),js)
+default: ltclient.html
 endif
 
 ############################ iOS Target ##############################
@@ -167,6 +179,22 @@ $(TARGET_DIR)/liblt.a: headers | $(TARGET_DIR)
 	cp buildtmp.tizen-arm/liblt.a $(TARGET_DIR)/
 endif
 
+############################ JavaScript target ##############################
+ifeq ($(TARGET_PLATFORM),js)
+LTCFLAGS+=-DLTNOCURL
+
+.PHONY: $(TARGET_DIR)/liblt.a
+$(TARGET_DIR)/liblt.a: headers | $(TARGET_DIR)
+	mkdir -p buildtmp.js
+	cd src && $(MAKE) \
+		LTCPP=em++ \
+		LTAR="emar rcus" \
+		OUT_DIR=$(PWD)/buildtmp.js \
+		LTCFLAGS="$(LTCFLAGS)" \
+		all
+	cp buildtmp.js/liblt.a $(TARGET_DIR)/
+endif
+
 ##########################################################
 ##########################################################
 
@@ -176,6 +204,8 @@ libs: $(TARGET_DIR)/liblt.a deplibs headers
 ltclient: libs
 	cd clients/glfw/ && make LTCFLAGS="$(LTCFLAGS) $(OBJC_FLAGS)" && cp $@ ../../
 
+ltclient.html: libs
+	cd clients/glfw/ && make ltclient.html LTCFLAGS="$(LTCFLAGS)"
 
 ##########################################################
 ##########################################################

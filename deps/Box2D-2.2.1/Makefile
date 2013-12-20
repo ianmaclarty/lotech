@@ -11,7 +11,11 @@ endif
 
 GPP_FLAGS=-I. $(LTCFLAGS) $(TARGET_FLAGS)
 GPP=$(CROSS)$(LTCPP)
+ifndef LTAR
 AR=$(CROSS)ar rcus
+else
+AR=$(LTAR)
+endif
 
 $(BOX2D_O_FILES): %.o: %.cpp
 	@echo CPP $@

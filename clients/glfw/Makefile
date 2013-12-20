@@ -13,6 +13,10 @@ LIBFLAGS= -llt -lcurl -lpng -lvorbis -lz -llua -lbox2d -lGLEW -lglfw -framework 
 		-pagezero_size 10000 -image_base 100000000
 endif
 
+ifeq ($(TARGET_PLATFORM),js)
+LIBFLAGS= -llt -lpng -lvorbis -lz -llua -lbox2d -lGLEW -lglfw -lGL -lOpenAL
+endif
+
 ifeq ($(TARGET_PLATFORM),linux)
 EXTRA_PREREQS=wrap_memcpy.o
 LIBFLAGS=-static-libstdc++ -static-libgcc \
@@ -37,6 +41,11 @@ endif
 ltclient: ltclient.cpp $(EXTRA_PREREQS)
 	g++ $(LTCFLAGS) -I$(LTDIR)/$(TARGET_PLATFORM)/include -L$(LTDIR)/$(TARGET_PLATFORM) ltclient.cpp \
 		-o ltclient $(LIBFLAGS)
+
+.PHONY: ltclient.html
+ltclient.html: ltclient.cpp $(EXTRA_PREREQS)
+	em++ -s LEGACY_GL_EMULATION=1 -s TOTAL_MEMORY=67108864 -DLTNOGLEW $(LTCFLAGS) -I$(LTDIR)/$(TARGET_PLATFORM)/include -L$(LTDIR)/$(TARGET_PLATFORM) ltclient.cpp \
+		-o $@ $(LIBFLAGS) --preload-file data
 
 .PHONY: clean
 clean:

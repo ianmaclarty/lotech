@@ -27,7 +27,11 @@ endif
 
 GCC_FLAGS=-Iinclude -I. $(LTCFLAGS) $(TARGET_FLAGS) -DFT2_BUILD_LIBRARY
 GCC=$(CROSS)$(LTCC)
+ifndef LTAR
 AR=$(CROSS)ar rcus
+else
+AR=$(LTAR)
+endif
 
 $(O_FILES): %.o: %.c
 	@echo CC $@

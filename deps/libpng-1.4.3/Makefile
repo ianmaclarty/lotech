@@ -11,7 +11,11 @@ endif
 
 GCC_FLAGS=-I. -I../$(ZLIB) $(LTCFLAGS) $(TARGET_FLAGS)
 GCC=$(CROSS)$(LTCC)
+ifndef LTAR
 AR=$(CROSS)ar rcus
+else
+AR=$(LTAR)
+endif
 
 $(O_FILES): %.o: %.c
 	@echo CC $@

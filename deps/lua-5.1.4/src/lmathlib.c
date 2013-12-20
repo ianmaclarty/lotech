@@ -181,7 +181,7 @@ static int math_max (lua_State *L) {
 static int math_random (lua_State *L) {
   /* the `%' avoids the (rare) case of r==1, and is needed also because on
      some systems (SunOS! and Windows!) `rand()' may return a value larger than RAND_MAX */
-  #ifdef _WIN32
+  #if defined(_WIN32) || defined(LTJS)
   lua_Number r = (lua_Number)(rand()%RAND_MAX) / (lua_Number)RAND_MAX;
   #else
   lua_Number r = (lua_Number)(random()%RAND_MAX) / (lua_Number)RAND_MAX;
@@ -211,7 +211,7 @@ static int math_random (lua_State *L) {
 
 
 static int math_randomseed (lua_State *L) {
-  #ifdef _WIN32
+  #if defined(_WIN32) || defined(LTJS)
   srand(luaL_checkint(L, 1));
   #else
   srandom(luaL_checkint(L, 1));

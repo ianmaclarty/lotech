@@ -22,8 +22,13 @@ LT_INIT_IMPL(ltopengl)
 #define GL_FUNC_REVERSE_SUBTRACT GL_FUNC_REVERSE_SUBTRACT_OES
 #endif
 #else
+#ifdef LTJS
+#define GLEXT(f) f
+#define GL_EXT(f) f
+#else
 #define GLEXT(f) f##EXT
 #define GL_EXT(f) f##_EXT
+#endif
 #endif
 
 #ifndef GL_DEPTH_COMPONENT16_EXT
@@ -194,7 +199,8 @@ LTtexid ltGenTexture() {
     gltrace
     LTtexid t;
     glGenTextures(1, &t);
-#if !defined(LTGLES1)
+#if !defined(LTGLES1) && !defined(LTJS)
+    ltBindTexture(t);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
     glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_FALSE);
