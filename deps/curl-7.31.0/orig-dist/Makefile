@@ -108,8 +108,8 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-build_triplet = x86_64-unknown-linux-gnu
-host_triplet = arm-unknown-linux-gnueabi
+build_triplet = i686-pc-linux-gnu
+host_triplet = i686-pc-linux-gnu
 DIST_COMMON = $(srcdir)/lib/Makefile.inc $(srcdir)/Makefile.in \
 	$(srcdir)/Makefile.am $(top_srcdir)/configure \
 	$(am__configure_deps) mkinstalldirs $(srcdir)/curl-config.in \
@@ -279,16 +279,16 @@ AUTOHEADER = ${SHELL} "/home/ian/lotech/deps/curl-7.31.0/orig-dist/missing" --ru
 AUTOMAKE = ${SHELL} "/home/ian/lotech/deps/curl-7.31.0/orig-dist/missing" --run automake-1.13
 AWK = gawk
 BLANK_AT_MAKETIME = 
-CC = /home/ian/tizen/sdk/tools/arm-linux-gnueabi-gcc-4.5/bin/arm-linux-gnueabi-gcc
-CCDEPMODE = depmode=none
-CFLAGS = --sysroot /home/ian/tizen/sdk/platforms/tizen2.2/rootstraps/tizen-device-2.2.native -fPIE -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16 -mtune=cortex-a8 -O2 -Wno-system-headers
+CC = gcc
+CCDEPMODE = depmode=gcc3
+CFLAGS = -O2 -Wno-system-headers
 CFLAG_CURL_SYMBOL_HIDING = -fvisibility=hidden
-CONFIGURE_OPTIONS = " '--disable-shared' '--enable-static' '--disable-dependency-tracking' '--enable-http' '--enable-ipv6' '--disable-largefile' '--disable-ftp' '--disable-file' '--disable-ldap' '--disable-ldaps' '--disable-rtsp' '--disable-proxy' '--disable-dict' '--disable-telnet' '--disable-tftp' '--disable-pop3' '--disable-imap' '--disable-smtp' '--disable-gopher' '--disable-manual' '--disable-libcurl-option' '--disable-sspi' '--disable-crypto-auth' '--disable-ntlm-wb' '--disable-tls-srp' '--disable-cookies' '--disable-soname-bump' '--without-zlib' '--without-winssl' '--without-darwinssl' '--without-ssl' '--without-gnutls' '--without-polarssl' '--without-cyassl' '--without-nss' '--without-axtls' '--without-libmetalink' '--without-libssh2' '--without-librtmp' '--without-winidn' '--host=arm-linux-gnueabi' 'host_alias=arm-linux-gnueabi' 'CC=/home/ian/tizen/sdk/tools/arm-linux-gnueabi-gcc-4.5/bin/arm-linux-gnueabi-gcc' 'CFLAGS=--sysroot /home/ian/tizen/sdk/platforms/tizen2.2/rootstraps/tizen-device-2.2.native -fPIE -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16 -mtune=cortex-a8' 'LDFLAGS=--sysroot /home/ian/tizen/sdk/platforms/tizen2.2/rootstraps/tizen-device-2.2.native -fPIE -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16 -mtune=cortex-a8'"
-CPP = /home/ian/tizen/sdk/tools/arm-linux-gnueabi-gcc-4.5/bin/arm-linux-gnueabi-gcc -E
+CONFIGURE_OPTIONS = " '--enable-http' '--enable-ipv6' '--disable-largefile' '--disable-ftp' '--disable-file' '--disable-ldap' '--disable-ldaps' '--disable-rtsp' '--disable-proxy' '--disable-dict' '--disable-telnet' '--disable-tftp' '--disable-pop3' '--disable-imap' '--disable-smtp' '--disable-gopher' '--disable-manual' '--disable-libcurl-option' '--disable-sspi' '--disable-crypto-auth' '--disable-ntlm-wb' '--disable-tls-srp' '--disable-cookies' '--disable-soname-bump' '--without-zlib' '--without-winssl' '--without-darwinssl' '--without-ssl' '--without-gnutls' '--without-polarssl' '--without-cyassl' '--without-nss' '--without-axtls' '--without-libmetalink' '--without-libssh2' '--without-librtmp' '--without-winidn'"
+CPP = gcc -E
 CPPFLAGS = 
-CPPFLAG_CURL_STATICLIB = -DCURL_STATICLIB
+CPPFLAG_CURL_STATICLIB = 
 CURLVERSION = 7.31.0
-CURL_CA_BUNDLE = 
+CURL_CA_BUNDLE = "/etc/ssl/certs/ca-certificates.crt"
 CURL_CFLAG_EXTRAS = 
 CURL_DISABLE_DICT = 1
 CURL_DISABLE_FILE = 1
@@ -305,19 +305,19 @@ CURL_DISABLE_SMTP = 1
 CURL_DISABLE_TELNET = 1
 CURL_DISABLE_TFTP = 1
 CURL_LT_SHLIB_VERSIONED_FLAVOUR = 
-CURL_NETWORK_AND_TIME_LIBS = -lrt
+CURL_NETWORK_AND_TIME_LIBS = 
 CURL_NETWORK_LIBS = 
 CYGPATH_W = echo
 DEFS = -DHAVE_CONFIG_H
 DEPDIR = .deps
 DLLTOOL = false
 DSYMUTIL = 
-DUMPBIN = :
+DUMPBIN = 
 ECHO_C = 
 ECHO_N = -n
 ECHO_T = 
 EGREP = /bin/grep -E
-ENABLE_SHARED = no
+ENABLE_SHARED = yes
 ENABLE_STATIC = yes
 EXEEXT = 
 FGREP = /bin/grep -F
@@ -335,14 +335,14 @@ INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = $(install_sh) -c -s
 IPV6_ENABLED = 1
 KRB4_ENABLED = 
-LD = /home/ian/tizen/sdk/tools/arm-linux-gnueabi-gcc-4.5/arm-linux-gnueabi/bin/ld
-LDFLAGS = --sysroot /home/ian/tizen/sdk/platforms/tizen2.2/rootstraps/tizen-device-2.2.native -fPIE -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16 -mtune=cortex-a8
-LIBCURL_LIBS = -lrt
+LD = /usr/bin/ld
+LDFLAGS = 
+LIBCURL_LIBS = 
 LIBMETALINK_CPPFLAGS = 
 LIBMETALINK_LDFLAGS = 
 LIBMETALINK_LIBS = 
 LIBOBJS = 
-LIBS = -lrt
+LIBS = 
 LIBTOOL = $(SHELL) $(top_builddir)/libtool
 LIPO = 
 LN_S = ln -s
@@ -352,7 +352,7 @@ MAKEINFO = ${SHELL} "/home/ian/lotech/deps/curl-7.31.0/orig-dist/missing" --run 
 MANIFEST_TOOL = :
 MANOPT = -man
 MKDIR_P = /bin/mkdir -p
-NM = nm
+NM = /usr/bin/nm -B
 NMEDIT = 
 NROFF = /usr/bin/nroff
 OBJDUMP = objdump
@@ -374,7 +374,7 @@ PKGADD_VENDOR = curl.haxx.se
 PKGCONFIG = no
 RANDOM_FILE = 
 RANLIB = ranlib
-REQUIRE_LIB_DEPS = yes
+REQUIRE_LIB_DEPS = no
 SED = /bin/sed
 SET_MAKE = 
 SHELL = /bin/bash
@@ -404,30 +404,30 @@ abs_srcdir = /home/ian/lotech/deps/curl-7.31.0/orig-dist
 abs_top_builddir = /home/ian/lotech/deps/curl-7.31.0/orig-dist
 abs_top_srcdir = /home/ian/lotech/deps/curl-7.31.0/orig-dist
 ac_ct_AR = 
-ac_ct_CC = 
-ac_ct_DUMPBIN = link -dump
+ac_ct_CC = gcc
+ac_ct_DUMPBIN = 
 am__include = include
 am__leading_dot = .
 am__quote = 
 am__tar = $${TAR-tar} chof - "$$tardir"
 am__untar = $${TAR-tar} xf -
 bindir = ${exec_prefix}/bin
-build = x86_64-unknown-linux-gnu
+build = i686-pc-linux-gnu
 build_alias = 
-build_cpu = x86_64
+build_cpu = i686
 build_os = linux-gnu
-build_vendor = unknown
+build_vendor = pc
 builddir = .
 datadir = ${datarootdir}
 datarootdir = ${prefix}/share
 docdir = ${datarootdir}/doc/${PACKAGE_TARNAME}
 dvidir = ${docdir}
 exec_prefix = ${prefix}
-host = arm-unknown-linux-gnueabi
-host_alias = arm-linux-gnueabi
-host_cpu = arm
-host_os = linux-gnueabi
-host_vendor = unknown
+host = i686-pc-linux-gnu
+host_alias = 
+host_cpu = i686
+host_os = linux-gnu
+host_vendor = pc
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
@@ -1084,23 +1084,23 @@ pdf:
 
 check: test examples
 
-test-full: test
-test-torture: test
-
-test:
-	@echo "NOTICE: we can't run the tests when cross-compiling!"
+#test-full: test
+#test-torture: test
 
 #test:
-#	@(cd tests; $(MAKE) all quiet-test)
+#	@echo "NOTICE: we can't run the tests when cross-compiling!"
 
-#test-full:
-#	@(cd tests; $(MAKE) all full-test)
+test:
+	@(cd tests; $(MAKE) all quiet-test)
 
-#test-torture:
-#	@(cd tests; $(MAKE) all torture-test)
+test-full:
+	@(cd tests; $(MAKE) all full-test)
 
-#test-am:
-#	@(cd tests; $(MAKE) all am-test)
+test-torture:
+	@(cd tests; $(MAKE) all torture-test)
+
+test-am:
+	@(cd tests; $(MAKE) all am-test)
 
 examples:
 	@(cd docs/examples; $(MAKE) check)

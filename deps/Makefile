@@ -432,8 +432,13 @@ libcurl.a: rebuild
 		clean all
 	cp $(CURL_DIR)/libcurl.a .
 
+ifdef LINUX32
+libopenal.a:
+	cp openal-soft/linux32/libopenal.a .
+else
 libopenal.a:
 	cp openal-soft/linux64/libopenal.a .
+endif
 
 .PHONY: openal_headers
 openal_headers:

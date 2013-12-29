@@ -32,7 +32,9 @@
 
 #include "curlver.h"         /* libcurl version defines   */
 
-#if defined(LTLINUX)
+#if defined(LTLINUX32)
+#   include "curlbuild_linux32.h"
+#elif defined(LTLINUX)
 #   include "curlbuild_linux.h"
 #elif defined(LTOSX)
 #   include "curlbuild_osx.h"

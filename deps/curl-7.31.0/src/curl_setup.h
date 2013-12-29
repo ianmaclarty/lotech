@@ -36,7 +36,9 @@
  * configuration file for platforms which lack config tool.
  */
 
-#if defined(LTLINUX)
+#if defined(LTLINUX32)
+#   include "curl_config_linux32.h"
+#elif defined(LTLINUX)
 #   include "curl_config_linux.h"
 #elif defined(LTOSX)
 #   include "curl_config_osx.h"
@@ -96,7 +98,9 @@
  * and might also include required system header files to define them.
  */
 
-#if defined(LTLINUX)
+#if defined(LTLINUX32)
+#   include <curl/curlbuild_linux32.h>
+#elif defined(LTLINUX)
 #   include <curl/curlbuild_linux.h>
 #elif defined(LTOSX)
 #   include <curl/curlbuild_osx.h>
