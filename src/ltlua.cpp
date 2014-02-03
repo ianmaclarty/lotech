@@ -5,6 +5,10 @@ LT_INIT_IMPL(ltlua)
 
 #include "lua_scripts.h"
 
+#ifdef LTDEVMODE
+#include <signal.h>
+#endif
+
 static const char* setup_scripts[] = {
     lt_script_lttimer,
     lt_script_ltutil,
@@ -81,6 +85,21 @@ static int traceback(lua_State *L) {
 }
 #endif
 
+#ifdef LTDEVMODE
+static void lstop (lua_State *L, lua_Debug *ar) {
+  (void)ar;  /* unused arg. */
+  lua_sethook(L, NULL, 0, 0);
+  luaL_error(L, "interrupted!");
+}
+
+static void laction (int i) {
+  signal(i, SIG_DFL); /* if another SIGINT happens before lstop,
+                              terminate process (default action) */
+  lua_sethook(g_L, lstop, LUA_MASKCALL | LUA_MASKRET | LUA_MASKCOUNT, 1);
+} 
+#endif
+
+
 // Copied from lua source and modified.
 static void docall(lua_State *L, int nargs, int nresults) {
   int status;
@@ -88,7 +107,9 @@ static void docall(lua_State *L, int nargs, int nresults) {
   int base = lua_gettop(L) - nargs;  /* function index */
   lua_pushcfunction(L, traceback);  /* push traceback function */
   lua_insert(L, base);  /* put it under chunk and args */
+  signal(SIGINT, laction);
   status = lua_pcall(L, nargs, nresults, base);
+  signal(SIGINT, SIG_DFL);
   lua_remove(L, base);  /* remove traceback function */
 #else
   status = lua_pcall(L, nargs, nresults, 0);
