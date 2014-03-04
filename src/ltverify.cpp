@@ -17,7 +17,7 @@ LTSHA1Digest   lt_verify_digest  = LTVERIFYDIGEST;
 int            lt_verify_secret[] = LTVERIFYSECRET;
 
 void ltDoVerify() {
-    if (lt_verify_modules == NULL) return;
+    if (lt_verify_modules == NULL || lt_verify_modules[0] == NULL) return;
 
     int n = 0;
     while (lt_verify_modules[n] != NULL) {
