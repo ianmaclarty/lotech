@@ -35,6 +35,7 @@ enum LTDrawMode {
     LT_DRAWMODE_POINTS         = GL_POINTS,
     LT_DRAWMODE_LINES          = GL_LINES,
     LT_DRAWMODE_LINE_STRIP     = GL_LINE_STRIP,
+    LT_DRAWMODE_LINE_LOOP      = GL_LINE_LOOP,
 };
 
 enum LTBlendMode {

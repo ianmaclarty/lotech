@@ -792,7 +792,19 @@ static int print_mesh(lua_State *L) {
     return 0;
 }
 
+static const LTEnumConstant DrawMode_enum_vals[] = {
+    {"triangles",       LT_DRAWMODE_TRIANGLES},
+    {"triangle_strip",  LT_DRAWMODE_TRIANGLE_STRIP},
+    {"triangle_fan",    LT_DRAWMODE_TRIANGLE_FAN},
+    {"points",          LT_DRAWMODE_POINTS},
+    {"lines",           LT_DRAWMODE_LINES},
+    {"line_strip",      LT_DRAWMODE_LINE_STRIP},
+    {"line_loop",       LT_DRAWMODE_LINE_LOOP},
+    {NULL, 0}
+};
+
 LT_REGISTER_TYPE(LTMesh, "lt.Mesh", "lt.SceneNode")
+LT_REGISTER_FIELD_ENUM(LTMesh, draw_mode, LTDrawMode, DrawMode_enum_vals)
 LT_REGISTER_METHOD(LTMesh, Clone, clone_mesh)
 LT_REGISTER_METHOD(LTMesh, Stretch, stretch_mesh)
 LT_REGISTER_METHOD(LTMesh, Shift, shift_mesh)
