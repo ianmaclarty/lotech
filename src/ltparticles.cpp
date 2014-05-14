@@ -195,13 +195,28 @@ void LTParticleSystem::add_particle() {
         p->rotation = startA;
         p->delta_rotation = (endA - startA) / p->time_to_live;
 
-        LTfloat a = LT_RADIANS_PER_DEGREE * (angle + angle_variance * ltRandMinus1_1());
-        LTfloat v_x = cosf(a);
-        LTfloat v_y = sinf(a);
-        LTfloat s = speed + speed_variance * ltRandMinus1_1();
-
-        p->dir.x = v_x * s;
-        p->dir.y = v_y * s;
+        LTfloat v_x;
+        LTfloat v_y;
+        if (use_end_position) {
+            LTVec2 end_pos;
+            end_pos.x = end_position.x + end_position_variance.x * ltRandMinus1_1();
+            end_pos.y = end_position.y + end_position_variance.y * ltRandMinus1_1();
+            LTfloat dx = end_pos.x - p->pos.x;
+            LTfloat dy = end_pos.y - p->pos.y;
+            LTfloat d = sqrtf(dx*dx + dy*dy);
+            v_x = dx/p->time_to_live;
+            v_y = dy/p->time_to_live;
+            p->dir.x = v_x;
+            p->dir.y = v_y;
+        } else {
+            LTfloat a;
+            a = LT_RADIANS_PER_DEGREE * (angle + angle_variance * ltRandMinus1_1());
+            v_x = cosf(a);
+            v_y = sinf(a);
+            LTfloat s = speed + speed_variance * ltRandMinus1_1();
+            p->dir.x = v_x * s;
+            p->dir.y = v_y * s;
+        }
 
         p->radial_accel = radial_accel + radial_accel_variance * ltRandMinus1_1();
         p->tangential_accel = tangential_accel + tangential_accel_variance * ltRandMinus1_1();
@@ -392,6 +407,11 @@ LT_REGISTER_FIELD_FLOAT_AS(LTParticleSystem, source_position.x, "source_position
 LT_REGISTER_FIELD_FLOAT_AS(LTParticleSystem, source_position.y, "source_position_y")
 LT_REGISTER_FIELD_FLOAT_AS(LTParticleSystem, source_position_variance.x, "source_position_variance_x")
 LT_REGISTER_FIELD_FLOAT_AS(LTParticleSystem, source_position_variance.y, "source_position_variance_y")
+LT_REGISTER_FIELD_BOOL(LTParticleSystem, use_end_position)
+LT_REGISTER_FIELD_FLOAT_AS(LTParticleSystem, end_position.x, "end_position_x")
+LT_REGISTER_FIELD_FLOAT_AS(LTParticleSystem, end_position.y, "end_position_y")
+LT_REGISTER_FIELD_FLOAT_AS(LTParticleSystem, end_position_variance.x, "end_position_variance_x")
+LT_REGISTER_FIELD_FLOAT_AS(LTParticleSystem, end_position_variance.y, "end_position_variance_y")
 LT_REGISTER_FIELD_FLOAT(LTParticleSystem, angle)
 LT_REGISTER_FIELD_FLOAT(LTParticleSystem, angle_variance)
 LT_REGISTER_FIELD_FLOAT_AS(LTParticleSystem, gravity.x, "gravity_x")

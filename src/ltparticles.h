@@ -38,6 +38,9 @@ struct LTParticleSystem : LTSceneNode {
     LTfloat elapsed;
     LTVec2 source_position;
     LTVec2 source_position_variance;
+    LTbool use_end_position;
+    LTVec2 end_position;
+    LTVec2 end_position_variance;
     LTdegrees angle;
     LTdegrees angle_variance;
     LTVec2 gravity;

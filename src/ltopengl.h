@@ -75,6 +75,7 @@ void ltDisableTexturing();
 void ltEnableTextureCoordArrays();
 void ltDisableTextureCoordArrays();
 void ltTextureMode(LTTextureMode mode);
+void ltColorMask(bool r, bool g, bool b, bool a);
 void ltTextureMagFilter(LTTextureFilter filter);
 void ltTextureMinFilter(LTTextureFilter filter);
 void ltBindTexture(LTtexid texture_id);

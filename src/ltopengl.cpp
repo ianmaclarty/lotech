@@ -166,6 +166,13 @@ void ltTextureMode(LTTextureMode mode) {
     gltrace
 }
 
+void ltColorMask(bool r, bool g, bool b, bool a) {
+    gltrace
+    glColorMask(r, g, b, a);
+    check_for_errors
+    gltrace
+}
+
 void ltTextureMagFilter(LTTextureFilter filter) {
     gltrace
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);

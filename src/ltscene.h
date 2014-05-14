@@ -157,6 +157,14 @@ struct LTTextureModeNode : LTWrapNode {
     virtual void draw();
 };
 
+struct LTColorMaskNode : LTWrapNode {
+    LTfloat red, green, blue, alpha;
+
+    LTColorMaskNode() {red = 1; green = 1; blue = 1; alpha = 1;};
+
+    virtual void draw();
+};
+
 struct LTBlendModeNode : LTWrapNode {
     LTBlendMode mode;
 

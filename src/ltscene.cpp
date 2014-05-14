@@ -599,6 +599,37 @@ static const LTEnumConstant TextureMode_enum_vals[] = {
 LT_REGISTER_TYPE(LTTextureModeNode, "lt.TextureMode", "lt.Wrap");
 LT_REGISTER_FIELD_ENUM(LTTextureModeNode, mode, LTTextureMode, TextureMode_enum_vals);
 
+static bool color_mask_red = true;
+static bool color_mask_green = true;
+static bool color_mask_blue = true;
+static bool color_mask_alpha = true;
+
+void LTColorMaskNode::draw() {
+    if (child != NULL) {
+        bool old_red = color_mask_red;
+        bool old_green = color_mask_green;
+        bool old_blue = color_mask_blue;
+        bool old_alpha = color_mask_alpha;
+        color_mask_red = red;
+        color_mask_green = green;
+        color_mask_blue = blue;
+        color_mask_alpha = alpha;
+        ltColorMask(red, green, blue, alpha);   
+        child->draw();
+        ltColorMask(old_red, old_green, old_blue, old_alpha);   
+        color_mask_red = old_red;
+        color_mask_green = old_green;
+        color_mask_blue = old_blue;
+        color_mask_alpha = old_alpha;
+    }
+}
+
+LT_REGISTER_TYPE(LTColorMaskNode, "lt.ColorMask", "lt.Wrap");
+LT_REGISTER_FIELD_BOOL(LTColorMaskNode, red);
+LT_REGISTER_FIELD_BOOL(LTColorMaskNode, green);
+LT_REGISTER_FIELD_BOOL(LTColorMaskNode, blue);
+LT_REGISTER_FIELD_BOOL(LTColorMaskNode, alpha);
+
 void LTBlendModeNode::draw() {
     if (child != NULL) {
         ltPushBlendMode(mode);
