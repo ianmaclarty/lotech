@@ -141,7 +141,6 @@ extern "C" {
 #import <objc/runtime.h>
 #import <UIKit/UIKit.h>
 #import <QuartzCore/QuartzCore.h>
-#import <GameKit/GameKit.h>
 #endif
 
 // Windows specific

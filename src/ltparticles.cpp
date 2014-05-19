@@ -203,7 +203,6 @@ void LTParticleSystem::add_particle() {
             end_pos.y = end_position.y + end_position_variance.y * ltRandMinus1_1();
             LTfloat dx = end_pos.x - p->pos.x;
             LTfloat dy = end_pos.y - p->pos.y;
-            LTfloat d = sqrtf(dx*dx + dy*dy);
             v_x = dx/p->time_to_live;
             v_y = dy/p->time_to_live;
             p->dir.x = v_x;

@@ -34,7 +34,7 @@ $(CPP_O_FILES): $(OUT_DIR)/%.o: %.cpp lt*.h
 
 $(MM_O_FILES): $(OUT_DIR)/%.o: %.mm *.h
 	@echo MM   `basename $@`
-	@$(GPP) -ObjC++ $(GPP_FLAGS) -c $< -o $@
+	@$(GPP) -std=c++0x -ObjC++ $(GPP_FLAGS) -c $< -o $@
 
 $(OUT_DIR)/liblt.a: $(O_FILES)
 	@echo AR $@
