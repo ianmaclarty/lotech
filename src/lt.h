@@ -50,12 +50,10 @@ THE SOFTWARE.
 #ifdef LTLINUX
     #define GLEW_STATIC 1
     #include <GL/glew.h>
-    #include <GL/glfw.h>
 #endif
 #ifdef LTMINGW
     #define GLEW_STATIC 1
     #include <GL/glew.h>
-    #include <GL/glfw.h>
 #endif
 #ifdef LTIOS
     #include <OpenGLES/ES1/gl.h>
@@ -65,7 +63,6 @@ THE SOFTWARE.
     //#include <OpenGL/GL.h>
     #define GLEW_STATIC 1
     #include <GL/glew.h>
-    #include <GL/glfw.h>
 #endif
 #ifdef LTANDROID
     #define GL_GLEXT_PROTOTYPES 1
@@ -151,7 +148,7 @@ extern "C" {
 // GLFW
 #if defined(LTLINUX) || defined(LTMINGW) || defined(LTOSX)
 #define LTGLFW
-#include <GL/glfw.h>
+#include <GLFW/glfw3.h>
 #endif
 
 // Curl

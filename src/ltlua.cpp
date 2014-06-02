@@ -2130,7 +2130,7 @@ static int lt_ReadGamePadState(lua_State *L) {
     if (statestr == NULL) {
         return luaL_error(L, "Expecting a string argument");
     }
-#ifdef LTGLFW
+#if 0 // defined(LTGLFW)
     int joy;
     unsigned char buttons[LT_GAMEPAD_NUM_BUTTONS];
     float axes[LT_GAMEPAD_NUM_AXES];
