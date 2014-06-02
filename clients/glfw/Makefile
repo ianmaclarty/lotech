@@ -40,7 +40,7 @@ ifeq ($(TARGET_PLATFORM),mingw)
 LIBFLAGS= -static -static-libstdc++ -static-libgcc -llt \
 		-lcurl -lws2_32 -llua -lpng -lvorbis -lz -lbox2d \
 		 -lOpenAL32 -lwinmm -lole32 -ldsound \
-		-lglew32 -lglfw -lopengl32
+		-lglew32 -lglfw -lopengl32 -lgdi32
 endif
 
 .PHONY: ltclient
