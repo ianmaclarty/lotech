@@ -14,7 +14,7 @@ APKFILE=$(APKPREFIX)-$(APPVERSIONNAME).apk
 
 default: install
 
-AndroidManifest.xml: AndroidManifest.xml.in
+AndroidManifest.xml: AndroidManifest.xml.in Make.params
 	cat $< \
 		| sed "s/APPNAME/$(APPNAME)/g" \
 		| sed "s/APPPACKAGE/$(APPPACKAGE)/g" \
