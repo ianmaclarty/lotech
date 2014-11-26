@@ -1,0 +1,2 @@
+#!/bin/sh
+javah -classpath ../bin/classes -d . com.muandheyo.lotech.LotechRenderer

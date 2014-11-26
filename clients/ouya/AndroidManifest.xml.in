@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+        package="APPPACKAGE"
+        android:versionCode="APPVERSIONCODE"
+        android:versionName="APPVERSIONNAME"
+        >
+
+    <uses-sdk android:minSdkVersion="16" />
+
+    <application android:label="APPNAME"
+        android:icon="@drawable/icon"
+        android:hasCode="true" android:debuggable="false">
+
+        <!-- LotechActivity extends the built-in NativeActivity class.
+             NativeActivity will take care of integrating with our C++ code. -->
+        <activity android:name="com.ianmaclarty.LotechActivity"
+                android:label="APPNAME"
+                android:screenOrientation="APPORIENTATION"
+                android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen"
+                android:configChanges="orientation|keyboardHidden">
+            <meta-data android:name="android.app.lib_name"
+                    android:value="ltandroid" />
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="tv.ouya.intent.category.GAME"/>
+            </intent-filter>
+        </activity>
+    </application>
+
+    <!-- needed for curl -->
+    <!--<uses-permission android:name="android.permission.INTERNET"></uses-permission>-->
+</manifest> 

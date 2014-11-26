@@ -1,0 +1,12 @@
+#!/bin/sh
+orig=$1
+mkdir -p res/drawable-ldpi
+mkdir -p res/drawable-mdpi
+mkdir -p res/drawable-hdpi
+mkdir -p res/drawable-xhdpi
+mkdir -p res/drawable-xxhdpi
+convert $orig -resize 36x36 res/drawable-ldpi/icon.png || exit 1
+convert $orig -resize 48x48 res/drawable-mdpi/icon.png || exit 1
+convert $orig -resize 72x72 res/drawable-hdpi/icon.png || exit 1
+convert $orig -resize 96x96 res/drawable-xhdpi/icon.png || exit 1
+convert $orig -resize 144x144 res/drawable-xxhdpi/icon.png || exit 1

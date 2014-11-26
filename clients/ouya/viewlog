@@ -1,0 +1,3 @@
+#!/bin/sh
+adb logcat Lotech:D *:S
+#adb logcat
