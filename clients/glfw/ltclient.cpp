@@ -7,7 +7,7 @@
 #endif
 
 #include <GL/glew.h>
-#include <GLFW/glfw3.h>
+#include <GL/glfw.h>
 
 #include "lt.h"
 
@@ -27,26 +27,20 @@
 #define LTTITLE Lotech Client
 #endif
 
-static void key_handler(GLFWwindow *win, int key, int scancode, int state, int mods);
-static void mouse_button_handler(GLFWwindow *win, int button, int action, int mods);
-static void mouse_pos_handler(GLFWwindow *win, double x, double y);
-static void resize_handler(GLFWwindow *win, int w, int h);
+static void key_handler(int key, int state);
+static void mouse_button_handler(int button, int action);
+static void mouse_pos_handler(int x, int y);
+static void resize_handler(int w, int h);
 static LTKey convert_key(int key);
 static bool fullscreen = lt_fullscreen;
 static void process_args(int argc, const char **argv);
 static const char *dir = STR(LTDATADIR);
 static const char *title = STR(LTTITLE);
-static int init_window_width = 960;
-static int init_window_height = 640;
-static int screen_window_width;
-static int screen_window_height;
-static int framebuffer_width;
-static int framebuffer_height;
-static GLFWwindow *window = NULL;
-static GLFWmonitor *monitor = NULL;
+static int window_width = 960;
+static int window_height = 640;
 
 static void setup_window();
-static void compute_init_window_size();
+static void compute_window_size();
 
 int main(int argc, const char **argv) {
 
@@ -63,14 +57,12 @@ int main(int argc, const char **argv) {
     ltSetResourcePrefix(dir);
     ltLuaSetup();
     fullscreen = lt_fullscreen;
-    compute_init_window_size();
+    compute_window_size();
 
     if (glfwInit() != GL_TRUE) {
         fprintf(stderr, "Failed to initialize glfw. Aborting.\n");
         return 1;
     }
-
-    monitor = glfwGetPrimaryMonitor();
 
     setup_window();
 
@@ -97,21 +89,20 @@ int main(int argc, const char **argv) {
     long long frame_count = 0;
 
     while (!lt_quit) {
-        if (glfwWindowShouldClose(window)) {
+        if (!glfwGetWindowParam(GLFW_OPENED)) {
             lt_quit = true;
         }
 
         if (lt_fullscreen != fullscreen) {
             ltSaveState();
             ltLuaReset();
-            glfwDestroyWindow(window);
-            window = NULL;
+            glfwCloseWindow();
             fullscreen = lt_fullscreen;
             setup_window();
         }
 
         ltLuaRender();
-        glfwSwapBuffers(window);
+        glfwSwapBuffers();
 
 #ifdef LTOSX
         // There seems to be a bug on Mac OS X where the framerate skyrockets when the
@@ -122,7 +113,6 @@ int main(int argc, const char **argv) {
             usleep(16000);
         }
 #endif
-        glfwPollEvents();
 
         t = glfwGetTime();
         dt = fmin(1.0/15.0, t - t0); // fmin in case process was suspended, or last frame took very long
@@ -184,7 +174,7 @@ int main(int argc, const char **argv) {
     return 0;
 }
 
-static void compute_init_window_size() {
+static void compute_window_size() {
     LTfloat w;
     LTfloat h;
     ltGetDesignScreenSize(&w, &h);
@@ -193,78 +183,71 @@ static void compute_init_window_size() {
         h = MIN_HEIGHT;
         w = h * r;
     }
-    init_window_width = (int)w;
-    init_window_height = (int)h;
+    window_width = (int)w;
+    window_height = (int)h;
 }
 
 static void setup_window() {
+    int w = window_width/SCALE;
+    int h = window_height/SCALE;
+    GLFWvidmode vidmode;
+    int screen_mode = GLFW_WINDOW;
     if (fullscreen) {
-        GLFWmonitor* monitor = glfwGetPrimaryMonitor();
-        if (monitor == NULL) {
-            glfwTerminate();
-            fprintf(stderr, "Unable to determine primary monitor\n");
-            exit(EXIT_FAILURE);
-        }
-        const GLFWvidmode *mode = glfwGetVideoMode(monitor);  
-        if (mode == NULL) {
-            glfwTerminate();
-            fprintf(stderr, "Unable to retrieve primary monitor video mode\n");
-            exit(EXIT_FAILURE);
-        }
-        window = glfwCreateWindow(mode->width, mode->height, title, monitor, NULL);
-    } else {
-        int w = init_window_width/SCALE;
-        int h = init_window_height/SCALE;
-        window = glfwCreateWindow(w, h, title, NULL, NULL);
+        screen_mode = GLFW_FULLSCREEN;
     }
-    if (window == NULL) {
+
+    glfwGetDesktopMode(&vidmode);
+    if (!fullscreen) {
+        vidmode.Width = w;
+        vidmode.Height = h;
+    }
+    //glfwOpenWindowHint(GLFW_OPENGL_PROFILE, 0);
+    if (!glfwOpenWindow(vidmode.Width, vidmode.Height, vidmode.RedBits, vidmode.GreenBits, vidmode.BlueBits, 0, 24, 0, screen_mode)) {
         glfwTerminate();
         fprintf(stderr, "Failed to create window\n");
         exit(EXIT_FAILURE);
     }
-    glfwMakeContextCurrent(window);
-
     glfwSwapInterval(lt_vsync ? 1 : 0);
+    glfwSetWindowTitle(title);
     if (lt_show_mouse_cursor) {
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        glfwEnable(GLFW_MOUSE_CURSOR);
     } else {
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+        glfwDisable(GLFW_MOUSE_CURSOR);
     }
 
-    // We need the following so glfwGetFramebufferSize
+    // We need the following so glfwGetWindowSize
     // returns correct results.  No idea why.
     for (int i = 0; i < 5; i++) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glfwSwapBuffers(window);
+        glfwSwapBuffers();
         usleep(100000);
     }
 
-    glfwGetFramebufferSize(window, &framebuffer_width, &framebuffer_height);
-    glfwGetWindowSize(window, &screen_window_width, &screen_window_height);
-    //ltLog("fw = %d, fh = %d, sw = %d, sh = %d", framebuffer_width, framebuffer_height, screen_window_width, screen_window_height);
-    ltLuaResizeWindow(framebuffer_width, framebuffer_height);
-    glfwSetKeyCallback(window, key_handler);
-    glfwSetMouseButtonCallback(window, mouse_button_handler);
-    glfwSetCursorPosCallback(window, mouse_pos_handler);
+    glfwGetWindowSize(&w, &h);
+    //ltLog("w = %d, h = %d", w, h);
+    ltLuaResizeWindow(w, h);
+    glfwSetKeyCallback(key_handler);
+    glfwSetMouseButtonCallback(mouse_button_handler);
+    glfwSetMousePosCallback(mouse_pos_handler);
     if (fullscreen) {
-        glfwSetWindowSizeCallback(window, NULL);
+        glfwSetWindowSizeCallback(NULL);
     } else {
-        glfwSetWindowSizeCallback(window, resize_handler);
+        glfwSetWindowSizeCallback(resize_handler);
     }
 }
 
-static void key_handler(GLFWwindow *win, int key, int scancode, int state, int mods) {
+static void key_handler(int key, int state) {
     LTKey ltkey = convert_key(key);
     if (state == GLFW_PRESS) {
-        if (key == GLFW_KEY_ESCAPE
-            && (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS
-            || glfwGetKey(window, GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS))
+        if (key == GLFW_KEY_ESC
+            && (glfwGetKey(GLFW_KEY_LCTRL) == GLFW_PRESS
+            || glfwGetKey(GLFW_KEY_RCTRL) == GLFW_PRESS))
         {
             lt_quit = true;
         }
         if (key == 'F'
-            && (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS
-            || glfwGetKey(window, GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS))
+            && (glfwGetKey(GLFW_KEY_LCTRL) == GLFW_PRESS
+            || glfwGetKey(GLFW_KEY_RCTRL) == GLFW_PRESS))
         {
             lt_fullscreen = !lt_fullscreen;
         } else {
@@ -275,7 +258,7 @@ static void key_handler(GLFWwindow *win, int key, int scancode, int state, int m
     }
 }
 
-static void mouse_button_handler(GLFWwindow *win, int button, int action, int mods) {
+static void mouse_button_handler(int button, int action) {
     int input = 0;
     switch (button) {
         case GLFW_MOUSE_BUTTON_1: input = 1; break;
@@ -287,8 +270,8 @@ static void mouse_button_handler(GLFWwindow *win, int button, int action, int mo
         case GLFW_MOUSE_BUTTON_7: input = 7; break;
         case GLFW_MOUSE_BUTTON_8: input = 8; break;
     }
-    double x, y;
-    glfwGetCursorPos(window, &x, &y);
+    int x, y;
+    glfwGetMousePos(&x, &y);
     if (action == GLFW_PRESS) {
         ltLuaMouseDown(input, x, y);
     } else {
@@ -296,29 +279,19 @@ static void mouse_button_handler(GLFWwindow *win, int button, int action, int mo
     }
 }
 
-static int to_framebuf_x(double x) {
-    return (x/(double)screen_window_width)*(double)framebuffer_width;
+static void mouse_pos_handler(int x, int y) {
+    ltLuaMouseMove(x, y);
 }
 
-static int to_framebuf_y(double y) {
-    return (y/(double)screen_window_height)*(double)framebuffer_height;
-}
-
-static void mouse_pos_handler(GLFWwindow *win, double x, double y) {
-    ltLuaMouseMove(to_framebuf_x(x), to_framebuf_y(y));
-}
-
-static void resize_handler(GLFWwindow *win, int w, int h) {
-    glfwGetFramebufferSize(win, &framebuffer_width, &framebuffer_height);
-    glfwGetWindowSize(win, &screen_window_width, &screen_window_height);
-    ltLuaResizeWindow(to_framebuf_x(w), to_framebuf_y(h));
+static void resize_handler(int w, int h) {
+    ltLuaResizeWindow(w, h);
 }
 
 static LTKey convert_key(int key) {
     switch(key) {
         case GLFW_KEY_TAB: return LT_KEY_TAB;
         case GLFW_KEY_ENTER: return LT_KEY_ENTER;
-        case GLFW_KEY_ESCAPE: return LT_KEY_ESC;
+        case GLFW_KEY_ESC: return LT_KEY_ESC;
         case GLFW_KEY_SPACE: return LT_KEY_SPACE;
         case '\'': return LT_KEY_APOS;
         case '=': return LT_KEY_PLUS;
@@ -367,7 +340,7 @@ static LTKey convert_key(int key) {
         case 'X': return LT_KEY_X;
         case 'Y': return LT_KEY_Y;
         case 'Z': return LT_KEY_Z;
-        case GLFW_KEY_DELETE: return LT_KEY_DEL;
+        case GLFW_KEY_DEL: return LT_KEY_DEL;
         case GLFW_KEY_BACKSPACE: return LT_KEY_DEL;
         case GLFW_KEY_UP: return LT_KEY_UP;
         case GLFW_KEY_DOWN: return LT_KEY_DOWN;
