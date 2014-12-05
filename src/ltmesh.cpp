@@ -748,6 +748,38 @@ static int set_rgbs(lua_State *L) {
     return 0;
 }
 
+static int set_uvs(lua_State *L) {
+    ltLuaCheckNArgs(L, 2);
+    LTMesh *mesh = lt_expect_LTMesh(L, 1);
+    if (!lua_istable(L, 2)) {
+        return luaL_error(L, "Expecting a table in argument 2");
+    }
+    int len = lua_objlen(L, 2);
+    if (len & 0x1) {
+        return luaL_error(L, "table should have even length (in fact %d)", len);
+    }
+    int size = len / 2;
+    if (size != mesh->size) {
+        mesh->resize_data(size);
+    }
+    LTVertData *ptr = mesh->vdata;
+    for (int i = 1; i <= len; i += 2) {
+        lua_rawgeti(L, 2, i);
+        lua_rawgeti(L, 2, i  + 1);
+        LTfloat u = luaL_checknumber(L, -2);
+        LTfloat v = luaL_checknumber(L, -1);
+        lua_pop(L, 2);
+        ptr->uv.u = u;
+        ptr->uv.v = v;
+        ptr++;
+    }
+
+    mesh->vb_dirty = true;
+    mesh->bb_dirty = true;
+
+    return 0;
+}
+
 #define MAX_INDICES 65000
 
 static int set_indices(lua_State *L) {
@@ -813,6 +845,7 @@ LT_REGISTER_METHOD(LTMesh, Grid, make_grid)
 LT_REGISTER_METHOD(LTMesh, SetXYs, set_xys)
 LT_REGISTER_METHOD(LTMesh, SetXYZs, set_xyzs)
 LT_REGISTER_METHOD(LTMesh, SetRGBs, set_rgbs)
+LT_REGISTER_METHOD(LTMesh, SetUVs, set_uvs)
 LT_REGISTER_METHOD(LTMesh, SetIndices, set_indices)
 LT_REGISTER_METHOD(LTMesh, ComputeNormals, compute_normals)
 LT_REGISTER_METHOD(LTMesh, Print, print_mesh)
