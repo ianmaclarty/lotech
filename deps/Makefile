@@ -510,9 +510,9 @@ libvorbis.a: rebuild
 	cp $(VORBIS_DIR)/libvorbis.a .
 
 libglfw.a: rebuild
-	#cp $(GLFW_DIR)/mingw-prebuilt/libglfw3.a $@
-	cd $(GLFW_DIR) && $(MAKE) mingw
-	cp $(GLFW_DIR)/build/src/libglfw3.a $@
+	cd $(GLFW_DIR) && $(MAKE) \
+		win32-msys
+	cp $(GLFW_DIR)/lib/win32/libglfw.a .
 
 libglew32.a: rebuild
 	cd $(GLEW_DIR) && $(MAKE) \
