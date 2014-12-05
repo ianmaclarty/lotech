@@ -776,6 +776,7 @@ static int set_uvs(lua_State *L) {
 
     mesh->vb_dirty = true;
     mesh->bb_dirty = true;
+    mesh->has_texture_coords = true;
 
     return 0;
 }
@@ -835,8 +836,20 @@ static const LTEnumConstant DrawMode_enum_vals[] = {
     {NULL, 0}
 };
 
+static LTObject *get_texture(LTObject *obj) {
+    return ((LTMesh*)obj)->texture;
+}
+
+static void set_texture(LTObject *obj, LTObject *val) {
+    LTMesh *mesh = (LTMesh*)obj;
+    //LTTexturedNode *old_texture = mesh->texture;
+    LTTexturedNode *new_texture = (LTTexturedNode*)val;
+    mesh->texture = new_texture;
+}
+
 LT_REGISTER_TYPE(LTMesh, "lt.Mesh", "lt.SceneNode")
 LT_REGISTER_FIELD_ENUM(LTMesh, draw_mode, LTDrawMode, DrawMode_enum_vals)
+LT_REGISTER_PROPERTY_OBJ(LTMesh, texture, LTTexturedNode, get_texture, set_texture);
 LT_REGISTER_METHOD(LTMesh, Clone, clone_mesh)
 LT_REGISTER_METHOD(LTMesh, Stretch, stretch_mesh)
 LT_REGISTER_METHOD(LTMesh, Shift, shift_mesh)
