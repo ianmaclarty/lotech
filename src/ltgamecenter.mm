@@ -85,16 +85,22 @@ void ltIOSInitGameCenter() {
     BOOL osVersionSupported = ([currSysVer compare:reqSysVer options:NSNumericSearch] != NSOrderedAscending);
  
     if (!(gcClass && osVersionSupported)) {
+        ltLog("gamecenter not supported");
         return;
     }
 
+    ltLog("gamecenter supported");
     game_center_supported = true;
 
     [[GKLocalPlayer localPlayer] authenticateWithCompletionHandler:^(NSError *error) {
         if (error == nil) {
             game_center_available = true;
+            ltLog("gamecenter initialisation ok");
             ltLuaGameCenterBecameAvailable();
         } else {
+            NSString *description = error.localizedDescription;
+            NSString *reason = error.localizedFailureReason;
+            ltLog("gamecenter initialisation failed: %s (%s)", description.UTF8String, reason.UTF8String);
             game_center_available = false;
         }
     }];

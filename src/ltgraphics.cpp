@@ -348,6 +348,7 @@ LTDisplayOrientation ltGetDisplayOrientation() {
 }
 
 void ltResizeScreen(int width, int height) {
+    //ltLog("resizing %dx%d", width, height);
     ltSetScreenSize(width, height);
 }
 
