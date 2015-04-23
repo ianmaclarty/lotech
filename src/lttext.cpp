@@ -17,7 +17,7 @@ static bool transparent_column(LTImageBuffer *buf, int col) {
     return true;
 }
 
-static LTImageBuffer *create_glyph(LTImageBuffer *buf, int start_col, int end_col, char chr) {
+static LTImageBuffer *create_glyph(LTImageBuffer *buf, int start_col, int end_col, char *glyph_str) {
     LTImageBuffer *glyph = new LTImageBuffer(buf->name);
     glyph->scaling = buf->scaling;
     int w = end_col - start_col + 1;
@@ -30,7 +30,7 @@ static LTImageBuffer *create_glyph(LTImageBuffer *buf, int start_col, int end_co
     glyph->bb_right = w - 1;
     glyph->bb_bottom = 0;
     glyph->is_glyph = true;
-    glyph->glyph_char = chr;
+    strcpy(glyph->glyph_str, glyph_str);
     LTpixel *pxls = new LTpixel[w * h];
     glyph->bb_pixels = pxls;
     LTpixel *src_ptr = buf->bb_pixels + start_col;
@@ -50,13 +50,28 @@ std::list<LTImageBuffer *> *ltImageBufferToGlyphs(LTImageBuffer *buf, const char
     int glyph_start = 0;
     int glyph_end = 0;
     int num_cols = buf->bb_width();
-    const char *chr = glyph_chars;
-    while (*chr != '\0' && col < num_cols) {
+    unsigned char *chr = (unsigned char*)glyph_chars;
+    unsigned char str[10];
+    while (*chr != 0 && col < num_cols) {
         while (col < num_cols && !transparent_column(buf, col)) {
             col++;
         }
         glyph_end = col - 1;
-        LTImageBuffer *glyph = create_glyph(buf, glyph_start, glyph_end, *chr);
+        if (*chr < 128) {
+            str[0] = *chr;
+            str[1] = 0;
+        } else {
+            memset(str, 0, 10);
+            str[0] = *chr;
+            chr++;
+            int i = 1;
+            while (i < 10 && *chr != 0 && (*chr >> 6) == 2) {
+                str[i++] = *chr;
+                chr++;
+            }
+            chr--;
+        }
+        LTImageBuffer *glyph = create_glyph(buf, glyph_start, glyph_end, (char*)str);
         glyphs->push_back(glyph);
         while (col < num_cols && transparent_column(buf, col)) {
             col++;

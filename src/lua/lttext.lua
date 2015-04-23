@@ -18,8 +18,8 @@ function lt.Text(str, font, halign, valign)
     local i = 1
     local len = str:len()
     while i <= len do
-        local chr = str:sub(i, i)
-        local kernpair = kerntable and str:sub(i, i + 1)
+        local chr = lt.read_utf8_char(str, i)
+        local kernpair = kerntable and chr..lt.read_utf8_char(str, i+1)
         if chr == "\n" then
             line.width = x - gap
             line = lt.Layer()
@@ -28,7 +28,7 @@ function lt.Text(str, font, halign, valign)
             x = 0
         elseif chr == "\\" then
             i = i + 1
-            chr = str:sub(i, i)
+            chr = lt.read_utf8_char(str, i)
             if chr == "+" then
                 scale = scale + 0.1
             elseif chr == "-" then
@@ -52,7 +52,11 @@ function lt.Text(str, font, halign, valign)
             end
             x = x + scale * dx
         end
-        i = i + 1
+        if chr then
+            i = i + #chr
+        else
+            break
+        end
     end
     line.width = x - gap
 

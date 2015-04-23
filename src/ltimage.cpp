@@ -54,7 +54,7 @@ LTImageBuffer::LTImageBuffer(const char *name) {
     LTImageBuffer::name = new char[strlen(name) + 1];
     strcpy(LTImageBuffer::name, name);
     is_glyph = false;
-    glyph_char = '\0';
+    glyph_str[0] = '\0';
     scaling = 1.0f;
     bb_pixels = NULL;
 }

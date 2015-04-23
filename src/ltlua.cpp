@@ -883,11 +883,8 @@ static void add_packer_images_to_lua_table(lua_State *L, int w, int h, LTImagePa
                 lua_setfield(L, -3, name);
             }
             // Font table now on top of stack.
-            char glyph_name[2];
-            glyph_name[0] = packer->occupant->glyph_char;
-            glyph_name[1] = '\0';
             new (lt_alloc_LTImage(L)) LTImage(atlas, w, h, packer);
-            lua_setfield(L, -2, glyph_name);
+            lua_setfield(L, -2, packer->occupant->glyph_str);
             lua_pop(L, 1); // Pop font table.
         }
         add_packer_images_to_lua_table(L, w, h, packer->lo_child, atlas);
@@ -2084,6 +2081,35 @@ static int lt_SetAppShortName(lua_State *L) {
     return 0;
 }
 
+/************************ UTF8 *****************************/
+
+static int read_utf8_char(lua_State *L) {
+    ltLuaCheckNArgs(L, 2);
+    const char *instr = luaL_checkstring(L, 1);
+    int pos = luaL_checkinteger(L, 2);
+    int len = strlen(instr);
+    if (pos > len || pos < 1) {
+        lua_pushnil(L);
+        return 1;
+    }
+    unsigned char *chr = (unsigned char*)&instr[pos-1];
+    unsigned char str[10];
+    memset(str, 0, 10);
+    if (*chr < 128) {
+        str[0] = *chr;
+    } else {
+        str[0] = *chr;
+        chr++;
+        int i = 1;
+        while (i < 10 && *chr != 0 && (*chr >> 6) == 2) {
+            str[i++] = *chr;
+            chr++;
+        }
+    }
+    lua_pushstring(L, (const char*)str);
+    return 1;
+}
+
 /************************ Logging *****************************/
 
 static int log(lua_State *L) {
@@ -2367,6 +2393,8 @@ static const luaL_Reg ltlib[] = {
 
     {"FromJSON",                        ltLuaParseJSON},
     {"ToJSON",                          ltLuaToJSON},
+
+    {"read_utf8_char",                  read_utf8_char},
     {NULL, NULL}
 };
 
