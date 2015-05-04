@@ -33,6 +33,8 @@ function lt.Text(str, font, halign, valign)
                 scale = scale + 0.1
             elseif chr == "-" then
                 scale = scale - 0.1
+            else
+                i = i - 1
             end
         else
             local img = font[chr] or font[string.upper(chr)] or font[string.lower(chr)]
