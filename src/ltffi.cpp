@@ -49,7 +49,6 @@ static void init_core_modules() {
         ltlighting_init();
         ltinput_init();
         ltjson_init();
-        lthttp_init();
         init_done = true;
     }
 }

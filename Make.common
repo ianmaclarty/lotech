@@ -64,7 +64,7 @@ VORBIS=vorbis
 #ISDK=/Developer/Platforms/iPhoneOS.platform/Developer
 #ISDKVER=iPhoneOS4.3.sdk
 ISDK=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer
-ISDKVER=iPhoneOS8.2.sdk
+ISDKVER=iPhoneOS8.4.sdk
 # XXX With the iOS 7 SDK the C compiler (gcc/clang) is in a separate directory
 # to the rest of the toolchain (e.g. ar, ld, etc). You need to create a gcc
 # symbolic link in the following directory for the build to work.
@@ -75,8 +75,8 @@ ISDK:=$(subst iPhoneOS,iPhoneSimulator,$(ISDK))
 ISDKVER:=$(subst iPhoneOS,iPhoneSimulator,$(ISDKVER))
 endif
 
-IOS_ARMv6_OPTS=-arch armv6 -mno-thumb -mfloat-abi=softfp -mfpu=vfp
-IOS_ARMv7_OPTS=-arch armv7 -mfloat-abi=softfp -mcpu=cortex-a8
+IOS_ARMv7_OPTS=-arch armv7 -miphoneos-version-min=4.3 -DLTGAMECENTER
+IOS_ARM64_OPTS=-arch arm64 -miphoneos-version-min=4.3 -DLTGAMECENTER
 #ARMv7_OPTS=-arch armv7 -mfloat-abi=softfp -mfpu=vfp
 #ARMv7_OPTS=-arch armv7 -mfloat-abi=softfp -mcpu=cortex-a8
 #IOS_CC=gcc

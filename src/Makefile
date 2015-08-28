@@ -30,11 +30,11 @@ AR=$(CROSS)ar rcus
 
 $(CPP_O_FILES): $(OUT_DIR)/%.o: %.cpp lt*.h
 	@echo CPP   `basename $@`
-	@$(GPP) $(GPP_FLAGS) -c $< -o $@
+	$(GPP) $(GPP_FLAGS) -c $< -o $@
 
 $(MM_O_FILES): $(OUT_DIR)/%.o: %.mm *.h
 	@echo MM   `basename $@`
-	@$(GPP) -std=c++0x -ObjC++ $(GPP_FLAGS) -c $< -o $@
+	$(GPP) -std=c++0x -ObjC++ $(GPP_FLAGS) -c $< -o $@
 
 $(OUT_DIR)/liblt.a: $(O_FILES)
 	@echo AR $@

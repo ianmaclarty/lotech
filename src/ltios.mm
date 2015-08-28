@@ -9,6 +9,9 @@
 #import <AudioToolbox/AudioServices.h>
 #import <CoreMotion/CoreMotion.h>
 
+#define MAX_TOUCHES 10
+static UITouch *active_touches[MAX_TOUCHES];
+
 int ltIOSMain(int argc, char *argv[])
 {
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
@@ -21,9 +24,6 @@ int ltIOSMain(int argc, char *argv[])
 @class LTView;
 static LTViewController *lt_view_controller = nil;
 static LTView *lt_view = nil;
-
-// The following is required for converting UITouch objects to input_ids.
-ct_assert(sizeof(UITouch*) == sizeof(int));
 
 static void set_audio_category() {
     UInt32 category = kAudioSessionCategory_AmbientSound;
@@ -41,7 +41,38 @@ static void audio_interrupt(void *ud, UInt32 state) {
     }
 }
 
+static void init_touches() {
+    for (int i = 0; i < MAX_TOUCHES; i++) {
+        active_touches[i] = NULL;
+    }
+}
+
+static int lookup_touch(UITouch *touch) {
+    for (int i = 0; i < MAX_TOUCHES; i++) {
+        if (active_touches[i] == touch) return i;
+    }
+    return -1;
+}
+
+static void begin_touch(UITouch *touch) {
+    for (int i = 0; i < MAX_TOUCHES; i++) {
+        if (active_touches[i] == NULL) {
+            active_touches[i] = touch;
+            return;
+        }
+    }
+}
+
+static void end_touch(UITouch *touch) {
+    for (int i = 0; i < MAX_TOUCHES; i++) {
+        if (active_touches[i] == touch) {
+            active_touches[i] = NULL;
+        }
+    }
+}
+
 void ltIOSInit() {
+    init_touches();
     // Turn off orientation change animations initially
     // to avoid an orientation change animation after loading.
     [UIView setAnimationsEnabled:NO];
@@ -133,8 +164,9 @@ void ltIOSTouchesBegan(NSSet *touches) {
     NSEnumerator *e = [touches objectEnumerator];
     UITouch *touch;
     while ((touch = [e nextObject])) {
+        begin_touch(touch);
         CGPoint pos = [touch locationInView:touch.view];
-        ltLuaTouchDown((int)touch, pos.x, pos.y);
+        ltLuaTouchDown(lookup_touch(touch), pos.x, pos.y);
     }
 }
 
@@ -143,7 +175,7 @@ void ltIOSTouchesMoved(NSSet *touches) {
     UITouch *touch;
     while ((touch = [e nextObject])) {
         CGPoint pos = [touch locationInView:touch.view];
-        ltLuaTouchMove((int)touch, pos.x, pos.y);
+        ltLuaTouchMove(lookup_touch(touch), pos.x, pos.y);
     }
 }
 
@@ -152,7 +184,8 @@ void ltIOSTouchesEnded(NSSet *touches) {
     UITouch *touch;
     while ((touch = [e nextObject])) {
         CGPoint pos = [touch locationInView:touch.view];
-        ltLuaTouchUp((int)touch, pos.x, pos.y);
+        ltLuaTouchUp(lookup_touch(touch), pos.x, pos.y);
+        end_touch(touch);
     }
 }
 
@@ -422,16 +455,6 @@ static bool has_rotated = false;
 
 static BOOL handle_orientation(UIInterfaceOrientation orientation) {
     BOOL res = NO;
-    switch (orientation) {
-        case UIInterfaceOrientationPortrait:
-            break;
-        case UIInterfaceOrientationPortraitUpsideDown:
-            break;
-        case UIInterfaceOrientationLandscapeRight:
-            break;
-        case UIInterfaceOrientationLandscapeLeft:
-            break;
-    }
     if (has_rotated && motionManager != nil && frames_since_disable_animations > 60) {
         // Prevent screen rotation if using motion input.
         return orientation == last_orientation;
@@ -616,6 +639,8 @@ void ltIOSSampleAccelerometer(LTdouble *x, LTdouble *y, LTdouble *z) {
             case UIInterfaceOrientationLandscapeRight:
                 *x = -accel.y;
                 *y = accel.x;
+                break;
+            case UIInterfaceOrientationUnknown:
                 break;
         }
     } else {

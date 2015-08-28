@@ -1,6 +1,7 @@
 /* Copyright (C) 2010-2013 Ian MacLarty. See Copyright Notice in lt.h. */
 #include "lt.h"
 
+#ifndef LTIOS
 LT_INIT_IMPL(lthttp)
 
 LTHTTPRequest::LTHTTPRequest() {
@@ -213,3 +214,5 @@ LT_REGISTER_PROPERTY_BOOL_NOCONS(LTHTTPRequest, success, get_success, NULL)
 LT_REGISTER_PROPERTY_BOOL_NOCONS(LTHTTPRequest, failure, get_failure, NULL)
 LT_REGISTER_PROPERTY_STRING_NOCONS(LTHTTPRequest, response, get_response, NULL)
 LT_REGISTER_PROPERTY_STRING_NOCONS(LTHTTPRequest, error, get_error, NULL)
+
+#endif

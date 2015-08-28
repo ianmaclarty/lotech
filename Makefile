@@ -47,23 +47,21 @@ ifeq ($(TARGET_PLATFORM),ios)
 
 .PHONY: $(TARGET_DIR)/liblt.a
 $(TARGET_DIR)/liblt.a: headers | $(TARGET_DIR)
-	mkdir -p buildtmp.ios.armv6
 	mkdir -p buildtmp.ios.armv7
+	mkdir -p buildtmp.ios.arm64
 	cd src && $(MAKE) \
-		CROSS=$(ISDKP)/ \
 		LTCPP=$(IOS_CPP) \
-		TARGET_FLAGS="$(IOS_ARMv6_OPTS) -isysroot $(ISDK)/SDKs/$(ISDKVER) -mno-thumb" \
-		OUT_DIR=$(PWD)/buildtmp.ios.armv6 \
-		LTCFLAGS="$(LTCFLAGS) $(OBJC_FLAGS)" \
-		all
-	cd src && $(MAKE) \
-		CROSS=$(ISDKP) \
-		LTCPP=$(IOS_CPP) \
-		TARGET_FLAGS="$(IOS_ARMv7_OPTS) -isysroot $(ISDK)/SDKs/$(ISDKVER) -mno-thumb" \
+		TARGET_FLAGS="$(IOS_ARMv7_OPTS) -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
 		OUT_DIR=$(PWD)/buildtmp.ios.armv7 \
 		LTCFLAGS="$(LTCFLAGS) $(OBJC_FLAGS)" \
 		all
-	lipo -create buildtmp.ios.armv6/liblt.a buildtmp.ios.armv7/liblt.a -output $@
+	cd src && $(MAKE) \
+		LTCPP=$(IOS_CPP) \
+		TARGET_FLAGS="$(IOS_ARM64_OPTS) -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
+		OUT_DIR=$(PWD)/buildtmp.ios.arm64 \
+		LTCFLAGS="$(LTCFLAGS) $(OBJC_FLAGS)" \
+		all
+	lipo -create buildtmp.ios.armv7/liblt.a buildtmp.ios.arm64/liblt.a -output $@
 endif
 
 ############################ iPhone Simulator Target ##############################

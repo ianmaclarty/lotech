@@ -154,9 +154,11 @@ extern "C" {
 #include <GL/glfw.h>
 #endif
 
+#ifndef LTIOS
 // Curl
 #define CURL_STATICLIB 1
 #include <curl/curl.h>
+#endif
 
 #if defined(LTDEVMODE) && (defined(LTOSX) || defined(LTLINUX) || defined(LTMINGW))
 #define LTMEMTRACK 1

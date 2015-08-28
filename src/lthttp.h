@@ -1,6 +1,7 @@
 /* Copyright (C) 2013 Ian MacLarty. See Copyright Notice in lt.h. */
 LT_INIT_DECL(lthttp)
 
+#ifndef LTIOS
 struct LTHTTPRequest : LTObject {
     LTHTTPRequest();
     virtual ~LTHTTPRequest();
@@ -25,3 +26,4 @@ struct LTHTTPRequest : LTObject {
     void poll();
     void cancel();
 };
+#endif
