@@ -1,5 +1,8 @@
 # Lotech
 
+NOTE: this project is no longer being developed.
+Please see https://github.com/ianmaclarty/amulet for its replacement.
+
 A game framework suitable for small-scope games and experimentation.
 
 Runs on Linux, Windows (MinGW), Mac OS X, Android, iOS
