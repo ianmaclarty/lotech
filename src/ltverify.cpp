@@ -17,6 +17,7 @@ LTSHA1Digest   lt_verify_digest  = LTVERIFYDIGEST;
 int            lt_verify_secret[] = LTVERIFYSECRET;
 
 void ltDoVerify() {
+/*
     if (lt_verify_modules == NULL || lt_verify_modules[0] == NULL) return;
 
     int n = 0;
@@ -53,6 +54,8 @@ void ltDoVerify() {
 #endif
         lt_verify_secret[0]++;
     }
+*/
+        lt_verify_secret[0]++;
 }
 
 char *ltSecret(const char *txt) {

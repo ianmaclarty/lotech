@@ -20,6 +20,10 @@ int ltIOSMain(int argc, char *argv[])
     return retVal;
 }
 
+int main(int argc, char *argv[]) {
+    return ltIOSMain(argc, argv);
+}
+
 @class LTViewController;
 @class LTView;
 static LTViewController *lt_view_controller = nil;

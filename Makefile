@@ -71,9 +71,8 @@ ifeq ($(TARGET_PLATFORM),iossim)
 $(TARGET_DIR)/liblt.a: headers | $(TARGET_DIR)
 	mkdir -p buildtmp.iossim
 	cd src && $(MAKE) \
-		CROSS=$(ISDKP)/ \
 		LTCPP=$(IOS_CPP) \
-		TARGET_FLAGS="-arch i386 -isysroot $(ISDK)/SDKs/$(ISDKVER) -mno-thumb" \
+		TARGET_FLAGS="-arch x86_64 -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
 		OUT_DIR=$(PWD)/buildtmp.iossim \
 		LTCFLAGS="$(LTCFLAGS) $(OBJC_FLAGS)" \
 		all

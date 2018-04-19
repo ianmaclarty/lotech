@@ -2,7 +2,7 @@ all: liblua.a
 
 VPATH=src
 
-LUA_C_FILES:=$(shell find src -name "*.c" -exec basename \{\} \;)
+LUA_C_FILES:=$(shell find src -name "*.c" -exec basename \{\} \; | grep -v "lua\.c" | grep -v "luac\.c")
 LUA_O_FILES:=$(patsubst %.c,%.o,$(LUA_C_FILES))
 
 ifndef LTCC
