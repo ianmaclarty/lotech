@@ -6,7 +6,7 @@
         >
 
     <!-- This is the platform API where NativeActivity was introduced. -->
-    <uses-sdk android:minSdkVersion="10" />
+    <uses-sdk android:minSdkVersion="16" />
 
     <application android:label="APPNAME"
         android:icon="@drawable/icon"

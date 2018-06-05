@@ -229,58 +229,64 @@ liblua.a: rebuild
 #		clean all
 #	cp $(LUAJIT_DIR)/src/libluajit.a $@
 	cd $(LUA_DIR) && $(MAKE) -f Makefile.custom \
-		CROSS=$(NDKP) \
-		TARGET_FLAGS="--sysroot $(NDKSYSROOT) -marm" \
+		CC=$(CC) \
+		AR=$(AR) \
+		TARGET_FLAGS="$(NDKCFLAGS)" \
 		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(LUA_DIR)/liblua.a $@
 
 libbox2d.a: rebuild
 	cd $(BOX2D_DIR) && $(MAKE) \
-		CROSS=$(NDKP) \
-		TARGET_FLAGS="$(NDKSTL) --sysroot $(NDKSYSROOT) -marm" \
+		CPP=$(CPP) \
+		AR=$(AR) \
+		TARGET_FLAGS="$(NDKSTL) $(NDKCFLAGS)" \
 		clean all
 	cp $(BOX2D_DIR)/libbox2d.a .
 
 libz.a: rebuild
 	cd $(ZLIB_DIR) && $(MAKE) \
-		CROSS=$(NDKP) \
-		TARGET_FLAGS="--sysroot $(NDKSYSROOT) -marm" \
+		CC=$(CC) \
+		AR=$(AR) \
+		TARGET_FLAGS="$(NDKCFLAGS)" \
 		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(ZLIB_DIR)/libz.a .
 
 libpng.a: rebuild
 	cd $(LIBPNG_DIR) && $(MAKE) \
-		CROSS=$(NDKP) \
-		TARGET_FLAGS="--sysroot $(NDKSYSROOT) -marm" \
+		CC=$(CC) \
+		AR=$(AR) \
+		TARGET_FLAGS="$(NDKCFLAGS)" \
 		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(LIBPNG_DIR)/libpng.a .
 
 libft2.a: rebuild
 	cd $(FREETYPE_DIR) && $(MAKE) \
-		CROSS=$(NDKP) \
-		TARGET_FLAGS="--sysroot $(NDKSYSROOT) -marm" \
+		CC=$(CC) \
+		AR=$(AR) \
+		TARGET_FLAGS="$(NDKCFLAGS)" \
 		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(FREETYPE_DIR)/libft2.a .
 
 libvorbis.a: rebuild
 	cd $(VORBIS_DIR) && $(MAKE) \
-		CROSS=$(NDKP) \
-		TARGET_FLAGS="--sysroot $(NDKSYSROOT) -marm" \
+		CC=$(CC) \
+		AR=$(AR) \
+		TARGET_FLAGS="$(NDKCFLAGS)" \
 		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(VORBIS_DIR)/libvorbis.a .
 
-libcurl.a: rebuild
-	cd $(CURL_DIR) && $(MAKE) \
-		CROSS=$(NDKP) \
-		TARGET_FLAGS="--sysroot $(NDKSYSROOT) -marm" \
-		LTCFLAGS="$(LTCFLAGS)" \
-		clean all
-	cp $(CURL_DIR)/libcurl.a libcurl.a
+#libcurl.a: rebuild
+#	cd $(CURL_DIR) && $(MAKE) \
+#		CROSS=$(NDKP) \
+#		TARGET_FLAGS="--sysroot $(NDKSYSROOT) -marm" \
+#		LTCFLAGS="$(LTCFLAGS)" \
+#		clean all
+#	cp $(CURL_DIR)/libcurl.a libcurl.a
 
 #libopenal.a: rebuild.openal
 #	cd openal-android && $(MAKE) \

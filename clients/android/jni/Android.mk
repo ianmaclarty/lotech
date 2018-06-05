@@ -31,11 +31,6 @@ LOCAL_SRC_FILES := ../../../android/libvorbis.a
 include $(PREBUILT_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := libcurl-prebuilt
-LOCAL_SRC_FILES := ../../../android/libcurl.a
-include $(PREBUILT_STATIC_LIBRARY)
-
-include $(CLEAR_VARS)
 LOCAL_MODULE := libft2-prebuilt
 LOCAL_SRC_FILES := ../../../android/libft2.a
 include $(PREBUILT_STATIC_LIBRARY)
@@ -51,7 +46,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := ltandroid
 LOCAL_SRC_FILES := ltandroid.cpp
 #LOCAL_STATIC_LIBRARIES := android_native_app_glue liblt-prebuilt libpng-prebuilt libz-prebuilt liblua-prebuilt libopenal-prebuilt libbox2d-prebuilt
-LOCAL_STATIC_LIBRARIES := android_native_app_glue liblt-prebuilt libpng-prebuilt libz-prebuilt liblua-prebuilt libbox2d-prebuilt libvorbis-prebuilt libcurl-prebuilt libft2-prebuilt libopenal-prebuilt
+LOCAL_STATIC_LIBRARIES := android_native_app_glue liblt-prebuilt libpng-prebuilt libz-prebuilt liblua-prebuilt libbox2d-prebuilt libvorbis-prebuilt libft2-prebuilt libopenal-prebuilt
 LOCAL_C_INCLUDES := ../../../android/include
 LOCAL_CFLAGS := -DLTDEVMODE -DLTANDROID -DLTDEPTHBUF
 LOCAL_LDLIBS := -llog -landroid -lEGL -lGLESv1_CM -lOpenSLES

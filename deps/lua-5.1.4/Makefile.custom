@@ -5,21 +5,15 @@ VPATH=src
 LUA_C_FILES:=$(shell find src -name "*.c" -exec basename \{\} \; | grep -v "lua\.c" | grep -v "luac\.c")
 LUA_O_FILES:=$(patsubst %.c,%.o,$(LUA_C_FILES))
 
-ifndef LTCC
-LTCC=gcc
-endif
-
-GCC_FLAGS=-I. $(LTCFLAGS) $(TARGET_FLAGS)
-GCC=$(CROSS)$(LTCC)
-AR=$(CROSS)ar rcus
+CC_FLAGS=-I. $(LTCFLAGS) $(TARGET_FLAGS)
 
 $(LUA_O_FILES): %.o: %.c
 	@echo C $@
-	@$(GCC) $(GCC_FLAGS) -c $<
+	@$(CC) $(CC_FLAGS) -c $<
 
 liblua.a: $(LUA_O_FILES)
 	@echo AR $@
-	@$(AR) $@ $^
+	@$(AR) rcus $@ $^
 
 .PHONY: clean
 clean:

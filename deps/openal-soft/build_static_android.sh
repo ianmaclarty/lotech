@@ -1,5 +1,8 @@
 #!/bin/sh
-PATH=/Users/ian/muheyo/android-ndk-r7/toolchains/arm-linux-androideabi-4.4.3/prebuilt/darwin-x86/bin:$PATH
+PATH=$NDK_HOME/toolchains/llvm/prebuilt/$NDK_HOST/bin:$PATH
+CC=$NDK_HOME/toolchains/llvm/prebuilt/$NDK_HOST/bin/clang
+CPP=$NDK_HOME/toolchains/llvm/prebuilt/$NDK_HOST/bin/clang++
+CXX=$CPP
 mkdir -p build
 rm -rf build/*
 cd build

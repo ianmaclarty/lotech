@@ -222,12 +222,12 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
         case APP_CMD_TERM_WINDOW:
             ltLog("APP_CMD_TERM_WINDOW");
             // The window is being hidden or closed, clean it up.
-            engine_term_display(engine);
+            //engine_term_display(engine);
             // Quit the app. We will need to restart anyway when we
             // re-initialise the display. Do a hard restart
             // seems to be more reliable the re-initializing
             // with an already running app.
-            quit(app);
+            //quit(app);
             break;
         case APP_CMD_GAINED_FOCUS:
             ltLog("APP_CMD_GAINED_FOCUS");

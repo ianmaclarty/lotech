@@ -85,12 +85,17 @@ IOS_CPP=clang++
 
 # Android settings
 
-NDK=$(HOME)/muheyo/android-ndk-r7
-NDKABI=9
-NDKVER=$(NDK)/toolchains/arm-linux-androideabi-4.4.3
-NDKP=$(NDKVER)/prebuilt/darwin-x86/bin/arm-linux-androideabi-
-NDKSYSROOT=$(NDK)/platforms/android-$(NDKABI)/arch-arm
-NDKSTL=-I$(NDK)/sources/cxx-stl/gnu-libstdc++/include -I$(NDK)/sources/cxx-stl/gnu-libstdc++/libs/armeabi/include
+NDK_VER=$(NDK_HOME)/toolchains/arm-linux-androideabi-4.9
+NDK_SYSROOT=$(NDK_HOME)/platforms/android-$(NDK_ANDROID_VER)/arch-arm
+CC=$(NDK_HOME)/toolchains/llvm/prebuilt/$(NDK_HOST)/bin/clang
+CPP=$(NDK_HOME)/toolchains/llvm/prebuilt/$(NDK_HOST)/bin/clang++
+AR=$(NDK_VER)/prebuilt/$(NDK_HOST)/bin/arm-linux-androideabi-ar
+NDKCFLAGS=--sysroot $(NDK_SYSROOT) -gcc-toolchain $(NDK_VER)/prebuilt/$(NDK_HOST) -fpic \
+        -target armv7-none-linux-androideabi -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16 -fno-exceptions -fno-rtti \
+        -I$(NDK_SYSROOT)usr/include
+NDKSTL=-I$(NDK_HOME)/sources/android/native_app_glue -I$(NDK_HOME)/sources/cxx-stl/gnu-libstdc++/4.9/include \
+    -I$(NDK_HOME)/sources/cxx-stl/gnu-libstdc++/4.9/libs/armeabi-v7a/include \
+    -I$(NDK_HOME)/sources/cxx-stl/gnu-libstdc++/4.9/include/backward
 
 # Tizen settings
 

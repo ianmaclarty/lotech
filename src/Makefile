@@ -19,26 +19,20 @@ ifeq ($(TARGET_PLATFORM),osx)
 O_FILES+=$(MM_O_FILES)
 endif
 
-ifndef LTCPP
-LTCPP=g++
-endif
-
 INCLUDE_FLAGS=-I. -I../$(TARGET_PLATFORM)/include
-GPP_FLAGS= $(INCLUDE_FLAGS) $(LTCFLAGS) -DLTDEPTHBUF $(TARGET_FLAGS) -Wall
-GPP=$(CROSS)$(LTCPP)
-AR=$(CROSS)ar rcus
+CPP_FLAGS= $(INCLUDE_FLAGS) $(LTCFLAGS) -DLTDEPTHBUF $(TARGET_FLAGS) -Wall
 
 $(CPP_O_FILES): $(OUT_DIR)/%.o: %.cpp lt*.h
 	@echo CPP   `basename $@`
-	$(GPP) $(GPP_FLAGS) -c $< -o $@
+	$(CPP) $(CPP_FLAGS) -c $< -o $@
 
 $(MM_O_FILES): $(OUT_DIR)/%.o: %.mm *.h
 	@echo MM   `basename $@`
-	$(GPP) -std=c++0x -ObjC++ $(GPP_FLAGS) -c $< -o $@
+	$(CPP) -std=c++0x -ObjC++ $(CPP_FLAGS) -c $< -o $@
 
 $(OUT_DIR)/liblt.a: $(O_FILES)
 	@echo AR $@
-	@$(AR) $@ $^
+	@$(AR) rcus $@ $^
 
 $(OUT_DIR)/ltlua.o: lua_scripts.h
 

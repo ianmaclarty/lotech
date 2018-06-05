@@ -81,14 +81,13 @@ endif
 
 ############################ Android Target ##############################
 ifeq ($(TARGET_PLATFORM),android)
-LTCFLAGS+=-mno-thumb
 
 .PHONY: $(TARGET_DIR)/liblt.a
 $(TARGET_DIR)/liblt.a: headers | $(TARGET_DIR)
 	mkdir -p buildtmp.android
 	cd src && $(MAKE) \
 		CROSS=$(NDKP) \
-		TARGET_FLAGS="$(NDKSTL) --sysroot $(NDKSYSROOT)" \
+		TARGET_FLAGS="$(NDKSTL) $(NDKCFLAGS)" \
 		OUT_DIR=$(PWD)/buildtmp.android \
 		LTCFLAGS="$(LTCFLAGS)" \
 		all

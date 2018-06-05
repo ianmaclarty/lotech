@@ -1,7 +1,7 @@
 /* Copyright (C) 2013 Ian MacLarty. See Copyright Notice in lt.h. */
 LT_INIT_DECL(lthttp)
 
-#ifndef LTIOS
+#if !defined(LTIOS) && !defined(LTANDROID)
 struct LTHTTPRequest : LTObject {
     LTHTTPRequest();
     virtual ~LTHTTPRequest();

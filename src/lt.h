@@ -154,7 +154,7 @@ extern "C" {
 #include <GL/glfw.h>
 #endif
 
-#ifndef LTIOS
+#if !defined(LTIOS) && !defined(LTANDROID)
 // Curl
 #define CURL_STATICLIB 1
 #include <curl/curl.h>

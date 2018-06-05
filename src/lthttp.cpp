@@ -1,7 +1,7 @@
 /* Copyright (C) 2010-2013 Ian MacLarty. See Copyright Notice in lt.h. */
 #include "lt.h"
 
-#ifndef LTIOS
+#if !defined(LTIOS) && !defined(LTANDROID)
 LT_INIT_IMPL(lthttp)
 
 LTHTTPRequest::LTHTTPRequest() {

@@ -1,12 +1,13 @@
 #!/bin/sh
+set -x
 orig=$1
-mkdir -p res/drawable-ldpi
 mkdir -p res/drawable-mdpi
 mkdir -p res/drawable-hdpi
 mkdir -p res/drawable-xhdpi
 mkdir -p res/drawable-xxhdpi
-convert $orig -resize 36x36 res/drawable-ldpi/icon.png || exit 1
-convert $orig -resize 48x48 res/drawable-mdpi/icon.png || exit 1
-convert $orig -resize 72x72 res/drawable-hdpi/icon.png || exit 1
-convert $orig -resize 96x96 res/drawable-xhdpi/icon.png || exit 1
-convert $orig -resize 144x144 res/drawable-xxhdpi/icon.png || exit 1
+mkdir -p res/drawable-xxxhdpi
+sips -z 48 48     $orig --out res/drawable-mdpi/icon.png
+sips -z 72 72     $orig --out res/drawable-hdpi/icon.png
+sips -z 96 96     $orig --out res/drawable-xhdpi/icon.png
+sips -z 144 144   $orig --out res/drawable-xxhdpi/icon.png
+sips -z 192 192   $orig --out res/drawable-xxxhdpi/icon.png

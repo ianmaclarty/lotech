@@ -3,8 +3,8 @@ SET(CMAKE_SYSTEM_NAME Linux)  # Tell CMake we're cross-compiling
 # Prefix detection only works with compiler id "GNU"
 # CMake will look for prefixed g++, cpp, ld, etc. automatically
 #CMAKE_FORCE_C_COMPILER(arm-linux-androideabi-gcc GNU)
-set(CMAKE_C_COMPILER   "arm-linux-androideabi-gcc"     CACHE PATH "gcc" FORCE)
-set(CMAKE_CXX_COMPILER "arm-linux-androideabi-g++"     CACHE PATH "g++" FORCE)
+set(CMAKE_C_COMPILER   "clang"     CACHE PATH "clang" FORCE)
+set(CMAKE_CXX_COMPILER "clang++"     CACHE PATH "clang++" FORCE)
 set(CMAKE_AR           "arm-linux-androideabi-ar"      CACHE PATH "archive" FORCE)
 set(CMAKE_LINKER       "arm-linux-androideabi-ld"      CACHE PATH "linker" FORCE)
 set(CMAKE_NM           "arm-linux-androideabi-nm"      CACHE PATH "nm" FORCE)

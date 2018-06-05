@@ -21,21 +21,15 @@ C_FILES:=	\
 
 O_FILES:=$(patsubst %.c,%.o,$(C_FILES))
 
-ifndef LTCC
-LTCC=gcc
-endif
-
-GCC_FLAGS=-Iinclude -I. $(LTCFLAGS) $(TARGET_FLAGS) -DFT2_BUILD_LIBRARY
-GCC=$(CROSS)$(LTCC)
-AR=$(CROSS)ar rcus
+CC_FLAGS=-Iinclude -I. $(LTCFLAGS) $(TARGET_FLAGS) -DFT2_BUILD_LIBRARY
 
 $(O_FILES): %.o: %.c
 	@echo CC $@
-	@$(GCC) $(GCC_FLAGS) -c $< -o $@
+	@$(CC) $(CC_FLAGS) -c $< -o $@
 
 libft2.a: $(O_FILES)
 	@echo AR $@
-	@$(AR) $@ $^
+	@$(AR) rcus $@ $^
 
 .PHONY: clean
 clean:
