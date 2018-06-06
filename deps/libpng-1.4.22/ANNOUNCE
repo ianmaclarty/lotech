@@ -1,0 +1,42 @@
+
+Libpng 1.4.22 - September 28, 2017
+
+This is a public release of libpng, intended for use in production codes.
+
+Files available for download:
+
+Source files with LF line endings (for Unix/Linux) and with a
+"configure" script
+
+   libpng-1.4.22.tar.xz (LZMA-compressed, recommended)
+   libpng-1.4.22.tar.gz
+
+Source files with CRLF line endings (for Windows), without the
+"configure" script
+
+   lpng1422.7z (LZMA-compressed, recommended)
+   lpng1422.zip
+
+Other information:
+
+   libpng-1.4.22-README.txt
+   libpng-1.4.22-LICENSE.txt
+   libpng-1.4.22-*.asc (armored detached GPG signatures)
+
+Changes since the last public release (1.4.21):
+  Added PNGMINUS_UNUSED macro to contrib/pngminus/p*.c and added missing
+    parenthesis in contrib/pngminus/pnm2png.c (bug report by Christian Hesse).
+  Compute a larger limit on IDAT because some applications write a deflate
+    buffer for each row (Bug report by Andrew Church).
+  Fixed incorrect typecast of some arguments to png_malloc() and
+    png_calloc() that were png_uint_32 instead of png_alloc_size_t
+    (Bug report by "irwir" in Github libpng issue #175).
+  Initialize memory allocated by png_inflate to zero, using memset, to
+    stop an oss-fuzz "use of uninitialized value" detection in png_set_text_2()
+    due to truncated iTXt or zTXt chunk.
+
+Send comments/corrections/commendations to glennrp at users.sourceforge.net
+or to png-mng-implement at lists.sf.net (subscription required; visit
+https://lists.sourceforge.net/lists/listinfo/png-mng-implement).
+
+Glenn R-P
