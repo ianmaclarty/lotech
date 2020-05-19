@@ -20,6 +20,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 *****************************************************************************/
 
+#if defined(LT_ANDROID_ARM32) || defined(LT_ANDROID_ARM64) || defined(LT_ANDROID_X86) || defined(LT_ANDROID_X86_64)
+    #define LTANDROID 1
+#endif
+
 #include <assert.h>
 #include <string.h>
 #include <errno.h>

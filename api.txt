@@ -1,0 +1,22 @@
+- ltResizeScreen
+- ltLuaAdvance + ltLuaRender
+- ltSetAssetManager / Init + ltLuaReset? + lt_android_data_dir
+* jniSurfaceCreated ??
+- ltLuaTeardown
+* jniPause
+* jniResume
+- ltLuaTouchDown
+- ltLuaTouchUp
+- ltLuaTouchMove
+* ltLuaKeyDown
+* ltLuaKeyUp
+* jniFillAudioBuffer
+
+ltSaveState
+
+ltLuaGarbageCollect
+ltLog
+
+ ??
+
+

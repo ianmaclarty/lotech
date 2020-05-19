@@ -27,3 +27,6 @@ ltclient
 *.xcf
 .*.swp
 D.*
+/settings
+/tools/pngbb
+/builds

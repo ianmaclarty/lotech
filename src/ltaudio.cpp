@@ -707,7 +707,7 @@ LTAudioSample *read_ogg_file(lua_State *L, const char *path, const char *name) {
 
     int num_channels;
     short *data;
-    unsigned int sample_rate;
+    int sample_rate;
     int samples_decoded = stb_vorbis_decode_memory((unsigned char*)rbuf, size, &num_channels, &sample_rate, &data);
     free(rbuf);
     if (samples_decoded <= 0) {

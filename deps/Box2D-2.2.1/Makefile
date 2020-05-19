@@ -1,20 +1,20 @@
-all: libbox2d.a
+include ../../Common.mk
+
+all: libbox2d$(ALIB_EXT)
 
 VPATH=Box2D:Box2D/Common:Box2D/Collision:Box2D/Collision/Shapes:Box2D/Dynamics:Box2D/Dynamics/Contacts:Box2D/Dynamics/Joints:Box2D/Rope
 
-BOX2D_CPP_FILES:=$(shell find Box2D -name "*.cpp" -exec basename \{\} \;)
-BOX2D_O_FILES:=$(patsubst %.cpp,%.o,$(BOX2D_CPP_FILES))
+CPP_FILES:=$(shell find Box2D -name "*.cpp" -exec basename \{\} \;)
+O_FILES:=$(patsubst %.cpp,%$(OBJ_EXT),$(CPP_FILES))
 
-CPP_FLAGS=-I. $(LTCFLAGS) $(TARGET_FLAGS)
+CPPFLAGS = $(COMMON_CFLAGS) -I.
 
-$(BOX2D_O_FILES): %.o: %.cpp
-	@echo CPP $@
-	@$(CPP) $(CPP_FLAGS) -c $<
+$(O_FILES): %$(OBJ_EXT): %.cpp
+	$(CPP) $(CPPFLAGS) $(NOLINK_OPT) $< $(OBJ_OUT_OPT)$@
 
-libbox2d.a: $(BOX2D_O_FILES)
-	@echo AR $@
-	@$(AR) rcus $@ $^
+libbox2d$(ALIB_EXT): $(O_FILES)
+	$(AR) $(AR_OPTS) $(AR_OUT_OPT)$@ $^
 
 .PHONY: clean
 clean:
-	rm -f *.o *.a
+	rm -f *.o *.a *.lib *.obj *.o-arm* *.o-sim*

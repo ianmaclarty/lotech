@@ -1,0 +1,16 @@
+#!/bin/sh
+set -e
+cd ios
+rm -rf xcode
+mkdir xcode
+for f in `ls lib*.a`; do
+    b=`echo $f | sed 's/^lib//'`
+    cp $f xcode/$b
+done
+cd ../iossim
+rm -rf xcode
+mkdir xcode
+for f in `ls lib*.a`; do
+    b=`echo $f | sed 's/^lib//'`
+    cp $f xcode/sim_$b
+done

@@ -1,20 +1,18 @@
-include ../../Make.common
+include ../../Common.mk
 
-all: libpng.a
+all: libpng$(ALIB_EXT)
 
 C_FILES:=$(wildcard *.c)
-O_FILES:=$(patsubst %.c,%.o,$(C_FILES))
+O_FILES:=$(patsubst %.c,%$(OBJ_EXT),$(C_FILES))
 
-CC_FLAGS=-I. -I../$(ZLIB) $(LTCFLAGS) $(TARGET_FLAGS)
+CFLAGS = $(COMMON_CFLAGS) -I. -I../../$(ZLIB_DIR)
 
-$(O_FILES): %.o: %.c
-	@echo CC $@
-	@$(CC) $(CC_FLAGS) -c $<
+$(O_FILES): %$(OBJ_EXT): %.c
+	$(CC) $(CFLAGS) $(NOLINK_OPT) $< $(OBJ_OUT_OPT)$@
 
-libpng.a: $(O_FILES)
-	@echo AR $@
-	@$(AR) rcus $@ $^
+libpng$(ALIB_EXT): $(O_FILES)
+	$(AR) $(AR_OPTS) $(AR_OUT_OPT)$@ $^
 
 .PHONY: clean
 clean:
-	rm -f *.o *.a
+	rm -f *.o *.a *.lib *.obj *.o-arm* *.o-sim*
