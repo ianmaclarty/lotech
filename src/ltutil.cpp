@@ -9,7 +9,7 @@ LT_INIT_IMPL(ltutil)
 #endif
 
 #ifdef LTANDROID
-const char *lt_android_data_dir = NULL;
+char *lt_android_data_dir = NULL;
 #endif
 
 void ltAbortImpl(const char *file, int line) {
@@ -26,7 +26,7 @@ extern void ltLog(const char *fmt, ...) {
     vsnprintf(msg, MAX_MSG_LEN, fmt, argp);
     va_end(argp);
 #ifdef LTANDROID
-    __android_log_print(ANDROID_LOG_INFO, "Lotech", "%s", msg);
+    __android_log_print(ANDROID_LOG_INFO, "LOTECH", "%s", msg);
 #else
     fprintf(stderr, "%s\n", msg);
     fflush(stderr);

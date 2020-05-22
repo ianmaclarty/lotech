@@ -50,7 +50,7 @@ else ifeq ($(TARGET_PLATFORM),msvc64)
 else ifdef ANDROID
   LT_DEPS = $(LUAVM) stb ft2 openal z png box2d
   LOTECH = $(BUILD_BIN_DIR)/liblotech.so
-  LT_DEFS += LTGLES1
+  LT_DEFS += LTGLES1 LTDEPTHBUF
 else ifeq ($(TARGET_PLATFORM),mingw32)
   LT_DEPS = $(LUAVM) stb kissfft tinymt ft2
   EXTRA_PREREQS = $(SDL_PREBUILT) $(ANGLE_WIN_PREBUILT) $(SIMPLEGLOB_H)

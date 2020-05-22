@@ -2613,11 +2613,13 @@ void ltLuaAdvance(LTdouble secs) {
 }
 
 void ltLuaRender() {
+    //ltLog("ltLuaRender");
     if (g_L != NULL && !g_suspended) {
         if (!g_initialized) {
             ltInitGLState();
             ltAdjustViewportAspectRatio();
             set_viewport_globals(g_L);
+            //ltLog("running %s", g_start_script);
             run_lua_file(g_L, g_start_script);
             #ifdef LTGAMECENTER
             if (ltIOSGameCenterIsAvailable()) {

@@ -259,7 +259,7 @@ else ifeq ($(TARGET_PLATFORM),android_arm32)
   XLDFLAGS = $(TARGET_CFLAGS) -Wl,-soname,liblotech.so -shared \
   	-static-libstdc++ \
 	-no-canonical-prefixes \
-	-llog -landroid -lEGL -lGLESv1_CM -llog -lc -lm 
+	-llog -landroid -lEGL -lGLESv1_CM -lOpenSLES -llog -lc -lm 
   LUA_CFLAGS += -DLUA_USE_POSIX
   ANDROID = 1
 else ifeq ($(TARGET_PLATFORM),android_arm64)
@@ -277,7 +277,7 @@ else ifeq ($(TARGET_PLATFORM),android_arm64)
   XLDFLAGS = $(TARGET_CFLAGS) -Wl,-soname,liblotech.so -shared \
   	-static-libstdc++ \
 	-no-canonical-prefixes \
-	-llog -landroid -lEGL -lGLESv1_CM -llog -lc -lm 
+	-llog -landroid -lEGL -lGLESv1_CM -lOpenSLES -llog -lc -lm 
   LUA_CFLAGS += -DLUA_USE_POSIX
   ANDROID = 1
 else ifeq ($(TARGET_PLATFORM),android_x86)
@@ -295,7 +295,7 @@ else ifeq ($(TARGET_PLATFORM),android_x86)
   XLDFLAGS = $(TARGET_CFLAGS) -Wl,-soname,liblotech.so -shared \
   	-static-libstdc++ \
 	-no-canonical-prefixes \
-	-llog -landroid -lEGL -lGLESv1_CM -llog -lc -lm 
+	-llog -landroid -lEGL -lGLESv1_CM -lOpenSLES -llog -lc -lm 
   LUA_CFLAGS += -DLUA_USE_POSIX
   ANDROID = 1
 else ifeq ($(TARGET_PLATFORM),android_x86_64)
@@ -313,7 +313,7 @@ else ifeq ($(TARGET_PLATFORM),android_x86_64)
   XLDFLAGS = $(TARGET_CFLAGS) -Wl,-soname,liblotech.so -shared \
   	-static-libstdc++ \
 	-no-canonical-prefixes \
-	-llog -landroid -lEGL -lGLESv1_CM -llog -lc -lm 
+	-llog -landroid -lEGL -lGLESv1_CM -lOpenSLES -llog -lc -lm 
   LUA_CFLAGS += -DLUA_USE_POSIX
   ANDROID = 1
 else ifeq ($(TARGET_PLATFORM),html)

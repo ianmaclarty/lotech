@@ -59,7 +59,7 @@ LT_REGISTER_TYPE(LTRandomGenerator, "lt.Random", "lt.Object")
 LT_REGISTER_FIELD_INT(LTRandomGenerator, seed)
 
 void LTRandomGenerator::ran_array(int *aa, int n) {
-  register int i,j;
+  int i,j;
   for (j=0;j<KK;j++) aa[j]=ran_x[j];
   for (;j<n;j++) aa[j]=mod_diff(aa[j-KK],aa[j-LL]);
   for (i=0;i<LL;i++,j++) ran_x[i]=mod_diff(aa[j-KK],aa[j-LL]);
@@ -70,9 +70,9 @@ void LTRandomGenerator::ran_array(int *aa, int n) {
 #define is_odd(x)  ((x)&1)          /* units bit of x */
 
 void LTRandomGenerator::ran_start(int seed) {
-  register int t,j;
+  int t,j;
   int x[KK+KK-1];              /* the preparation buffer */
-  register int ss=(seed+2)&(MM-2);
+  int ss=(seed+2)&(MM-2);
   for (j=0;j<KK;j++) {
     x[j]=ss;                      /* bootstrap the buffer */
     ss<<=1; if (ss>=MM) ss-=MM-2; /* cyclic shift 29 bits */

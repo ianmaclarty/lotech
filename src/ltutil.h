@@ -2,7 +2,7 @@
 LT_INIT_DECL(ltutil)
 
 #ifdef LTANDROID
-extern const char *lt_android_data_dir;
+extern char *lt_android_data_dir;
 #endif
 
 #define LT_TRACE ltLog("%s:%d %s", __FILE__, __LINE__, __PRETTY_FUNCTION__)

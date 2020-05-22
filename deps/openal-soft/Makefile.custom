@@ -26,6 +26,7 @@ CFILES:= \
 	Alc/backends/opensl.c \
 	Alc/backends/null.c \
 	Alc/backends/wave.c \
+	Alc/backends/loopback.c \
 	OpenAL32/alAuxEffectSlot.c \
 	OpenAL32/alBuffer.c \
 	OpenAL32/alEffect.c \
