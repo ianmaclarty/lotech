@@ -39,6 +39,8 @@ static inline int absidx(lua_State *L, int index) {
 static lua_State *g_L = NULL;
 static int g_wrefs_ref = LUA_NOREF;
 static bool g_suspended = false;
+static bool g_was_resumed = false;
+static bool g_was_suspended = false;
 static bool g_initialized = false;
 static bool g_gamecenter_initialized = false;
 static char g_start_script[MAX_START_SCRIPT_LEN];
@@ -2541,6 +2543,20 @@ static void set_globals(lua_State *L) {
     }
 }
 
+static void set_perframe_globals(lua_State *L) {
+    if (L != NULL) {
+        lua_getglobal(L, "lt");
+        lua_pushboolean(L, g_was_suspended ? 1 : 0);
+        lua_setfield(L, -2, "was_suspended");
+        lua_pushboolean(L, g_was_resumed ? 1 : 0);
+        lua_setfield(L, -2, "was_resumed");
+        lua_pop(L, 1); // pop lt
+        g_was_resumed = false;
+        g_was_suspended = false;
+        set_viewport_globals(L);
+    }
+}
+
 void ltLuaSetup() {
     ltDoVerify();
     ltAudioInit();
@@ -2596,16 +2612,19 @@ void ltLuaReset() {
 
 void ltLuaSuspend() {
     g_suspended = true;
+    g_was_suspended = true;
     ltAudioSuspend();
 }
 
 void ltLuaResume() {
     g_suspended = false;
+    g_was_resumed = true;
     ltAudioResume();
 }
 
 void ltLuaAdvance(LTdouble secs) {
     if (g_L != NULL && !g_suspended && push_lt_func(g_L, "Advance")) {
+        set_perframe_globals(g_L);
         lua_pushnumber(g_L, secs);
         docall(g_L, 1, 0);
     }

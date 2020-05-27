@@ -76,25 +76,25 @@ static void android_update() {
 }
 
 extern "C" {
-    JNIEXPORT void JNICALL Java_xyz_amulet_AmuletActivity_jniResize(JNIEnv * env, jobject obj,  jint width, jint height);
-    JNIEXPORT void JNICALL Java_xyz_amulet_AmuletActivity_jniStep(JNIEnv * env, jobject obj);
-    JNIEXPORT void JNICALL Java_xyz_amulet_AmuletActivity_jniInit(JNIEnv * env, jobject obj, jobject jassman, jstring jdatadir, jstring jlang);
-    JNIEXPORT void JNICALL Java_xyz_amulet_AmuletActivity_jniSurfaceCreated(JNIEnv * env, jobject obj);
-    JNIEXPORT void JNICALL Java_xyz_amulet_AmuletActivity_jniTeardown(JNIEnv * env, jobject obj);
-    JNIEXPORT void JNICALL Java_xyz_amulet_AmuletActivity_jniPause(JNIEnv * env, jobject obj);
-    JNIEXPORT void JNICALL Java_xyz_amulet_AmuletActivity_jniResume(JNIEnv * env, jobject obj);
-    JNIEXPORT void JNICALL Java_xyz_amulet_AmuletActivity_jniTouchDown(JNIEnv * env, jobject obj, jint id, jfloat x, jfloat y);
-    JNIEXPORT void JNICALL Java_xyz_amulet_AmuletActivity_jniTouchUp(JNIEnv * env, jobject obj, jint id, jfloat x, jfloat y);
-    JNIEXPORT void JNICALL Java_xyz_amulet_AmuletActivity_jniTouchMove(JNIEnv * env, jobject obj, jint id, jfloat x, jfloat y);
+    JNIEXPORT void JNICALL Java_com_ianmaclarty_LotechActivity_jniResize(JNIEnv * env, jobject obj,  jint width, jint height);
+    JNIEXPORT void JNICALL Java_com_ianmaclarty_LotechActivity_jniStep(JNIEnv * env, jobject obj);
+    JNIEXPORT void JNICALL Java_com_ianmaclarty_LotechActivity_jniInit(JNIEnv * env, jobject obj, jobject jassman, jstring jdatadir, jstring jlang);
+    JNIEXPORT void JNICALL Java_com_ianmaclarty_LotechActivity_jniSurfaceCreated(JNIEnv * env, jobject obj);
+    JNIEXPORT void JNICALL Java_com_ianmaclarty_LotechActivity_jniTeardown(JNIEnv * env, jobject obj);
+    JNIEXPORT void JNICALL Java_com_ianmaclarty_LotechActivity_jniPause(JNIEnv * env, jobject obj);
+    JNIEXPORT void JNICALL Java_com_ianmaclarty_LotechActivity_jniResume(JNIEnv * env, jobject obj);
+    JNIEXPORT void JNICALL Java_com_ianmaclarty_LotechActivity_jniTouchDown(JNIEnv * env, jobject obj, jint id, jfloat x, jfloat y);
+    JNIEXPORT void JNICALL Java_com_ianmaclarty_LotechActivity_jniTouchUp(JNIEnv * env, jobject obj, jint id, jfloat x, jfloat y);
+    JNIEXPORT void JNICALL Java_com_ianmaclarty_LotechActivity_jniTouchMove(JNIEnv * env, jobject obj, jint id, jfloat x, jfloat y);
 };
 
-JNIEXPORT void JNICALL Java_xyz_amulet_AmuletActivity_jniResize(JNIEnv * env, jobject obj,  jint width, jint height)
+JNIEXPORT void JNICALL Java_com_ianmaclarty_LotechActivity_jniResize(JNIEnv * env, jobject obj,  jint width, jint height)
 {
     ltLuaResizeWindow((float)width, (float)height);
 
 }
 
-JNIEXPORT void JNICALL Java_xyz_amulet_AmuletActivity_jniStep(JNIEnv * env, jobject obj)
+JNIEXPORT void JNICALL Java_com_ianmaclarty_LotechActivity_jniStep(JNIEnv * env, jobject obj)
 {
     jni_env = env;
     android_draw();
@@ -102,7 +102,7 @@ JNIEXPORT void JNICALL Java_xyz_amulet_AmuletActivity_jniStep(JNIEnv * env, jobj
     jni_env = NULL;
 }
 
-JNIEXPORT void JNICALL Java_xyz_amulet_AmuletActivity_jniInit(JNIEnv * env, jobject obj, jobject jassman, jstring jdatadir, jstring jlang)
+JNIEXPORT void JNICALL Java_com_ianmaclarty_LotechActivity_jniInit(JNIEnv * env, jobject obj, jobject jassman, jstring jdatadir, jstring jlang)
 {
     jni_env = env;
     ltSetAssetManager(AAssetManager_fromJava(env, jassman));
@@ -116,41 +116,43 @@ JNIEXPORT void JNICALL Java_xyz_amulet_AmuletActivity_jniInit(JNIEnv * env, jobj
     jni_env = NULL;
 }
 
-JNIEXPORT void JNICALL Java_xyz_amulet_AmuletActivity_jniSurfaceCreated(JNIEnv * env, jobject obj)
+JNIEXPORT void JNICALL Java_com_ianmaclarty_LotechActivity_jniSurfaceCreated(JNIEnv * env, jobject obj)
 {
     jni_env = env;
     android_init_engine();
     jni_env = NULL;
 }
 
-JNIEXPORT void JNICALL Java_xyz_amulet_AmuletActivity_jniTeardown(JNIEnv * env, jobject obj) {
+JNIEXPORT void JNICALL Java_com_ianmaclarty_LotechActivity_jniTeardown(JNIEnv * env, jobject obj) {
     android_teardown();
 }
 
-JNIEXPORT void JNICALL Java_xyz_amulet_AmuletActivity_jniTouchDown(JNIEnv * env, jobject obj, jint id, jfloat x, jfloat y) {
+JNIEXPORT void JNICALL Java_com_ianmaclarty_LotechActivity_jniTouchDown(JNIEnv * env, jobject obj, jint id, jfloat x, jfloat y) {
     jni_env = env;
     ltLuaTouchDown((int)id, x, y);
     jni_env = NULL;
 }
 
-JNIEXPORT void JNICALL Java_xyz_amulet_AmuletActivity_jniTouchUp(JNIEnv * env, jobject obj, jint id, jfloat x, jfloat y) {
+JNIEXPORT void JNICALL Java_com_ianmaclarty_LotechActivity_jniTouchUp(JNIEnv * env, jobject obj, jint id, jfloat x, jfloat y) {
     jni_env = env;
     ltLuaTouchUp((int)id, x, y);
     jni_env = NULL;
 }
 
-JNIEXPORT void JNICALL Java_xyz_amulet_AmuletActivity_jniTouchMove(JNIEnv * env, jobject obj, jint id, jfloat x, jfloat y) {
+JNIEXPORT void JNICALL Java_com_ianmaclarty_LotechActivity_jniTouchMove(JNIEnv * env, jobject obj, jint id, jfloat x, jfloat y) {
     jni_env = env;
     ltLuaTouchMove((int)id, x, y);
     jni_env = NULL;
 }
 
-JNIEXPORT void JNICALL Java_xyz_amulet_AmuletActivity_jniPause(JNIEnv * env, jobject obj)
+JNIEXPORT void JNICALL Java_com_ianmaclarty_LotechActivity_jniPause(JNIEnv * env, jobject obj)
 {
+    ltLuaSuspend();
 }
 
-JNIEXPORT void JNICALL Java_xyz_amulet_AmuletActivity_jniResume(JNIEnv * env, jobject obj)
+JNIEXPORT void JNICALL Java_com_ianmaclarty_LotechActivity_jniResume(JNIEnv * env, jobject obj)
 {
+    ltLuaResume();
 }
 
 #endif // LTANDROID
