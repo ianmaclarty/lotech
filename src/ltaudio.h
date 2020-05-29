@@ -12,13 +12,17 @@ void ltAudioResume();
 struct LTAudioSample : LTObject {
     ALuint buffer_id;
     char *name;
+    void *data;
+    int data_size;
+    ALenum format;
+    int sample_rate;
 
     LTAudioSample() {
         ltLog("Don't create a sample directly. Use lt.LoadSamples instead.");
         ltAbort();
     };
     // name is copied.
-    LTAudioSample(ALuint buffer_id, const char *name);
+    LTAudioSample(ALuint buffer_id, const char *name, void *data, int data_size, ALenum format, int sample_rate);
     virtual ~LTAudioSample();
 
     int bytes();

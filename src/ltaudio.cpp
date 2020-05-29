@@ -80,6 +80,9 @@ struct LTAudioSource {
     bool was_stop;
     bool was_rewind;
     LTfloat gain;
+    LTfloat pitch;
+    bool looping;
+    LTAudioSample *lastQueuedSample;
     LTAudioSource() {
         alGenSources(1, &source_id);
         check_for_errors
@@ -89,8 +92,11 @@ struct LTAudioSource {
         curr_state = AL_STOPPED;
         new_state = AL_STOPPED;
         gain = 1.0f;
+        pitch = 1.0f;
+        looping = false;
         was_stop = false;
         was_rewind = false;
+        lastQueuedSample = NULL;
     }
     void reset() {
         alSourceStop(source_id);
@@ -104,6 +110,7 @@ struct LTAudioSource {
         set_pitch(1.0f);
         set_gain(1.0f);
         set_looping(false);
+        lastQueuedSample = NULL;
     }
     void play() {
         new_state = AL_PLAYING;
@@ -144,8 +151,9 @@ struct LTAudioSource {
         was_stop = false;
         was_rewind = false;
     }
-    void set_pitch(LTfloat pitch) {
-        alSourcef(source_id, AL_PITCH, pitch);
+    void set_pitch(LTfloat p) {
+        pitch = p;
+        alSourcef(source_id, AL_PITCH, p);
         check_for_errors
     }
     void set_gain(LTfloat g) {
@@ -153,7 +161,8 @@ struct LTAudioSource {
         alSourcef(source_id, AL_GAIN, gain * master_gain);
         check_for_errors
     }
-    void set_looping(bool looping) {
+    void set_looping(bool l) {
+        looping = l;
         alSourcei(source_id, AL_LOOPING, looping ? AL_TRUE : AL_FALSE);
         check_for_errors
     }
@@ -172,8 +181,9 @@ struct LTAudioSource {
         check_for_errors
         return looping == AL_TRUE ? true : false;
     }
-    void queue_buffer(ALuint buffer_id) {
-        alSourceQueueBuffers(source_id, 1, &buffer_id);
+    void queue_sample(LTAudioSample *sample) {
+        lastQueuedSample = sample;
+        alSourceQueueBuffers(source_id, 1, &sample->buffer_id);
         check_for_errors
     }
     void dequeue_buffers(int n) {
@@ -181,6 +191,7 @@ struct LTAudioSource {
         alSourceUnqueueBuffers(source_id, n, buffers);
         check_for_errors
         free(buffers);
+        lastQueuedSample = NULL;
     }
     int num_samples() {
         ALint queued;
@@ -197,10 +208,24 @@ struct LTAudioSource {
     int num_pending_samples() {
         return num_samples() - num_processed_samples();
     }
+    void restore_last_sample() {
+        if (lastQueuedSample != NULL) {
+            queue_sample(lastQueuedSample);
+            set_gain(gain);
+            set_pitch(pitch);
+            set_looping(looping);
+            switch (curr_state) {
+                case AL_PLAYING: alSourcePlay(source_id); break;
+                case AL_PAUSED: alSourcePause(source_id); break;
+                case AL_STOPPED: alSourceStop(source_id); break;
+            }
+            check_for_errors
+        }
+    }
 };
 
 static std::vector<LTAudioSource*> sources;
-static std::vector<LTAudioSource*> suspended_sources;
+static std::vector<LTAudioSample*> samples;
 static std::vector<ALuint> buffers_to_delete;
 
 static LTAudioSource* aquire_source(bool is_temp);
@@ -208,8 +233,14 @@ static void release_source(LTAudioSource *source);
 
 static bool audio_is_suspended = false;
 
+//extern "C" {
+//const char * getplaybackdevicename();
+//}
+
 void ltAudioInit() {
+    ltLog("ltAudioInit");
     audio_device = alcOpenDevice(NULL);
+    //ltLog("playback device: %s", getplaybackdevicename());
     if (audio_device == NULL) {
         ltLog("Unable to open audio device");
         return;
@@ -259,20 +290,36 @@ void ltAudioTeardown() {
     }
 }
 
-LTAudioSample::LTAudioSample(ALuint buf_id, const char *name) {
+LTAudioSample::LTAudioSample(ALuint buf_id, const char *name, void *data, int data_size, ALenum format, int sample_rate) {
     LTAudioSample::name = new char[strlen(name) + 1];
     strcpy(LTAudioSample::name, name);
     LTAudioSample::buffer_id = buf_id;
+    LTAudioSample::data = data;
+    LTAudioSample::data_size = data_size;
+    LTAudioSample::format = format;
+    LTAudioSample::sample_rate = sample_rate;
+    samples.push_back(this);
 }
 
 LTAudioSample::~LTAudioSample() {
     buffers_to_delete.push_back(buffer_id);
     delete[] name;
+    if (data != NULL) {
+        free(data);
+        data = NULL;
+    }
+    for (unsigned i = 0; i < samples.size(); i++) {
+        LTAudioSample *sample = samples[i];
+        if (sample == this) {
+            samples.erase(samples.begin() + i);
+        }
+        break;
+    }
 }
 
 void LTAudioSample::play(LTfloat pitch, LTfloat gain) {
     LTAudioSource *source = aquire_source(true);
-    source->queue_buffer(buffer_id);
+    source->queue_sample(this);
     source->set_pitch(pitch);
     source->set_gain(gain);
     source->play();
@@ -365,7 +412,7 @@ void LTTrack::on_deactivate() {
 }
 
 void LTTrack::queueSample(LTAudioSample *sample, int ref) {
-    source->queue_buffer(sample->buffer_id);
+    source->queue_sample(sample);
     queued_samples.push_front(std::pair<LTAudioSample*, int>(sample, ref));
 }
 
@@ -449,20 +496,26 @@ void ltAudioSuspend() {
     if (!audio_is_suspended) {
         if (audio_context != NULL) {
 
-            std::vector<LTAudioSource*>::iterator it;
-            for (it = sources.begin(); it != sources.end(); ++it) {
-                LTAudioSource *src = *it;
-                if (src->is_playing()) {
-                    src->pause();
-                    suspended_sources.push_back(src);
-                    src->update_state();
-                }
+            // delete all sources
+            for (unsigned i = 0; i < sources.size(); i++) {
+                ALuint source_id = sources[i]->source_id;
+                alDeleteSources(1, &source_id);
+                sources[i]->source_id = 0;
             }
+
+            // delete all buffers
+            for (unsigned i = 0; i < samples.size(); i++) {
+                ALuint buffer_id = samples[i]->buffer_id;
+                alDeleteBuffers(1, &buffer_id);
+                samples[i]->buffer_id = 0;
+            }
+            buffers_to_delete.clear();
 
             alcMakeContextCurrent(NULL);
             check_for_errors
-            alcSuspendContext(audio_context);
+            alcDestroyContext(audio_context);
             check_for_errors
+            audio_context = NULL;
         }
         audio_is_suspended = true;
     }
@@ -470,20 +523,34 @@ void ltAudioSuspend() {
 
 void ltAudioResume() {
     if (audio_is_suspended) {
-        if (audio_context != NULL) {
-
-            alcMakeContextCurrent(audio_context);
-            check_for_errors
-            alcProcessContext(audio_context);
+        if (audio_context == NULL) {
+            audio_context = alcCreateContext(audio_device, 0);
             check_for_errors
 
-            std::vector<LTAudioSource*>::iterator it;
-            for (it = suspended_sources.begin(); it != suspended_sources.end(); ++it) {
-                LTAudioSource *src = *it;
-                src->play();
-                src->update_state();
+            if (audio_context != NULL) {
+                alcMakeContextCurrent(audio_context);
+                check_for_errors
+
+                // restore all buffers
+                for (unsigned i = 0; i < samples.size(); i++) {
+                    LTAudioSample *sample = samples[i];
+                    ALuint buf_id;
+                    alGenBuffers(1, &buf_id);
+                    alBufferData(buf_id, sample->format, sample->data, sample->data_size, sample->sample_rate);
+                    sample->buffer_id = buf_id;
+                }
+
+                // restore all sources
+                for (unsigned i = 0; i < sources.size(); i++) {
+                    LTAudioSource *source = sources[i];
+                    ALuint source_id;
+                    alGenSources(1, &source_id);
+                    source->source_id = source_id;
+                    if (!source->is_free) {
+                        source->restore_last_sample();
+                    }
+                }
             }
-            suspended_sources.clear();
         }
         audio_is_suspended = false;
     }
@@ -646,7 +713,7 @@ LTAudioSample *read_wav_file(lua_State *L, const char *path, const char *name) {
 
     int data_size = read_4_byte_little_endian_int(rsc);
 
-    unsigned char *data = new unsigned char[data_size];
+    unsigned char *data = (unsigned char *)malloc(data_size);
 
     int num_bytes_read = ltReadResource(rsc, data, data_size);
 
@@ -681,7 +748,6 @@ LTAudioSample *read_wav_file(lua_State *L, const char *path, const char *name) {
         format = AL_FORMAT_STEREO8;
     }
     alBufferData(buf_id, format, data, data_size, sample_rate);
-    delete[] data;
 
     ALenum err = alGetError();
     if (err != AL_NO_ERROR) {
@@ -689,7 +755,7 @@ LTAudioSample *read_wav_file(lua_State *L, const char *path, const char *name) {
         return NULL;
     }
     
-    LTAudioSample *buf = new (lt_alloc_LTAudioSample(L)) LTAudioSample(buf_id, name);
+    LTAudioSample *buf = new (lt_alloc_LTAudioSample(L)) LTAudioSample(buf_id, name, data, data_size, format, sample_rate);
     return buf;
 }
 
@@ -725,7 +791,6 @@ LTAudioSample *read_ogg_file(lua_State *L, const char *path, const char *name) {
         format = AL_FORMAT_STEREO16;
     }
     alBufferData(buf_id, format, data, data_size, sample_rate);
-    free(data);
 
     ALenum err = alGetError();
     if (err != AL_NO_ERROR) {
@@ -733,7 +798,7 @@ LTAudioSample *read_ogg_file(lua_State *L, const char *path, const char *name) {
         return NULL;
     }
     
-    LTAudioSample *buf = new (lt_alloc_LTAudioSample(L)) LTAudioSample(buf_id, name);
+    LTAudioSample *buf = new (lt_alloc_LTAudioSample(L)) LTAudioSample(buf_id, name, data, data_size, format, sample_rate);
     return buf;
 }
 
