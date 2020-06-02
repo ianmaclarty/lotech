@@ -102,7 +102,7 @@ KISSFFT_ALIB = $(BUILD_LIB_DIR)/libkissfft$(ALIB_EXT)
 TINYMT_ALIB = $(BUILD_LIB_DIR)/libtinymt$(ALIB_EXT)
 GLSLOPT_ALIB = $(BUILD_LIB_DIR)/libglslopt$(ALIB_EXT)
 OPENAL_ALIB = $(BUILD_LIB_DIR)/libopenal$(ALIB_EXT)
-ZLIB_ALIB = $(BUILD_LIB_DIR)/libz$(ALIB_EXT)
+ZLIB_ALIB = $(BUILD_LIB_DIR)/libzlib$(ALIB_EXT)
 LIBPNG_ALIB = $(BUILD_LIB_DIR)/libpng$(ALIB_EXT)
 BOX2D_ALIB = $(BUILD_LIB_DIR)/libbox2d$(ALIB_EXT)
 SIMPLEGLOB_H = $(BUILD_INC_DIR)/SimpleGlob.h
@@ -259,7 +259,7 @@ else ifeq ($(TARGET_PLATFORM),android_arm32)
   XLDFLAGS = $(TARGET_CFLAGS) -Wl,-soname,liblotech.so -shared \
   	-static-libstdc++ \
 	-no-canonical-prefixes \
-	-llog -landroid -lEGL -lGLESv1_CM -lOpenSLES -llog -lc -lm 
+	-llog -landroid -lEGL -lGLESv1_CM -lOpenSLES -llog -lc -lm
   LUA_CFLAGS += -DLUA_USE_POSIX
   ANDROID = 1
 else ifeq ($(TARGET_PLATFORM),android_arm64)
@@ -277,7 +277,7 @@ else ifeq ($(TARGET_PLATFORM),android_arm64)
   XLDFLAGS = $(TARGET_CFLAGS) -Wl,-soname,liblotech.so -shared \
   	-static-libstdc++ \
 	-no-canonical-prefixes \
-	-llog -landroid -lEGL -lGLESv1_CM -lOpenSLES -llog -lc -lm 
+	-llog -landroid -lEGL -lGLESv1_CM -lOpenSLES -llog -lc -lm
   LUA_CFLAGS += -DLUA_USE_POSIX
   ANDROID = 1
 else ifeq ($(TARGET_PLATFORM),android_x86)
@@ -295,7 +295,7 @@ else ifeq ($(TARGET_PLATFORM),android_x86)
   XLDFLAGS = $(TARGET_CFLAGS) -Wl,-soname,liblotech.so -shared \
   	-static-libstdc++ \
 	-no-canonical-prefixes \
-	-llog -landroid -lEGL -lGLESv1_CM -lOpenSLES -llog -lc -lm 
+	-llog -landroid -lEGL -lGLESv1_CM -lOpenSLES -llog -lc -lm
   LUA_CFLAGS += -DLUA_USE_POSIX
   ANDROID = 1
 else ifeq ($(TARGET_PLATFORM),android_x86_64)
@@ -313,7 +313,7 @@ else ifeq ($(TARGET_PLATFORM),android_x86_64)
   XLDFLAGS = $(TARGET_CFLAGS) -Wl,-soname,liblotech.so -shared \
   	-static-libstdc++ \
 	-no-canonical-prefixes \
-	-llog -landroid -lEGL -lGLESv1_CM -lOpenSLES -llog -lc -lm 
+	-llog -landroid -lEGL -lGLESv1_CM -lOpenSLES -llog -lc -lm
   LUA_CFLAGS += -DLUA_USE_POSIX
   ANDROID = 1
 else ifeq ($(TARGET_PLATFORM),html)

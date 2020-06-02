@@ -48,7 +48,7 @@ else ifeq ($(TARGET_PLATFORM),msvc64)
   LT_DEFS += LT_ANGLE_TRANSLATE_GL
   EXTRA_PREREQS = $(SDL_PREBUILT) $(ANGLE_WIN_PREBUILT) $(SIMPLEGLOB_H)
 else ifdef ANDROID
-  LT_DEPS = $(LUAVM) stb ft2 openal z png box2d
+  LT_DEPS = $(LUAVM) stb ft2 openal png zlib box2d
   LOTECH = $(BUILD_BIN_DIR)/liblotech.so
   LT_DEFS += LTGLES1 LTDEPTHBUF
 else ifeq ($(TARGET_PLATFORM),mingw32)
