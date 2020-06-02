@@ -56,7 +56,19 @@ static const char *oal_errstr(ALenum err) {
         case AL_INVALID_VALUE: return "AL_INVALID_VALUE";
         case AL_INVALID_OPERATION: return "AL_INVALID_OPERATION";
         case AL_OUT_OF_MEMORY: return "AL_OUT_OF_MEMORY";
-        default: return "unknown";
+        default: return "UNKNOWN AL ERROR";
+    }
+}
+
+static const char *oalc_errstr(ALCenum err) {
+    switch (err) {
+        case ALC_NO_ERROR: return "ALC_NO_ERROR";
+        case ALC_INVALID_DEVICE: return "ALC_INVALID_DEVICE";
+        case ALC_INVALID_CONTEXT: return "ALC_INVALID_CONTEXT";
+        case ALC_INVALID_ENUM: return "ALC_INVALID_ENUM";
+        case ALC_INVALID_VALUE: return "ALC_INVALID_VALUE";
+        case ALC_OUT_OF_MEMORY: return "ALC_OUT_OF_MEMORY";
+        default: return "UNKNOWN ALC ERROR";
     }
 }
 
@@ -65,6 +77,14 @@ static const char *oal_errstr(ALenum err) {
         ALenum err = alGetError(); \
         if (err != AL_NO_ERROR) { \
             ltLog("%s:%d: OpenAL error: %s", __FILE__, __LINE__, oal_errstr(err)); \
+        } \
+    }
+
+#define check_for_errors_alc \
+    {   \
+        ALenum err = alcGetError(audio_device); \
+        if (err != ALC_NO_ERROR) { \
+            ltLog("%s:%d: OpenAL error: %s", __FILE__, __LINE__, oalc_errstr(err)); \
         } \
     }
 
@@ -110,6 +130,8 @@ struct LTAudioSource {
         set_pitch(1.0f);
         set_gain(1.0f);
         set_looping(false);
+        was_stop = false;
+        was_rewind = false;
         lastQueuedSample = NULL;
     }
     void play() {
@@ -209,7 +231,7 @@ struct LTAudioSource {
         return num_samples() - num_processed_samples();
     }
     void restore_last_sample() {
-        if (lastQueuedSample != NULL) {
+        if (lastQueuedSample != NULL && lastQueuedSample->buffer_id != 0) {
             queue_sample(lastQueuedSample);
             set_gain(gain);
             set_pitch(pitch);
@@ -246,30 +268,35 @@ void ltAudioInit() {
         return;
     }
     audio_context = alcCreateContext(audio_device, 0);
+    check_for_errors_alc
     if (audio_context == NULL) {
         ltLog("Unable to create audio context");
         return;
     }
     alcMakeContextCurrent(audio_context);
-    check_for_errors
+    check_for_errors_alc
 }
 
-static void buffers_gc() {
-    std::vector<ALuint> undeleted;
-    for (unsigned i = 0; i < buffers_to_delete.size(); i++) {
-        alDeleteBuffers(1, &buffers_to_delete[i]);
-        ALenum err = alGetError();
-        // Sometimes happens on OSX if we try to delete the
-        // buffer just after removing it from the source.
-        if (err == AL_INVALID_OPERATION) {
-            undeleted.push_back(buffers_to_delete[i]);
-        }
-    }
-    buffers_to_delete.clear();
-    for (unsigned i = 0; i < undeleted.size(); i++) {
-        buffers_to_delete.push_back(undeleted[i]);
-    }
-}
+//static void buffers_gc() {
+//    std::vector<ALuint> undeleted;
+//    for (unsigned i = 0; i < buffers_to_delete.size(); i++) {
+//        alDeleteBuffers(1, &buffers_to_delete[i]);
+//        ALenum err = alGetError();
+//        // Sometimes happens on OSX if we try to delete the
+//        // buffer just after removing it from the source.
+//        if (err == AL_INVALID_OPERATION) {
+//            ltLog("got AL_INVALID_OPERATION when trying to delete buffer");
+//            undeleted.push_back(buffers_to_delete[i]);
+//        }
+//    }
+//    if (buffers_to_delete.size() > 0) {
+//        ltLog("deleted %d audio buffers (buffers_gc)", buffers_to_delete.size());
+//    }
+//    buffers_to_delete.clear();
+//    for (unsigned i = 0; i < undeleted.size(); i++) {
+//        buffers_to_delete.push_back(undeleted[i]);
+//    }
+//}
 
 void ltAudioTeardown() {
     for (unsigned i = 0; i < sources.size(); i++) {
@@ -279,9 +306,11 @@ void ltAudioTeardown() {
         delete s;
     }
     sources.clear();
-    buffers_gc();
+    samples.clear();
+    //buffers_gc();
     if (audio_context != NULL) {
         alcDestroyContext(audio_context);
+        check_for_errors_alc
         audio_context = NULL;
     }
     if (audio_device != NULL) {
@@ -302,19 +331,19 @@ LTAudioSample::LTAudioSample(ALuint buf_id, const char *name, void *data, int da
 }
 
 LTAudioSample::~LTAudioSample() {
-    buffers_to_delete.push_back(buffer_id);
+    //buffers_to_delete.push_back(buffer_id);
     delete[] name;
     if (data != NULL) {
         free(data);
         data = NULL;
     }
-    for (unsigned i = 0; i < samples.size(); i++) {
-        LTAudioSample *sample = samples[i];
-        if (sample == this) {
-            samples.erase(samples.begin() + i);
-        }
-        break;
-    }
+    //for (unsigned i = 0; i < samples.size(); i++) {
+    //    LTAudioSample *sample = samples[i];
+    //    if (sample == this) {
+    //        samples.erase(samples.begin() + i);
+    //    }
+    //    break;
+    //}
 }
 
 void LTAudioSample::play(LTfloat pitch, LTfloat gain) {
@@ -495,26 +524,32 @@ static void set_loop(LTObject *obj, LTbool val) {
 void ltAudioSuspend() {
     if (!audio_is_suspended) {
         if (audio_context != NULL) {
+            ltLog("ltAudioSuspend");
+
+            //buffers_gc();
 
             // delete all sources
             for (unsigned i = 0; i < sources.size(); i++) {
-                ALuint source_id = sources[i]->source_id;
-                alDeleteSources(1, &source_id);
-                sources[i]->source_id = 0;
+                LTAudioSource *source = sources[i];
+                alDeleteSources(1, &source->source_id);
+                check_for_errors
+                source->source_id = 0;
             }
+            ltLog("deleted %d sources", sources.size());
 
             // delete all buffers
             for (unsigned i = 0; i < samples.size(); i++) {
                 ALuint buffer_id = samples[i]->buffer_id;
                 alDeleteBuffers(1, &buffer_id);
+                check_for_errors
                 samples[i]->buffer_id = 0;
             }
-            buffers_to_delete.clear();
+            ltLog("deleted %d samples", samples.size());
 
             alcMakeContextCurrent(NULL);
-            check_for_errors
+            check_for_errors_alc
             alcDestroyContext(audio_context);
-            check_for_errors
+            check_for_errors_alc
             audio_context = NULL;
         }
         audio_is_suspended = true;
@@ -525,20 +560,25 @@ void ltAudioResume() {
     if (audio_is_suspended) {
         if (audio_context == NULL) {
             audio_context = alcCreateContext(audio_device, 0);
-            check_for_errors
+            check_for_errors_alc
 
             if (audio_context != NULL) {
                 alcMakeContextCurrent(audio_context);
-                check_for_errors
+                check_for_errors_alc
 
-                // restore all buffers
+                // restore all samples
                 for (unsigned i = 0; i < samples.size(); i++) {
                     LTAudioSample *sample = samples[i];
-                    ALuint buf_id;
-                    alGenBuffers(1, &buf_id);
-                    alBufferData(buf_id, sample->format, sample->data, sample->data_size, sample->sample_rate);
-                    sample->buffer_id = buf_id;
+                    if (sample->data != NULL) {
+                        ALuint buf_id;
+                        alGenBuffers(1, &buf_id);
+                        alBufferData(buf_id, sample->format, sample->data, sample->data_size, sample->sample_rate);
+                        sample->buffer_id = buf_id;
+                    } else {
+                        ltLog("OpenAL error: sample->data is NULL");
+                    }
                 }
+                ltLog("restored %d samples", samples.size());
 
                 // restore all sources
                 for (unsigned i = 0; i < sources.size(); i++) {
@@ -546,10 +586,11 @@ void ltAudioResume() {
                     ALuint source_id;
                     alGenSources(1, &source_id);
                     source->source_id = source_id;
-                    if (!source->is_free) {
+                    if (!source->is_free && !source->is_temp) {
                         source->restore_last_sample();
                     }
                 }
+                ltLog("restored %d sources", sources.size());
             }
         }
         audio_is_suspended = false;
@@ -578,14 +619,14 @@ void ltAudioGC() {
                 s->update_state();
             }
         }
-    }
-    if (num_temp != prev_num_temp || num_used != prev_num_used) {
-        //fprintf(stderr, "Audio sources: slots: %d, used: %d, temp: %d\n", num_slots, num_used, num_temp);
-        prev_num_used = num_used;
-        prev_num_temp = num_temp;
-    }
 
-    buffers_gc();
+        if (num_temp != prev_num_temp || num_used != prev_num_used) {
+            //fprintf(stderr, "Audio sources: slots: %d, used: %d, temp: %d\n", num_slots, num_used, num_temp);
+            prev_num_used = num_used;
+            prev_num_temp = num_temp;
+        }
+        //buffers_gc();
+    }
 }
 
 static void skip_bytes(LTResource *rsc, int n) {
