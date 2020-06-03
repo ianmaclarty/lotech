@@ -86,6 +86,8 @@ extern "C" {
     JNIEXPORT void JNICALL Java_com_ianmaclarty_LotechActivity_jniTouchDown(JNIEnv * env, jobject obj, jint id, jfloat x, jfloat y);
     JNIEXPORT void JNICALL Java_com_ianmaclarty_LotechActivity_jniTouchUp(JNIEnv * env, jobject obj, jint id, jfloat x, jfloat y);
     JNIEXPORT void JNICALL Java_com_ianmaclarty_LotechActivity_jniTouchMove(JNIEnv * env, jobject obj, jint id, jfloat x, jfloat y);
+    JNIEXPORT void JNICALL Java_com_ianmaclarty_LotechActivity_jniBackPressed(JNIEnv * env, jobject obj);
+    JNIEXPORT jint JNICALL Java_com_ianmaclarty_LotechActivity_jniQuit(JNIEnv * env, jobject obj);
 };
 
 JNIEXPORT void JNICALL Java_com_ianmaclarty_LotechActivity_jniResize(JNIEnv * env, jobject obj,  jint width, jint height)
@@ -153,6 +155,18 @@ JNIEXPORT void JNICALL Java_com_ianmaclarty_LotechActivity_jniPause(JNIEnv * env
 JNIEXPORT void JNICALL Java_com_ianmaclarty_LotechActivity_jniResume(JNIEnv * env, jobject obj)
 {
     ltLuaResume();
+}
+
+JNIEXPORT void JNICALL Java_com_ianmaclarty_LotechActivity_jniBackPressed(JNIEnv * env, jobject obj)
+{
+    jni_env = env;
+    ltLuaKeyDown(LT_KEY_ESC);
+    jni_env = NULL;
+}
+
+JNIEXPORT jint JNICALL Java_com_ianmaclarty_LotechActivity_jniQuit(JNIEnv * env, jobject obj)
+{
+    return lt_quit ? 1 : 0;
 }
 
 #endif // LTANDROID

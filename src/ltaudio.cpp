@@ -261,6 +261,8 @@ static bool audio_is_suspended = false;
 
 void ltAudioInit() {
     ltLog("ltAudioInit");
+    sources.clear();
+    samples.clear();
     audio_device = alcOpenDevice(NULL);
     //ltLog("playback device: %s", getplaybackdevicename());
     if (audio_device == NULL) {
@@ -299,15 +301,16 @@ void ltAudioInit() {
 //}
 
 void ltAudioTeardown() {
-    for (unsigned i = 0; i < sources.size(); i++) {
-        LTAudioSource* s = sources[i];
-        s->reset();
-        alDeleteSources(1, &s->source_id);
-        delete s;
-    }
-    sources.clear();
-    samples.clear();
-    //buffers_gc();
+    //for (unsigned i = 0; i < sources.size(); i++) {
+    //    LTAudioSource* s = sources[i];
+    //    alDeleteSources(1, &s->source_id);
+    //    delete s;
+    //}
+    //for (unsigned i = 0; i < samples.size(); i++) {
+    //    LTAudioSample* s = samples[i];
+    //    alDeleteBuffers(1, &s->buffer_id);
+    //    delete s;
+    //}
     if (audio_context != NULL) {
         alcDestroyContext(audio_context);
         check_for_errors_alc
@@ -540,6 +543,7 @@ void ltAudioSuspend() {
             // delete all buffers
             for (unsigned i = 0; i < samples.size(); i++) {
                 ALuint buffer_id = samples[i]->buffer_id;
+                ltLog("trying to delete buffer %d", buffer_id);
                 alDeleteBuffers(1, &buffer_id);
                 check_for_errors
                 samples[i]->buffer_id = 0;
@@ -557,6 +561,7 @@ void ltAudioSuspend() {
 }
 
 void ltAudioResume() {
+    ltLog("ltAudioResume");
     if (audio_is_suspended) {
         if (audio_context == NULL) {
             audio_context = alcCreateContext(audio_device, 0);
