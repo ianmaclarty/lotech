@@ -49,13 +49,13 @@ ifeq ($(TARGET_PLATFORM),ios)
 $(TARGET_DIR)/liblt.a: headers | $(TARGET_DIR)
 	mkdir -p buildtmp.ios.armv7
 	mkdir -p buildtmp.ios.arm64
-	cd src && $(MAKE) \
+	cd src && "$(MAKE)" \
 		LTCPP=$(IOS_CPP) \
 		TARGET_FLAGS="$(IOS_ARMv7_OPTS) -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
 		OUT_DIR=$(PWD)/buildtmp.ios.armv7 \
 		LTCFLAGS="$(LTCFLAGS) $(OBJC_FLAGS)" \
 		all
-	cd src && $(MAKE) \
+	cd src && "$(MAKE)" \
 		LTCPP=$(IOS_CPP) \
 		TARGET_FLAGS="$(IOS_ARM64_OPTS) -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
 		OUT_DIR=$(PWD)/buildtmp.ios.arm64 \
@@ -70,7 +70,7 @@ ifeq ($(TARGET_PLATFORM),iossim)
 .PHONY: $(TARGET_DIR)/liblt.a
 $(TARGET_DIR)/liblt.a: headers | $(TARGET_DIR)
 	mkdir -p buildtmp.iossim
-	cd src && $(MAKE) \
+	cd src && "$(MAKE)" \
 		LTCPP=$(IOS_CPP) \
 		TARGET_FLAGS="-arch x86_64 -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
 		OUT_DIR=$(PWD)/buildtmp.iossim \
@@ -85,7 +85,7 @@ ifeq ($(TARGET_PLATFORM),android)
 .PHONY: $(TARGET_DIR)/liblt.a
 $(TARGET_DIR)/liblt.a: headers | $(TARGET_DIR)
 	mkdir -p buildtmp.android
-	cd src && $(MAKE) \
+	cd src && "$(MAKE)" \
 		CROSS=$(NDKP) \
 		TARGET_FLAGS="$(NDKSTL) $(NDKCFLAGS)" \
 		OUT_DIR=$(PWD)/buildtmp.android \
@@ -99,7 +99,7 @@ ifeq ($(TARGET_PLATFORM),osx)
 .PHONY: $(TARGET_DIR)/liblt.a
 $(TARGET_DIR)/liblt.a: headers | $(TARGET_DIR)
 	mkdir -p buildtmp.osx
-	cd src && $(MAKE) \
+	cd src && "$(MAKE)" \
 		TARGET_FLAGS="-m64 -arch x86_64" \
 		OUT_DIR=$(PWD)/buildtmp.osx \
 		LTCFLAGS="$(LTCFLAGS) $(OBJC_FLAGS)" \
@@ -112,7 +112,7 @@ ifeq ($(TARGET_PLATFORM),linux)
 .PHONY: $(TARGET_DIR)/liblt.a
 $(TARGET_DIR)/liblt.a: headers | $(TARGET_DIR)
 	mkdir -p buildtmp.linux
-	cd src && $(MAKE) \
+	cd src && "$(MAKE)" \
 		OUT_DIR=$(PWD)/buildtmp.linux \
 		LTCFLAGS="$(LTCFLAGS)" \
 		all
@@ -124,7 +124,7 @@ ifeq ($(TARGET_PLATFORM),mingw)
 .PHONY: $(TARGET_DIR)/liblt.a
 $(TARGET_DIR)/liblt.a: headers | $(TARGET_DIR)
 	mkdir -p buildtmp.mingw
-	cd src && $(MAKE) \
+	cd src && "$(MAKE)" \
 		OUT_DIR=$(PWD)/buildtmp.mingw \
 		LTCFLAGS="$(LTCFLAGS)" \
 		all
@@ -138,7 +138,7 @@ LTCFLAGS+=-I$(TIZSYSROOTX86)/usr/include/osp
 .PHONY: $(TARGET_DIR)/liblt.a
 $(TARGET_DIR)/liblt.a: headers | $(TARGET_DIR)
 	mkdir -p buildtmp.tizen-x86
-	cd src && $(MAKE) \
+	cd src && "$(MAKE)" \
 		CROSS=$(TDKPX86) \
 		TARGET_FLAGS="$(TIZEN_TARGET_FLAGS_X86)" \
 		OUT_DIR=$(PWD)/buildtmp.tizen-x86 \
@@ -154,7 +154,7 @@ LTCFLAGS+=-I$(TIZSYSROOTARM)/usr/include/osp
 .PHONY: $(TARGET_DIR)/liblt.a
 $(TARGET_DIR)/liblt.a: headers | $(TARGET_DIR)
 	mkdir -p buildtmp.tizen-arm
-	cd src && $(MAKE) \
+	cd src && "$(MAKE)" \
 		CROSS=$(TDKPARM) \
 		TARGET_FLAGS="$(TIZEN_TARGET_FLAGS_ARM)" \
 		OUT_DIR=$(PWD)/buildtmp.tizen-arm \
@@ -178,7 +178,7 @@ ltclient: libs
 
 .PHONY: deplibs
 deplibs: | $(TARGET_DIR)
-	cd deps && $(MAKE) LTCFLAGS="$(LTCFLAGS)"
+	cd deps && "$(MAKE)" LTCFLAGS="$(LTCFLAGS)"
 	-cp deps/*.a deps/*.lib $(TARGET_DIR)
 	cp -r deps/include $(TARGET_DIR)
 
@@ -192,8 +192,8 @@ $(TARGET_DIR):
 .PHONY: clean
 clean:
 	rm -rf buildtmp.$(TARGET_PLATFORM)*
-	cd deps && $(MAKE) clean
-	cd clients/glfw && $(MAKE) clean
+	cd deps && "$(MAKE)" clean
+	cd clients/glfw && "$(MAKE)" clean
 	rm -rf $(TARGET_DIR)/*
 	rm -f src/lua_scripts.h
 	rm -f ltclient$(EXE_EXT)

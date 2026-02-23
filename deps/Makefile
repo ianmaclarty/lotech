@@ -31,14 +31,14 @@ ifeq ($(TARGET_PLATFORM),ios)
 ############################ iOS Targets ##############################
 
 #liblua.a: rebuild
-#	cd $(LUAJIT_DIR) && $(MAKE) \
+#	cd $(LUAJIT_DIR) && "$(MAKE)" \
 #		HOST_CC="gcc -m32 -arch i386" \
 #		CROSS=$(ISDKP) \
 #		TARGET_FLAGS="$(IOS_ARMv7_OPTS) -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
 #		TARGET=arm TARGET_SYS=iOS \
 #		clean all
 #	cp $(LUAJIT_DIR)/src/libluajit.a libluajit-armv7.a
-#	cd $(LUAJIT_DIR) && $(MAKE) \
+#	cd $(LUAJIT_DIR) && "$(MAKE)" \
 #		HOST_CC="gcc -m32 -arch i386" \
 #		CROSS=$(ISDKP) \
 #		TARGET_FLAGS="$(IOS_ARM64_OPTS) -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
@@ -49,13 +49,13 @@ ifeq ($(TARGET_PLATFORM),ios)
 #	rm libluajit-armv*.a
 
 liblua.a: rebuild
-	cd $(LUA_DIR) && $(MAKE) -f Makefile.custom \
+	cd $(LUA_DIR) && "$(MAKE)" -f Makefile.custom \
 		LTCC=$(IOS_CC) \
 		TARGET_FLAGS="$(IOS_ARMv7_OPTS) -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
 		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(LUA_DIR)/liblua.a liblua-armv7.a
-	cd $(LUA_DIR) && $(MAKE) -f Makefile.custom \
+	cd $(LUA_DIR) && "$(MAKE)" -f Makefile.custom \
 		LTCC=$(IOS_CC) \
 		TARGET_FLAGS="$(IOS_ARM64_OPTS) -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
 		LTCFLAGS="$(LTCFLAGS)" \
@@ -65,13 +65,13 @@ liblua.a: rebuild
 	rm liblua-arm*.a
 
 libbox2d.a: rebuild
-	cd $(BOX2D_DIR) && $(MAKE) \
+	cd $(BOX2D_DIR) && "$(MAKE)" \
 		LTCPP=$(IOS_CPP) \
 		TARGET_FLAGS="$(IOS_ARMv7_OPTS) -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
 		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(BOX2D_DIR)/libbox2d.a libbox2d-armv7.a
-	cd $(BOX2D_DIR) && $(MAKE) \
+	cd $(BOX2D_DIR) && "$(MAKE)" \
 		LTCPP=$(IOS_CPP) \
 		TARGET_FLAGS="$(IOS_ARM64_OPTS) -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
 		LTCFLAGS="$(LTCFLAGS)" \
@@ -81,13 +81,13 @@ libbox2d.a: rebuild
 	rm libbox2d-arm*.a
 
 libz.a: rebuild
-	cd $(ZLIB_DIR) && $(MAKE) \
+	cd $(ZLIB_DIR) && "$(MAKE)" \
 		LTCC=$(IOS_CC) \
 		TARGET_FLAGS="$(IOS_ARMv7_OPTS) -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
 		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(ZLIB_DIR)/libz.a libz-armv7.a
-	cd $(ZLIB_DIR) && $(MAKE) \
+	cd $(ZLIB_DIR) && "$(MAKE)" \
 		LTCC=$(IOS_CC) \
 		TARGET_FLAGS="$(IOS_ARM64_OPTS) -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
 		LTCFLAGS="$(LTCFLAGS)" \
@@ -97,13 +97,13 @@ libz.a: rebuild
 	rm libz-arm*.a
 
 libpng.a: rebuild
-	cd $(LIBPNG_DIR) && $(MAKE) \
+	cd $(LIBPNG_DIR) && "$(MAKE)" \
 		LTCC=$(IOS_CC) \
 		TARGET_FLAGS="$(IOS_ARMv7_OPTS) -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
 		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(LIBPNG_DIR)/libpng.a libpng-armv7.a
-	cd $(LIBPNG_DIR) && $(MAKE) \
+	cd $(LIBPNG_DIR) && "$(MAKE)" \
 		LTCC=$(IOS_CC) \
 		TARGET_FLAGS="$(IOS_ARM64_OPTS) -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
 		LTCFLAGS="$(LTCFLAGS)" \
@@ -113,13 +113,13 @@ libpng.a: rebuild
 	rm libpng-arm*.a
 
 libvorbis.a: rebuild
-	cd $(VORBIS_DIR) && $(MAKE) \
+	cd $(VORBIS_DIR) && "$(MAKE)" \
 		LTCC=$(IOS_CC) \
 		TARGET_FLAGS="$(IOS_ARMv7_OPTS) -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
 		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(VORBIS_DIR)/libvorbis.a libvorbis-armv7.a
-	cd $(VORBIS_DIR) && $(MAKE) \
+	cd $(VORBIS_DIR) && "$(MAKE)" \
 		LTCC=$(IOS_CC) \
 		TARGET_FLAGS="$(IOS_ARM64_OPTS) -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
 		LTCFLAGS="$(LTCFLAGS)" \
@@ -129,13 +129,13 @@ libvorbis.a: rebuild
 	rm libvorbis-arm*.a
 
 libft2.a: rebuild
-	cd $(FREETYPE_DIR) && $(MAKE) \
+	cd $(FREETYPE_DIR) && "$(MAKE)" \
 		LTCC=$(IOS_CC) \
 		TARGET_FLAGS="$(IOS_ARMv7_OPTS) -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
 		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(FREETYPE_DIR)/libft2.a libft2-armv7.a
-	cd $(FREETYPE_DIR) && $(MAKE) \
+	cd $(FREETYPE_DIR) && "$(MAKE)" \
 		LTCC=$(IOS_CC) \
 		TARGET_FLAGS="$(IOS_ARM64_OPTS) -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
 		LTCFLAGS="$(LTCFLAGS)" \
@@ -145,14 +145,14 @@ libft2.a: rebuild
 	rm libft2-arm*.a
 
 #libcurl.a: rebuild
-#	cd $(CURL_DIR) && $(MAKE) \
+#	cd $(CURL_DIR) && "$(MAKE)" \
 #		CROSS=$(ISDKP)/ \
 #		LTCC=$(IOS_CC) \
 #		TARGET_FLAGS="$(IOS_ARMv7_OPTS) -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
 #		LTCFLAGS="$(LTCFLAGS)" \
 #		clean all
 #	cp $(CURL_DIR)/libcurl.a libcurl-armv7.a
-#	cd $(CURL_DIR) && $(MAKE) \
+#	cd $(CURL_DIR) && "$(MAKE)" \
 #		CROSS=$(ISDKP)/ \
 #		LTCC=$(IOS_CC) \
 #		TARGET_FLAGS="$(IOS_ARM64_OPTS) -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
@@ -168,7 +168,7 @@ ifeq ($(TARGET_PLATFORM),iossim)
 ############################ iPhone Simulator Targets ##############################
 
 liblua.a: rebuild
-	cd $(LUA_DIR) && $(MAKE) -f Makefile.custom \
+	cd $(LUA_DIR) && "$(MAKE)" -f Makefile.custom \
 		LTCC=$(IOS_CC) \
 		TARGET_FLAGS="-arch x86_64 -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
 		LTCFLAGS="$(LTCFLAGS)" \
@@ -176,7 +176,7 @@ liblua.a: rebuild
 	cp $(LUA_DIR)/liblua.a $@
 
 libbox2d.a: rebuild
-	cd $(BOX2D_DIR) && $(MAKE) \
+	cd $(BOX2D_DIR) && "$(MAKE)" \
 		LTCPP=$(IOS_CPP) \
 		TARGET_FLAGS="-arch x86_64 -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
 		LTCFLAGS="$(LTCFLAGS)" \
@@ -184,7 +184,7 @@ libbox2d.a: rebuild
 	cp $(BOX2D_DIR)/libbox2d.a $@
 
 libz.a: rebuild
-	cd $(ZLIB_DIR) && $(MAKE) \
+	cd $(ZLIB_DIR) && "$(MAKE)" \
 		LTCC=$(IOS_CC) \
 		TARGET_FLAGS="-arch x86_64 -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
 		LTCFLAGS="$(LTCFLAGS)" \
@@ -192,7 +192,7 @@ libz.a: rebuild
 	cp $(ZLIB_DIR)/libz.a $@
 
 libpng.a: rebuild
-	cd $(LIBPNG_DIR) && $(MAKE) \
+	cd $(LIBPNG_DIR) && "$(MAKE)" \
 		LTCC=$(IOS_CC) \
 		TARGET_FLAGS="-arch x86_64 -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
 		LTCFLAGS="$(LTCFLAGS)" \
@@ -200,7 +200,7 @@ libpng.a: rebuild
 	cp $(LIBPNG_DIR)/libpng.a $@
 
 libvorbis.a: rebuild
-	cd $(VORBIS_DIR) && $(MAKE) \
+	cd $(VORBIS_DIR) && "$(MAKE)" \
 		LTCC=$(IOS_CC) \
 		TARGET_FLAGS="-arch x86_64 -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
 		LTCFLAGS="$(LTCFLAGS)" \
@@ -208,7 +208,7 @@ libvorbis.a: rebuild
 	cp $(VORBIS_DIR)/libvorbis.a $@
 
 libft2.a: rebuild
-	cd $(FREETYPE_DIR) && $(MAKE) \
+	cd $(FREETYPE_DIR) && "$(MAKE)" \
 		LTCC=$(IOS_CC) \
 		TARGET_FLAGS="-arch x86_64 -isysroot $(ISDK)/SDKs/$(ISDKVER)" \
 		LTCFLAGS="$(LTCFLAGS)" \
@@ -221,14 +221,14 @@ ifeq ($(TARGET_PLATFORM),android)
 ############################ Android Targets ##############################
 
 liblua.a: rebuild
-#	cd $(LUAJIT_DIR) && $(MAKE) \
+#	cd $(LUAJIT_DIR) && "$(MAKE)" \
 #		HOST_CC="gcc -m32 -arch i386" \
 #		CROSS=$(NDKP) \
 #		TARGET_FLAGS="--sysroot $(NDKSYSROOT)" \
 #		TARGET=arm TARGET_SYS=Linux \
 #		clean all
 #	cp $(LUAJIT_DIR)/src/libluajit.a $@
-	cd $(LUA_DIR) && $(MAKE) -f Makefile.custom \
+	cd $(LUA_DIR) && "$(MAKE)" -f Makefile.custom \
 		CC=$(CC) \
 		AR=$(AR) \
 		TARGET_FLAGS="$(NDKCFLAGS)" \
@@ -237,7 +237,7 @@ liblua.a: rebuild
 	cp $(LUA_DIR)/liblua.a $@
 
 libbox2d.a: rebuild
-	cd $(BOX2D_DIR) && $(MAKE) \
+	cd $(BOX2D_DIR) && "$(MAKE)" \
 		CPP=$(CPP) \
 		AR=$(AR) \
 		TARGET_FLAGS="$(NDKSTL) $(NDKCFLAGS)" \
@@ -245,7 +245,7 @@ libbox2d.a: rebuild
 	cp $(BOX2D_DIR)/libbox2d.a .
 
 libz.a: rebuild
-	cd $(ZLIB_DIR) && $(MAKE) \
+	cd $(ZLIB_DIR) && "$(MAKE)" \
 		CC=$(CC) \
 		AR=$(AR) \
 		TARGET_FLAGS="$(NDKCFLAGS)" \
@@ -254,7 +254,7 @@ libz.a: rebuild
 	cp $(ZLIB_DIR)/libz.a .
 
 libpng.a: rebuild
-	cd $(LIBPNG_DIR) && $(MAKE) \
+	cd $(LIBPNG_DIR) && "$(MAKE)" \
 		CC=$(CC) \
 		AR=$(AR) \
 		TARGET_FLAGS="$(NDKCFLAGS)" \
@@ -263,7 +263,7 @@ libpng.a: rebuild
 	cp $(LIBPNG_DIR)/libpng.a .
 
 libft2.a: rebuild
-	cd $(FREETYPE_DIR) && $(MAKE) \
+	cd $(FREETYPE_DIR) && "$(MAKE)" \
 		CC=$(CC) \
 		AR=$(AR) \
 		TARGET_FLAGS="$(NDKCFLAGS)" \
@@ -272,7 +272,7 @@ libft2.a: rebuild
 	cp $(FREETYPE_DIR)/libft2.a .
 
 libvorbis.a: rebuild
-	cd $(VORBIS_DIR) && $(MAKE) \
+	cd $(VORBIS_DIR) && "$(MAKE)" \
 		CC=$(CC) \
 		AR=$(AR) \
 		TARGET_FLAGS="$(NDKCFLAGS)" \
@@ -281,7 +281,7 @@ libvorbis.a: rebuild
 	cp $(VORBIS_DIR)/libvorbis.a .
 
 #libcurl.a: rebuild
-#	cd $(CURL_DIR) && $(MAKE) \
+#	cd $(CURL_DIR) && "$(MAKE)" \
 #		CROSS=$(NDKP) \
 #		TARGET_FLAGS="--sysroot $(NDKSYSROOT) -marm" \
 #		LTCFLAGS="$(LTCFLAGS)" \
@@ -289,7 +289,7 @@ libvorbis.a: rebuild
 #	cp $(CURL_DIR)/libcurl.a libcurl.a
 
 #libopenal.a: rebuild.openal
-#	cd openal-android && $(MAKE) \
+#	cd openal-android && "$(MAKE)" \
 #		CROSS=$(NDKP) \
 #		TARGET_FLAGS="--sysroot $(NDKSYSROOT) -marm" \
 #		LTCFLAGS="$(LTCFLAGS)" \
@@ -309,58 +309,58 @@ ifeq ($(TARGET_PLATFORM),osx)
 ############################ Mac OS X Targets ##############################
 
 liblua.a: rebuild
-	cd $(LUA_DIR) && $(MAKE) macosx CC="gcc -m64 -arch x86_64 $(LTCFLAGS)"
+	cd $(LUA_DIR) && "$(MAKE)" macosx CC="gcc -m64 -arch x86_64 $(LTCFLAGS)"
 	cp $(LUA_DIR)/src/liblua.a $@
 
 libbox2d.a: rebuild
-	cd $(BOX2D_DIR) && $(MAKE) \
+	cd $(BOX2D_DIR) && "$(MAKE)" \
 		TARGET_FLAGS="-m64 -arch x86_64" \
 		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(BOX2D_DIR)/libbox2d.a .
 
 libz.a: rebuild
-	cd $(ZLIB_DIR) && $(MAKE) \
+	cd $(ZLIB_DIR) && "$(MAKE)" \
 		TARGET_FLAGS="-m64 -arch x86_64" \
 		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(ZLIB_DIR)/libz.a .
 
 libpng.a: rebuild
-	cd $(LIBPNG_DIR) && $(MAKE) \
+	cd $(LIBPNG_DIR) && "$(MAKE)" \
 		TARGET_FLAGS="-m64 -arch x86_64" \
 		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(LIBPNG_DIR)/libpng.a .
 
 libvorbis.a: rebuild
-	cd $(VORBIS_DIR) && $(MAKE) \
+	cd $(VORBIS_DIR) && "$(MAKE)" \
 		TARGET_FLAGS="-m64 -arch x86_64" \
 		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(VORBIS_DIR)/libvorbis.a .
 
 libft2.a: rebuild
-	cd $(FREETYPE_DIR) && $(MAKE) \
+	cd $(FREETYPE_DIR) && "$(MAKE)" \
 		TARGET_FLAGS="-m64 -arch x86_64" \
 		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(FREETYPE_DIR)/libft2.a .
 
 libcurl.a: rebuild
-	cd $(CURL_DIR) && $(MAKE) \
+	cd $(CURL_DIR) && "$(MAKE)" \
 		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(CURL_DIR)/libcurl.a .
 
 libGLEW.a: rebuild
-	cd $(GLEW_DIR) && $(MAKE) \
+	cd $(GLEW_DIR) && "$(MAKE)" \
 		CC="gcc -m64 -arch x86_64" \
 		clean all
 	cp $(GLEW_DIR)/lib/libGLEW.a .
 
 libglfw.a: rebuild
-	cd $(GLFW_DIR) && $(MAKE) \
+	cd $(GLFW_DIR) && "$(MAKE)" \
 		CC="gcc -m64 -arch x86_64" \
 		cocoa
 	cp $(GLFW_DIR)/lib/cocoa/libglfw.a .
@@ -379,43 +379,43 @@ ifeq ($(TARGET_PLATFORM),linux)
 ############################ Linux Targets ##############################
 
 liblua.a: rebuild
-	#cd $(LUAJIT_DIR) && $(MAKE)
+	#cd $(LUAJIT_DIR) && "$(MAKE)"
 	#cp $(LUAJIT_DIR)/src/libluajit.a $@
-	cd $(LUA_DIR) && $(MAKE) linux CC="gcc $(LTCFLAGS)"
+	cd $(LUA_DIR) && "$(MAKE)" linux CC="gcc $(LTCFLAGS)"
 	cp $(LUA_DIR)/src/liblua.a $@
 
 libbox2d.a: rebuild
-	cd $(BOX2D_DIR) && $(MAKE) \
+	cd $(BOX2D_DIR) && "$(MAKE)" \
 		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(BOX2D_DIR)/libbox2d.a .
 
 libz.a: rebuild
-	cd $(ZLIB_DIR) && $(MAKE) \
+	cd $(ZLIB_DIR) && "$(MAKE)" \
 		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(ZLIB_DIR)/libz.a .
 
 libpng.a: rebuild
-	cd $(LIBPNG_DIR) && $(MAKE) \
+	cd $(LIBPNG_DIR) && "$(MAKE)" \
 		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(LIBPNG_DIR)/libpng.a .
 
 libvorbis.a: rebuild
-	cd $(VORBIS_DIR) && $(MAKE) \
+	cd $(VORBIS_DIR) && "$(MAKE)" \
 		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(VORBIS_DIR)/libvorbis.a .
 
 libft2.a: rebuild
-	cd $(FREETYPE_DIR) && $(MAKE) \
+	cd $(FREETYPE_DIR) && "$(MAKE)" \
 		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(FREETYPE_DIR)/libft2.a .
 
 libcurl.a: rebuild
-	cd $(CURL_DIR) && $(MAKE) \
+	cd $(CURL_DIR) && "$(MAKE)" \
 		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(CURL_DIR)/libcurl.a .
@@ -433,12 +433,12 @@ openal_headers:
 	cp -r openal-soft/include/* include/
 
 libGLEW.a: rebuild
-	cd $(GLEW_DIR) && $(MAKE) \
+	cd $(GLEW_DIR) && "$(MAKE)" \
 		clean all
 	cp $(GLEW_DIR)/lib/libGLEW.a .
 
 libglfw.a: rebuild
-	cd $(GLFW_DIR) && $(MAKE) \
+	cd $(GLFW_DIR) && "$(MAKE)" \
 		x11
 	cp $(GLFW_DIR)/lib/x11/libglfw.a .
 
@@ -457,54 +457,54 @@ ifeq ($(TARGET_PLATFORM),mingw)
 ############################ MinGW Targets ##############################
 
 liblua.a: rebuild
-	cd $(LUA_DIR) && $(MAKE) mingw
+	cd $(LUA_DIR) && "$(MAKE)" mingw
 	cp $(LUA_DIR)/src/liblua.a $@
-	#cd $(LUAJIT_DIR) && $(MAKE) BUILDMODE=static
+	#cd $(LUAJIT_DIR) && "$(MAKE)" BUILDMODE=static
 	#cp $(LUAJIT_DIR)/src/libluajit.a $@
 
 libbox2d.a: rebuild
-	cd $(BOX2D_DIR) && $(MAKE) \
+	cd $(BOX2D_DIR) && "$(MAKE)" \
 		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(BOX2D_DIR)/libbox2d.a .
 
 libz.a: rebuild
-	cd $(ZLIB_DIR) && $(MAKE) \
+	cd $(ZLIB_DIR) && "$(MAKE)" \
 		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(ZLIB_DIR)/libz.a .
 
 libpng.a: rebuild
-	cd $(LIBPNG_DIR) && $(MAKE) \
+	cd $(LIBPNG_DIR) && "$(MAKE)" \
 		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(LIBPNG_DIR)/libpng.a .
 
 libft2.a: rebuild
-	cd $(FREETYPE_DIR) && $(MAKE) \
+	cd $(FREETYPE_DIR) && "$(MAKE)" \
 		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(FREETYPE_DIR)/libft2.a .
 
 libcurl.a: rebuild
-	cd $(CURL_DIR) && $(MAKE) \
+	cd $(CURL_DIR) && "$(MAKE)" \
 		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(CURL_DIR)/libcurl.a .
 
 libvorbis.a: rebuild
-	cd $(VORBIS_DIR) && $(MAKE) \
+	cd $(VORBIS_DIR) && "$(MAKE)" \
 		LTCFLAGS="$(LTCFLAGS)" \
 		clean all
 	cp $(VORBIS_DIR)/libvorbis.a .
 
 libglfw.a: rebuild
-	cd $(GLFW_DIR) && $(MAKE) \
+	cd $(GLFW_DIR) && "$(MAKE)" \
 		win32-msys
 	cp $(GLFW_DIR)/lib/win32/libglfw.a .
 
 libglew32.a: rebuild
-	cd $(GLEW_DIR) && $(MAKE) \
+	cd $(GLEW_DIR) && "$(MAKE)" \
 		clean all
 	cp $(GLEW_DIR)/lib/libglew32.a .
 
@@ -531,7 +531,7 @@ ifeq ($(TARGET_PLATFORM),tizen-x86)
 ############################ Tizen ##############################
 
 liblua.a: rebuild
-	cd $(LUA_DIR) && $(MAKE) -f Makefile.custom \
+	cd $(LUA_DIR) && "$(MAKE)" -f Makefile.custom \
 		CROSS=$(TDKPX86) \
 		TARGET_FLAGS="$(TIZEN_TARGET_FLAGS_X86)" \
 		LTCFLAGS="$(LTCFLAGS)" \
@@ -539,14 +539,14 @@ liblua.a: rebuild
 	cp $(LUA_DIR)/liblua.a $@
 
 libbox2d.a: rebuild
-	cd $(BOX2D_DIR) && $(MAKE) \
+	cd $(BOX2D_DIR) && "$(MAKE)" \
 		CROSS=$(TDKPX86) \
 		TARGET_FLAGS="$(TIZEN_TARGET_FLAGS_X86)" \
 		clean all
 	cp $(BOX2D_DIR)/libbox2d.a .
 
 libz.a: rebuild
-	cd $(ZLIB_DIR) && $(MAKE) \
+	cd $(ZLIB_DIR) && "$(MAKE)" \
 		CROSS=$(TDKPX86) \
 		TARGET_FLAGS="$(TIZEN_TARGET_FLAGS_X86)" \
 		LTCFLAGS="$(LTCFLAGS)" \
@@ -554,7 +554,7 @@ libz.a: rebuild
 	cp $(ZLIB_DIR)/libz.a .
 
 libpng.a: rebuild
-	cd $(LIBPNG_DIR) && $(MAKE) \
+	cd $(LIBPNG_DIR) && "$(MAKE)" \
 		CROSS=$(TDKPX86) \
 		TARGET_FLAGS="$(TIZEN_TARGET_FLAGS_X86)" \
 		LTCFLAGS="$(LTCFLAGS)" \
@@ -562,7 +562,7 @@ libpng.a: rebuild
 	cp $(LIBPNG_DIR)/libpng.a .
 
 libft2.a: rebuild
-	cd $(FREETYPE_DIR) && $(MAKE) \
+	cd $(FREETYPE_DIR) && "$(MAKE)" \
 		CROSS=$(TDKPX86) \
 		TARGET_FLAGS="$(TIZEN_TARGET_FLAGS_X86)" \
 		LTCFLAGS="$(LTCFLAGS)" \
@@ -570,7 +570,7 @@ libft2.a: rebuild
 	cp $(FREETYPE_DIR)/libft2.a .
 
 libvorbis.a: rebuild
-	cd $(VORBIS_DIR) && $(MAKE) \
+	cd $(VORBIS_DIR) && "$(MAKE)" \
 		CROSS=$(TDKPX86) \
 		TARGET_FLAGS="$(TIZEN_TARGET_FLAGS_X86)" \
 		LTCFLAGS="$(LTCFLAGS)" \
@@ -578,7 +578,7 @@ libvorbis.a: rebuild
 	cp $(VORBIS_DIR)/libvorbis.a .
 
 libcurl.a: rebuild
-	cd $(CURL_DIR) && $(MAKE) \
+	cd $(CURL_DIR) && "$(MAKE)" \
 		CROSS=$(TDKPX86) \
 		TARGET_FLAGS="$(TIZEN_TARGET_FLAGS_X86)" \
 		LTCFLAGS="$(LTCFLAGS)" \
@@ -591,7 +591,7 @@ ifeq ($(TARGET_PLATFORM),tizen-arm)
 ############################ Tizen ##############################
 
 liblua.a: rebuild
-	cd $(LUA_DIR) && $(MAKE) -f Makefile.custom \
+	cd $(LUA_DIR) && "$(MAKE)" -f Makefile.custom \
 		CROSS=$(TDKPARM) \
 		TARGET_FLAGS="$(TIZEN_TARGET_FLAGS_ARM)" \
 		LTCFLAGS="$(LTCFLAGS)" \
@@ -599,14 +599,14 @@ liblua.a: rebuild
 	cp $(LUA_DIR)/liblua.a $@
 
 libbox2d.a: rebuild
-	cd $(BOX2D_DIR) && $(MAKE) \
+	cd $(BOX2D_DIR) && "$(MAKE)" \
 		CROSS=$(TDKPARM) \
 		TARGET_FLAGS="$(TIZEN_TARGET_FLAGS_ARM)" \
 		clean all
 	cp $(BOX2D_DIR)/libbox2d.a .
 
 libz.a: rebuild
-	cd $(ZLIB_DIR) && $(MAKE) \
+	cd $(ZLIB_DIR) && "$(MAKE)" \
 		CROSS=$(TDKPARM) \
 		TARGET_FLAGS="$(TIZEN_TARGET_FLAGS_ARM)" \
 		LTCFLAGS="$(LTCFLAGS)" \
@@ -614,7 +614,7 @@ libz.a: rebuild
 	cp $(ZLIB_DIR)/libz.a .
 
 libpng.a: rebuild
-	cd $(LIBPNG_DIR) && $(MAKE) \
+	cd $(LIBPNG_DIR) && "$(MAKE)" \
 		CROSS=$(TDKPARM) \
 		TARGET_FLAGS="$(TIZEN_TARGET_FLAGS_ARM)" \
 		LTCFLAGS="$(LTCFLAGS)" \
@@ -622,7 +622,7 @@ libpng.a: rebuild
 	cp $(LIBPNG_DIR)/libpng.a .
 
 libft2.a: rebuild
-	cd $(FREETYPE_DIR) && $(MAKE) \
+	cd $(FREETYPE_DIR) && "$(MAKE)" \
 		CROSS=$(TDKPARM) \
 		TARGET_FLAGS="$(TIZEN_TARGET_FLAGS_ARM)" \
 		LTCFLAGS="$(LTCFLAGS)" \
@@ -630,7 +630,7 @@ libft2.a: rebuild
 	cp $(FREETYPE_DIR)/libft2.a .
 
 libvorbis.a: rebuild
-	cd $(VORBIS_DIR) && $(MAKE) \
+	cd $(VORBIS_DIR) && "$(MAKE)" \
 		CROSS=$(TDKPARM) \
 		TARGET_FLAGS="$(TIZEN_TARGET_FLAGS_ARM)" \
 		LTCFLAGS="$(LTCFLAGS)" \
@@ -638,7 +638,7 @@ libvorbis.a: rebuild
 	cp $(VORBIS_DIR)/libvorbis.a .
 
 libcurl.a: rebuild
-	cd $(CURL_DIR) && $(MAKE) \
+	cd $(CURL_DIR) && "$(MAKE)" \
 		CROSS=$(TDKPARM) \
 		TARGET_FLAGS="$(TIZEN_TARGET_FLAGS_ARM)" \
 		LTCFLAGS="$(LTCFLAGS)" \
@@ -674,13 +674,13 @@ headers: rebuild
 
 .PHONY: clean
 clean:
-	cd $(LUAJIT_DIR) && $(MAKE) clean
-	cd $(LUA_DIR) && $(MAKE) clean
-	cd $(BOX2D_DIR) && $(MAKE) clean
-	cd $(ZLIB_DIR) && $(MAKE) clean
-	cd $(LIBPNG_DIR) && $(MAKE) clean
-	cd $(FREETYPE_DIR) && $(MAKE) clean
-	cd $(VORBIS_DIR) && $(MAKE) clean
+	cd $(LUAJIT_DIR) && "$(MAKE)" clean
+	cd $(LUA_DIR) && "$(MAKE)" clean
+	cd $(BOX2D_DIR) && "$(MAKE)" clean
+	cd $(ZLIB_DIR) && "$(MAKE)" clean
+	cd $(LIBPNG_DIR) && "$(MAKE)" clean
+	cd $(FREETYPE_DIR) && "$(MAKE)" clean
+	cd $(VORBIS_DIR) && "$(MAKE)" clean
 	rm -rf *.a
 	rm -rf *.lib
 	rm -rf include/*

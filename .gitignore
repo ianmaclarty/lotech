@@ -15,7 +15,7 @@ tools/randtest
 linux/
 osx/
 ios/
-./android/
+/android
 mingw/
 *.out
 *.res
@@ -27,3 +27,4 @@ ltclient
 *.xcf
 .*.swp
 D.*
+/deps/include
