@@ -39,6 +39,10 @@ else ifneq (,$(findstring MSYS_NT,$(UNAME)))
   HOST_PLATFORM = msvc32
   IS_WINDOWS = yes
   PATH_SEP = ;
+else ifneq (,$(findstring MINGW64_NT,$(UNAME)))
+  HOST_PLATFORM = msvc32
+  IS_WINDOWS = yes
+  PATH_SEP = ;
 else ifneq (,$(findstring Linux,$(UNAME)))
   UNAME_A := $(shell uname -a)
   ifneq (,$(findstring x86_64,$(UNAME_A)))
@@ -251,7 +255,7 @@ else ifeq ($(TARGET_PLATFORM),android_arm32)
   CC = $(NDK_HOME)/toolchains/llvm/prebuilt/$(NDK_HOST)/bin/clang
   CPP = $(NDK_HOME)/toolchains/llvm/prebuilt/$(NDK_HOST)/bin/clang++
   LINK = $(CPP)
-  AR= $(NDK_VER)/prebuilt/$(NDK_HOST)/bin/arm-linux-androideabi-ar
+  AR= $(NDK_VER)/prebuilt/$(NDK_HOST)/bin/llvm-ar
   TARGET_CFLAGS += -fPIC \
   	-target armv7a-linux-androideabi$(NDK_ANDROID_VER) -fno-exceptions -fno-rtti \
 	-I$(NDK_HOME)/sources/android/native_app_glue \
@@ -269,7 +273,7 @@ else ifeq ($(TARGET_PLATFORM),android_arm64)
   CC = $(NDK_HOME)/toolchains/llvm/prebuilt/$(NDK_HOST)/bin/clang
   CPP = $(NDK_HOME)/toolchains/llvm/prebuilt/$(NDK_HOST)/bin/clang++
   LINK = $(CPP)
-  AR= $(NDK_VER)/prebuilt/$(NDK_HOST)/bin/aarch64-linux-android-ar
+  AR= $(NDK_VER)/prebuilt/$(NDK_HOST)/bin/llvm-ar
   TARGET_CFLAGS += -fPIC \
   	-target aarch64-linux-android$(NDK_ANDROID_VER) -fno-exceptions -fno-rtti \
 	-I$(NDK_HOME)/sources/android/native_app_glue \
@@ -287,7 +291,7 @@ else ifeq ($(TARGET_PLATFORM),android_x86)
   CC = $(NDK_HOME)/toolchains/llvm/prebuilt/$(NDK_HOST)/bin/clang
   CPP = $(NDK_HOME)/toolchains/llvm/prebuilt/$(NDK_HOST)/bin/clang++
   LINK = $(CPP)
-  AR= $(NDK_VER)/prebuilt/$(NDK_HOST)/bin/i686-linux-android-ar 
+  AR= $(NDK_VER)/prebuilt/$(NDK_HOST)/bin/llvm-ar
   TARGET_CFLAGS += -fPIC \
   	-target i686-linux-android$(NDK_ANDROID_VER) -fno-exceptions -fno-rtti \
 	-I$(NDK_HOME)/sources/android/native_app_glue \
@@ -305,7 +309,7 @@ else ifeq ($(TARGET_PLATFORM),android_x86_64)
   CC = $(NDK_HOME)/toolchains/llvm/prebuilt/$(NDK_HOST)/bin/clang
   CPP = $(NDK_HOME)/toolchains/llvm/prebuilt/$(NDK_HOST)/bin/clang++
   LINK = $(CPP)
-  AR= $(NDK_VER)/prebuilt/$(NDK_HOST)/bin/x86_64-linux-android-ar 
+  AR= $(NDK_VER)/prebuilt/$(NDK_HOST)/bin/llvm-ar
   TARGET_CFLAGS += -fPIC \
   	-target x86_64-linux-android$(NDK_ANDROID_VER) -fno-exceptions -fno-rtti \
 	-I$(NDK_HOME)/sources/android/native_app_glue \

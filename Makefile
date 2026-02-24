@@ -151,7 +151,7 @@ $(SDL_ALIB): | $(BUILD_LIB_DIR) $(BUILD_INC_DIR)
 	    cp -r $(SDL_PREBUILT_DIR)/include/* $(BUILD_INC_DIR)/; \
 	else \
 	    BASE_DIR=`pwd`; \
-	    cd $(SDL_DIR) && ./configure --disable-render --disable-loadso --disable-video-vulkan CC=$(CC) CXX=$(CPP) CFLAGS="$(COMMON_CFLAGS)" LDFLAGS="$(LDFLAGS)" && $(MAKE) clean && $(MAKE); \
+	    cd $(SDL_DIR) && ./configure --disable-render --disable-loadso --disable-video-vulkan CC=$(CC) CXX=$(CPP) CFLAGS="$(COMMON_CFLAGS)" LDFLAGS="$(LDFLAGS)" && "$(MAKE)" clean && "$(MAKE)"; \
 	    cd $$BASE_DIR; \
 	    cp -r $(SDL_DIR)/include/* $(BUILD_INC_DIR)/; \
 	    cp $(SDL_DIR)/build/.libs/libSDL2$(ALIB_EXT) $@; \
@@ -166,8 +166,8 @@ $(SDL_PREBUILT): | $(BUILD_LIB_DIR) $(BUILD_INC_DIR) $(BUILD_BIN_DIR)
 	touch $@
 
 $(ANGLE_ALIB): | $(BUILD_LIB_DIR) $(BUILD_INC_DIR)
-	cd $(ANGLE_DIR) && $(MAKE) clean
-	cd $(ANGLE_DIR) && $(MAKE) all
+	cd $(ANGLE_DIR) && "$(MAKE)" clean
+	cd $(ANGLE_DIR) && "$(MAKE)" all
 	cp -r $(ANGLE_DIR)/include/GLSLANG $(BUILD_INC_DIR)/
 	cp -r $(ANGLE_DIR)/include/KHR $(BUILD_INC_DIR)/
 	cp $(ANGLE_DIR)/libangle$(ALIB_EXT) $@
@@ -192,20 +192,20 @@ $(STEAMWORKS_LIB): | $(BUILD_INC_DIR) $(BUILD_BIN_DIR)
 endif
 
 $(LUA51_ALIB): | $(BUILD_LIB_DIR) $(BUILD_INC_DIR)
-	cd $(LUA51_DIR) && $(MAKE) -f Makefile.custom clean
-	cd $(LUA51_DIR) && $(MAKE) -f Makefile.custom all
+	cd $(LUA51_DIR) && "$(MAKE)" -f Makefile.custom clean
+	cd $(LUA51_DIR) && "$(MAKE)" -f Makefile.custom all
 	cp $(LUA51_DIR)/src/*.h $(BUILD_INC_DIR)/
 	cp $(LUA51_DIR)/src/liblua$(ALIB_EXT) $@
 
 $(LUA52_ALIB): | $(BUILD_LIB_DIR) $(BUILD_INC_DIR)
-	cd $(LUA52_DIR) && $(MAKE) -f Makefile.custom clean
-	cd $(LUA52_DIR) && $(MAKE) -f Makefile.custom all
+	cd $(LUA52_DIR) && "$(MAKE)" -f Makefile.custom clean
+	cd $(LUA52_DIR) && "$(MAKE)" -f Makefile.custom all
 	cp $(LUA52_DIR)/src/*.h $(BUILD_INC_DIR)/
 	cp $(LUA52_DIR)/src/liblua$(ALIB_EXT) $@
 
 $(LUA53_ALIB): | $(BUILD_LIB_DIR) $(BUILD_INC_DIR)
-	cd $(LUA53_DIR) && $(MAKE) -f Makefile.custom clean
-	cd $(LUA53_DIR) && $(MAKE) -f Makefile.custom all
+	cd $(LUA53_DIR) && "$(MAKE)" -f Makefile.custom clean
+	cd $(LUA53_DIR) && "$(MAKE)" -f Makefile.custom all
 	cp $(LUA53_DIR)/src/*.h $(BUILD_INC_DIR)/
 	cp $(LUA53_DIR)/src/liblua$(ALIB_EXT) $@
 
@@ -225,54 +225,54 @@ $(LUAJIT_ALIB): | $(BUILD_LIB_DIR) $(BUILD_INC_DIR)
 	    cp $(LUAJIT_DIR)/src/*.h $(BUILD_INC_DIR)/; \
 	else \
 	    cd $(LUAJIT_DIR); \
-	    $(MAKE) clean $(LUAJIT_FLAGS); \
-	    $(MAKE) all $(LUAJIT_FLAGS); \
+	    "$(MAKE)" clean $(LUAJIT_FLAGS); \
+	    "$(MAKE)" all $(LUAJIT_FLAGS); \
 	    cd $$BASE_DIR; \
 	    cp $(LUAJIT_DIR)/src/*.h $(BUILD_INC_DIR)/; \
 	    cp $(LUAJIT_DIR)/src/libluajit$(ALIB_EXT) $@; \
 	fi
 
 $(OPENAL_ALIB): | $(BUILD_LIB_DIR) $(BUILD_INC_DIR)
-	cd $(OPENAL_DIR) && $(MAKE) -f Makefile.custom clean
-	cd $(OPENAL_DIR) && $(MAKE) -f Makefile.custom all
+	cd $(OPENAL_DIR) && "$(MAKE)" -f Makefile.custom clean
+	cd $(OPENAL_DIR) && "$(MAKE)" -f Makefile.custom all
 	cp -r $(OPENAL_DIR)/include/* $(BUILD_INC_DIR)/
 	cp $(OPENAL_DIR)/libopenal$(ALIB_EXT) $@
 
 $(FT2_ALIB): | $(BUILD_LIB_DIR) $(BUILD_INC_DIR)
-	cd $(FT2_DIR) && $(MAKE) -f Makefile.custom clean
-	cd $(FT2_DIR) && $(MAKE) -f Makefile.custom all
+	cd $(FT2_DIR) && "$(MAKE)" -f Makefile.custom clean
+	cd $(FT2_DIR) && "$(MAKE)" -f Makefile.custom all
 	cp -r $(FT2_DIR)/include/* $(BUILD_INC_DIR)/
 	cp $(FT2_DIR)/libft2$(ALIB_EXT) $@
 
 $(STB_ALIB): | $(BUILD_LIB_DIR) $(BUILD_INC_DIR)
-	cd $(STB_DIR) && $(MAKE) clean
-	cd $(STB_DIR) && $(MAKE) all
+	cd $(STB_DIR) && "$(MAKE)" clean
+	cd $(STB_DIR) && "$(MAKE)" all
 	cp $(STB_DIR)/*.h $(BUILD_INC_DIR)/
 	cp $(STB_DIR)/*.c $(BUILD_INC_DIR)/
 	cp $(STB_DIR)/libstb$(ALIB_EXT) $@
 
 $(ZLIB_ALIB): | $(BUILD_LIB_DIR) $(BUILD_INC_DIR)
-	cd $(ZLIB_DIR) && $(MAKE) clean
-	cd $(ZLIB_DIR) && $(MAKE) all
+	cd $(ZLIB_DIR) && "$(MAKE)" clean
+	cd $(ZLIB_DIR) && "$(MAKE)" all
 	cp $(ZLIB_DIR)/zlib.h $(BUILD_INC_DIR)/
 	cp $(ZLIB_DIR)/zconf.h $(BUILD_INC_DIR)/
 	cp $(ZLIB_DIR)/libz$(ALIB_EXT) $@
 
 $(LIBPNG_ALIB): | $(BUILD_LIB_DIR) $(BUILD_INC_DIR)
-	cd $(LIBPNG_DIR) && $(MAKE) clean
-	cd $(LIBPNG_DIR) && $(MAKE) all
+	cd $(LIBPNG_DIR) && "$(MAKE)" clean
+	cd $(LIBPNG_DIR) && "$(MAKE)" all
 	cp $(LIBPNG_DIR)/*.h $(BUILD_INC_DIR)/
 	cp $(LIBPNG_DIR)/libpng$(ALIB_EXT) $@
 
 $(BOX2D_ALIB): | $(BUILD_LIB_DIR) $(BUILD_INC_DIR)
-	cd $(BOX2D_DIR) && $(MAKE) clean
-	cd $(BOX2D_DIR) && $(MAKE) all
+	cd $(BOX2D_DIR) && "$(MAKE)" clean
+	cd $(BOX2D_DIR) && "$(MAKE)" all
 	cp -r $(BOX2D_DIR)/Box2D $(BUILD_INC_DIR)/
 	cp $(BOX2D_DIR)/libbox2d$(ALIB_EXT) $@
 
 $(GLSLOPT_ALIB): | $(BUILD_LIB_DIR) $(BUILD_INC_DIR)
-	cd $(GLSLOPT_DIR) && $(MAKE) clean
-	cd $(GLSLOPT_DIR) && $(MAKE) all
+	cd $(GLSLOPT_DIR) && "$(MAKE)" clean
+	cd $(GLSLOPT_DIR) && "$(MAKE)" all
 	cp $(GLSLOPT_DIR)/src/glsl/glsl_optimizer.h $(BUILD_INC_DIR)/
 	cp $(GLSLOPT_DIR)/libglslopt$(ALIB_EXT) $@
 
@@ -280,15 +280,15 @@ $(SIMPLEGLOB_H): | $(BUILD_INC_DIR)
 	cp $(SIMPLEOPT_DIR)/SimpleGlob.h $@
 
 $(KISSFFT_ALIB): | $(BUILD_LIB_DIR) $(BUILD_INC_DIR)
-	cd $(KISSFFT_DIR) && $(MAKE) -f Makefile.custom clean
-	cd $(KISSFFT_DIR) && $(MAKE) -f Makefile.custom all
+	cd $(KISSFFT_DIR) && "$(MAKE)" -f Makefile.custom clean
+	cd $(KISSFFT_DIR) && "$(MAKE)" -f Makefile.custom all
 	cp $(KISSFFT_DIR)/kiss_fft.h $(BUILD_INC_DIR)/
 	cp $(KISSFFT_DIR)/kiss_fftr.h $(BUILD_INC_DIR)/
 	cp $(KISSFFT_DIR)/libkissfft$(ALIB_EXT) $@
 
 $(TINYMT_ALIB): | $(BUILD_LIB_DIR) $(BUILD_INC_DIR)
-	cd $(TINYMT_DIR) && $(MAKE) -f Makefile.custom clean
-	cd $(TINYMT_DIR) && $(MAKE) -f Makefile.custom all
+	cd $(TINYMT_DIR) && "$(MAKE)" -f Makefile.custom clean
+	cd $(TINYMT_DIR) && "$(MAKE)" -f Makefile.custom all
 	cp $(TINYMT_DIR)/tinymt32.h $(BUILD_INC_DIR)/
 	cp $(TINYMT_DIR)/libtinymt$(ALIB_EXT) $@
 
@@ -328,7 +328,7 @@ clean-all: clean-tests
 
 .PHONY: doc
 doc:
-	cd doc && $(MAKE)
+	cd doc && "$(MAKE)"
 
 # Tests
 
