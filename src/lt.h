@@ -209,6 +209,8 @@ extern "C" {
 #include "ltverify.h"
 #include "ltluacache.h"
 
+#include "ltandroid.h"
+
 #include "ltgamecenter.h"
 #include "ltios.h"
 #include "ltiosutil.h"

@@ -1633,8 +1633,10 @@ static int lt_SubmitAchievement(lua_State *L) {
     ltLuaCheckNArgs(L, 1);
     const char *achievement = lua_tostring(L, 1);
     if (achievement != NULL) {
-        #ifdef LTGAMECENTER
+        #if defined(LTGAMECENTER)
         ltIOSSubmitGameCenterAchievement(achievement);
+        #elif defined(LTANDROID)
+        ltAndroidSubmitAchievement(achievement);
         #endif
     }
     return 0;

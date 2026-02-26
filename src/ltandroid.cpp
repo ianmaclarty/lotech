@@ -75,6 +75,15 @@ static void android_update() {
     }
 }
 
+void ltAndroidSubmitAchievement(const char *id) {
+    ltLog("%s", "ltAndroidSubmitAchievement");
+    jstring jid = jni_env->NewStringUTF(id);
+    jclass cls = jni_env->FindClass("com/ianmaclarty/LotechActivity");
+    jmethodID mid = jni_env->GetStaticMethodID(cls, "submitAchievement", "(Ljava/lang/String;)V");
+    jni_env->CallStaticVoidMethod(cls, mid, jid);
+    jni_env->DeleteLocalRef(jid);
+}
+
 extern "C" {
     JNIEXPORT void JNICALL Java_com_ianmaclarty_LotechActivity_jniResize(JNIEnv * env, jobject obj,  jint width, jint height);
     JNIEXPORT void JNICALL Java_com_ianmaclarty_LotechActivity_jniStep(JNIEnv * env, jobject obj);
@@ -93,7 +102,6 @@ extern "C" {
 JNIEXPORT void JNICALL Java_com_ianmaclarty_LotechActivity_jniResize(JNIEnv * env, jobject obj,  jint width, jint height)
 {
     ltLuaResizeWindow((float)width, (float)height);
-
 }
 
 JNIEXPORT void JNICALL Java_com_ianmaclarty_LotechActivity_jniStep(JNIEnv * env, jobject obj)
